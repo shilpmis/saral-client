@@ -1,11 +1,12 @@
 import React from 'react';
 // import logo from './logo.svg';
 import './App.css';
+import RootRoute from './components/Routes/index.routes';
 
 function App() {
   return (
-    <div className="App border border-black underline">
-      Saral ERP 
+    <div className=' p-1'>
+      <RootRoute/>
     </div>
   );
 }
