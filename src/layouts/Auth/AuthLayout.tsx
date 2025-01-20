@@ -1,10 +1,9 @@
-import React from 'react'
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import AppSidebar from '../Admin/Components/Appsidebar'
-import { useSidebar } from '@/components/ui/sidebar'
+import { Outlet } from 'react-router-dom'
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout() {
     return (
-        <div>Auth</div>
+        <div className='p-2'>
+              <Outlet />
+        </div>
     )
 }
