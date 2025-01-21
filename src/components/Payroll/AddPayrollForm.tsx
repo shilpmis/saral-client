@@ -6,17 +6,34 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { PayrollEntry } from "../../types/payroll"
+import type { Policy } from "./PayrollPolicy"
 
 interface AddPayrollFormProps {
   onSubmit: (data: PayrollEntry) => void
   onCancel: () => void
+  policies: Policy[]
 }
 
-export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCancel }) => {
-  const { register, handleSubmit, control } = useForm<PayrollEntry>()
+export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCancel, policies }) => {
+  const { register, handleSubmit, control, watch, setValue } = useForm<PayrollEntry & { policyId: string }>()
+  const selectedPolicyId = watch("policyId")
+  const selectedPolicy = policies.find((p) => p.id === selectedPolicyId)
+
+  const onPolicyChange = (policyId: string) => {
+    const policy = policies.find((p) => p.id === policyId)
+    if (policy) {
+      setValue("salary", policy.salary)
+      setValue("deductions", policy.deductions)
+    }
+  }
+
+  const onSubmitForm = (data: PayrollEntry & { policyId: string }) => {
+    const { policyId, ...payrollData } = data
+    onSubmit(payrollData)
+  }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name">Name</Label>
@@ -38,7 +55,6 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="teaching">Teaching</SelectItem>
                   <SelectItem value="non-teaching">Non-Teaching</SelectItem>
                 </SelectContent>
@@ -52,6 +68,34 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
         </div>
       </div>
 
+      <div>
+        <Label htmlFor="policyId">Payroll Policy</Label>
+        <Controller
+          name="policyId"
+          control={control}
+          render={({ field }) => (
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value)
+                onPolicyChange(value)
+              }}
+              value={field.value || ""}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select policy" />
+              </SelectTrigger>
+              <SelectContent>
+                {policies.map((policy) => (
+                  <SelectItem key={policy.id} value={policy.id}>
+                    {policy.policyName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </div>
+
       <Tabs defaultValue="salary" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="salary">Salary</TabsTrigger>
@@ -59,80 +103,38 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
         </TabsList>
         <TabsContent value="salary" className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="salary.basic">Basic</Label>
-              <Input id="salary.basic" type="number" {...register("salary.basic", { required: true, min: 0 })} />
-            </div>
-            <div>
-              <Label htmlFor="salary.gradePay">Grade Pay</Label>
-              <Input id="salary.gradePay" type="number" {...register("salary.gradePay", { required: true, min: 0 })} />
-            </div>
-            <div>
-              <Label htmlFor="salary.inflation">Inflation</Label>
-              <Input
-                id="salary.inflation"
-                type="number"
-                {...register("salary.inflation", { required: true, min: 0 })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="salary.houseRentAllowance">House Rent Allowance</Label>
-              <Input
-                id="salary.houseRentAllowance"
-                type="number"
-                {...register("salary.houseRentAllowance", { required: true, min: 0 })}
-              />
-            </div>
-            {/* Add all other salary fields here */}
-            <div>
-              <Label htmlFor="salary.other">Other</Label>
-              <Input id="salary.other" type="number" {...register("salary.other", { required: true, min: 0 })} />
-            </div>
-            <div>
-              <Label htmlFor="salary.otherSalaryReason">Other Salary Reason</Label>
-              <Input id="salary.otherSalaryReason" {...register("salary.otherSalaryReason")} />
-            </div>
+            {selectedPolicy &&
+              Object.keys(selectedPolicy.salary).map((key) => (
+                <div key={key}>
+                  <Label htmlFor={`salary.${key}`}>{key}</Label>
+                  <Input
+                    id={`salary.${key}`}
+                    type={key === "otherSalaryReason" ? "text" : "number"}
+                    {...register(`salary.${key as keyof PayrollEntry["salary"]}` as const, {
+                      required: true,
+                      valueAsNumber: key !== "otherSalaryReason",
+                    })}
+                  />
+                </div>
+              ))}
           </div>
         </TabsContent>
         <TabsContent value="deductions" className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="deductions.gpf">GPF</Label>
-              <Input id="deductions.gpf" type="number" {...register("deductions.gpf", { required: true, min: 0 })} />
-            </div>
-            <div>
-              <Label htmlFor="deductions.cpf">CPF</Label>
-              <Input id="deductions.cpf" type="number" {...register("deductions.cpf", { required: true, min: 0 })} />
-            </div>
-            <div>
-              <Label htmlFor="deductions.gpfLoan">GPF Loan</Label>
-              <Input
-                id="deductions.gpfLoan"
-                type="number"
-                {...register("deductions.gpfLoan", { required: true, min: 0 })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="deductions.cpfLoan">CPF Loan</Label>
-              <Input
-                id="deductions.cpfLoan"
-                type="number"
-                {...register("deductions.cpfLoan", { required: true, min: 0 })}
-              />
-            </div>
-            {/* Add all other deduction fields here */}
-            <div>
-              <Label htmlFor="deductions.otherDeductions">Other Deductions</Label>
-              <Input
-                id="deductions.otherDeductions"
-                type="number"
-                {...register("deductions.otherDeductions", { required: true, min: 0 })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="deductions.otherDeductionReason">Other Deduction Reason</Label>
-              <Input id="deductions.otherDeductionReason" {...register("deductions.otherDeductionReason")} />
-            </div>
+            {selectedPolicy &&
+              Object.keys(selectedPolicy.deductions).map((key) => (
+                <div key={key}>
+                  <Label htmlFor={`deductions.${key}`}>{key}</Label>
+                  <Input
+                    id={`deductions.${key}`}
+                    type={key === "otherDeductionReason" ? "text" : "number"}
+                    {...register(`deductions.${key as keyof PayrollEntry["deductions"]}` as const, {
+                      required: true,
+                      valueAsNumber: key !== "otherDeductionReason",
+                    })}
+                  />
+                </div>
+              ))}
           </div>
         </TabsContent>
       </Tabs>

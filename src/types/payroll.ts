@@ -3,7 +3,7 @@ export interface PayrollEntry {
     id: number;
     name: string;
     role: string;
-    category: "admin" | "teaching" | "non-teaching";
+    category: "teaching" | "non-teaching";
     active: boolean;
     salary: {
       basic: number;

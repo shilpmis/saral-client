@@ -15,6 +15,7 @@ import { MoreHorizontal, Plus, FileDown, Pencil, Trash, ToggleLeft, ToggleRight 
 import type { PayrollEntry } from "../types/payroll"
 import { AddPayrollForm } from "@/components/Payroll/AddPayrollForm"
 import { EditPayrollForm } from "@/components/Payroll/EditPayrollForm"
+import { PayrollPolicy, Policy } from "@/components/Payroll/PayrollPolicy"
 
 const initialPayrollData: PayrollEntry[] = [
   {
@@ -79,6 +80,7 @@ export const Payroll: React.FC = () => {
   const [isAddPayrollOpen, setIsAddPayrollOpen] = useState(false)
   const [isEditPayrollOpen, setIsEditPayrollOpen] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<PayrollEntry | null>(null)
+  const [policies, setPolicies] = useState<Policy[]>([])
 
   const handleAddPayroll = (newEntry: PayrollEntry) => {
     setPayrollData([...payrollData, { ...newEntry, id: payrollData.length + 1 }])
@@ -127,7 +129,11 @@ export const Payroll: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Add New Payroll Entry</DialogTitle>
               </DialogHeader>
-              <AddPayrollForm onSubmit={handleAddPayroll} onCancel={() => setIsAddPayrollOpen(false)} />
+              <AddPayrollForm
+                onSubmit={handleAddPayroll}
+                onCancel={() => setIsAddPayrollOpen(false)}
+                policies={policies}
+              />
             </DialogContent>
           </Dialog>
           <Button variant="outline">
@@ -136,82 +142,86 @@ export const Payroll: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Total Salary</TableHead>
-              <TableHead>Total Deductions</TableHead>
-              <TableHead>Net Salary</TableHead>
-              <TableHead>Last Pay Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {payrollData.map((entry) => {
-              const totalSalary = calculateTotalSalary(entry.salary)
-              const totalDeductions = calculateTotalDeductions(entry.deductions)
-              const netSalary = totalSalary - totalDeductions
+      <PayrollPolicy />
 
-              return (
-                <TableRow key={entry.id}>
-                  <TableCell>{entry.name}</TableCell>
-                  <TableCell>{entry.role}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell>₹{totalSalary.toLocaleString()}</TableCell>
-                  <TableCell>₹{totalDeductions.toLocaleString()}</TableCell>
-                  <TableCell>₹{netSalary.toLocaleString()}</TableCell>
-                  <TableCell>{entry.lastPayDate}</TableCell>
-                  <TableCell>{entry.active ? "Active" : "Inactive"}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedEntry(entry)
-                            setIsEditPayrollOpen(true)
-                          }}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleActive(entry.id)}>
-                          {entry.active ? (
-                            <>
-                              <ToggleLeft className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <ToggleRight className="mr-2 h-4 w-4" />
-                              Activate
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDeletePayroll(entry.id)}>
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+      <div className="mt-8">
+        <div className="w-full overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Total Salary</TableHead>
+                <TableHead>Total Deductions</TableHead>
+                <TableHead>Net Salary</TableHead>
+                <TableHead>Last Pay Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payrollData.map((entry) => {
+                const totalSalary = calculateTotalSalary(entry.salary)
+                const totalDeductions = calculateTotalDeductions(entry.deductions)
+                const netSalary = totalSalary - totalDeductions
+
+                return (
+                  <TableRow key={entry.id}>
+                    <TableCell>{entry.name}</TableCell>
+                    <TableCell>{entry.role}</TableCell>
+                    <TableCell>{entry.category}</TableCell>
+                    <TableCell>₹{totalSalary.toLocaleString()}</TableCell>
+                    <TableCell>₹{totalDeductions.toLocaleString()}</TableCell>
+                    <TableCell>₹{netSalary.toLocaleString()}</TableCell>
+                    <TableCell>{entry.lastPayDate}</TableCell>
+                    <TableCell>{entry.active ? "Active" : "Inactive"}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedEntry(entry)
+                              setIsEditPayrollOpen(true)
+                            }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleActive(entry.id)}>
+                            {entry.active ? (
+                              <>
+                                <ToggleLeft className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <ToggleRight className="mr-2 h-4 w-4" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDeletePayroll(entry.id)}>
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <Dialog open={isEditPayrollOpen} onOpenChange={setIsEditPayrollOpen}>
@@ -221,9 +231,10 @@ export const Payroll: React.FC = () => {
           </DialogHeader>
           {selectedEntry && (
             <EditPayrollForm
-              entry={selectedEntry}
+            //   entry={selectedEntry}
               onSubmit={handleEditPayroll}
               onCancel={() => setIsEditPayrollOpen(false)}
+              policies={policies}
             />
           )}
         </DialogContent>
