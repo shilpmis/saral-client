@@ -6,6 +6,7 @@ import SettingsPage from "@/pages/Setting";
 import StudentListing from "@/pages/Students";
 import StudentForm from "../Students/StudentForm";
 import { Staff } from "@/pages/Staff";
+import { Payroll } from "@/pages/Payroll";
 
 const RoutesForAuth: any[] = [];
 const RoutesForDashboard: any[] = [];
@@ -21,7 +22,7 @@ export default function RootRoute() {
           <Route path="student/add" element={<StudentForm />}></Route>
           <Route path="student/edit/2" element={<StudentForm />}></Route>
           <Route path="staff" element={<Staff />}></Route>
-          
+          <Route path="payroll" element= {<Payroll/>}></Route>
           <Route path="settings" element={<SettingsPage />}></Route>
         </Route>
       </Routes>
