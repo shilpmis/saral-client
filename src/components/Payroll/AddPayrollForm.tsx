@@ -1,36 +1,49 @@
-import type React from "react"
-import { useForm, Controller } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { PayrollEntry } from "../../types/payroll"
-import type { Policy } from "./PayrollPolicy"
+import type React from "react";
+import { useForm, Controller } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { PayrollEntry } from "../../types/payroll";
+import type { Policy } from "./PayrollPolicy";
 
 interface AddPayrollFormProps {
-  onSubmit: (data: PayrollEntry) => void
-  onCancel: () => void
-  policies: Policy[]
+  onSubmit: (data: PayrollEntry) => void;
+  onCancel: () => void;
+  policies: Policy[];
 }
 
-export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCancel, policies }) => {
-  const { register, handleSubmit, control, watch, setValue } = useForm<PayrollEntry & { policyId: string }>()
-  const selectedPolicyId = watch("policyId")
-  const selectedPolicy = policies.find((p) => p.id === selectedPolicyId)
+export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({
+  onSubmit,
+  onCancel,
+  policies,
+}) => {
+  const { register, handleSubmit, control, watch, setValue } = useForm<
+    PayrollEntry & { policyId: string }
+  >();
+  const selectedPolicyId = watch("policyId");
+  const selectedPolicy = policies.find((p) => p.id === selectedPolicyId);
 
   const onPolicyChange = (policyId: string) => {
-    const policy = policies.find((p) => p.id === policyId)
+    const policy = policies.find((p) => p.id === policyId);
     if (policy) {
-      setValue("salary", policy.salary)
-      setValue("deductions", policy.deductions)
+      setValue("salary", policy.salary);
+      setValue("deductions", policy.deductions);
     }
-  }
+  };
+  
 
   const onSubmitForm = (data: PayrollEntry & { policyId: string }) => {
-    const { policyId, ...payrollData } = data
-    onSubmit(payrollData)
-  }
+    const { policyId, ...payrollData } = data;
+    onSubmit(payrollData);
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
@@ -49,8 +62,9 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
             name="category"
             control={control}
             rules={{ required: true }}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+            render={({ field : { onChange, onBlur, value, ref } }) => (
+                // console.log("field", field)
+              <Select onValueChange={onChange} defaultValue={value}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -64,7 +78,11 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
         </div>
         <div>
           <Label htmlFor="lastPayDate">Last Pay Date</Label>
-          <Input id="lastPayDate" type="date" {...register("lastPayDate", { required: true })} />
+          <Input
+            id="lastPayDate"
+            type="date"
+            {...register("lastPayDate", { required: true })}
+          />
         </div>
       </div>
 
@@ -76,10 +94,10 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
           render={({ field }) => (
             <Select
               onValueChange={(value) => {
-                field.onChange(value)
-                onPolicyChange(value)
+                field.onChange(value); // Updates the form state
+                onPolicyChange(value); // Applies dependent updates (e.g., salary, deductions)
               }}
-              value={field.value || ""}
+              value={field.value || ""} // Ensures value is synced with form state
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select policy" />
@@ -110,10 +128,13 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
                   <Input
                     id={`salary.${key}`}
                     type={key === "otherSalaryReason" ? "text" : "number"}
-                    {...register(`salary.${key as keyof PayrollEntry["salary"]}` as const, {
-                      required: true,
-                      valueAsNumber: key !== "otherSalaryReason",
-                    })}
+                    {...register(
+                      `salary.${key as keyof PayrollEntry["salary"]}` as const,
+                      {
+                        required: true,
+                        valueAsNumber: key !== "otherSalaryReason",
+                      }
+                    )}
                   />
                 </div>
               ))}
@@ -128,10 +149,15 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
                   <Input
                     id={`deductions.${key}`}
                     type={key === "otherDeductionReason" ? "text" : "number"}
-                    {...register(`deductions.${key as keyof PayrollEntry["deductions"]}` as const, {
-                      required: true,
-                      valueAsNumber: key !== "otherDeductionReason",
-                    })}
+                    {...register(
+                      `deductions.${
+                        key as keyof PayrollEntry["deductions"]
+                      }` as const,
+                      {
+                        required: true,
+                        valueAsNumber: key !== "otherDeductionReason",
+                      }
+                    )}
                   />
                 </div>
               ))}
@@ -146,6 +172,5 @@ export const AddPayrollForm: React.FC<AddPayrollFormProps> = ({ onSubmit, onCanc
         <Button type="submit">Add Payroll</Button>
       </div>
     </form>
-  )
-}
-
+  );
+};

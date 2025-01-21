@@ -15,9 +15,9 @@ export default function RootRoute() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<AdminLayout />}/>
         <Route path="/login" element={<AuthLayout children={<></>} />}></Route>
-        <Route path="/d/" element={<AdminLayout />}>
-
+        <Route path="/admin/" element={<AdminLayout />}>
           <Route path="students" element={<StudentListing />}></Route>
           <Route path="student/add" element={<StudentForm />}></Route>
           <Route path="student/edit/2" element={<StudentForm />}></Route>
