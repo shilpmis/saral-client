@@ -59,7 +59,7 @@ const SideBarItems = [
     },
     {
         title: "Fee Structure",
-        url: "/admin/fees",
+        url: "/admin/fee",
         icon: IndianRupee,
     },
     {
