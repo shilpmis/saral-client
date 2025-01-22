@@ -7,6 +7,7 @@ import StudentListing from "@/pages/Students";
 import StudentForm from "../Students/StudentForm";
 import { Staff } from "@/pages/Staff";
 import { Payroll } from "@/pages/Payroll";
+import { UserManagement } from "@/pages/UserManagement";
 
 const RoutesForAuth: any[] = [];
 const RoutesForDashboard: any[] = [];
@@ -18,6 +19,7 @@ export default function RootRoute() {
         <Route path="/" element={<AdminLayout />}/>
         <Route path="/login" element={<AuthLayout children={<></>} />}></Route>
         <Route path="/admin/" element={<AdminLayout />}>
+          <Route path="user-management" element={<UserManagement />} />
           <Route path="students" element={<StudentListing />}></Route>
           <Route path="student/add" element={<StudentForm />}></Route>
           <Route path="student/edit/2" element={<StudentForm />}></Route>

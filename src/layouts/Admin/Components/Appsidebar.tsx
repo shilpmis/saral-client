@@ -38,6 +38,11 @@ const SideBarItems = [
         icon: Home,
     },
     {
+        title: "User Management",
+        url : "/admin/user-management",
+        icon: Users,
+    },
+    {
         title: "Student",
         url: "/admin/students",
         icon: Users,
