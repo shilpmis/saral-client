@@ -1,4 +1,4 @@
-import  React from "react"
+import type React from "react"
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -43,37 +43,37 @@ export const OnboardUserForm: React.FC<OnboardUserFormProps> = ({ onSubmit, init
     defaultValues: initialData,
   })
   const [imagePreview, setImagePreview] = useState<string | null>(() => {
-    if (typeof initialData.image === 'string') {
-      return initialData.image; // If it's already a string, use it
+    if (typeof initialData.image === "string") {
+      return initialData.image
     }
     if (initialData.image instanceof File) {
-      return URL.createObjectURL(initialData.image); // Convert File to string URL
+      return URL.createObjectURL(initialData.image)
     }
-    return null; // For other cases (e.g., FileList or null)
-  });
-  
+    return null
+  })
+
   const watchedImage = watch("image")
 
   useEffect(() => {
-    let objectUrl: string | null = null;
-  
+    let objectUrl: string | null = null
+
     if (initialData.image instanceof File) {
-      objectUrl = URL.createObjectURL(initialData.image);
-      setImagePreview(objectUrl);
+      objectUrl = URL.createObjectURL(initialData.image)
+      setImagePreview(objectUrl)
     }
-  
+
     return () => {
       if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
+        URL.revokeObjectURL(objectUrl)
       }
-    };
-  }, [initialData.image]);
-  
+    }
+  }, [initialData.image])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setValue("image", file)
+      setImagePreview(URL.createObjectURL(file))
     }
   }
 
