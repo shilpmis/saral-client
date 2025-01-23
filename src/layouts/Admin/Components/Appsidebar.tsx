@@ -7,13 +7,29 @@ import {
     SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuButton, 
+    SidebarMenuButton,
     SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Calendar, Home, Inbox, Search, Settings , EllipsisVertical} from "lucide-react"
-import { NavLink } from "react-router-dom"
-import { Link } from 'react-router-dom';
-
+} from "@/components/ui/sidebar";
+import {
+    Calendar,
+    Home,
+    Inbox,
+    Search,
+    Settings,
+    EllipsisVertical,
+    Bed,
+    DollarSign,
+    MessageSquare,
+    FileText,
+    Truck,
+    Clock,
+    Book,
+    Landmark,
+    UserCheck,
+    Users,
+    IndianRupee,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 const SideBarItems = [
     {
@@ -22,16 +38,71 @@ const SideBarItems = [
         icon: Home,
     },
     {
-        title: "Students",
-        url: "#",
-        icon: Inbox,
+        title: "User Management",
+        url : "/admin/user-management",
+        icon: Users,
     },
     {
-        title: "Teachers",
-        url: "#",
+        title: "Student",
+        url: "/admin/students",
+        icon: Users,
+    },
+    {
+        title: "Staff",
+        url: "/admin/staff",
+        icon: UserCheck,
+    },
+    {
+        title: "Payroll",
+        url: "/admin/payroll",
+        icon: Landmark,
+    },
+    {
+        title: "Fee Structure",
+        url: "/admin/fee",
+        icon: IndianRupee,
+    },
+    {
+        title: "Appointment Details",
+        url: "/admin/appointment",
         icon: Calendar,
     },
-]
+    {
+        title: "List of Guardians",
+        url: "/admin/guardians",
+        icon: EllipsisVertical,
+    },
+    {
+        title: "School Academic Management",
+        url: "/admin/academics",
+        icon: Book,
+    },
+    {
+        title: "School Time Table",
+        url: "/admin/timetable",
+        icon: Clock,
+    },
+    {
+        title: "List of Complaints",
+        url: "/admin/complaints",
+        icon: MessageSquare,
+    },
+    {
+        title: "Result Details",
+        url: "/admin/results",
+        icon: FileText,
+    },
+    {
+        title: "Transport Department",
+        url: "/admin/transport",
+        icon: Truck,
+    },
+    {
+        title: "Hostel Department",
+        url: "/admin/hostel",
+        icon: Bed,
+    },
+];
 
 const SideBarFooter = [
     {
@@ -39,20 +110,27 @@ const SideBarFooter = [
         url: "/settings",
         icon: Settings,
     },
-]
-
+    {
+        title: "Inbox",
+        url: "/inbox",
+        icon: Inbox,
+    },
+    {
+        title: "Search",
+        url: "/search",
+        icon: Search,
+    },
+];
 
 export default function AppSidebar() {
     return (
         <Sidebar variant="sidebar" collapsible="icon">
-            <SidebarHeader >
-                {/* <SidebarMenuItem  > */}
+            <SidebarHeader>
                 <SidebarMenuButton asChild>
                     <div>
-                        <span>{'School Logo'}</span>
+                        <span>School Logo</span>
                     </div>
                 </SidebarMenuButton>
-                {/* </SidebarMenuItem> */}
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
@@ -63,7 +141,7 @@ export default function AppSidebar() {
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild>
                                         <Link to={item.url}>
-                                            <item.icon />
+                                            <item.icon className="mr-2" />
                                             <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
@@ -74,16 +152,24 @@ export default function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                {SideBarFooter.map((item) => (
-                    <SidebarMenuButton asChild>
-                        <Link to={item.url}>
-                            <item.icon />
-                            <span>{item.title}</span>
-                            <EllipsisVertical />
-                        </Link>
-                    </SidebarMenuButton>
-                ))}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Footer</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {SideBarFooter.map((item) => (
+                                <SidebarMenuItem key={item.title}>
+                                    <SidebarMenuButton asChild>
+                                        <Link to={item.url}>
+                                            <item.icon className="mr-2" />
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
             </SidebarFooter>
         </Sidebar>
-    )
+    );
 }
