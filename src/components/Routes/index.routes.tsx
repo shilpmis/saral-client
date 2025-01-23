@@ -10,6 +10,8 @@ import { Payroll } from "@/pages/Payroll";
 import { UserManagement } from "@/pages/UserManagement";
 import { FeeManagement } from "@/pages/FeeMangement";
 
+import LogIn from "@/pages/Login"; 
+
 const RoutesForAuth: any[] = [];
 const RoutesForDashboard: any[] = [];
 
@@ -28,6 +30,7 @@ export default function RootRoute() {
           <Route path="payroll" element= {<Payroll/>}></Route>
           <Route path="fee" element={<FeeManagement/>}></Route>
           <Route path="settings" element={<SettingsPage />}></Route>
+
         </Route>
       </Routes>
     </Router>
