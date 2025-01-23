@@ -11,9 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Plus, FileDown } from "lucide-react"
+import { MoreHorizontal, Plus, FileDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { FilterOptions } from "@/components/Staff/FilterOptions"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { StaffForm } from "@/components/Staff/StaffForm"
 
 interface Staff {
@@ -25,7 +27,6 @@ interface Staff {
   designation: string
   status: string
   category: string
-  // Add other fields as necessary
 }
 
 const teachingStaff: Staff[] = [
@@ -83,6 +84,87 @@ const isValidEmail = (email: string): boolean => {
 const isValidMobile = (mobile: number): boolean => {
   const mobileRegex = /^[6-9]\d{9}$/
   return mobileRegex.test(mobile.toString())
+}
+
+const ITEMS_PER_PAGE = 6
+
+const FilterOptions: React.FC<{
+  onFilterChange: (value: string) => void
+  searchValue: string
+}> = ({ onFilterChange, searchValue }) => {
+  return (
+    <div className="flex items-center space-x-2 mb-4">
+      <Label htmlFor="search" className="sr-only">
+        Search
+      </Label>
+      <Input
+        id="search"
+        placeholder="Search by name, email, mobile or designation"
+        value={searchValue}
+        onChange={(e) => onFilterChange(e.target.value)}
+        className="max-w-sm"
+      />
+    </div>
+  )
+}
+
+const Pagination: React.FC<{
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}> = ({ currentPage, totalPages, onPageChange }) => {
+  return (
+    <div className="flex items-center justify-between px-2 py-3 sm:px-6">
+      <div className="flex-1 flex justify-between sm:hidden">
+        <Button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} variant="outline">
+          Previous
+        </Button>
+        <Button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} variant="outline">
+          Next
+        </Button>
+      </div>
+      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm text-gray-700">
+            Showing page <span className="font-medium">{currentPage}</span> of{" "}
+            <span className="font-medium">{totalPages}</span>
+          </p>
+        </div>
+        <div>
+          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <Button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              variant="outline"
+              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              <span className="sr-only">Previous</span>
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </Button>
+            {[...Array(totalPages)].map((_, index) => (
+              <Button
+                key={index + 1}
+                onClick={() => onPageChange(index + 1)}
+                variant={currentPage === index + 1 ? "default" : "outline"}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {index + 1}
+              </Button>
+            ))}
+            <Button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              variant="outline"
+              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              <span className="sr-only">Next</span>
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </Button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const StaffTable: React.FC<{ staffList: Staff[]; onEdit: (staff: Staff) => void }> = ({ staffList, onEdit }) => (
@@ -154,31 +236,29 @@ const StaffTable: React.FC<{ staffList: Staff[]; onEdit: (staff: Staff) => void 
 export const Staff: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("teaching")
   const [isStaffFormOpen, setIsStaffFormOpen] = useState(false)
-  const [filterField, setFilterField] = useState<string>("name")
-  const [filterValue, setFilterValue] = useState<string>("")
+  const [searchValue, setSearchValue] = useState<string>("")
   const [staffFormMode, setStaffFormMode] = useState<"add" | "edit">("add")
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilterField(field)
-    setFilterValue(value)
+  const handleFilterChange = (value: string) => {
+    setSearchValue(value)
+    setCurrentPage(1)
   }
 
-  const filteredTeachingStaff = useMemo(() => {
-    return teachingStaff.filter((staff) =>
-      String(staff[filterField as keyof Staff])
-        .toLowerCase()
-        .includes(filterValue.toLowerCase()),
+  const filteredStaff = useMemo(() => {
+    const staffList = activeTab === "teaching" ? teachingStaff : nonTeachingStaff
+    return staffList.filter((staff) =>
+      Object.values(staff).some((value) => String(value).toLowerCase().includes(searchValue.toLowerCase())),
     )
-  }, [filterField, filterValue])
+  }, [activeTab, searchValue])
 
-  const filteredNonTeachingStaff = useMemo(() => {
-    return nonTeachingStaff.filter((staff) =>
-      String(staff[filterField as keyof Staff])
-        .toLowerCase()
-        .includes(filterValue.toLowerCase()),
-    )
-  }, [filterField, filterValue])
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredStaff.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [filteredStaff, currentPage])
+
+  const totalPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE)
 
   const handleAddStaff = () => {
     setStaffFormMode("add")
@@ -191,13 +271,11 @@ export const Staff: React.FC = () => {
     setSelectedStaff({
       ...staff,
       category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
-      // Add any additional fields that need to be mapped from Staff to StaffData
     })
     setIsStaffFormOpen(true)
   }
 
   const handleStaffSubmit = (data: any) => {
-    // Handle staff submission (add or edit)
     console.log("Staff data submitted:", data)
     setIsStaffFormOpen(false)
   }
@@ -216,26 +294,22 @@ export const Staff: React.FC = () => {
         </div>
       </div>
 
-      <div className="mb-4">
-        <FilterOptions onFilterChange={handleFilterChange} />
-      </div>
+      <FilterOptions onFilterChange={handleFilterChange} searchValue={searchValue} />
 
-      <Tabs defaultValue="teaching" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="teaching" onClick={() => setActiveTab("teaching")}>
-            Teaching Staff
-          </TabsTrigger>
-          <TabsTrigger value="non-teaching" onClick={() => setActiveTab("non-teaching")}>
-            Non-Teaching Staff
-          </TabsTrigger>
+          <TabsTrigger value="teaching">Teaching Staff</TabsTrigger>
+          <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
-          <StaffTable staffList={filteredTeachingStaff} onEdit={handleEditStaff} />
+          <StaffTable staffList={paginatedStaff} onEdit={handleEditStaff} />
         </TabsContent>
         <TabsContent value="non-teaching">
-          <StaffTable staffList={filteredNonTeachingStaff} onEdit={handleEditStaff} />
+          <StaffTable staffList={paginatedStaff} onEdit={handleEditStaff} />
         </TabsContent>
       </Tabs>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       <Dialog open={isStaffFormOpen} onOpenChange={setIsStaffFormOpen}>
         <DialogContent className="sm:max-w-[800px]">
@@ -246,7 +320,7 @@ export const Staff: React.FC = () => {
             onClose={() => setIsStaffFormOpen(false)}
             onSubmit={handleStaffSubmit}
             mode={staffFormMode}
-            // initialData={selectedStaff}
+            // initialData={selectedStaff || undefined}
           />
         </DialogContent>
       </Dialog>

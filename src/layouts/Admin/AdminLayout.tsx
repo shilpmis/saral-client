@@ -11,7 +11,7 @@ export default function AdminLayout() {
             <AppSidebar />
             <main className='w-full'>
                 <Header />
-                <div className=' w-full h-auto mt-6'>
+                <div className='p-3 w-full h-auto mt-6'>
                     <Outlet />
                 </div>
             </main>
