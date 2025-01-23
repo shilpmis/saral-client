@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Pencil, Trash, FileDown } from "lucide-react"
+import { Plus, Pencil, Trash, FileDown, ToggleRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { OnboardUserForm } from "@/components/UserManagement/OnboardUserForm"
@@ -26,7 +26,8 @@ export const UserManagement: React.FC = () => {
     return users.filter((user) => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.mobileNumber.includes(searchTerm)
       const matchesStatus = statusFilter ? user.currentStatus === statusFilter : true
       return matchesSearch && matchesStatus
     })
@@ -78,6 +79,16 @@ export const UserManagement: React.FC = () => {
     setIsAddUserOpen(true)
   }
 
+  const handleToggleStudentStatus = (id: string): void => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === id
+          ? { ...user, currentStatus: user.currentStatus === "Active" ? "Inactive" : "Active" }
+          : user
+      )
+    )
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -96,7 +107,7 @@ export const UserManagement: React.FC = () => {
       <CardContent>
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Input
-            placeholder="Search by name or email"
+            placeholder="Search by name, email or mobile"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -142,6 +153,9 @@ export const UserManagement: React.FC = () => {
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
                     <Trash className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleToggleStudentStatus(user.id)}>
+                    <ToggleRight className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </TableRow>
