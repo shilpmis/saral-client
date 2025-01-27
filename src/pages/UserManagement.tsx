@@ -8,37 +8,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Pencil, Trash, FileDown, ToggleRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OnboardUserForm } from "@/components/UserManagement/OnboardUserForm"
+import { OnboardUserForm } from "@/components/Users/OnboardUserForm"
 import { User } from "@/types/user"
 import { mockUsers } from "@/mock/mockUserData"
+import UserTable from "@/components/Users/UserTable"
 
-const ITEMS_PER_PAGE = 5
 
 export const UserManagement: React.FC = () => {
+
   const [users, setUsers] = useState<User[]>(mockUsers)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesSearch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.mobileNumber.includes(searchTerm)
-      const matchesStatus = statusFilter ? user.currentStatus === statusFilter : true
-      return matchesSearch && matchesStatus
-    })
-  }, [users, searchTerm, statusFilter])
-
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [filteredUsers, currentPage])
-
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)
 
   const onSubmit = (data: User) => {
     const newUser = { ...data }
@@ -65,29 +48,12 @@ export const UserManagement: React.FC = () => {
     setIsAddUserOpen(false)
   }
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user)
-    setIsAddUserOpen(true)
-  }
-
-  const handleDeleteUser = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id))
-  }
-
   const handleAddUser = () => {
     setEditingUser(null)
     setIsAddUserOpen(true)
   }
 
-  const handleToggleStudentStatus = (id: string): void => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === id
-          ? { ...user, currentStatus: user.currentStatus === "Active" ? "Inactive" : "Active" }
-          : user
-      )
-    )
-  }
+
 
   return (
     <Card className="w-full">
@@ -96,7 +62,7 @@ export const UserManagement: React.FC = () => {
           <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">User Management</h2>
           <div className="space-x-2">
             <Button onClick={handleAddUser}>
-              <Plus className="mr-2 h-4 w-4" /> Assign Role 
+              <Plus className="mr-2 h-4 w-4" /> Assign Role
             </Button>
             <Button variant="outline">
               <FileDown className="mr-2 h-4 w-4" /> Import
@@ -123,72 +89,17 @@ export const UserManagement: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Mobile Number</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  <Avatar>
-                    <AvatarImage src={typeof user.image === "string" ? user.image : undefined} alt={user.name} />
-                    <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </TableCell>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.mobileNumber}</TableCell>
-                <TableCell>{user.currentStatus}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleToggleStudentStatus(user.id)}>
-                    <ToggleRight className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="mt-4 flex justify-between items-center">
-          <div>
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-            {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length} entries
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
+
+        {/* Place here */}
+        <div className="overflow-x-auto"> 
+          <UserTable />
         </div>
+
       </CardContent>
       <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
+            <DialogTitle>{"Add New User"}</DialogTitle>
           </DialogHeader>
           <OnboardUserForm onSubmit={onSubmit} initialData={editingUser || undefined} />
         </DialogContent>

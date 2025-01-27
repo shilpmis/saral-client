@@ -73,6 +73,7 @@ const mockFeeStructures: FeeStructure[] = [
 ]
 
 export const FeeStructureManagement: React.FC = () => {
+  
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>(mockFeeStructures)
   const [isAddFeeStructureOpen, setIsAddFeeStructureOpen] = useState(false)
   const [editingFeeStructure, setEditingFeeStructure] = useState<FeeStructure | null>(null)

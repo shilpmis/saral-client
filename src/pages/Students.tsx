@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Upload, MoreHorizontal } from 'lucide-react'
+import StudentTable from '@/components/Students/StudentTable' 
 
 interface Student {
   id: string;
@@ -55,7 +56,7 @@ const mockStudents: Student[] = [
 ];
 
 
-const StudentListing: React.FC = () => {
+const Students: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string | undefined>()
   const [selectedDivision, setSelectedDivision] = useState<string | undefined>()
 
@@ -120,52 +121,11 @@ const StudentListing: React.FC = () => {
       </Card>
 
       <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Division</TableHead>
-              <TableHead>Roll Number</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Date of Birth</TableHead>
-              <TableHead>Contact Number</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.class}</TableCell>
-                <TableCell>{student.division}</TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.gender}</TableCell>
-                <TableCell>{student.dateOfBirth}</TableCell>
-                <TableCell>{student.contactNumber}</TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>{student.address}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StudentTable filteredStudents={mockStudents} />
       </div>
     </div>
   )
 }
 
-export default StudentListing
+export default Students
 

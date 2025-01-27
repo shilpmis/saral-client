@@ -34,92 +34,78 @@ import { Link } from "react-router-dom";
 const SideBarItems = [
     {
         title: "Dashboard",
-        url: "/login",
+        url: "/d",
         icon: Home,
     },
     {
-        title: "User Management",
-        url : "/admin/user-management",
-        icon: Users,
-    },
-    {
         title: "Student",
-        url: "/admin/students",
+        url: "/d/students",
         icon: Users,
     },
     {
         title: "Staff",
-        url: "/admin/staff",
+        url: "/d/staff",
         icon: UserCheck,
     },
     {
         title: "Payroll",
-        url: "/admin/payroll",
+        url: "/d/payroll",
         icon: Landmark,
     },
     {
-        title: "Fee Structure",
-        url: "/admin/fee",
+        title: "Fees",
+        url: "/d/fee",
         icon: IndianRupee,
     },
     {
-        title: "Appointment Details",
-        url: "/admin/appointment",
-        icon: Calendar,
-    },
-    {
-        title: "List of Guardians",
-        url: "/admin/guardians",
-        icon: EllipsisVertical,
-    },
-    {
-        title: "School Academic Management",
-        url: "/admin/academics",
-        icon: Book,
-    },
-    {
-        title: "School Time Table",
-        url: "/admin/timetable",
+        title: "Time Table",
+        url: "/d/timetable",
         icon: Clock,
     },
+    // {
+    //     title: "List of Complaints",
+    //     url: "/d/complaints",
+    //     icon: MessageSquare,
+    // },
     {
-        title: "List of Complaints",
-        url: "/admin/complaints",
-        icon: MessageSquare,
-    },
-    {
-        title: "Result Details",
-        url: "/admin/results",
+        title: "Result",
+        url: "/d/results",
         icon: FileText,
     },
-    {
-        title: "Transport Department",
-        url: "/admin/transport",
-        icon: Truck,
-    },
-    {
-        title: "Hostel Department",
-        url: "/admin/hostel",
-        icon: Bed,
-    },
+    // {
+    //     title: "Transport Department",
+    //     url: "/d/transport",
+    //     icon: Truck,
+    // },
+    // {
+    //     title: "Hostel Department",
+    //     url: "/d/hostel",
+    //     icon: Bed,
+    // },
 ];
 
 const SideBarFooter = [
+
+    {
+        title: "User Management",
+        url: "/d/user-management",
+        icon: Users,
+    },
     {
         title: "Settings",
-        url: "/settings",
+        url: "/d/settings",
         icon: Settings,
     },
-    {
-        title: "Inbox",
-        url: "/inbox",
-        icon: Inbox,
-    },
-    {
-        title: "Search",
-        url: "/search",
-        icon: Search,
-    },
+    // {
+    //     title: "Inbox",
+    //     url: "/inbox",
+    //     icon: Inbox,
+    // },
+    // {
+    //     title: "Search",
+    //     url: "/search",
+    //     icon: Search,
+    // },
 ];
 
 export default function AppSidebar() {
@@ -127,9 +113,16 @@ export default function AppSidebar() {
         <Sidebar variant="sidebar" collapsible="icon">
             <SidebarHeader>
                 <SidebarMenuButton asChild>
-                    <div>
-                        <span>School Logo</span>
-                    </div>
+                    {/* <div className="p-5 bg-[#ed9254] text-white text-center"> */}
+                        <SidebarMenuItem className="rounded-lg">
+                            <SidebarMenuButton asChild>
+                                <Link to='/' className="p-5 bg-[#ed9254] text-white text-center rounded-lg">
+                                    <Home className="mr-2" />
+                                    <span>Melzo School</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    {/* </div> */}
                 </SidebarMenuButton>
             </SidebarHeader>
             <SidebarContent>
@@ -153,7 +146,7 @@ export default function AppSidebar() {
             </SidebarContent>
             <SidebarFooter>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Footer</SidebarGroupLabel>
+                    <SidebarGroupLabel>Manage</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {SideBarFooter.map((item) => (
