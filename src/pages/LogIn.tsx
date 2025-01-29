@@ -37,10 +37,13 @@ export default function Login() {
     },
   })
 
- 
- async function onSubmit(values: z.infer<typeof formSchema>) {
-      let user = await ApiService.post('/login' , values);
-      console.log("user" , user)
+
+  console.log("Check this form===>" , form)
+
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    let user = await ApiService.post('/login', values);
+    console.log("user", user)
   }
 
   return (
@@ -61,7 +64,7 @@ export default function Login() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField 
+                <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (

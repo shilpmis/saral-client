@@ -1,10 +1,10 @@
 import type React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StudentFeeManagement } from "@/components/StudentFeeManagement/StudentFeeManagement"
-import { FeeStructureManagement } from "@/components/StudentFeeManagement/FeeStructureManagement"
+import { StudentFeeManagement } from "@/components/Fees/StudentFeeManagement"
+import { FeeStructureManagement } from "@/components/Fees/FeeStructureManagement"
 
-export const FeeManagement: React.FC = () => {
+export const Fees: React.FC = () => {
   return (
     <Card className="w-full">
       <CardHeader>

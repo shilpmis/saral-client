@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Upload, MoreHorizontal } from 'lucide-react'
-import StudentTable from '@/components/Students/StudentTable' 
+import StudentTable from '@/components/Students/StudentTable'
 
 interface Student {
   id: string;
@@ -52,7 +52,9 @@ const mockStudents: Student[] = [
   { id: '27', name: 'Jack Moore', class: '10', division: 'A', rollNumber: '1027', gender: 'Male', dateOfBirth: '2005-06-05', contactNumber: '1717177888', email: 'jack@example.com', address: '519 Maple St, Village' },
   { id: '28', name: 'Sophie Rodriguez', class: '10', division: 'B', rollNumber: '1028', gender: 'Female', dateOfBirth: '2005-08-30', contactNumber: '1818188999', email: 'sophie@example.com', address: '830 Cedar Ave, City' },
   { id: '29', name: 'Lucas Evans', class: '10', division: 'A', rollNumber: '1029', gender: 'Male', dateOfBirth: '2005-07-10', contactNumber: '1919199000', email: 'lucas.evans@example.com', address: '247 Oak St, Town' },
-  { id: '30', name: 'Ella Thompson', class: '10', division: 'B', rollNumber: '1030', gender: 'Female', dateOfBirth: '2005-05-30', contactNumber: '2020200111', email: 'ella@example.com', address: '112 Willow Ave, Village' }
+  { id: '30', name: 'Ella Thompson', class: '10', division: 'B', rollNumber: '1030', gender: 'Female', dateOfBirth: '2005-05-30', contactNumber: '2020200111', email: 'ella@example.com', address: '112 Willow Ave, Village' },
+  { id: '31', name: 'Ella Thompson', class: '10', division: 'B', rollNumber: '1030', gender: 'Female', dateOfBirth: '2005-05-30', contactNumber: '2020200111', email: 'ella@example.com', address: '112 Willow Ave, Village' },
+  { id: '32', name: 'Ella Thompson', class: '10', division: 'B', rollNumber: '1030', gender: 'Female', dateOfBirth: '2005-05-30', contactNumber: '2020200111', email: 'ella@example.com', address: '112 Willow Ave, Village' }
 ];
 
 
@@ -60,7 +62,7 @@ const Students: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string | undefined>()
   const [selectedDivision, setSelectedDivision] = useState<string | undefined>()
 
-  const filteredStudents = mockStudents.filter(student => 
+  const filteredStudents = mockStudents.filter(student =>
     (!selectedClass || student.class === selectedClass) &&
     (!selectedDivision || student.division === selectedDivision)
   )
@@ -69,6 +71,7 @@ const Students: React.FC = () => {
     <div className="p-6 bg-white">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Students</h1>
+        {/*Menubar  */}
         <div className="flex space-x-2">
           <Button>
             <Plus className="mr-2 h-4 w-4" /> Add New Student
@@ -87,7 +90,8 @@ const Students: React.FC = () => {
           </DropdownMenu>
         </div>
       </div>
-      
+
+      {/*Filters   */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter Students</CardTitle>

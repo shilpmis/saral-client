@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+import { SaralPagination } from "../ui/common/SaralPagination"
 
 interface Staff {
     id: number
@@ -34,82 +35,43 @@ const isValidMobile = (mobile: number): boolean => {
 }
 
 
-const Pagination: React.FC<{
-    currentPage: number
-    totalPages: number
-    onPageChange: (page: number) => void
-}> = ({ currentPage, totalPages, onPageChange }) => {
-    return (
-        <div className="flex items-center justify-between px-2 py-3 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
-                <Button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} variant="outline">
-                    Previous
-                </Button>
-                <Button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} variant="outline">
-                    Next
-                </Button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p className="text-sm text-gray-700">
-                        Showing page <span className="font-medium">{currentPage}</span> of{" "}
-                        <span className="font-medium">{totalPages}</span>
-                    </p>
-                </div>
-                <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <Button
-                            onClick={() => onPageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            variant="outline"
-                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                        >
-                            <span className="sr-only">Previous</span>
-                            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                        </Button>
-                        {[...Array(totalPages)].map((_, index) => (
-                            <Button
-                                key={index + 1}
-                                onClick={() => onPageChange(index + 1)}
-                                variant={currentPage === index + 1 ? "default" : "outline"}
-                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                {index + 1}
-                            </Button>
-                        ))}
-                        <Button
-                            onClick={() => onPageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            variant="outline"
-                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                        >
-                            <span className="sr-only">Next</span>
-                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                        </Button>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    )
-}
-
 export default function StaffTable({ staffList, onEdit , setDefaultRoute }: { staffList: Staff[]; onEdit: (staff: Staff) => void , setDefaultRoute ?: number }) {
 
     // Pagination 
-    const [currentPage, setCurrentPage] = useState(1)
+    // const [currentPage, setCurrentPage] = useState(1)
 
-    const ITEMS_PER_PAGE = 6
+    // const ITEMS_PER_PAGE = 6
 
-    const paginatedStaff = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-        return staffList.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-    }, [staffList, currentPage])
+    // const paginatedStaff = useMemo(() => {
+    //     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    //     return staffList.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+    // }, [staffList, currentPage])
 
-    const totalPages = Math.ceil(staffList.length / ITEMS_PER_PAGE)
+    // const totalPages = Math.ceil(staffList.length / ITEMS_PER_PAGE)
+
+    const [currentPage, setCurrentPage] = useState<number>(1);
+      const [currentVisibleData, setCurrentVisibleData] = useState<Staff[]>(staffList);
+    
+      const perPageData = 6;
+      const totalPages = Math.round((staffList.length + 1) / perPageData);
+    
+      const paginateData = (page: number): Staff[] => {
+        const newVisibleDataSet = staffList.slice((Math.max(0, page - 1)) * perPageData + 1, (page) * perPageData + 1);
+        return newVisibleDataSet;
+      }
+    
+      const onPageChange = (upadatedPage: number) => {
+        setCurrentVisibleData(paginateData(upadatedPage))
+        setCurrentPage(upadatedPage);
+      }
+      
+      useEffect(()=>{
+        setCurrentVisibleData(paginateData(1));
+      } , [])
 
     return (
         <div className="w-full overflow-auto">
-            {staffList.length > 0 ? (
+            {currentVisibleData.length > 0 ? (
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -124,7 +86,7 @@ export default function StaffTable({ staffList, onEdit , setDefaultRoute }: { st
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {staffList.map((staff) => (
+                        {currentVisibleData.map((staff) => (
                             <TableRow key={staff.id}>
                                 <TableCell>{staff.id}</TableCell>
                                 <TableCell>{staff.name}</TableCell>
@@ -170,7 +132,7 @@ export default function StaffTable({ staffList, onEdit , setDefaultRoute }: { st
             ) : (
                 <div className="text-center py-4 text-gray-500">No records found</div>
             )}
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            <SaralPagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
 
         </div>
     )

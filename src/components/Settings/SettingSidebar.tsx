@@ -15,6 +15,7 @@ import {
   Bell,
   BookOpen,
 } from "lucide-react"
+import { Link } from "react-router-dom"
 
 interface NavItem {
   title: string
@@ -34,12 +35,12 @@ const navigationSections: NavSection[] = [
       {
         title: "General Management",
         icon: Settings,
-        href: "/settings/general",
+        href: "/d/settings/general",
       },
       {
         title: "Notifications",
         icon: Bell,
-        href: "/settings/notifications",
+        href: "notifications",
       },
     ],
   },
@@ -49,22 +50,22 @@ const navigationSections: NavSection[] = [
       {
         title: "Academic Management",
         icon: GraduationCap,
-        href: "/settings/academic",
+        href: "academic",
       },
       {
         title: "Staff Management",
         icon: Users,
-        href: "/settings/staff",
+        href: "staff",
       },
       {
         title: "Payroll Management",
         icon: DollarSign,
-        href: "/settings/payroll",
+        href: "payroll",
       },
       {
         title: "Fees Management",
         icon: CreditCard,
-        href: "/settings/fees",
+        href: "fees",
       },
     ],
   },
@@ -88,9 +89,9 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
                 <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{section.title}</h3>
                 <div className="space-y-1">
                   {section.items.map((item) => (
-                    <a
+                    <Link
                       key={item.href}
-                      href={item.href}
+                      to={item.href}
                       className={cn(
                         "flex items-center gap-x-3 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-100 transition-colors",
                         currentPath === item.href ? "bg-gray-100 text-gray-900" : "text-gray-600",
@@ -98,7 +99,7 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
                     >
                       <item.icon className="h-4 w-4" />
                       {item.title}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
