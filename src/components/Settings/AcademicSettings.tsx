@@ -154,7 +154,7 @@ export default function AcademicSettings() {
   }, [academicYear.classes])
 
   return (
-    <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] p-4">
+    <div className="space-y-6 overflow-y-auto p-4">
       <SaralCard title="Academic Year Management" description="Current academic year information">
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold">{academicYear.name}</h3>
