@@ -14,6 +14,7 @@ class ApiService {
     static cancelTokens: any[] = [];
     static access_token: string | null;
     static userId: string | null;
+  static reducerPath: any;
 
     /**
      * @description Initialize Axios instance
