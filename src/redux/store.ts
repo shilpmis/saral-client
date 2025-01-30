@@ -1,7 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "./slices/authSlice"
-import { api } from "./services/api"
+import ApiService from "@/services/ApiService"
+import { api } from "../services/Api"
 
+// Initialize the API service
+ApiService.init()
 
 const store = configureStore({
   reducer: {

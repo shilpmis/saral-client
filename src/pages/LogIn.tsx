@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { LogIn } from 'lucide-react'
 import ApiService from '@/services/ApiService'
+import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
+import { useAppSelector } from '@/redux/hooks/useAppSelector'
+import { selectAuthError, selectAuthStatus } from '@/redux/slices/authSlice'
+import { login } from '@/services/AuthService'
 
 const formSchema = z.object({
   email: z.string().email({
@@ -28,6 +32,9 @@ const formSchema = z.object({
 })
 
 export default function Login() {
+  const dispatch = useAppDispatch()
+  const authStatus = useAppSelector(selectAuthStatus)
+  const authError = useAppSelector(selectAuthError)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,13 +44,8 @@ export default function Login() {
     },
   })
 
-
-  console.log("Check this form===>" , form)
-
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    let user = await ApiService.post('/login', values);
-    console.log("user", user)
+    dispatch(login(values))
   }
 
   return (
