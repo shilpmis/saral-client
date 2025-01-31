@@ -1,50 +1,65 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { SaralPagination } from '../ui/common/SaralPagination'
+import { SaralPagination } from "../ui/common/SaralPagination"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import StudentForm, { type StudentFormData } from "./StudentForm"
 
-interface Student {
-  id: string;
-  name: string;
-  class: string;
-  division: string;
-  rollNumber: string;
-  gender: string;
-  dateOfBirth: string;
-  contactNumber: string;
-  email: string;
-  address: string;
+interface Student extends StudentFormData {
+  id: string
+  class: string
+  rollNumber: string
+  gender: string
+  dateOfBirth: string
+  contactNumber: string
+  email: string
 }
 
-export default function StudentTable({ filteredStudents }: { filteredStudents: Student[] }) {
+interface StudentTableProps {
+  filteredStudents: Student[]
+  onEdit: (student: Student) => void
+  onDelete: (studentId: string) => void
+}
 
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [currentVisibleData, setCurrentVisibleData] = useState<Student[]>(filteredStudents);
+export default function StudentTable({ filteredStudents, onEdit, onDelete }: StudentTableProps) {
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
-  const perPageData = 6;
-  const totalPages = Math.round((filteredStudents.length + 1) / perPageData);
+  const perPageData = 6
+  const totalPages = Math.ceil(filteredStudents.length / perPageData)
 
-  const paginateData = (page: number): Student[] => {
-    const newVisibleDataSet = filteredStudents.slice((Math.max(0, page - 1)) * perPageData + 1, (page) * perPageData + 1);
-    return newVisibleDataSet;
+  const paginatedData = (page: number): Student[] => {
+    const startIndex = (page - 1) * perPageData
+    return filteredStudents.slice(startIndex, startIndex + perPageData)
   }
 
-  const onPageChange = (upadatedPage: number) => {
-    setCurrentVisibleData(paginateData(upadatedPage))
-    setCurrentPage(upadatedPage);
+  const onPageChange = (updatedPage: number) => {
+    setCurrentPage(updatedPage)
   }
-  
-  useEffect(()=>{
-    setCurrentVisibleData(paginateData(1));
-  } , [])
 
+  const handleEdit = (student: Student) => {
+    setSelectedStudent(student)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditSubmit = (updatedStudentData: StudentFormData) => {
+    if (selectedStudent) {
+      const updatedStudent: Student = {
+        ...selectedStudent,
+        ...updatedStudentData,
+        class: updatedStudentData.admission_std,
+        contactNumber: updatedStudentData.mobile_number_2,
+      }
+      onEdit(updatedStudent)
+      setIsEditDialogOpen(false)
+    }
+  }
 
   return (
-    <div className='p-1'>
+    <div className="p-1">
       <Table>
         <TableHeader>
           <TableRow>
@@ -61,7 +76,7 @@ export default function StudentTable({ filteredStudents }: { filteredStudents: S
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentVisibleData.map((student) => (
+          {paginatedData(currentPage).map((student) => (
             <TableRow key={student.id}>
               <TableCell>{student.name}</TableCell>
               <TableCell>{student.class}</TableCell>
@@ -75,11 +90,19 @@ export default function StudentTable({ filteredStudents }: { filteredStudents: S
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(student)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(student.id)}>
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -88,9 +111,19 @@ export default function StudentTable({ filteredStudents }: { filteredStudents: S
         </TableBody>
       </Table>
 
-      <div className='w-full flex text-right p-1 mt-3'>
+      <div className="w-full flex text-right p-1 mt-3">
         <SaralPagination currentPage={currentPage} onPageChange={onPageChange} totalPages={totalPages} />
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && <StudentForm onSubmit={handleEditSubmit} initialData={selectedStudent} />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

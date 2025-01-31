@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Upload, MoreHorizontal } from 'lucide-react'
 import StudentTable from '@/components/Students/StudentTable'
+import StudentForm, { StudentFormData } from '@/components/Students/StudentForm'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogTrigger } from '@radix-ui/react-dialog'
 
 interface Student {
   id: string;
@@ -20,6 +23,7 @@ interface Student {
   contactNumber: string;
   email: string;
   address: string;
+  
 }
 
 const mockStudents: Student[] = [
@@ -61,27 +65,64 @@ const mockStudents: Student[] = [
 const Students: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string | undefined>()
   const [selectedDivision, setSelectedDivision] = useState<string | undefined>()
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
+  const [students, setStudents] = useState<Student[]>(mockStudents)
 
-  const filteredStudents = mockStudents.filter(student =>
-    (!selectedClass || student.class === selectedClass) &&
-    (!selectedDivision || student.division === selectedDivision)
+  const filteredStudents = students.filter(
+    (student) =>
+      (!selectedClass || student.admission_std === selectedClass) &&
+      (!selectedDivision || student.division === selectedDivision),
   )
+
+  const handleAddStudent = (newStudentData: StudentFormData) => {
+    const newStudent: Student = {
+      ...newStudentData,
+      id: (students.length + 1).toString(),
+      class: newStudentData.admission_std,
+      rollNumber: (students.length + 1).toString().padStart(4, "0"),
+      gender: "Not specified", // You may want to add this to the form
+      dateOfBirth: "Not specified", // You may want to add this to the form
+      contactNumber: newStudentData.mobile_number_2,
+      email: "Not specified", // You may want to add this to the form
+    }
+    setStudents([...students, newStudent])
+    setIsAddStudentOpen(false)
+  }
+
+  const handleEditStudent = (updatedStudent: Student) => {
+    setStudents(students.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)))
+  }
+
+  const handleDeleteStudent = (studentId: string) => {
+    setStudents(students.filter((student) => student.id !== studentId))
+  }
 
   return (
     <div className="p-6 bg-white">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Students</h1>
-        {/*Menubar  */}
         <div className="flex space-x-2">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add New Student
-          </Button>
+          <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add New Student
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Add New Student</DialogTitle>
+              </DialogHeader>
+              <StudentForm onSubmit={handleAddStudent} />
+            </DialogContent>
+          </Dialog>
           <Button variant="outline">
             <Upload className="mr-2 h-4 w-4" /> Upload Excel
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline"><MoreHorizontal className="h-4 w-4" /></Button>
+              <Button variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem>Export Data</DropdownMenuItem>
@@ -91,7 +132,7 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      {/*Filters   */}
+      {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter Students</CardTitle>
@@ -114,7 +155,7 @@ const Students: React.FC = () => {
               <SelectValue placeholder="Select Division" />
             </SelectTrigger>
             <SelectContent>
-              {['A', 'B', 'C', 'D'].map((division) => (
+              {["A", "B", "C", "D", "E", "F", "G", "H"].map((division) => (
                 <SelectItem key={division} value={division}>
                   Division {division}
                 </SelectItem>
@@ -125,11 +166,10 @@ const Students: React.FC = () => {
       </Card>
 
       <div className="overflow-x-auto">
-        <StudentTable filteredStudents={mockStudents} />
+        {/* <StudentTable filteredStudents={filteredStudents} onEdit={handleEditStudent} onDelete={handleDeleteStudent} /> */}
       </div>
     </div>
   )
 }
 
 export default Students
-

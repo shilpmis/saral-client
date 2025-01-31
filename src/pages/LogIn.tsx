@@ -55,7 +55,9 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await dispatch(login(values)).unwrap()
+      const loggedInUser = await dispatch(login(values)).unwrap();
+      console.log("loggedInUser", loggedInUser);
+
       // If login is successful, the useEffect above will handle the redirection
     } catch (error) {
       console.error("Login failed:", error)

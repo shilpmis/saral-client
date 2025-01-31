@@ -30,24 +30,25 @@ export default function RootRoute() {
   return (
     <Router>
       <Routes>
-        <Route
+        {/* <Route
           path="/"
           element={isAuthenticated ? <Navigate to="/d/staff" replace /> : <Navigate to="/auth/login" replace />}
-        />
+        /> */}
 
         <Route path="/auth" element={<AuthLayout />}>
           <Route path="login" element={<Login />} />
         </Route>
 
-        <Route path="/d" element={<PrivateRoute />}>
+        <Route path="/d" >
           <Route element={<AdminLayout />}>
             <Route path="students" element={<Students />} />
-            <Route path="student/add" element={<StudentForm />} />
-            <Route path="student/edit/:id" element={<StudentForm />} />
+            {/* <Route path="student/add" element={<StudentForm />} />
+            <Route path="student/edit/:id" element={<StudentForm />} /> */}
             <Route path="staff" element={<Staff />} />
             <Route path="payroll" element={<Payroll />} />
             <Route path="fee" element={<Fees />} />
             <Route path="user-management" element={<UserManagement />} />
+
             <Route path="settings" element={<SettingsPage />}>
               <Route path="general" element={<GeneralSettings />} />
               <Route path="academic" element={<AcademicSettings />} />

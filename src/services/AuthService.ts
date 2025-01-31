@@ -24,7 +24,7 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
       const { user, token } = response.data
 
       // Set the token in ApiService for future requests
-      ApiService.setTokenInLocal(token)
+      ApiService.setTokenInLocal(token?.token)
 
       return { user, token }
     } catch (error: any) {
