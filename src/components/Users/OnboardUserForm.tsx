@@ -1,133 +1,62 @@
 import type React from "react"
-import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera } from "lucide-react"
-import { User } from "../../types/user.js"
+import { type User, UserStatus } from "@/types/user"
 
 interface OnboardUserFormProps {
   onSubmit: (data: User) => void
   initialData?: User
 }
 
-const defaultUser: User = {
-  id: "",
-  image: "",
+const defaultUser: Omit<User, "id"> = {
+  school_id: 0,
   name: "",
-  mobileNumber: "",
-  registrationDetails: "",
-  email: "",
+  username: "",
+  saral_email: "",
   password: "",
-  currentStatus: "Active",
-  delegateResponsibilities: {
-    managementDepartment: false,
-    studentDetails: false,
-    timeTable: false,
-    feeStructure: false,
-    staffManagement: false,
-    listOfComplaints: false,
-    accounts: false,
-    resultDetails: false,
-    transportDepartment: false,
-    hostelDepartment: false,
-  },
+  role_id: 0,
+  status: UserStatus.ACTIVE,
 }
 
-export const OnboardUserForm: React.FC<OnboardUserFormProps> = ({ onSubmit, initialData = defaultUser }) => {
-  const { register, handleSubmit, control, setValue, watch } = useForm<User>({
-    defaultValues: initialData,
+export const OnboardUserForm: React.FC<OnboardUserFormProps> = ({ onSubmit, initialData }) => {
+  const { register, handleSubmit, control } = useForm<User>({
+    defaultValues: initialData || defaultUser,
   })
-  const [imagePreview, setImagePreview] = useState<string | null>(() => {
-    if (typeof initialData.image === "string") {
-      return initialData.image
-    }
-    if (initialData.image instanceof File) {
-      return URL.createObjectURL(initialData.image)
-    }
-    return null
-  })
-
-  const watchedImage = watch("image")
-
-  useEffect(() => {
-    let objectUrl: string | null = null
-
-    if (initialData.image instanceof File) {
-      objectUrl = URL.createObjectURL(initialData.image)
-      setImagePreview(objectUrl)
-    }
-
-    return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl)
-      }
-    }
-  }, [initialData.image])
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setValue("image", file)
-      setImagePreview(URL.createObjectURL(file))
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="flex items-center space-x-4">
-        <div className="relative">
-          <Avatar className="w-24 h-24">
-            {imagePreview ? (
-              <AvatarImage src={imagePreview} alt="User avatar" />
-            ) : (
-              <AvatarFallback>
-                <Camera className="w-8 h-8" />
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <Input
-            type="file"
-            id="image"
-            accept="image/jpeg,image/png"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onChange={handleImageUpload}
-          />
-        </div>
-        <Label htmlFor="image" className="cursor-pointer">
-          Upload Image
-        </Label>
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="school_id">School ID</Label>
+          <Input id="school_id" type="number" {...register("school_id", { required: true })} />
+        </div>
         <div>
           <Label htmlFor="name">Name</Label>
           <Input id="name" {...register("name", { required: true })} />
         </div>
         <div>
-          <Label htmlFor="mobileNumber">Mobile Number</Label>
-          <Input id="mobileNumber" {...register("mobileNumber", { required: true })} />
+          <Label htmlFor="username">Username</Label>
+          <Input id="username" {...register("username", { required: true })} />
         </div>
         <div>
-          <Label htmlFor="registrationDetails">Registration Details</Label>
-          <Input id="registrationDetails" {...register("registrationDetails", { required: true })} />
-        </div>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...register("email", { required: true })} />
+          <Label htmlFor="saral_email">Saral Email</Label>
+          <Input id="saral_email" type="email" {...register("saral_email", { required: true })} />
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" {...register("password", { required: true })} />
         </div>
         <div>
-          <Label htmlFor="currentStatus">Current Status</Label>
+          <Label htmlFor="role_id">Role ID</Label>
+          <Input id="role_id" type="number" {...register("role_id", { required: true })} />
+        </div>
+        <div>
+          <Label htmlFor="status">Status</Label>
           <Controller
-            name="currentStatus"
+            name="status"
             control={control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
@@ -135,38 +64,18 @@ export const OnboardUserForm: React.FC<OnboardUserFormProps> = ({ onSubmit, init
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  {Object.values(UserStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
           />
         </div>
       </div>
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Delegate Responsibilities</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {Object.entries(defaultUser.delegateResponsibilities).map(([key, value]) => (
-            <div key={key} className="flex items-center space-x-2">
-              <Controller
-                name={`delegateResponsibilities.${key as keyof User["delegateResponsibilities"]}`}
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id={`delegateResponsibilities.${key}`}
-                  />
-                )}
-              />
-              <Label htmlFor={`delegateResponsibilities.${key}`}>
-                {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-      <Button type="submit">{initialData.id ? "Update User" : "Add User"}</Button>
+      <Button type="submit">{initialData ? "Update User" : "Add User"}</Button>
     </form>
   )
 }
