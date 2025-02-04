@@ -108,7 +108,7 @@ export default function AcademicSettings() {
 
   const handleEditDivision = (classId: number, division: Division) => {
     setEditingDivision({ classId, division: { ...division } })
-    setIsEditDivisionDialogOpen(true)
+    setIsEditDivisionDialogOpen(true);
   }
 
   const handleSaveEditDivision = () => {

@@ -1,18 +1,7 @@
-// import React from 'react'
-// import { SaralCard } from '../ui/common/SaralCard'
+"use client"
 
-// export default function StaffSettings() {
-//   return (
-<SaralCard
-  title="Notifications"
-  description="Manage your notification preferences"
->
-  <h3>Setting Page</h3>
-</SaralCard>;
-//   )
-// }
-import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { toast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -21,93 +10,99 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Edit, Plus, Trash } from "lucide-react";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Switch } from "../ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
-import { SaralCard } from "../ui/common/SaralCard";
-
-type Role = {
-  id: string
-  name: string
-  roleType: "teaching" | "non-teaching"
-}
-
-const initialRoles: Role[] = [
-  {
-    id: "1",
-    name: "Teacher",
-    roleType: "teaching",
-  },
-  {
-    id: "2",
-    name: "Principal",
-    roleType: "non-teaching",
-  },
-]
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Edit, Plus, Trash } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SaralCard } from "@/components/ui/common/SaralCard"
+import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { Role } from "@/services/RoleService"
+import { addRole, deleteRole, fetchRoles, updateRole } from "@/redux/slices/roleSlice"
 
 
 export default function StaffSettings() {
-  const [roles, setRoles] = useState<Role[]>(initialRoles)
+  const dispatch = useAppDispatch()
+  const { roles, status, error } = useAppSelector((state) => state.role)
+
   const [newRole, setNewRole] = useState<Omit<Role, "id">>({
-    name: "",
-    roleType: "teaching",
+    role: "",
+    is_teaching_role: true,
   })
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false)
 
-  const handleAddRole = () => {
-    const newRoleItem: Role = {
-      ...newRole,
-      id: (roles.length + 1).toString(),
-    }
-    setRoles([...roles, newRoleItem])
-    setNewRole({ name: "", roleType: "teaching" })
-    setIsAddRoleOpen(false)
-    toast({
-      title: "Role Added",
-      description: `${newRoleItem.name} has been added to the roles list.`,
-    })
-  }
+  useEffect(() => {
+    if (status === "idle") {
+     const response =  dispatch(fetchRoles());
+     response.then((res)=> {
+      console.log("res", res)
+     })
+     console.log("response_feth_roles", response)
 
-  const handleEditRole = () => {
-    if (editingRole) {
-      setRoles(roles.map((r) => (r.id === editingRole.id ? editingRole : r)))
-      setEditingRole(null)
-      setIsEditRoleOpen(false)
+    }
+  }, [status, dispatch])
+
+  const handleAddRole = async () => {
+    try {
+      await dispatch(addRole(newRole)).unwrap()
+      setNewRole({ role: "", is_teaching_role: true })
+      setIsAddRoleOpen(false)
       toast({
-        title: "Role Updated",
-        description: `${editingRole.name} has been updated.`,
+        title: "Role Added",
+        description: `${newRole.role} has been added to the roles list.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add role. Please try again.",
+        variant: "destructive",
       })
     }
   }
 
-  const handleDeleteRole = (id: string) => {
-    setRoles(roles.filter((r) => r.id !== id))
-    toast({
-      title: "Role Removed",
-      description: "The role has been removed from the list.",
-      variant: "destructive",
-    })
+  const handleEditRole = async () => {
+    if (editingRole) {
+      try {
+        await dispatch(updateRole(editingRole)).unwrap()
+        setEditingRole(null)
+        setIsEditRoleOpen(false)
+        toast({
+          title: "Role Updated",
+          description: `${editingRole.role} has been updated.`,
+        })
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update role. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
   }
+
+  const handleDeleteRole = async (id: string) => {
+    try {
+      await dispatch(deleteRole(id)).unwrap()
+      toast({
+        title: "Role Removed",
+        description: "The role has been removed from the list.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete role. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (status === "loading") return <div>Loading...</div>
+  if (status === "failed") return <div>Error: {error}</div>
 
   return (
     <SaralCard title="Staff Settings" description="Manage your staff roles">
@@ -133,8 +128,8 @@ export default function StaffSettings() {
                     </Label>
                     <Input
                       id="roleName"
-                      value={newRole.name}
-                      onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                      value={newRole.role}
+                      onChange={(e) => setNewRole({ ...newRole, role: e.target.value })}
                       className="col-span-3"
                     />
                   </div>
@@ -143,9 +138,7 @@ export default function StaffSettings() {
                       Role Type
                     </Label>
                     <Select
-                      onValueChange={(value: "teaching" | "non-teaching") =>
-                        setNewRole({ ...newRole, roleType: value })
-                      }
+                      onValueChange={(value) => setNewRole({ ...newRole, is_teaching_role: value === "teaching" })}
                     >
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select role type" />
@@ -174,8 +167,8 @@ export default function StaffSettings() {
             <TableBody>
               {roles.map((role) => (
                 <TableRow key={role.id}>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell>{role.roleType === "teaching" ? "Teaching" : "Non-Teaching"}</TableCell>
+                  <TableCell>{role.role}</TableCell>
+                  <TableCell>{role.is_teaching_role ? "Teaching" : "Non-Teaching"}</TableCell>  
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
@@ -213,8 +206,8 @@ export default function StaffSettings() {
                   </Label>
                   <Input
                     id="editRoleName"
-                    value={editingRole.name}
-                    onChange={(e) => setEditingRole({ ...editingRole, name: e.target.value })}
+                    value={editingRole.role}
+                    onChange={(e) => setEditingRole({ ...editingRole, role: e.target.value })}
                     className="col-span-3"
                   />
                 </div>
@@ -223,9 +216,9 @@ export default function StaffSettings() {
                     Role Type
                   </Label>
                   <Select
-                    value={editingRole.roleType}
-                    onValueChange={(value: "teaching" | "non-teaching") =>
-                      setEditingRole({ ...editingRole, roleType: value })
+                    value={editingRole.is_teaching_role ? "teaching" : "non-teaching"}
+                    onValueChange={(value) =>
+                      setEditingRole({ ...editingRole, is_teaching_role: value === "teaching" })
                     }
                   >
                     <SelectTrigger className="col-span-3">
@@ -248,3 +241,4 @@ export default function StaffSettings() {
     </SaralCard>
   )
 }
+
