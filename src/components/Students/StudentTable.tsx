@@ -5,7 +5,8 @@ import { MoreHorizontal, Edit, Trash } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SaralPagination } from "../ui/common/SaralPagination"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import StudentForm, { type StudentFormData } from "./StudentForm"
+import { StudentFormData } from "@/utils/student.validation"
+import StudentForm from "./StudentForm"
 
 interface Student extends StudentFormData {
   id: string
