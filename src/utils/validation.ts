@@ -2,8 +2,14 @@ import * as z from "zod"
 
 export const personalDetailsSchema = z.object({
   category: z.enum(["teaching", "non-teaching"]),
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  mobile: z.string().regex(/^\d{10}$/, "Mobile number must be 10 digits"),
+  username: z.string().min(3, "Username must be at least 3 characters").max(10,"Username length should be shorter then 10 Chartacter"),
+  mobile: z.string()
+  .refine((value) => {
+    /^[a-zA-Z]+$/.test(value);
+    /*const number = /^\d{10}$/.test(value);*/   
+  }, {
+    message: "Character not allowed"
+  }),
   email: z.string().email("Invalid email address"),
   dob: z.string().refine((date) => {
     const today = new Date()
