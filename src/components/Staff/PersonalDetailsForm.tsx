@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { personalDetailsSchema } from "@/utils/validation"
+import { personalDetailsSchema } from "@/utils/staff.validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"

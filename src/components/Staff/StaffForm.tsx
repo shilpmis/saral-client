@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PersonalDetailsForm } from "./PersonalDetailsForm"
 import { AddressForm } from "./AddressForm"
 import { BankDetailsForm } from "./BankDetailsForm"
-import type { StaffFormData } from "@/utils/validation"
+import type { StaffFormData } from "@/utils/staff.validation"
 
 interface StaffFormProps {
   onClose: () => void

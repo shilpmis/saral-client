@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const BASE_URL = "http://localhost:3333/api/v1/";
+const BASE_URL = "https://33dc-2405-201-200c-1073-e000-bb3-e025-2c0c.ngrok-free.app/api/v1/";
 
 class ApiService {
     static axiosInstance: any;
