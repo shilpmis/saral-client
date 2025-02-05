@@ -11,8 +11,10 @@ import { BankDetailsForm } from "./BankDetailsForm"
 import { StudentFormData, studentFormSchema } from "@/utils/student.validation"
 
 interface StudentFormProps {
-  onSubmit: (data: StudentFormData) => void
-  initialData?: Partial<StudentFormData>
+   onClose: () => void
+    onSubmit: (data: StudentFormData) => void
+    mode: "add" | "edit"
+    initialData?: Partial<StudentFormData>
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
@@ -45,8 +47,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
   }
 
   return (
-    <Form {...form}>
-      <form className="space-y-6">
+      <div className="space-y-6">
         <Tabs value={activeTab} className="w-full">
           <TabsList>
             <TabsTrigger value="personal">Personal Details</TabsTrigger>
@@ -79,8 +80,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
             />
           </TabsContent>
         </Tabs>
-      </form>
-    </Form>
+      </div>
   )
 }
 
