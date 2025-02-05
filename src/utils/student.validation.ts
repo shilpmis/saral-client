@@ -1,14 +1,34 @@
 import * as z from "zod"
 
 export const personalDetailsSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  aadhar_dise_no: z.string().min(12, { message: "Aadhar/DISE number must be at least 12 characters." }),
-  birth_place: z.string().min(2, { message: "Birth place must be at least 2 characters." }),
+  name:z.string()
+  .min(5, { message: "Name must be at least 5 characters." })
+  .max(20, { message: "Name must be at most 20 characters." })
+  .regex(/^[A-Za-z]+$/, { message: "Name must contain only alphabet characters." }),
+
+  aadhar_dise_no: z.string()
+  .length(12, { message: "Aadhar/DISE number must be exactly 12 characters." })
+  .regex(/^\d{12}$/, { message: "Aadhar/DISE number must be a 12-digit number." }),
+
+  birth_place: z.string()
+  .min(5, { message: "Birth place must be at least 5 characters." })
+  .max(20, { message: "Birth place must be at most 20 characters." })
+  .regex(/^[A-Za-z]+$/, { message: "Birth place must contain only alphabet characters." }),
+
   birth_place_in_guj: z.string().min(2, { message: "Birth place in Gujarati must be at least 2 characters." }),
-  religiion: z.string().min(2, { message: "Religion must be at least 2 characters." }),
+  
+
+  religiion:  z.string()
+  .min(5, { message: "Religion must be at least 5 characters." })
+  .max(20, { message: "Religion must be at most 20 characters." })
+  .regex(/^[A-Za-z]+$/, { message: "Religion must contain only alphabet characters." }),
+
   religiion_in_guj: z.string().min(2, { message: "Religion in Gujarati must be at least 2 characters." }),
-  cast: z.string().min(2, { message: "Cast must be at least 2 characters." }),
-  cast_in_guj: z.string().min(2, { message: "Cast in Gujarati must be at least 2 characters." }),
+  caste: z.string()
+  .min(5, { message: "Caste must be at least 5 characters." })
+  .max(20, { message: "Caste must be at most 20 characters." })
+  .regex(/^[A-Za-z]+$/, { message: "Caste must contain only alphabet characters." }),
+  caste_in_guj: z.string().min(2, { message: "Cast in Gujarati must be at least 2 characters." }),
   category: z.enum(["ST", "SC", "OBC", "OPEN"]),
 })
 
