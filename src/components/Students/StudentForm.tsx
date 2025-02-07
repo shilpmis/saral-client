@@ -1,8 +1,5 @@
 import type React from "react"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Form } from "@/components/ui/form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PersonalDetailsForm } from "./PersonalDetailsForm"
 import { AdmissionDetailsForm } from "./AdmissionDetailsForm"
@@ -11,22 +8,22 @@ import { BankDetailsForm } from "./BankDetailsForm"
 import { StudentFormData, studentFormSchema } from "@/utils/student.validation"
 
 interface StudentFormProps {
-   onClose: () => void
-    onSubmit: (data: StudentFormData) => void
-    mode: "add" | "edit"
-    initialData?: Partial<StudentFormData>
+  onClose: () => void
+  onSubmit: (data: StudentFormData) => void
+  mode: "add" | "edit"
+  initialData?: Partial<StudentFormData>
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
   const [activeTab, setActiveTab] = useState<string>("personal")
   const [formData, setFormData] = useState<Partial<StudentFormData>>(initialData || {})
-
-  const form = useForm<StudentFormData>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: formData,
-  })
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+  }
 
   const handlePersonalDetailsSubmit = (data: Partial<StudentFormData>) => {
+    console.log("personaldetaiks")
     setFormData((prev) => ({ ...prev, ...data }))
     setActiveTab("admission")
   }

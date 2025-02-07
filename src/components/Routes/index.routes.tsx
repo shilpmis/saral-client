@@ -30,10 +30,10 @@ export default function RootRoute() {
   return (
     <Router>
       <Routes>
-        <Route
+        {/* <Route
           path="/"
           element={isAuthenticated ? <Navigate to="/d/staff" replace /> : <Navigate to="/auth/login" replace />}
-        />
+        /> */}
 
         <Route path="/auth" element={<AuthLayout />}>
           <Route path="login" element={<Login />} />

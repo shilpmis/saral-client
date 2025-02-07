@@ -120,7 +120,7 @@ export default function StudentTable({ filteredStudents, onEdit, onDelete }: Stu
           <DialogHeader>
             <DialogTitle>Edit Student</DialogTitle>
           </DialogHeader>
-          {selectedStudent && <StudentForm onSubmit={handleEditSubmit} initialData={selectedStudent} />}
+          {/* {selectedStudent && <StudentForm onSubmit={handleEditSubmit} initialData={selectedStudent} />} */}
         </DialogContent>
       </Dialog>
     </div>

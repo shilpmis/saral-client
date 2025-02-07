@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Upload, MoreHorizontal } from 'lucide-react'
 import StudentTable from '@/components/Students/StudentTable'
-import StudentForm, { StudentFormData } from '@/components/Students/StudentForm'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DialogTrigger } from '@radix-ui/react-dialog'
+import { StudentFormData } from '@/utils/student.validation'
+import StudentForm from '@/components/Students/StudentForm'
 
 interface Student {
   id: string;
@@ -70,7 +71,7 @@ const Students: React.FC = () => {
 
   const filteredStudents = students.filter(
     (student) =>
-      (!selectedClass || student.admission_std === selectedClass) &&
+      // (!selectedClass || student.admission_std === selectedClass) &&
       (!selectedDivision || student.division === selectedDivision),
   )
 
@@ -112,7 +113,9 @@ const Students: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
               </DialogHeader>
-              <StudentForm onSubmit={handleAddStudent} />
+              <StudentForm onSubmit={handleAddStudent} onClose={function (): void {
+                throw new Error('Function not implemented.')
+              } } mode={'add'} />
             </DialogContent>
           </Dialog>
           <Button variant="outline">
