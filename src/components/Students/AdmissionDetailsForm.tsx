@@ -100,7 +100,7 @@ export function AdmissionDetailsForm({ onSubmit, onPrevious, defaultValues }: Ad
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="privious_school"
+            name="previous_school"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Previous School</FormLabel>
@@ -113,7 +113,7 @@ export function AdmissionDetailsForm({ onSubmit, onPrevious, defaultValues }: Ad
           />
           <FormField
             control={form.control}
-            name="privious_school_in_guj"
+            name="previous_school_in_guj"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Previous School (in Gujarati)</FormLabel>

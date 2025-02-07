@@ -11,8 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
+import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 export default function AcademicSettings() {
+  const dispatch = useAppDispatch();
+  const {loading, classes} = useAppSelector((state)=> state.academic);
   const currentYear = new Date().getFullYear()
   const [academicYear, setAcademicYear] = useState<AcademicYear>({
     id: 1,
@@ -24,6 +28,7 @@ export default function AcademicSettings() {
       isSelected: false,
     })),
   })
+
 
   const [isEditClassDialogOpen, setIsEditClassDialogOpen] = useState(false)
   const [editingClass, setEditingClass] = useState<ClassData | null>(null)
