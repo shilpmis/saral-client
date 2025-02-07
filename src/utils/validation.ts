@@ -2,15 +2,9 @@ import * as z from "zod"
 
 export const personalDetailsSchema = z.object({
   category: z.enum(["teaching", "non-teaching"]),
-  username: z.string().min(3, "Username must be at least 3 characters").max(10,"Username length should be shorter then 10 Chartacter"),
-  mobile: z.string()
-  .refine((value) => {
-    /^[a-zA-Z]+$/.test(value);
-    /*const number = /^\d{10}$/.test(value);*/   
-  }, {
-    message: "Character not allowed"
-  }),
-  email: z.string().email("Invalid email address"),
+  username: z.string().regex(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*_)[a-zA-Z0-9_]+$/,"userName contain only letter,underscore,digit"),
+  mobile: z.string().regex( /^\d{10}$/,"not valid mobile number"),
+  email: z.string().regex(/^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/,"not valid email please check your mail"),
   dob: z.string().refine((date) => {
     const today = new Date()
     const birthDate = new Date(date)
@@ -21,12 +15,12 @@ export const personalDetailsSchema = z.object({
     }
     return age >= 18
   }, "Must be at least 18 years old"),
-  age: z.string().refine((age) => Number.parseInt(age) >= 18, "Must be at least 18 years old"),
+  age: z.string().refine((age) => Number.parseInt(age) >= 18, "Must be at least 18 years old").optional(),
   title: z.enum(["mr", "miss"]),
-  qualification: z.string().min(2, "Qualification is required"),
+  qualification: z.enum(["8th", "10th","12th","diploma","graduation","post-graduation"]),
   aadhaar: z.string().regex(/^\d{12}$/, "Aadhaar number must be 12 digits"),
-  bloodGroup: z.string().min(1, "Blood group is required"),
-  tshirtSize: z.string().min(1, "T-shirt size is required"),
+  bloodGroup: z.enum(["A+", "A-","B+","B-","O+","O-","AB+","AB-"]),
+  tshirtSize: z.enum(["S", "M","L","Xl","XXl"]),
   profilePhoto: z.instanceof(File).optional().nullable(),
 })
 

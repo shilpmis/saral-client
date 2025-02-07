@@ -13,7 +13,7 @@ interface StaffFormProps {
 }
 
 export function StaffForm({ onClose, onSubmit, mode, initialData }: StaffFormProps) {
-  const [activeTab, setActiveTab] = useState<string>("personal")
+  const [activeTab, setActiveTab] = useState<string>("address")
   const [formData, setFormData] = useState<Partial<StaffFormData>>(initialData || {})
 
   const handlePersonalDetailsSubmit = (data: Partial<StaffFormData>) => {

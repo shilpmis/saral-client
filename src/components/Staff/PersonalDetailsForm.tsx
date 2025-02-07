@@ -17,8 +17,21 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
     resolver: zodResolver(personalDetailsSchema),
     defaultValues: defaultValues || {},
   })
+  const { register, handleSubmit, watch, formState: { errors }, getValues } = form;
 
-  return (
+  const usedob = watch("dob");
+  const handleUserAge = ()=>{
+    
+  const today = new Date()
+  const birthDate = new Date(usedob)
+  let age = today.getFullYear() - birthDate.getFullYear()
+  let months = today.getMonth() - birthDate.getMonth();
+  const ageString = `${age} years, ${months} month`;
+  return ageString;
+  }
+ 
+ 
+   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
@@ -98,7 +111,7 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
               <FormItem>
                 <FormLabel>Date of Birth</FormLabel>
                 <FormControl>
-                  <Input {...field} type="date" />
+                  <Input {...field}  type="date" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -112,7 +125,7 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
               <FormItem>
                 <FormLabel>Age</FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" />
+                  <Input  value={usedob !== undefined ? handleUserAge() : " "} type="text" readOnly/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -141,19 +154,34 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
             )}
           />
 
-          <FormField
+
+         <FormField
             control={form.control}
             name="qualification"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Qualification</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Qualification" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="8th">8th</SelectItem>
+                    <SelectItem value="10th">10th</SelectItem>
+                    <SelectItem value="12th">12th</SelectItem>
+                    <SelectItem value="diploma">Diploma</SelectItem>
+                    <SelectItem value="graduation">Graduation</SelectItem>
+                    <SelectItem value="post-graduation">Post Graduion</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+
 
           <FormField
             control={form.control}
@@ -169,29 +197,55 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
             )}
           />
 
-          <FormField
+
+       <FormField
             control={form.control}
             name="bloodGroup"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Blood Group</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <FormLabel>BloodGroup</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select BloodGroup" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <FormField
+
+        <FormField
             control={form.control}
             name="tshirtSize"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>T-shirt Size</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <FormLabel>T-shirt-Size</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Size" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="S">S</SelectItem>
+                    <SelectItem value="M">M</SelectItem>
+                    <SelectItem value="L">L</SelectItem>
+                    <SelectItem value="Xl">xL</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
