@@ -1,12 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "./slices/authSlice"
-import ApiService from "@/services/ApiService"
-import { api } from "../services/Api"
 import academicReducer from "./slices/academicSlice";
 import roleReducer from "./slices/roleSlice";
 import userManagementReducer from "./slices/userManagementSlice";
-// Initialize the API service
-ApiService.init()
+import { Authapi } from "@/services/AuthService";
+
 
 const store = configureStore({
   reducer: {
@@ -14,9 +12,9 @@ const store = configureStore({
     academic : academicReducer,
     role: roleReducer,
     userManagement: userManagementReducer,
-    [api.reducerPath]: api.reducer,
+    [Authapi.reducerPath]: Authapi.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(Authapi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

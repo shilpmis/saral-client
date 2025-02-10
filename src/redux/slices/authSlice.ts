@@ -6,7 +6,7 @@ interface User {
   id: string
   username: string
   role: string
-  schoolId ?: number
+  schoolId?: number
 }
 
 interface AuthState {
@@ -28,7 +28,14 @@ const initialState: AuthState = {
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    setCredentials: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      state.status = "succeeded";
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -57,5 +64,8 @@ export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenti
 export const selectAuthStatus = (state: RootState) => state.auth.status
 export const selectAuthError = (state: RootState) => state.auth.error
 
+export const selectAuthState = (state: RootState) => state.auth
+
+export const { setCredentials} = authSlice.actions;
 export default authSlice.reducer
 
