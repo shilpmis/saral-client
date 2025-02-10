@@ -16,12 +16,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { LogIn } from 'lucide-react'
-import ApiService from '@/services/ApiService'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { useAppSelector } from '@/redux/hooks/useAppSelector'
-import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from '@/redux/slices/authSlice'
-import { login } from '@/services/AuthService'
+import { setCredentials } from '@/redux/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
+// import { useLoginMutation } from '@/services/AuthService'
+import { login } from '@/services/AuthService'
+import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from '@/redux/slices/authSlice'
+// import ver
 
 const formSchema = z.object({
   email: z.string().email({
@@ -33,11 +35,15 @@ const formSchema = z.object({
 })
 
 export default function Login() {
+  
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+
   const authStatus = useAppSelector(selectAuthStatus)
   const authError = useAppSelector(selectAuthError)
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
+
+  // const [login , {isLoading , isError , status}] = useLoginMutation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,15 +55,14 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/d/staff")
+      navigate("/d/students")
     }
   }, [isAuthenticated, navigate])
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit (values: z.infer<typeof formSchema>) {
     try {
-      const loggedInUser = await dispatch(login(values)).unwrap();
-      console.log("loggedInUser", loggedInUser);
-
+      const response = await dispatch(login(values));
+      // dispatch(setCredentials(response));
       // If login is successful, the useEffect above will handle the redirection
     } catch (error) {
       console.error("Login failed:", error)
