@@ -3,26 +3,51 @@ import type { RootState } from "../store"
 import { login, logout } from "../../services/AuthService"
 
 interface User {
-  id: string
-  username: string
-  role: string
-  schoolId?: number
+  id: number,
+  schoolId: number,
+  roleId: number,
+  name: string,
+  username: string,
+  saralEmail: string,
+}
+
+interface School {
+  id: number,
+  name: string,
+  email: string,
+  username: string,
+  contactNumber: number,
+  subscriptionType: string,
+  status: string,
+  establishedYear: string,
+  schoolType: string,
+  address: string
 }
 
 interface AuthState {
   isAuthenticated: boolean
   user: User | null
+  // school: School | null,
   token: string | null
   status: "idle" | "loading" | "succeeded" | "failed"
-  error: string | null
+  error: string | null,
+  isVerificationInProgress: boolean,
+  isVeificationFails: boolean,
+  verificationError: string | null
+  isVerificationSuccess: boolean
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
+  // school: null,
   token: null,
   status: "idle",
   error: null,
+  isVerificationInProgress: true,
+  isVeificationFails: false,
+  verificationError: null,
+  isVerificationSuccess: false
 }
 
 const authSlice = createSlice({
@@ -34,6 +59,15 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.status = "succeeded";
+    },
+    setCredentialsForVerificationStatus: (state, action) => {
+      state.isVerificationInProgress = action.payload.isVerificationInProgress,
+        state.isVeificationFails = action.payload.isVeificationFails,
+        state.verificationError = action.payload.verificationError,
+        state.isVerificationSuccess = action.payload.isVerificationSuccess
+    },
+    setCredentialsForVerification: () => {
+
     }
   },
   extraReducers: (builder) => {
@@ -45,6 +79,7 @@ const authSlice = createSlice({
         state.status = "succeeded"
         state.isAuthenticated = true
         state.user = action.payload.user
+        // state.school = action.payload.user,
         state.token = action.payload.token
       })
       .addCase(login.rejected, (state, action) => {
@@ -60,12 +95,13 @@ const authSlice = createSlice({
 })
 
 export const selectCurrentUser = (state: RootState) => state.auth.user
+export const selectVerificationStatus = (state: RootState) => state.auth
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated
 export const selectAuthStatus = (state: RootState) => state.auth.status
 export const selectAuthError = (state: RootState) => state.auth.error
 
 export const selectAuthState = (state: RootState) => state.auth
 
-export const { setCredentials} = authSlice.actions;
+export const { setCredentials, setCredentialsForVerificationStatus, setCredentialsForVerification } = authSlice.actions;
 export default authSlice.reducer
 

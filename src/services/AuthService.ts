@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit"
 import ApiService from "./ApiService"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { RootState } from "../redux/store"
+import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
 
 
 /**
@@ -10,14 +11,11 @@ import type { RootState } from "../redux/store"
  */
 
 export const Authapi = createApi({
+  reducerPath : "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1", // Updated to match your API URL
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
-      // const token = (getState() as RootState).auth.token
-      // if (token) {
-      //   // headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
-      // }
       return headers
     },
   }),
@@ -27,6 +25,51 @@ export const Authapi = createApi({
         url: "verify",
         method: "GET",
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setCredentialsForVerificationStatus({
+            isVerificationInProgress: true,
+            isVeificationFails: false,
+            verificationError: null,
+            isVerificationSuccess: false
+          }))
+
+          const { data } = await queryFulfilled
+
+          dispatch(setCredentialsForVerificationStatus({
+            isVerificationInProgress: false,
+            isVeificationFails: false,
+            verificationError: null,
+            isVerificationSuccess: true
+          }))
+
+          dispatch(setCredentials({
+            user: data.user,
+            isAuthenticated: true,
+            token: localStorage.getItem('access_token')
+          }))
+
+        } catch (error) {
+          console.log("Check this error====>" , error)
+          // window.location.href = '/'
+          // console.log("Verification fails" , error)
+          localStorage.removeItem('access_token')
+          dispatch(setCredentialsForVerificationStatus({
+            isVerificationInProgress: false,
+            isVeificationFails: true,
+            verificationError: error,
+            isVerificationSuccess: false
+          }))
+        } finally {
+          // localStorage.removeItem('access_token')
+          // dispatch(setCredentialsForVerificationStatus({
+          //   isVerificationInProgress: false,
+          //   isVeificationFails: true,
+          //   verificationError: null,
+          //   isVerificationSuccess: false
+          // }))
+        }
+      },
     }),
     login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
       query: (credentials) => ({
@@ -57,7 +100,7 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
 
       // Store token properly
       ApiService.setTokenInLocal(token.token);
-      return { user, token };
+      return { user , token };
 
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Login failed");
