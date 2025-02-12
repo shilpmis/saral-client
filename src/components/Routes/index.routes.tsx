@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 
 import AdminLayout from "@/layouts/Admin/AdminLayout"
 import AuthLayout from "@/layouts/Auth/AuthLayout"
@@ -25,22 +25,16 @@ export default function RootRoute() {
 
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
 
+  /**
+   * If localhost has no access_token , then there is no need to make request for verification  
+   */
   const { data, error, isLoading, isFetching, isSuccess, isError } = useVerifyQuery()
 
-  useEffect(() => {
-
-  }, [isAuthenticated])
 
   return (
     <>
-      {isLoading && <p>Loading...</p>}
-      {isFetching && <p>Fetching...</p>}
-      {isSuccess && <Router>
+      <Router>
         <Routes>
-          {/* <Route
-          path="/"
-          element={isAuthenticated ? <Navigate to="/d/staff" replace /> : <Navigate to="/auth/login" replace />}
-        /> */}
 
           <Route path='/' element={<Login />}></Route>
 
@@ -52,8 +46,6 @@ export default function RootRoute() {
             <Route element={<AdminLayout />}>
 
               <Route path="students" element={<Students />} />
-              {/* <Route path="student/add" element={<StudentForm />} />
-            <Route path="student/edit/:id" element={<StudentForm />} /> */}
 
               <Route path="staff" element={<Staff />} />
               <Route path="payroll" element={<Payroll />} />
@@ -72,7 +64,7 @@ export default function RootRoute() {
             </Route>
           </Route>
         </Routes>
-      </Router>}
+      </Router>
     </>
   )
 }
