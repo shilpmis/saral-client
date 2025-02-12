@@ -4,31 +4,30 @@ export const personalDetailsSchema = z.object({
   name: z.string()
     .min(5, { message: "Name must be at least 5 characters." })
     .max(20, { message: "Name must be at most 20 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "Name must contain only alphabet characters and spaces." }),
+    .regex(/^[A-Za-z\s]+$/, {message: "Name must contain only alphabet characters and spaces." }),
 
   aadhar_dise_no: z.string()
     .length(12, { message: "Aadhar/DISE number must be exactly 12 digits." })
     .regex(/^\d{12}$/, { message: "Aadhar/DISE number must be a 12-digit number." }),
 
   birth_place: z.string()
-    .min(5, { message: "Birth place must be at least 5 characters." })
-    .max(20, { message: "Birth place must be at most 20 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "Birth place must contain only alphabet characters and spaces." }),
+    .min(3, { message: "Birth place must be at least 3 characters." })
+    .max(15, { message: "Birth place must be at most 15 characters." })
+    .regex(/^[A-Za-z\s]+$/, {message: "Birth place must contain only alphabet characters and spaces." }),
 
   birth_place_in_guj: z.string()
     .min(2, { message: "Birth place in Gujarati must be at least 2 characters." }),
 
   religion: z.string()
-    .min(5, { message: "Religion must be at least 5 characters." })
-    .max(20, { message: "Religion must be at most 20 characters." })
+    .min(3, { message: "Religion must be at least 3 characters." })
+    .max(7, { message: "Religion must be at most 7 characters." })
     .regex(/^[A-Za-z\s]+$/, { message: "Religion must contain only alphabet characters and spaces." }),
 
   religion_in_guj: z.string()
     .min(2, { message: "Religion in Gujarati must be at least 2 characters." }),
 
   caste: z.string()
-    .min(5, { message: "Caste must be at least 5 characters." })
-    .max(20, { message: "Caste must be at most 20 characters." })
+    .max(4, { message: "Caste must be at most 4 characters." })
     .regex(/^[A-Za-z\s]+$/, { message: "Caste must contain only alphabet characters and spaces." }),
 
   caste_in_guj: z.string()
