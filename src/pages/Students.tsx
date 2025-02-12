@@ -1,17 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal } from 'lucide-react'
+import { Plus, Upload, MoreHorizontal, FileDown } from 'lucide-react'
 import StudentTable from '@/components/Students/StudentTable'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DialogTrigger } from '@radix-ui/react-dialog'
 import { StudentFormData } from '@/utils/student.validation'
 import StudentForm from '@/components/Students/StudentForm'
+import { StudentStatus } from '@/types/student'
 
 interface Student {
   id: string;
@@ -68,6 +69,10 @@ const Students: React.FC = () => {
   const [selectedDivision, setSelectedDivision] = useState<string | undefined>()
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [students, setStudents] = useState<Student[]>(mockStudents)
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
+  const [fileName, setFileName] = useState<string |null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   const filteredStudents = students.filter(
     (student) =>
@@ -98,6 +103,26 @@ const Students: React.FC = () => {
     setStudents(students.filter((student) => student.id !== studentId))
   }
 
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+   }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name)
+     
+    }
+   };
+
+   const handleDownloadDemo = () => {
+    const demoExcelUrl = "/path/to/demo-excel-file.xlsx";
+    const link = document.createElement("a");
+    link.href = demoExcelUrl;
+    link.download = "demo-excel-file.xlsx"; 
+    link.click(); 
+  };
+
   return (
     <div className="p-6 bg-white">
       <div className="flex justify-between items-center mb-6">
@@ -118,9 +143,45 @@ const Students: React.FC = () => {
               } } mode={'add'} />
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+
+          <Dialog>
+            <DialogTrigger asChild>
+            <Button variant="outline">
             <Upload className="mr-2 h-4 w-4" /> Upload Excel
           </Button>
+            </DialogTrigger>
+            <DialogContent>
+          <DialogTitle>Upload Excel File</DialogTitle>
+
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={handleDownloadDemo} className='w-1/2 mr-2'>Download Demo Excel Sheet
+            </Button>
+            <Button variant="outline" onClick={handleChooseFile} className='w-1/2 mr-2'>
+            Choose Excel File
+          </Button>
+           
+            </div>
+              
+      <input
+        ref={fileInputRef}
+        id="excel-file"
+        type="file"
+        accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+        className="hidden"
+        onChange={handleFileChange}
+      />  
+           {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+           <div className='flex justify-end'>
+           <Button className='w-1/2'>Upload
+            </Button>
+            </div>
+      </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" >
+            <FileDown className="mr-2 h-4 w-4" /> Download Excel
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
