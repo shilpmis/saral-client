@@ -15,7 +15,7 @@ interface StudentFormProps {
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
-  const [activeTab, setActiveTab] = useState<string>("personal")
+  const [activeTab, setActiveTab] = useState<string>("address")
   const [formData, setFormData] = useState<Partial<StudentFormData>>(initialData || {})
   
   const handleTabChange = (value: string) => {

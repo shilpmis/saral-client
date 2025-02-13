@@ -1,25 +1,28 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "./slices/authSlice"
-import ApiService from "@/services/ApiService"
-import { api } from "../services/Api"
+import schoolReducer from './slices/schoolSlice'
 import academicReducer from "./slices/academicSlice";
 import roleReducer from "./slices/roleSlice";
 import userManagementReducer from "./slices/userManagementSlice";
-// Initialize the API service
-ApiService.init()
+import { Authapi } from "@/services/AuthService";
+import { SchoolApi } from "@/services/SchoolServices";
+
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    school : schoolReducer,
     academic : academicReducer,
     role: roleReducer,
     userManagement: userManagementReducer,
-    [api.reducerPath]: api.reducer,
+    [Authapi.reducerPath]: Authapi.reducer,
+    [SchoolApi.reducerPath] : SchoolApi.reducer, 
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(Authapi.middleware , SchoolApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>
+export type SchoolState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
 
 export default store

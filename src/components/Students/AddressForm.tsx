@@ -75,6 +75,19 @@ export function AddressForm({ onSubmit, onPrevious, defaultValues }: AddressForm
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="postal_code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pincode</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={onPrevious}>

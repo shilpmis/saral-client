@@ -616,6 +616,26 @@ const Students: React.FC = () => {
     }
   };
 
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+   }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name)
+     
+    }
+   };
+
+   const handleDownloadDemo = () => {
+    const demoExcelUrl = "/path/to/demo-excel-file.xlsx";
+    const link = document.createElement("a");
+    link.href = demoExcelUrl;
+    link.download = "demo-excel-file.xlsx"; 
+    link.click(); 
+  };
+
   return (
     <div className="p-6 bg-white">
       <div className="flex justify-between items-center mb-6">
@@ -640,9 +660,45 @@ const Students: React.FC = () => {
               />
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+
+          <Dialog>
+            <DialogTrigger asChild>
+            <Button variant="outline">
             <Upload className="mr-2 h-4 w-4" /> Upload Excel
           </Button>
+            </DialogTrigger>
+            <DialogContent>
+          <DialogTitle>Upload Excel File</DialogTitle>
+
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={handleDownloadDemo} className='w-1/2 mr-2'>Download Demo Excel Sheet
+            </Button>
+            <Button variant="outline" onClick={handleChooseFile} className='w-1/2 mr-2'>
+            Choose Excel File
+          </Button>
+           
+            </div>
+              
+      <input
+        ref={fileInputRef}
+        id="excel-file"
+        type="file"
+        accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+        className="hidden"
+        onChange={handleFileChange}
+      />  
+           {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+           <div className='flex justify-end'>
+           <Button className='w-1/2'>Upload
+            </Button>
+            </div>
+      </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" >
+            <FileDown className="mr-2 h-4 w-4" /> Download Excel
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">

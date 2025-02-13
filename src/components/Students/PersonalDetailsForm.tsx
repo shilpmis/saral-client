@@ -77,7 +77,7 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="religiion"
+            name="religion"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Religion</FormLabel>
@@ -90,7 +90,7 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
           />
           <FormField
             control={form.control}
-            name="religiion_in_guj"
+            name="religion_in_guj"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Religion (in Gujarati)</FormLabel>
@@ -105,10 +105,10 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="cast"
+            name="caste"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cast</FormLabel>
+                <FormLabel>Caste</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -118,10 +118,10 @@ export function PersonalDetailsForm({ onSubmit, defaultValues }: PersonalDetails
           />
           <FormField
             control={form.control}
-            name="cast_in_guj"
+            name="caste_in_guj"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cast (in Gujarati)</FormLabel>
+                <FormLabel>Caste (in Gujarati)</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

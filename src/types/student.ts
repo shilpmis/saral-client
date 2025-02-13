@@ -1,5 +1,11 @@
 import { EnumValues } from "zod";
 
+export enum StudentStatus{
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  BANNED = "BANNED",
+}
+
 export interface Student {
     school_id : number;
     first_name : string;
