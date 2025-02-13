@@ -73,7 +73,7 @@ export default function RootRoute() {
                 }
               />
               <Route
-                path="admin/leave"
+                path="admin-leave-management"
                 element={<AdminLeaveManagement />}
               />
 

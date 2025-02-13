@@ -10,17 +10,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Home, Settings, FileText, Clock, Landmark, UserCheck, Users, IndianRupee } from "lucide-react"
+import { Home, Settings, FileText, Clock, Landmark, UserCheck, Users, IndianRupee, Bed } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const SideBarItems = [
   { title: "Dashboard", url: "/d", icon: Home },
   { title: "Student", url: "/d/students", icon: Users },
   { title: "Staff", url: "/d/staff", icon: UserCheck },
+  { title: "Leave", url: "/d/leave", icon: Bed },
   { title: "Payroll", url: "/d/payroll", icon: Landmark },
   { title: "Fees", url: "/d/fee", icon: IndianRupee },
   { title: "Time Table", url: "/d/timetable", icon: Clock },
   { title: "Result", url: "/d/results", icon: FileText },
+  { title: "Admin Leave Management", url: "/d/admin-leave-management", icon: Bed },
 ]
 
 const SideBarFooter = [
