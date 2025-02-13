@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Upload, MoreHorizontal } from "lucide-react";
+import { Plus, Upload, MoreHorizontal, FileDown } from "lucide-react";
 import StudentTable from "@/components/Students/StudentTable";
 import {
   Dialog,
@@ -36,6 +36,7 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { StudentFormData } from "@/utils/student.validation";
 import StudentForm from "@/components/Students/StudentForm";
 import { Input } from "@/components/ui/input";
+import { StudentStatus } from "@/types/student";
 
 interface Student {
   id: string;
@@ -463,6 +464,9 @@ const Students: React.FC = () => {
   >();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [students, setStudents] = useState<Student[]>(mockStudents);
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
+  const [fileName, setFileName] = useState<string |null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredStudents = students.filter(
     (student) =>
