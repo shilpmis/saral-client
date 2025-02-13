@@ -47,6 +47,21 @@ const SideBarItems = [
         url: "/d/staff",
         icon: UserCheck,
     },
+    // {
+    //     title : "Attendance",
+    //     url: "/d/attendance",
+    //     icon: Clock,
+    // },
+    {
+        title: "Request For Leave",
+        url: "/d/leave",
+        icon: Bed,
+    },
+    {
+        title : "Leave Management",
+        url: "/d/admin/leave-management",
+        icon: Bed,
+    },
     {
         title: "Payroll",
         url: "/d/payroll",

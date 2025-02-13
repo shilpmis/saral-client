@@ -15,6 +15,7 @@ const store = configureStore({
     academic : academicReducer,
     role: roleReducer,
     userManagement: userManagementReducer,
+    // leaveManagement : leaveManagementReducer,
     [Authapi.reducerPath]: Authapi.reducer,
     [SchoolApi.reducerPath] : SchoolApi.reducer, 
   },

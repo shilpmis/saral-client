@@ -7,7 +7,6 @@ import { useAppSelector } from '@/redux/hooks/useAppSelector'
 import { selectVerificationStatus } from '@/redux/slices/authSlice'
 
 export default function AdminLayout() {
-
     const verificationStatus = useAppSelector(selectVerificationStatus);
     const navigate = useNavigate();
 
