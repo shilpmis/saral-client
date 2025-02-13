@@ -80,7 +80,7 @@ export default function Login() {
       {(verificationStatus.isAuthenticated || verificationStatus.isVeificationFails) && <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
           <div className="hidden md:block bg-gray-200">
-            <img src="/placeholder.svg?height=600&width=600" alt="School" className="object-cover w-full h-full" />
+            <img src="/melzo_logo.png?height=600&width=600" alt="School" className="object-cover w-full h-full" />
           </div>
           <div>
             <CardHeader className="space-y-1">
