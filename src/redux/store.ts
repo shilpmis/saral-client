@@ -6,6 +6,7 @@ import roleReducer from "./slices/roleSlice";
 import userManagementReducer from "./slices/userManagementSlice";
 import { Authapi } from "@/services/AuthService";
 import { SchoolApi } from "@/services/SchoolServices";
+import { AcademicApi } from "@/services/AcademicService";
 
 
 const store = configureStore({
@@ -18,8 +19,13 @@ const store = configureStore({
     // leaveManagement : leaveManagementReducer,
     [Authapi.reducerPath]: Authapi.reducer,
     [SchoolApi.reducerPath] : SchoolApi.reducer, 
+    [AcademicApi.reducerPath] : AcademicApi.reducer
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(Authapi.middleware , SchoolApi.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
+    Authapi.middleware ,
+    SchoolApi.middleware,
+    AcademicApi.middleware
+  ),
 })
 
 export type RootState = ReturnType<typeof store.getState>

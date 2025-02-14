@@ -47,8 +47,8 @@ const contactInformationSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  phone: z.string().regex(/^\+?[1-9]\d{10}$/, {
-    message: "Please enter a valid phone number.",
+  phone: z.string().regex(/^\d{10}$/, {
+    message: "Please enter a valid 10-digit phone number.",
   }),
   address: z.string().min(5, {
     message: "Address must be at least 5 characters.",
@@ -121,19 +121,26 @@ export default function GeneralSettings() {
 
   }
 
-  function onSubmitContactInformation(values: z.infer<typeof contactInformationSchema>) {
+  async function onSubmitContactInformation(values: z.infer<typeof contactInformationSchema>) {
     setLoading(prev => ({ ...prev, contactInformation: true }))
+
     // Simulate API call
-    setTimeout(() => {
-      setLoading(prev => ({ ...prev, contactInformation: false }))
-      // toast({
-      //   title: "Contact information updated",
-      //   description: "Your school's contact information has been updated successfully.",
-      // })
-      console.log(values)
-    }, 1000)
+    let payload: TypeForUpdateSchoolData = {}
+
+    if (data?.address !== values.address.trim()) payload.address = values.address.trim();
+    if (data?.contactNumber != parseInt(values.phone.trim())) payload.contact_number = parseInt(values.phone.trim());
+
+    const updated_school = await dispatch(updateSchoolDetails({ id: user!.schoolId, schoolData: payload }));
+    setLoading(prev => ({ ...prev, contactInformation: false }))
+
   }
 
+
+  /**
+   * TODO :  Currrently not working 
+   * 
+   * @param values 
+   */
   function onSubmitSubscription(values: z.infer<typeof subscriptionSchema>) {
     setLoading(prev => ({ ...prev, subscription: true }))
     // Simulate API call
@@ -327,7 +334,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.contactInformation}>
-                  {loading.contactInformation ? "Saving..." : "Save Contact Information"}
+                  {loading.contactInformation ? "Saving..." : "Save"}
                 </Button>
               </CardFooter>
             </form>

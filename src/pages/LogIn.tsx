@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LogIn } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { useAppSelector } from '@/redux/hooks/useAppSelector'
-import { selectVerificationStatus, setCredentials } from '@/redux/slices/authSlice'
+import { selectVerificationStatus, setCredentials, setCredentialsForVerificationStatus } from '@/redux/slices/authSlice'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { login, useVerifyQuery } from '@/services/AuthService'
 import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from '@/redux/slices/authSlice'
@@ -55,10 +55,16 @@ export default function Login() {
     },
   })
 
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await dispatch(login(values));
+      dispatch(setCredentialsForVerificationStatus({
+        isVerificationInProgress: false,
+        isVerificationFails: false,
+        verificationError: null,
+        isVerificationSuccess: true
+      }))
+      window.location.reload();
     } catch (error) {
       console.error("Login failed:", error)
     }
@@ -71,13 +77,15 @@ export default function Login() {
     if (isAuthenticated && isRootOrLogin) {
       navigate('/d/students');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
+
+  console.log("I am Login Page")
 
 
   return (
     <>
       {verificationStatus.isVerificationInProgress && <h3>Loading for Login....</h3>}
-      {(verificationStatus.isAuthenticated || verificationStatus.isVeificationFails) && <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      {!verificationStatus.isAuthenticated && <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
           <div className="hidden md:block bg-gray-200">
             <img src="/melzo_logo.png?height=600&width=600" alt="School" className="object-cover w-full h-full" />

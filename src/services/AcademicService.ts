@@ -1,19 +1,76 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import ApiService from "./ApiService"
 import { Class } from "@/types/class"
-import { AcademicYear } from "@/types/academic"
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
+import { AcademicClasses } from "@/types/academic"
 
-// Create a new class
-export const createClass = createAsyncThunk<Class, Omit<Class, "id">>(
+
+/**
+ * 
+ * RTK Query for query which are simeple to execute and need to caching  
+ */
+
+export const AcademicApi = createApi({
+  reducerPath: 'AcademicApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: "http://localhost:3333/api/v1/",
+    prepareHeaders: (headers, { getState }) => {
+      headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
+      return headers
+    },
+  }),
+  endpoints: (builder) => ({
+    getAcademicClasses: builder.query<AcademicClasses[], number>({
+      query: (schoolId) => ({
+        url: `/classes/${schoolId}`,
+        method: "GET",
+      }),
+    })
+  })
+})
+
+export const { useGetAcademicClassesQuery } = AcademicApi;
+
+/**
+ *  
+ *   Query using Thunk for complicated one , which need some operation after or before trigger query 
+ */
+
+
+export const createClasses = createAsyncThunk<Class[], Omit<Class, 'id' | 'school_id'>[]>(
   "academic/createClass",
   async (newClass, { rejectWithValue }) => {
     try {
-      const response = await ApiService.post("/class", newClass)
+      const response = await ApiService.post('/classes', newClass)
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to create class")
     }
   },
+)
+
+export const createDivision = createAsyncThunk<Class[], Omit<Class, 'id' | 'school_id'>>(
+  "academic/createDivision",
+  async (paylaod, { rejectWithValue }) => {
+    try {
+      const res = await ApiService.post('class/division', paylaod);
+      return res.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || "Failed to create class")
+    }
+  }
+)
+
+export const editDivision = createAsyncThunk<Class[], {aliases : string | null , class_id : number}>(
+  "academic/createDivision",
+  async (paylaod, { rejectWithValue }) => {
+    try {
+      const res = await ApiService.put(`class/${paylaod.class_id}`, paylaod);
+      return res.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || "Failed to create class")
+    }
+  }
 )
 
 // Get all classes for a school

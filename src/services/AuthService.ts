@@ -27,18 +27,19 @@ export const Authapi = createApi({
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          dispatch(setCredentialsForVerificationStatus({
-            isVerificationInProgress: true,
-            isVeificationFails: false,
-            verificationError: null,
-            isVerificationSuccess: false
-          }))
+          // dispatch(setCredentialsForVerificationStatus({
+          //   isVerificationInProgress: true,
+          //   isVerificationFails: false,
+          //   verificationError: null,
+          //   isVerificationSuccess: false
+          // }))
+          console.log("I am triggering dispatch !@@")
 
           const { data } = await queryFulfilled
 
           dispatch(setCredentialsForVerificationStatus({
             isVerificationInProgress: false,
-            isVeificationFails: false,
+            isVerificationFails: false,
             verificationError: null,
             isVerificationSuccess: true
           }))
@@ -51,39 +52,29 @@ export const Authapi = createApi({
 
         } catch (error) {
           console.log("Check this error====>" , error)
-          // window.location.href = '/'
-          // console.log("Verification fails" , error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
+            isVerificationFails: true,
             isVerificationInProgress: false,
-            isVeificationFails: true,
             verificationError: error,
             isVerificationSuccess: false
           }))
-        } finally {
-          // localStorage.removeItem('access_token')
-          // dispatch(setCredentialsForVerificationStatus({
-          //   isVerificationInProgress: false,
-          //   isVeificationFails: true,
-          //   verificationError: null,
-          //   isVerificationSuccess: false
-          // }))
-        }
+        } 
       },
     }),
-    login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
-      query: (credentials) => ({
-        url: "login",
-        method: "POST",
-        body: credentials,
-      }),
-    }),
+    // login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
+    //   query: (credentials) => ({
+    //     url: "login",
+    //     method: "POST",
+    //     body: credentials,
+    //   }),
+    // }),
     // Add more endpoints as needed for your school ERP system
   }
   ),
 })
 
-export const { useVerifyQuery } = Authapi
+export const { useVerifyQuery , useLazyVerifyQuery } = Authapi
 
 
 /**
