@@ -36,8 +36,8 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader>
+    <Sidebar  variant="sidebar" collapsible="icon">
+      <SidebarHeader className="p-2 bg-white rounded-lg">
         <div className="flex items-center justify-center p-2 bg-white rounded-lg">
           {isCollapsed ? (
             <img
@@ -45,7 +45,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
               alt="Product logo"
               width={70}
               height={70}
-              className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-blue-500"
+              className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
             />
           ) : (
             <>
@@ -54,7 +54,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
                 alt="School Logo"
                 width={70}
                 height={60}
-                className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-blue-500"
+                className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
               />
               <div className="h-16 w-[2px] bg-black mx-2"></div>
               <img
@@ -62,16 +62,16 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
                 alt="Product logo"
                 width={70}
                 height={60}
-                className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-blue-500"
+                className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
               />
             </>
           )}
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-2 bg-white rounded-lg">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu  >
               {SideBarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -86,11 +86,11 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2 bg-white rounded-lg">
         <SidebarGroup>
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu >
               {SideBarFooter.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

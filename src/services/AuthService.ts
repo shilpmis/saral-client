@@ -13,7 +13,7 @@ import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/sli
 export const Authapi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1", // Updated to match your API URL
+    baseUrl: "http://localhost:3333/api/v1/", // Updated to match your API URL
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
       return headers
@@ -51,7 +51,6 @@ export const Authapi = createApi({
           }))
 
         } catch (error) {
-          console.log("Check this error====>", error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
             isVerificationFails: true,
