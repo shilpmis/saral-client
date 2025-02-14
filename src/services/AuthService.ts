@@ -11,7 +11,7 @@ import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/sli
  */
 
 export const Authapi = createApi({
-  reducerPath : "authApi",
+  reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1/", // Updated to match your API URL
     prepareHeaders: (headers, { getState }) => {
@@ -27,18 +27,19 @@ export const Authapi = createApi({
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          dispatch(setCredentialsForVerificationStatus({
-            isVerificationInProgress: true,
-            isVeificationFails: false,
-            verificationError: null,
-            isVerificationSuccess: false
-          }))
+          // dispatch(setCredentialsForVerificationStatus({
+          //   isVerificationInProgress: true,
+          //   isVerificationFails: false,
+          //   verificationError: null,
+          //   isVerificationSuccess: false
+          // }))
+          console.log("I am triggering dispatch !@@")
 
           const { data } = await queryFulfilled
 
           dispatch(setCredentialsForVerificationStatus({
             isVerificationInProgress: false,
-            isVeificationFails: false,
+            isVerificationFails: false,
             verificationError: null,
             isVerificationSuccess: true
           }))
@@ -50,38 +51,29 @@ export const Authapi = createApi({
           }))
 
         } catch (error) {
-          console.log("Check error while login====>" , error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
+            isVerificationFails: true,
             isVerificationInProgress: false,
-            isVeificationFails: true,
             verificationError: error,
             isVerificationSuccess: false
           }))
-        } finally {
-          // localStorage.removeItem('access_token')
-          // dispatch(setCredentialsForVerificationStatus({
-          //   isVerificationInProgress: false,
-          //   isVeificationFails: true,
-          //   verificationError: null,
-          //   isVerificationSuccess: false
-          // }))
         }
       },
     }),
-    login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
-      query: (credentials) => ({
-        url: "login",
-        method: "POST",
-        body: credentials,
-      }),
-    }),
+    // login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
+    //   query: (credentials) => ({
+    //     url: "login",
+    //     method: "POST",
+    //     body: credentials,
+    //   }),
+    // }),
     // Add more endpoints as needed for your school ERP system
   }
   ),
 })
 
-export const { useVerifyQuery } = Authapi
+export const { useVerifyQuery, useLazyVerifyQuery } = Authapi
 
 
 /**
@@ -98,7 +90,7 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
 
       // Store token properly
       ApiService.setTokenInLocal(token.token);
-      return { user , token };
+      return { user, token };
 
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Login failed");
@@ -108,8 +100,9 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
 
 export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
   try {
-    await ApiService.post("/logout", {});
+    await ApiService.get("/logout");
     ApiService.removeTokenFromLocal();
+    window.location.reload();
   } catch (error: any) {
     return rejectWithValue(error.response?.data || "Logout failed");
   }

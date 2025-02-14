@@ -32,9 +32,10 @@ interface AuthState {
   status: "idle" | "loading" | "succeeded" | "failed"
   error: string | null,
   isVerificationInProgress: boolean,
-  isVeificationFails: boolean,
+  isVerificationFails: boolean,
   verificationError: string | null
   isVerificationSuccess: boolean
+  isSignOutInProgress : boolean
 }
 
 const initialState: AuthState = {
@@ -45,9 +46,10 @@ const initialState: AuthState = {
   status: "idle",
   error: null,
   isVerificationInProgress: true,
-  isVeificationFails: false,
+  isVerificationFails: false,
   verificationError: null,
-  isVerificationSuccess: false
+  isVerificationSuccess: false,
+  isSignOutInProgress : false
 }
 
 const authSlice = createSlice({
@@ -61,18 +63,16 @@ const authSlice = createSlice({
       state.status = "succeeded";
     },
     setCredentialsForVerificationStatus: (state, action) => {
+      console.log("check actions" , action.payload)
       state.isVerificationInProgress = action.payload.isVerificationInProgress,
-        state.isVeificationFails = action.payload.isVeificationFails,
-        state.verificationError = action.payload.verificationError,
-        state.isVerificationSuccess = action.payload.isVerificationSuccess
+      state.isVerificationFails = action.payload.isVerificationFails,
+      state.verificationError = action.payload.verificationError,
+      state.isVerificationSuccess = action.payload.isVerificationSuccess
     },
-    setCredentialsForVerification: () => {
-
-    }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(login.pending, (state) => {
+      .addCase(login.pending, (state , action) => {
         state.status = "loading"
       })
       .addCase(login.fulfilled, (state, action) => {
@@ -82,14 +82,16 @@ const authSlice = createSlice({
         // state.school = action.payload.user,
         state.token = action.payload.token
       })
-      .addCase(login.rejected, (state, action) => {
+      .addCase(logout.pending, (state, action) => {
         state.status = "failed"
-        state.error = action.payload as string
+        state.isSignOutInProgress = true
+        // state.error = action.payload as string
       })
       .addCase(logout.fulfilled, (state) => {
         state.isAuthenticated = false
         state.user = null
         state.token = null
+        state.isSignOutInProgress = true
       })
   },
 })
@@ -102,6 +104,6 @@ export const selectAuthError = (state: RootState) => state.auth.error
 
 export const selectAuthState = (state: RootState) => state.auth
 
-export const { setCredentials, setCredentialsForVerificationStatus, setCredentialsForVerification } = authSlice.actions;
+export const { setCredentials, setCredentialsForVerificationStatus } = authSlice.actions;
 export default authSlice.reducer
 

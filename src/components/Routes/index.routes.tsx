@@ -28,6 +28,7 @@ import { useEffect } from "react";
 import { useVerifyQuery } from "@/services/AuthService";
 import LeaveManagement from "@/components/Leave/LeaveManagement";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
+import DashboardPage from "@/pages/Dashboard";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -50,6 +51,9 @@ export default function RootRoute() {
 
           <Route path="/d">
             <Route element={<AdminLayout />}>
+
+              <Route path="" element={<DashboardPage />} />
+
               <Route path="students" element={<Students />} />
 
               <Route path="staff" element={<Staff />} />
