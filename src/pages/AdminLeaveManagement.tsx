@@ -139,7 +139,7 @@ const AdminLeaveManagement: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Leave Requests Management</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary mb-4 sm:mb-0">Leave Requests Management</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between mb-4">

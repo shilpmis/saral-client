@@ -447,15 +447,14 @@ const mockStudents: Student[] = [
 ];
 
 const Students: React.FC = () => {
-  //all useState here
   const [selectedClass, setSelectedClass] = useState<string | undefined>();
   const [searchValue, setSearchValue] = useState<string>("");
   const [filterData, setfilterData] = useState<Student[]>([]);
-  const [message, setMessageData] = useState<no_record_found[]>([]); //this useState for msg if table has no desired data
-  const [mainData, setMainData] = useState<Student[]>(mockStudents); // all mockStudent data store here for futher use if no any filter apply then show only row data
+  const [message, setMessageData] = useState<no_record_found[]>([]);
+  const [mainData, setMainData] = useState<Student[]>(mockStudents);
   const [perticularClassSearch, setperticularClassSearch] = useState<Student[]>(
     []
-  ); // this is for filter through
+  );
   const [perticularDivisionSearch, setperticularDivisionSearch] = useState<
     Student[]
   >([]);
@@ -465,14 +464,8 @@ const Students: React.FC = () => {
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [students, setStudents] = useState<Student[]>(mockStudents);
   const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
-  const [fileName, setFileName] = useState<string |null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const filteredStudents = students.filter(
-    (student) =>
-      // (!selectedClass || student.admission_std === selectedClass) &&
-      !selectedDivision || student.division === selectedDivision
-  );
 
   const handleAddStudent = (newStudentData: StudentFormData) => {
     const newStudent: Student = {
@@ -531,7 +524,6 @@ const Students: React.FC = () => {
       perticularClassSearch.length !== 0 &&
       perticularDivisionSearch.length !== 0
     ) {
-      console.log("teri maa ki chut");
 
       let search_filters_data: Student[] = perticularDivisionSearch;
       let result: any = search_filters_data.filter((person) => {
@@ -571,17 +563,6 @@ const Students: React.FC = () => {
       }
     }
   };
-  useEffect(() => {}, [filterData]);
-
-  useEffect(() => {}, [message]);
-
-  useEffect(() => {}, [perticularClassSearch]);
-
-  useEffect(() => {
-    console.log(perticularDivisionSearch);
-  }, [perticularDivisionSearch]);
-
-  //search filter ends here
 
   const handleClassFilter = (value: string) => {
     if (value === "All") {
@@ -622,22 +603,21 @@ const Students: React.FC = () => {
 
   const handleChooseFile = () => {
     fileInputRef.current?.click();
-   }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFileName(file.name)
-     
+      setFileName(file.name);
     }
-   };
+  };
 
-   const handleDownloadDemo = () => {
+  const handleDownloadDemo = () => {
     const demoExcelUrl = "/path/to/demo-excel-file.xlsx";
     const link = document.createElement("a");
     link.href = demoExcelUrl;
-    link.download = "demo-excel-file.xlsx"; 
-    link.click(); 
+    link.download = "demo-excel-file.xlsx";
+    link.click();
   };
 
   return (
@@ -667,39 +647,48 @@ const Students: React.FC = () => {
 
           <Dialog>
             <DialogTrigger asChild>
-            <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Upload Excel
-          </Button>
+              <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" /> Upload Excel
+              </Button>
             </DialogTrigger>
             <DialogContent>
-          <DialogTitle>Upload Excel File</DialogTitle>
+              <DialogTitle>Upload Excel File</DialogTitle>
 
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={handleDownloadDemo} className='w-1/2 mr-2'>Download Demo Excel Sheet
-            </Button>
-            <Button variant="outline" onClick={handleChooseFile} className='w-1/2 mr-2'>
-            Choose Excel File
-          </Button>
-           
-            </div>
-              
-      <input
-        ref={fileInputRef}
-        id="excel-file"
-        type="file"
-        accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
-        className="hidden"
-        onChange={handleFileChange}
-      />  
-           {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
-           <div className='flex justify-end'>
-           <Button className='w-1/2'>Upload
-            </Button>
-            </div>
-      </DialogContent>
+              <div className="flex justify-between mt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadDemo}
+                  className="w-1/2 mr-2"
+                >
+                  Download Demo Excel Sheet
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleChooseFile}
+                  className="w-1/2 mr-2"
+                >
+                  Choose Excel File
+                </Button>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                id="excel-file"
+                type="file"
+                accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              {fileName && (
+                <p className="text-sm text-muted-foreground mt-2">{fileName}</p>
+              )}
+              <div className="flex justify-end">
+                <Button className="w-1/2">Upload</Button>
+              </div>
+            </DialogContent>
           </Dialog>
 
-          <Button variant="outline" >
+          <Button variant="outline">
             <FileDown className="mr-2 h-4 w-4" /> Download Excel
           </Button>
 
@@ -731,7 +720,7 @@ const Students: React.FC = () => {
             className="max-w-sm"
           />
           <div className="flex gap-2">
-          <Select onValueChange={(e: any) => handleClassFilter(e)}>
+            <Select onValueChange={(e: any) => handleClassFilter(e)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
