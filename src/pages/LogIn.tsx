@@ -75,7 +75,7 @@ export default function Login() {
     const isRootOrLogin = pathname === '/' || pathname === '/login';
 
     if (isAuthenticated && isRootOrLogin) {
-      navigate('/d/students');
+      navigate('/d/');
     }
   }, [isAuthenticated]);
 
