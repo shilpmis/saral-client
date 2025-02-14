@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -9,17 +9,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, Upload, MoreHorizontal } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StaffForm } from "@/components/Staff/StaffForm";
 import StaffTable from "@/components/Staff/StaffTable";
+import { StaffStatus } from "@/types/staff";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Staff {
   id: number;
@@ -277,6 +280,10 @@ export const Staff: React.FC = () => {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
   const [currentDisplayData, setCurrentDisplayData] = useState<Staff[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StaffStatus | null>(null);
+  const [fileName, setFileName] = useState<string |null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   const handleSearchFilter = (value: string) => {
     setSearchValue(value);
@@ -339,6 +346,27 @@ export const Staff: React.FC = () => {
     setIsStaffFormOpen(false);
   };
 
+   const handleChooseFile = () => {
+      fileInputRef.current?.click();
+     }
+  
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        setFileName(file.name)
+       
+      }
+     };
+  
+     const handleDownloadDemo = () => {
+      const demoExcelUrl = "/path/to/demo-excel-file.xlsx";
+      const link = document.createElement("a");
+      link.href = demoExcelUrl;
+      link.download = "demo-excel-file.xlsx"; 
+      link.click(); 
+    };
+  
+
   return (
     <div className="bg-white shadow-md rounded-lg p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -349,12 +377,59 @@ export const Staff: React.FC = () => {
           <Button onClick={handleAddStaff}>
             <Plus className="mr-2 h-4 w-4" /> Add Staff
           </Button>
-          <Button variant="outline">
-            <FileDown className="mr-2 h-4 w-4" /> Import
+
+          <Dialog>
+            <DialogTrigger asChild>
+            <Button variant="outline">
+            <Upload className="mr-2 h-4 w-4" /> Upload Excel
           </Button>
+            </DialogTrigger>
+            <DialogContent>
+          <DialogTitle>Upload Excel File</DialogTitle>
+
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={handleDownloadDemo} className='w-1/2 mr-2'>Download Demo Excel Sheet
+            </Button>
+            <Button variant="outline" onClick={handleChooseFile} className='w-1/2 mr-2'>
+            Choose Excel File
+          </Button>
+           
+            </div>
+              
+      <input
+        ref={fileInputRef}
+        id="excel-file"
+        type="file"
+        accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+        className="hidden"
+        onChange={handleFileChange}
+      />  
+           {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+           <div className='flex justify-end'>
+           <Button className='w-1/2'>Upload
+            </Button>
+            </div>
+      </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" >
+            <FileDown className="mr-2 h-4 w-4" /> Download Excel
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+         
         </div>
       </div>
-
+        
       <FilterOptions
         onSearchChange={handleSearchFilter}
         onStatusChange={handleStatusFilter}

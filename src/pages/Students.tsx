@@ -452,15 +452,9 @@ const Students: React.FC = () => {
   const [filterData, setfilterData] = useState<Student[]>([]);
   const [message, setMessageData] = useState<no_record_found[]>([]);
   const [mainData, setMainData] = useState<Student[]>(mockStudents);
-  const [perticularClassSearch, setperticularClassSearch] = useState<Student[]>(
-    []
-  );
-  const [perticularDivisionSearch, setperticularDivisionSearch] = useState<
-    Student[]
-  >([]);
-  const [selectedDivision, setSelectedDivision] = useState<
-    string | undefined
-  >();
+  const [perticularClassSearch, setperticularClassSearch] = useState<Student[]>([]);
+  const [perticularDivisionSearch, setperticularDivisionSearch] = useState<Student[]>([]);
+  const [selectedDivision, setSelectedDivision] = useState<string | undefined>();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [students, setStudents] = useState<Student[]>(mockStudents);
   const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
@@ -621,9 +615,9 @@ const Students: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Students</h1>
+    <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Students</h2>
         <div className="flex space-x-2">
           <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
             <DialogTrigger asChild>
