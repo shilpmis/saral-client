@@ -35,6 +35,7 @@ interface AuthState {
   isVerificationFails: boolean,
   verificationError: string | null
   isVerificationSuccess: boolean
+  isSignOutInProgress : boolean
 }
 
 const initialState: AuthState = {
@@ -47,7 +48,8 @@ const initialState: AuthState = {
   isVerificationInProgress: true,
   isVerificationFails: false,
   verificationError: null,
-  isVerificationSuccess: false
+  isVerificationSuccess: false,
+  isSignOutInProgress : false
 }
 
 const authSlice = createSlice({
@@ -80,14 +82,16 @@ const authSlice = createSlice({
         // state.school = action.payload.user,
         state.token = action.payload.token
       })
-      .addCase(login.rejected, (state, action) => {
+      .addCase(logout.pending, (state, action) => {
         state.status = "failed"
-        state.error = action.payload as string
+        state.isSignOutInProgress = true
+        // state.error = action.payload as string
       })
       .addCase(logout.fulfilled, (state) => {
         state.isAuthenticated = false
         state.user = null
         state.token = null
+        state.isSignOutInProgress = true
       })
   },
 })

@@ -11,7 +11,7 @@ import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/sli
  */
 
 export const Authapi = createApi({
-  reducerPath : "authApi",
+  reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1", // Updated to match your API URL
     prepareHeaders: (headers, { getState }) => {
@@ -51,7 +51,7 @@ export const Authapi = createApi({
           }))
 
         } catch (error) {
-          console.log("Check this error====>" , error)
+          console.log("Check this error====>", error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
             isVerificationFails: true,
@@ -59,7 +59,7 @@ export const Authapi = createApi({
             verificationError: error,
             isVerificationSuccess: false
           }))
-        } 
+        }
       },
     }),
     // login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
@@ -74,7 +74,7 @@ export const Authapi = createApi({
   ),
 })
 
-export const { useVerifyQuery , useLazyVerifyQuery } = Authapi
+export const { useVerifyQuery, useLazyVerifyQuery } = Authapi
 
 
 /**
@@ -91,7 +91,7 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
 
       // Store token properly
       ApiService.setTokenInLocal(token.token);
-      return { user , token };
+      return { user, token };
 
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Login failed");
@@ -101,8 +101,9 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
 
 export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
   try {
-    await ApiService.post("/logout", {});
+    await ApiService.get("/logout");
     ApiService.removeTokenFromLocal();
+    window.location.reload();
   } catch (error: any) {
     return rejectWithValue(error.response?.data || "Logout failed");
   }
