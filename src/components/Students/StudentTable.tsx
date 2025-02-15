@@ -22,9 +22,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import StudentForm, { type StudentFormData } from "./StudentForm";
+import { StudentFormData } from "@/utils/student.validation";
 
-interface Student extends StudentFormData {
+interface Student{
   address: ReactNode;
   division: ReactNode;
   name: ReactNode;
