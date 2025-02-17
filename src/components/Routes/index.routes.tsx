@@ -82,6 +82,7 @@ export default function RootRoute() {
               />
 
               <Route path="settings" element={<SettingsPage />}>
+                <Route path="" element={<GeneralSettings />} />
                 <Route path="general" element={<GeneralSettings />} />
                 <Route path="academic" element={<AcademicSettings />} />
                 <Route path="staff" element={<StaffSettings />} />
