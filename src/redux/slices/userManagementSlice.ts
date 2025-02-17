@@ -14,29 +14,6 @@ const initialState: UserManagementState = {
   error: null,
 }
 
-export const fetchUsers = createAsyncThunk<User[], void>(
-  "userManagement/fetchUsers",
-  async (): Promise<User[]> => {  // Explicitly return `User[]`
-    const response = await userManagementService.getUsers() as unknown as  UserApiResponse;
-    return response.data;  // ✅ Return only `data` array
-  }
-);
-
-
-
-export const addUser = createAsyncThunk("userManagement/addUser", async (user: Omit<User, "id">) => {
-  return await userManagementService.addUser(user)
-})
-
-export const updateUser = createAsyncThunk("userManagement/updateUser", async (user: User) => {
-  return await userManagementService.updateUser(user)
-})
-
-export const deleteUser = createAsyncThunk("userManagement/deleteUser", async (id: number) => {
-  await userManagementService.deleteUser(id)
-  return id
-})
-
 const userManagementSlice = createSlice({
   name: "userManagement",
   initialState,
@@ -71,4 +48,29 @@ const userManagementSlice = createSlice({
 })
 
 export default userManagementSlice.reducer
+
+
+export const fetchUsers = createAsyncThunk<User[], void>(
+  "userManagement/fetchUsers",
+  async (): Promise<User[]> => {  // Explicitly return `User[]`
+    const response = await userManagementService.getUsers() as unknown as  UserApiResponse;
+    return response.data;  // ✅ Return only `data` array
+  }
+);
+
+
+
+export const addUser = createAsyncThunk("userManagement/addUser", async (user: Omit<User, "id">) => {
+  return await userManagementService.addUser(user)
+})
+
+export const updateUser = createAsyncThunk("userManagement/updateUser", async (user: User) => {
+  return await userManagementService.updateUser(user)
+})
+
+export const deleteUser = createAsyncThunk("userManagement/deleteUser", async (id: number) => {
+  await userManagementService.deleteUser(id)
+  return id
+})
+
 

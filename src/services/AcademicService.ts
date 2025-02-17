@@ -3,6 +3,7 @@ import ApiService from "./ApiService"
 import { Class } from "@/types/class"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { AcademicClasses } from "@/types/academic"
+import { setAcademicClasses } from "@/redux/slices/academicSlice"
 
 
 /**
@@ -25,11 +26,19 @@ export const AcademicApi = createApi({
         url: `/classes/${schoolId}`,
         method: "GET",
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(setAcademicClasses([...data]))
+        } catch (error) {
+          console.log("Error while fetching academic classes", error)
+        }
+      }
     })
   })
 })
 
-export const { useGetAcademicClassesQuery } = AcademicApi;
+export const { useGetAcademicClassesQuery , useLazyGetAcademicClassesQuery } = AcademicApi;
 
 /**
  *  

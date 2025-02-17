@@ -2,9 +2,11 @@ import { createClasses } from "@/services/AcademicService"
 import { AcademicClasses } from "@/types/academic"
 import { Class } from "@/types/class"
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
+import type { RootState } from "../store"
+
 
 interface AcademicState {
-  academicClasses: AcademicClasses | null
+  academicClasses: AcademicClasses[] | null
   classes: Class[]
   loading: boolean
   error: string | null
@@ -21,6 +23,9 @@ const academicSlice = createSlice({
   name: "academic",
   initialState,
   reducers: {
+    setAcademicClasses : (state , action) =>{
+      state.academicClasses = action.payload
+    }
     // setAcademicYear: (state, action: PayloadAction<AcademicYear>) => {
     //   state.academicClasses = action.payload
     // },
@@ -58,8 +63,10 @@ const academicSlice = createSlice({
   }
 })
 
-export const {  } =
+export const { setAcademicClasses } =
   academicSlice.actions
+
+export const selectAcademicClasses = (state : RootState) => state.academic.academicClasses   
 
 export default academicSlice.reducer
 
