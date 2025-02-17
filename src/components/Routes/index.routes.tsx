@@ -29,6 +29,8 @@ import { useVerifyQuery } from "@/services/AuthService";
 import LeaveManagement from "@/components/Leave/LeaveManagement";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
+import AdminAttendanceView from "../../pages/AdminAttendance";
+import StudentAttendanceView from "@/pages/StudentAttendance";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -76,10 +78,9 @@ export default function RootRoute() {
                 />
                 }
               />
-              <Route
-                path="admin-leave-management"
-                element={<AdminLeaveManagement />}
-              />
+              <Route path="admin-leave-management" element={<AdminLeaveManagement />}/>
+              <Route path="attendance" element={<AdminAttendanceView/>} />
+              <Route path="admin-attendance-mangement" element={<StudentAttendanceView/>} />
 
               <Route path="settings" element={<SettingsPage />}>
                 <Route path="" element={<GeneralSettings />} />
