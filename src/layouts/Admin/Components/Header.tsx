@@ -76,31 +76,31 @@ export default function Header() {
       </DropdownMenu>
 
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
-      <DialogContent className="max-w-md rounded-2xl shadow-lg">
-        <DialogHeader className="text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 10 }}
-            className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
-          >
-            <AlertTriangle className="text-red-600 w-7 h-7" />
-          </motion.div>
-          <DialogTitle className="text-2xl font-bold text-gray-800">Logout Confirmation</DialogTitle>
-          <DialogDescription className="text-gray-600">
-            Are you sure you want to logout? You will be redirected to the login page.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="mt-4 flex justify-center space-x-4">
-          <Button type="button" variant="outline" onClick={() => setIsLogoutDialogOpen(false)} className="px-6 py-2 rounded-lg">
-            Cancel
-          </Button>
-          <Button type="button" variant="destructive" onClick={handleLogout} className="px-6 py-2 rounded-lg bg-red-600 text-white">
-            Logout
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DialogContent className="max-w-md rounded-2xl shadow-lg">
+          <DialogHeader className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 10 }}
+              className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
+            >
+              <AlertTriangle className="text-red-600 w-7 h-7" />
+            </motion.div>
+            <DialogTitle className="text-2xl font-bold text-gray-800">Logout Confirmation</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Are you sure you want to logout? You will be redirected to the login page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex justify-center space-x-4">
+            <Button type="button" variant="outline" onClick={() => setIsLogoutDialogOpen(false)} className="px-6 py-2 rounded-lg">
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleLogout} className="px-6 py-2 rounded-lg bg-red-600 text-white">
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
