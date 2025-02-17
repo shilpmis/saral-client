@@ -7,6 +7,7 @@ import { Outlet, useNavigate } from "react-router-dom"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectVerificationStatus } from "@/redux/slices/authSlice"
 import AppSidebar from "./Components/Appsidebar"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function AdminLayout() {
   const verificationStatus = useAppSelector(selectVerificationStatus)
@@ -42,6 +43,7 @@ function SidebarContent() {
         <div className="p-3 w-full h-auto mt-6">
           <Outlet />
         </div>
+        <Toaster/>
       </main>
     </>
   )

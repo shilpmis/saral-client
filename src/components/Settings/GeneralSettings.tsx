@@ -15,6 +15,8 @@ import { selectCurrentUser } from '@/redux/slices/authSlice'
 import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
+// import { useToast } from "@/components/hooks/use-toast"
+import { toast } from '@/hooks/use-toast'
 
 
 
@@ -116,7 +118,18 @@ export default function GeneralSettings() {
     if (data?.schoolType !== values.schoolType.trim()) payload.school_type = values.schoolType.trim()
     if (data?.establishedYear !== values.establishedYear.trim()) payload.established_year = values.establishedYear.trim()
 
-    const updated_school = await dispatch(updateSchoolDetails({ id: user!.schoolId, schoolData: payload }));
+    const updated_school = await dispatch(updateSchoolDetails({ id: user!.schoolId, schoolData: payload })); 
+    if(updated_school?.meta.requestStatus === "rejected"){
+      toast({
+        variant: "destructive",
+        title: `Error :: ${updated_school.payload.message} ! `
+      })
+    }else{
+      toast({
+        variant: "default",
+        title: "Basic School Details updated Succesfully ! ",
+      })
+    }
     setLoading(prev => ({ ...prev, basicSchoolData: false }))
 
   }
