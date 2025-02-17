@@ -1,120 +1,133 @@
-"use client"
+/**
+ * 
+ * TODO : 
+ * 
+ * - Set Default selection for class at first time and also after re-rendering of component (use localhost to store selected class)
+ * - Make search filter works 
+ * - make pagination work , by fetching data as per page , backend api has been created for this , need to manage everything
+ *   at front end side only 
+ * - Code for Add student , update student (form UI has been created with UI and validation)
+ * - Code for Upload excle (Advance task)
+ * 
+ */
 
 import type React from "react"
-import { useState, useRef, useCallback, useMemo } from "react"
+import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, FileDown } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, FileDown, Edit, Trash } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import type { StudentFormData } from "@/utils/student.validation"
 import StudentForm from "@/components/Students/StudentForm"
 import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
+import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { selectAuthState } from "@/redux/slices/authSlice"
+import { AcademicClasses, Division } from "@/types/academic"
+import { useLazyFetchStudentForClassQuery } from "@/services/StundetServices"
+import { PageDetailsForStudents, Student } from "@/types/student"
+import StudentTable from "@/components/Students/StudentTable"
 
-interface Student {
-  id: string
-  name: string
-  class: string
-  division: string
-  rollNumber: string
-  gender: string
-  dateOfBirth: string
-  contactNumber: string
-  email: string
-  address: string
-}
 
-// Mock data and API functions
-const mockStudents: Student[] = [
-  // ... (keep the existing mock data)
-]
-
-const mockDivisions = {
-  "1": ["A", "B"],
-  "2": ["A", "B", "C"],
-  // ... add more classes and their divisions
-}
-
-const fetchStudents = async (classId: string, division: string): Promise<Student[]> => {
-  // Simulating API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const filteredStudents = mockStudents.filter(
-        (student) => student.class === classId && student.division === division,
-      )
-      resolve(filteredStudents)
-    }, 500)
-  })
-}
 
 export const Students: React.FC = () => {
-  const [selectedClass, setSelectedClass] = useState<string>("")
-  const [selectedDivision, setSelectedDivision] = useState<string>("")
+
+  const dispatch = useAppDispatch()
+  const authState = useAppSelector(selectAuthState)
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+
+  const [getAcademicClasses,
+    { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass }] = useLazyGetAcademicClassesQuery();
+  const [getStudentForClass,
+    { data: studentDataForSelectedClass, isLoading: isLoadingForStudents, isError: isErrorWhileFetchingStudents, error: errorWhileFetchingStudents }] = useLazyFetchStudentForClassQuery();
+
+  const [selectedClass, setSelectedClass] = useState<string>('')
+  const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [searchValue, setSearchValue] = useState<string>("")
-  const [students, setStudents] = useState<Student[]>(mockStudents)
+
+  const [studentForSelectedClass, setStudentForSelectedClass] = useState<Student[] | null>(null);
+  const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null);
+  const [paginationDataForSelectedClass, setPaginationDataForSelectedClass] = useState<PageDetailsForStudents | null>(null);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
-    setSelectedDivision("")
+    setSelectedDivision(null)
+
+    // Filter Divition
   }, [])
 
-  const handleDivisionChange = useCallback(
-    async (value: string) => {
-      setSelectedDivision(value)
-      if (selectedClass && value) {
-        const fetchedStudents = await fetchStudents(selectedClass, value)
-        setStudents(fetchedStudents)
-      }
-    },
-    [selectedClass],
-  )
+  const handleDivisionChange = async (value: string) => {
+    if (AcademicClasses) {
+
+      let selectedDiv = AcademicClasses
+        .filter((cls) => cls.class == parseInt(selectedClass))[0].divisions
+        .filter((div) => div.id == parseInt(value))
+      setSelectedDivision(selectedDiv[0]);
+      /**
+       * Fetch Student while division get change  
+       */
+      getStudentForClass({ class_id: parseInt(value) });
+    }
+  }
 
   const handleSearchFilter = useCallback((value: string) => {
     setSearchValue(value)
   }, [])
 
   const filteredStudents = useMemo(() => {
-    return students.filter((student) =>
-      Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
-    )
-  }, [students, searchValue])
+    // return studentForSelectedClass.filter((student) =>
+    //   Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
+    // )
+  }, [studentForSelectedClass, searchValue])
 
-  const availableDivisions = useMemo(() => {
-    return selectedClass ? mockDivisions[selectedClass as keyof typeof mockDivisions] || [] : []
+  const availableDivisions = useMemo<AcademicClasses | null>(() => {
+    if (AcademicClasses && selectedClass) {
+      return AcademicClasses!.filter((cls) => {
+        if ((cls.class).toString() === selectedClass) {
+          return cls
+        }
+      })[0]
+    } else {
+      return null
+    }
   }, [selectedClass])
 
   const handleAddStudent = useCallback(
-    (newStudentData: StudentFormData) => {
-      const newStudent: Student = {
-        ...newStudentData,
-        id: (students.length + 1).toString(),
-        class: newStudentData.admission_std,
-        rollNumber: (students.length + 1).toString().padStart(4, "0"),
-        gender: "Not specified",
-        dateOfBirth: "Not specified",
-        contactNumber: newStudentData.mobile_number_2,
-        email: "Not specified",
-      }
-      setStudents((prevStudents) => [...prevStudents, newStudent])
-      setIsAddStudentOpen(false)
+    // (newStudentData: StudentFormData) => {
+    //   const newStudent: Student = {
+    //     ...newStudentData,
+    //     id: (studentForSelectedClass.length + 1).toString(),
+    //     class: newStudentData.admission_std,
+    //     rollNumber: (studentForSelectedClass.length + 1).toString().padStart(4, "0"),
+    //     gender: "Not specified",
+    //     dateOfBirth: "Not specified",
+    //     contactNumber: newStudentData.mobile_number_2,
+    //     email: "Not specified",
+    //   }
+    //   setStudentForSelectedClass((prevStudents) => [...prevStudents, newStudent])
+    //   setIsAddStudentOpen(false)
+    // },
+    () => {
+
     },
-    [students],
+    [studentForSelectedClass],
   )
 
   const handleEditStudent = useCallback((updatedStudent: Student) => {
-    setStudents((prevStudents) =>
-      prevStudents.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)),
-    )
+    // setStudentForSelectedClass((prevStudents) =>
+    //   prevStudents.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)),
+    // )
   }, [])
 
-  const handleDeleteStudent = useCallback((studentId: string) => {
-    setStudents((prevStudents) => prevStudents.filter((student) => student.id !== studentId))
+  const handleDeleteStudent = useCallback((studentId: number) => {
+    // setStudentForSelectedClass((prevStudents) => prevStudents.filter((student) => student.id !== studentId))
   }, [])
 
   const handleChooseFile = useCallback(() => {
@@ -136,8 +149,26 @@ export const Students: React.FC = () => {
     link.click()
   }, [])
 
+  useEffect(() => {
+    if (!AcademicClasses) {
+      getAcademicClasses(authState.user!.schoolId)
+    }
+  }, [])
+
+
+  useEffect(() => {
+    if (studentDataForSelectedClass) {
+      setStudentForSelectedClass(studentDataForSelectedClass.data)
+      setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
+      setListedStudentForSelectedClass(studentDataForSelectedClass.data)
+    }
+  }, [studentDataForSelectedClass])
+
+
   return (
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
+
+      {/* Title bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Students</h2>
         <div className="flex space-x-2">
@@ -151,7 +182,9 @@ export const Students: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
               </DialogHeader>
-              <StudentForm onClose={() => setIsAddStudentOpen(false)} form_type="create" onSubmit={handleAddStudent} />
+              <div className="w-full lg:h-[600px] overflow-auto">
+                <StudentForm onClose={() => setIsAddStudentOpen(false)} form_type="create" onSubmit={handleAddStudent} />
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -204,7 +237,8 @@ export const Students: React.FC = () => {
         </div>
       </div>
 
-      <Card className="mb-6">
+      {/* Tool bar - search filter , class & divition selection */}
+      {AcademicClasses && (<Card className="mb-6">
         <CardHeader>
           <CardTitle>Search Students</CardTitle>
         </CardHeader>
@@ -222,73 +256,48 @@ export const Students: React.FC = () => {
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">All Classes</SelectItem>
-                {Array.from({ length: 12 }, (_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()}>
-                    Class {i + 1}
-                  </SelectItem>
-                ))}
+                <SelectItem value=" " disabled>Classes</SelectItem>
+                {AcademicClasses.map((cls, index) =>
+                  cls.divisions.length > 0 ? (   // Replace 'trur' with your actual condition
+                    <SelectItem key={index} value={(cls.class).toString()}>
+                      Class {cls.class}
+                    </SelectItem>
+                  ) : null   // Return null when the condition is false
+                )}
               </SelectContent>
             </Select>
-            <Select value={selectedDivision} onValueChange={handleDivisionChange}>
+            <Select value={selectedDivision ? selectedDivision!.id.toString() : " "} onValueChange={handleDivisionChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Division" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">All Divisions</SelectItem>
-                {availableDivisions.map((division) => (
-                  <SelectItem key={division} value={division}>
-                    Division {division}
+                <SelectItem value=" " disabled>Divisions</SelectItem>
+                {availableDivisions && availableDivisions.divisions.map((division, index) => (
+                  <SelectItem key={index} value={(division.id).toString()}>
+                    {`${division.division} ${division.aliases ? "-" + (division.aliases) : ""}`}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </CardContent>
-      </Card>
+      </Card>)}
+      {isLoadingForAcademicClasses &&
+        <div>
+          Academic classes are fetching ....
+        </div>}
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Division</TableHead>
-              <TableHead>Roll Number</TableHead>
-              <TableHead>Contact Number</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>
-                  <Link to={`/students/${student.id}`} className="text-blue-600 hover:underline">
-                    {student.name}
-                  </Link>
-                </TableCell>
-                <TableCell>{student.class}</TableCell>
-                <TableCell>{student.division}</TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.contactNumber}</TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm" onClick={() => handleEditStudent(student)}>
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteStudent(student.id)}
-                    className="ml-2"
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Table */}
+      {isLoadingForStudents && (<div>Student are fetching ....</div>)}
+
+      {studentDataForSelectedClass && listedStudentForSelectedClass && (
+        <StudentTable
+          selectedClass={selectedClass}
+          selectedDivision={selectedDivision}
+          filteredStudents={listedStudentForSelectedClass}
+          PageDetailsForStudents={paginationDataForSelectedClass}
+          onEdit={handleEditStudent} />)}
+
     </div>
   )
 }

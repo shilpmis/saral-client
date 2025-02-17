@@ -23,36 +23,35 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StudentFormData } from "@/utils/student.validation";
+import { PageDetailsForStudents, Student } from "@/types/student";
+import { editDivision } from "@/services/AcademicService";
+import { Division } from "@/types/academic";
+import { Link } from "react-router-dom";
 
-interface Student{
-  address: ReactNode;
-  division: ReactNode;
-  name: ReactNode;
-  id: string;
-  class: string;
-  rollNumber: string;
-  gender: string;
-  dateOfBirth: string;
-  contactNumber: string;
-  email: string;
-}
 
 interface StudentTableProps {
   filteredStudents: Student[];
   onEdit: (student: Student) => void;
-  onDelete: (studentId: string) => void;
+  onDelete?: (studentId: string) => void;
+  selectedClass : string,
+  selectedDivision : Division | null
+  PageDetailsForStudents : PageDetailsForStudents | null
 }
 
 export default function StudentTable({
   filteredStudents,
   onEdit,
-  onDelete,
+  selectedClass,
+  selectedDivision,
+  PageDetailsForStudents
+  // onDelete,
 }: StudentTableProps) {
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  const perPageData = 6;
+  const perPageData = PageDetailsForStudents?.per_page ||  6;
   const totalPages = Math.ceil(filteredStudents.length / perPageData);
 
   const paginatedData = (page: number): Student[] => {
@@ -70,16 +69,16 @@ export default function StudentTable({
   };
 
   const handleEditSubmit = (updatedStudentData: StudentFormData) => {
-    if (selectedStudent) {
-      const updatedStudent: Student = {
-        ...selectedStudent,
-        ...updatedStudentData,
-        class: updatedStudentData.admission_std,
-        contactNumber: updatedStudentData.mobile_number_2,
-      };
-      onEdit(updatedStudent);
-      setIsEditDialogOpen(false);
-    }
+    // if (selectedStudent) {
+    //   const updatedStudent: Student = {
+    //     ...selectedStudent,
+    //     ...updatedStudentData,
+    //     class: updatedStudentData.admission_std,
+    //     contactNumber: updatedStudentData.mobile_number_2,
+    //   };
+    //   onEdit(updatedStudent);
+    //   setIsEditDialogOpen(false);
+    // }
   };
 
   return (
@@ -91,47 +90,43 @@ export default function StudentTable({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Name in Guj</TableHead>
               <TableHead>Class</TableHead>
               <TableHead>Division</TableHead>
-              <TableHead>Roll Number</TableHead>
               <TableHead>Gender</TableHead>
-              <TableHead>Date of Birth</TableHead>
               <TableHead>Contact Number</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Address</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData(currentPage).map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.class}</TableCell>
-                <TableCell>{student.division}</TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.gender}</TableCell>
-                <TableCell>{student.dateOfBirth}</TableCell>
-                <TableCell>{student.contactNumber}</TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>{student.address}</TableCell>
+            {paginatedData(currentPage).map((student , index ) => (
+              <TableRow key={index}>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEdit(student)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onDelete(student.id)}>
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Link to={`/studentForSelectedClass/${student.id}`} className="hover:underline">
+                    {student.first_name} {student.middle_name} {student.last_name}
+                  </Link>
+                </TableCell>
+                <TableCell >{student.first_name_in_guj} {student.middle_name_in_guj} {student.last_name_in_guj}</TableCell>
+                <TableCell>{selectedClass}</TableCell>
+                <TableCell>{selectedDivision?.aliases}</TableCell>
+                <TableCell>{student.gender}</TableCell>
+                <TableCell>{student.primary_mobile}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mr-2"
+                    onClick={ ()=>{}}
+                  >
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+
+                  }}
+                    className="hover:bg-red-600 hover:text-white"
+                  >
+                    <Trash className="h-4 w-4 mr-1" /> Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -140,9 +135,9 @@ export default function StudentTable({
       )}
       <div className="w-full flex text-right p-1 mt-3">
         <SaralPagination
-          currentPage={currentPage}
+          currentPage={PageDetailsForStudents!.current_page}
           onPageChange={onPageChange}
-          totalPages={totalPages}
+          totalPages={PageDetailsForStudents!.last_page}
         />
       </div>
 

@@ -69,6 +69,69 @@ const studentSchema = z.object({
   IFSC_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
 })
 
+
+const personalSchema = z.object({
+  first_name: z.string().min(2, "First name is required"),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, "Last name is required"),
+  first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
+  middle_name_in_guj: z.string().optional(),
+  last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
+  gender: z.enum(["Male", "Female"]),
+  birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  birth_place: z.string().min(2, "Birth place is required"),
+  birth_place_in_guj: z.string().min(2, "Birth place in Gujarati is required"),
+  aadhar_no: z.number().int().positive("Aadhar number must be positive"),
+  aadhar_dise_no: z.number().int().positive("Aadhar DISE number must be positive"),
+});
+
+const familySchema = z.object({
+  father_name: z.string().min(2, "Father's name is required"),
+  father_name_in_guj: z.string().min(2, "Father's name in Gujarati is required"),
+  mother_name: z.string().min(2, "Mother's name is required"),
+  mother_name_in_guj: z.string().min(2, "Mother's name in Gujarati is required"),
+  primary_mobile: z.number().int().positive("Mobile number must be positive"),
+  secondary_mobile: z.number().int().positive("Secondary mobile number must be positive"),
+});
+
+const academicSchema = z.object({
+  gr_no: z.number().int().positive("GR number must be positive"),
+  roll_number: z.number().int().positive("Roll number must be positive"),
+  admission_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  admission_std: z.number().int().positive("Admission standard must be positive"),
+  class: z.string().min(1, "Class is required"),
+  division: z.string().min(1, "Division is required"),
+  privious_school: z.string().optional(),
+  privious_school_in_guj: z.string().optional(),
+});
+
+const otherSchema = z.object({
+  religiion: z.string().min(2, "Religion is required"),
+  religiion_in_guj: z.string().min(2, "Religion in Gujarati is required"),
+  caste: z.string().min(2, "Caste is required"),
+  caste_in_guj: z.string().min(2, "Caste in Gujarati is required"),
+  category: z.enum(["ST", "SC", "OBC", "OPEN"]),
+});
+
+const addressSchema = z.object({
+  address: z.string().min(5, "Address is required"),
+  district: z.string().min(2, "District is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  postal_code: z.string().regex(/^\d{6}$/, "Invalid postal code"),
+});
+
+const bankSchema = z.object({
+  bank_name: z.string().min(2, "Bank name is required"),
+  account_no: z.number().int().positive("Account number must be positive"),
+  IFSC_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
+});
+
+
 type StudentFormData = z.infer<typeof studentSchema>
 
 const mockClasses = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
@@ -79,15 +142,16 @@ const mockDivisions = {
 }
 
 interface StudentFormProps {
+  initialData?: StudentFormData
   onSubmit: (data: any) => void
   onClose : ()=> void
   form_type : "create" | "update"
-  initialData?: Partial<StudentFormData>
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
 
   const [activeTab, setActiveTab] = useState("personal")
+
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: initialData || {},
@@ -97,7 +161,14 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
     onSubmit(data)
   }
 
-  const handleNextTab = useCallback(() => {
+  const handleNextTab = useCallback(async() => {
+    
+    let isValidToChangeTab : boolean= false; 
+
+    if(activeTab === "personal"){
+      isValidToChangeTab = (await personalSchema.safeParseAsync(form.getValues())).success
+    }
+
     if (activeTab === "personal") setActiveTab("family")
     else if (activeTab === "family") setActiveTab("academic")
     else if (activeTab === "academic") setActiveTab("other")
