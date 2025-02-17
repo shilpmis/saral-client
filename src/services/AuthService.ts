@@ -27,14 +27,6 @@ export const Authapi = createApi({
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          // dispatch(setCredentialsForVerificationStatus({
-          //   isVerificationInProgress: true,
-          //   isVerificationFails: false,
-          //   verificationError: null,
-          //   isVerificationSuccess: false
-          // }))
-          console.log("I am triggering dispatch !@@")
-
           const { data } = await queryFulfilled
 
           dispatch(setCredentialsForVerificationStatus({
@@ -61,14 +53,6 @@ export const Authapi = createApi({
         }
       },
     }),
-    // login: builder.mutation<{ user: any; token: string }, { email: string; password: string }>({
-    //   query: (credentials) => ({
-    //     url: "login",
-    //     method: "POST",
-    //     body: credentials,
-    //   }),
-    // }),
-    // Add more endpoints as needed for your school ERP system
   }
   ),
 })
