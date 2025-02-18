@@ -1,105 +1,124 @@
-import * as z from "zod"
+import { z } from "zod";
 
-export const personalDetailsSchema = z.object({
-  name: z.string()
-    .min(5, { message: "Name must be at least 5 characters." })
-    .max(20, { message: "Name must be at most 20 characters." })
-    .regex(/^[A-Za-z\s]+$/, {message: "Name must contain only alphabet characters and spaces." }),
+// Define the schema for student data
+export const studentSchema = z.object({
+  // Personal Details
+  first_name: z.string().min(2, "First name is required"),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, "Last name is required"),
+  first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
+  middle_name_in_guj: z.string().optional(),
+  last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
+  gender: z.enum(["Male", "Female"]),
+  birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  birth_place: z.string().min(2, "Birth place is required"),
+  birth_place_in_guj: z.string().min(2, "Birth place in Gujarati is required"),
+  aadhar_no: z.number().int().positive("Aadhar number must be positive"),
+  aadhar_dise_no: z.number().int().positive("Aadhar DISE number must be positive"),
 
-  aadhar_dise_no: z.string()
-    .length(12, { message: "Aadhar/DISE number must be exactly 12 digits." })
-    .regex(/^\d{12}$/, { message: "Aadhar/DISE number must be a 12-digit number." }),
+  // Family Details
+  father_name: z.string().min(2, "Father's name is required"),
+  father_name_in_guj: z.string().min(2, "Father's name in Gujarati is required"),
+  mother_name: z.string().min(2, "Mother's name is required"),
+  mother_name_in_guj: z.string().min(2, "Mother's name in Gujarati is required"),
+  primary_mobile: z.number().int().positive("Mobile number must be positive"),
+  secondary_mobile: z.number().int().positive("Secondary mobile number must be positive"),
 
-  birth_place: z.string()
-    .min(3, { message: "Birth place must be at least 3 characters." })
-    .max(15, { message: "Birth place must be at most 15 characters." })
-    .regex(/^[A-Za-z\s]+$/, {message: "Birth place must contain only alphabet characters and spaces." }),
+  // Academic Details
+  gr_no: z.number().int().positive("GR number must be positive"),
+  roll_number: z.number().int().positive("Roll number must be positive"),
+  admission_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  admission_std: z.number().int().positive("Admission standard must be positive"),
+  class: z.string().min(1, "Class is required"),
+  division: z.string().min(1, "Division is required"),
+  privious_school: z.string().optional(),
+  privious_school_in_guj: z.string().optional(),
 
-  birth_place_in_guj: z.string()
-    .min(2, { message: "Birth place in Gujarati must be at least 2 characters." }),
+  // Other Details
+  religiion: z.string().min(2, "Religion is required"),
+  religiion_in_guj: z.string().min(2, "Religion in Gujarati is required"),
+  caste: z.string().min(2, "Caste is required"),
+  caste_in_guj: z.string().min(2, "Caste in Gujarati is required"),
+  category: z.enum(["ST", "SC", "OBC", "OPEN"]),
 
-  religion: z.string()
-    .min(3, { message: "Religion must be at least 3 characters." })
-    .max(7, { message: "Religion must be at most 7 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "Religion must contain only alphabet characters and spaces." }),
+  // Address Details
+  address: z.string().min(5, "Address is required"),
+  district: z.string().min(2, "District is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  postal_code: z.string().regex(/^\d{6}$/, "Invalid postal code"),
 
-  religion_in_guj: z.string()
-    .min(2, { message: "Religion in Gujarati must be at least 2 characters." }),
+  // Bank Details
+  bank_name: z.string().min(2, "Bank name is required"),
+  account_no: z.number().int().positive("Account number must be positive"),
+  IFSC_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
+})
 
-  caste: z.string()
-    .max(4, { message: "Caste must be at most 4 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "Caste must contain only alphabet characters and spaces." }),
 
-  caste_in_guj: z.string()
-    .min(2, { message: "Caste in Gujarati must be at least 2 characters." }),
+export const personalSchema = z.object({
+  first_name: z.string().min(2, "First name is required"),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, "Last name is required"),
+  first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
+  middle_name_in_guj: z.string().optional(),
+  last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
+  gender: z.enum(["Male", "Female"]),
+  birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  birth_place: z.string().min(2, "Birth place is required"),
+  birth_place_in_guj: z.string().min(2, "Birth place in Gujarati is required"),
+  aadhar_no: z.number().int().positive("Aadhar number must be positive"),
+  aadhar_dise_no: z.number().int().positive("Aadhar DISE number must be positive"),
+});
 
+export const familySchema = z.object({
+  father_name: z.string().min(2, "Father's name is required"),
+  father_name_in_guj: z.string().min(2, "Father's name in Gujarati is required"),
+  mother_name: z.string().min(2, "Mother's name is required"),
+  mother_name_in_guj: z.string().min(2, "Mother's name in Gujarati is required"),
+  primary_mobile: z.number().int().positive("Mobile number must be positive"),
+  secondary_mobile: z.number().int().positive("Secondary mobile number must be positive"),
+});
+
+export const academicSchema = z.object({
+  gr_no: z.number().int().positive("GR number must be positive"),
+  roll_number: z.number().int().positive("Roll number must be positive"),
+  admission_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
+  admission_std: z.number().int().positive("Admission standard must be positive"),
+  class: z.string().min(1, "Class is required"),
+  division: z.string().min(1, "Division is required"),
+  privious_school: z.string().optional(),
+  privious_school_in_guj: z.string().optional(),
+});
+
+export const otherSchema = z.object({
+  religiion: z.string().min(2, "Religion is required"),
+  religiion_in_guj: z.string().min(2, "Religion in Gujarati is required"),
+  caste: z.string().min(2, "Caste is required"),
+  caste_in_guj: z.string().min(2, "Caste in Gujarati is required"),
   category: z.enum(["ST", "SC", "OBC", "OPEN"]),
 });
 
-export const admissionDetailsSchema = z.object({
-  admission_date: z.string(), // Assuming date as a string, consider changing to `z.date()` if necessary.
-
-  admission_std: z.enum(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]),
-
-  division: z.enum(["A", "B", "C", "D", "E", "F", "G", "H"]),
-
-  mobile_number_2: z.string()
-    .regex(/^[6-9]\d{9}$/, { message: "Invalid mobile number. Must start with 6-9 and be 10 digits long." }),
-
-  previous_school: z.string()
-    .max(25, { message: "School name should not exceed 25 characters." })
-    .nullable()
-    .refine((val) => val === null || /^[A-Za-z0-9\s]+$/.test(val), {
-      message: "School name should only contain letters, numbers, and spaces.",
-    }),
-
-  previous_school_in_guj: z.string().nullable(),
-});
-
 export const addressSchema = z.object({
-  address: z.string()
-    .min(5, { message: "Address must be at least 5 characters." })
-    .max(50, { message: "Address must not exceed 50 characters." })
-    .regex(/^[A-Za-z0-9\s,.-]*$/, { message: "Address can contain letters, numbers, spaces, and basic punctuation." }),
-
-  district: z.string()
-    .min(3, { message: "District must be at least 3 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "District must contain only letters and spaces." }),
-
-  city: z.string()
-    .min(5, { message: "City must be at least 5 characters." })
-    .max(20, { message: "City must be at most 20 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "City must contain only alphabetic characters and spaces." }),
-
-  state: z.string()
-    .min(5, { message: "State must be at least 5 characters." })
-    .max(20, { message: "State must be at most 20 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "State must contain only alphabetic characters and spaces." }),
-
-  postal_code: z.string()
-    .length(6, { message: "Postal code must be exactly 6 digits." })
-    .regex(/^\d{6}$/, { message: "Postal code must contain only digits." }),
+  address: z.string().min(5, "Address is required"),
+  district: z.string().min(2, "District is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  postal_code: z.string().regex(/^\d{6}$/, "Invalid postal code"),
 });
 
-export const bankDetailsSchema = z.object({
-  bank_name: z.string()
-    .min(5, { message: "Bank name must be at least 5 characters." })
-    .max(15, { message: "Bank name must be at most 15 characters." })
-    .regex(/^[A-Za-z\s]+$/, { message: "Bank name must contain only alphabetic characters and spaces." }),
-
-  account_no: z.string()
-    .min(9, { message: "Account number must be at least 9 characters." })
-    .max(15, { message: "Account number must be at most 15 characters." })
-    .regex(/^\d+$/, { message: "Account number must contain only digits." }),
-
-  IFSC_code: z.string()
-    .length(11, { message: "IFSC code must be exactly 11 characters." })
-    .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, { message: "Invalid IFSC code format." }),
+export const bankSchema = z.object({
+  bank_name: z.string().min(2, "Bank name is required"),
+  account_no: z.number().int().positive("Account number must be positive"),
+  IFSC_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
 });
 
-export const studentFormSchema = personalDetailsSchema
-  .merge(admissionDetailsSchema)
-  .merge(addressSchema)
-  .merge(bankDetailsSchema);
 
-export type StudentFormData = z.infer<typeof studentFormSchema>;
+export type StudentFormData = z.infer<typeof studentSchema>

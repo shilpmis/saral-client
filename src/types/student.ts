@@ -10,11 +10,10 @@ export enum StudentStatus{
 
 
 export interface StudentMeta{
-  id: number
   aadhar_dise_no : BigInteger;
   birth_place : string;
   birth_place_in_guj : string;
-  religion : string;
+  religiion : string;
   religiion_in_guj: string;
   caste : string;
   caste_in_guj : string;
@@ -37,7 +36,6 @@ export interface StudentMeta{
 }
 
 export interface Student {
-    id : number;
     school_id : number;
     first_name : string;
     middle_name :string;
@@ -72,3 +70,12 @@ export interface PageDetailsForStudents {
   previous_page_url: string | null
 }
 
+export interface StudentEntry {
+  students_data: Student;
+  student_meta_data: StudentMeta;
+}
+
+export interface AddStudentsRequest {
+  class_id: number;
+  students: StudentEntry[];
+}
