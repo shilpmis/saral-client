@@ -17,6 +17,11 @@ import { AddPayrollForm } from "@/components/Payroll/AddPayrollForm"
 import { EditPayrollForm } from "@/components/Payroll/EditPayrollForm"
 import { PayrollPolicy, Policy } from "@/components/Payroll/PayrollPolicy"
 import PayrollTable from "@/components/Payroll/PayrollTable"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select"
+import { Label } from "@/components/ui/label"
+import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
 const initialPayrollData: PayrollEntry[] = [
   {
@@ -191,6 +196,7 @@ export const Payroll: React.FC = () => {
   const [isEditPayrollOpen, setIsEditPayrollOpen] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<PayrollEntry | null>(null)
   const [policies, setPolicies] = useState<Policy[]>([])
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleAddPayroll = (newEntry: PayrollEntry) => {
     setPayrollData([...payrollData, { ...newEntry, id: payrollData.length + 1 }])
@@ -201,13 +207,27 @@ export const Payroll: React.FC = () => {
     setPayrollData(payrollData.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry)))
     setIsEditPayrollOpen(false)
   }
-
+  
+  
+  const perPageData = 6;
+  const totalRequests = payrollData.length;
+    const totalPages = Math.ceil(totalRequests / perPageData);
+  
+    const paginatedData = (page: number): PayrollEntry[] => {
+      const startIndex = (page - 1) * perPageData;
+      return payrollData.slice(startIndex, startIndex + perPageData);
+    };
+  
+    const onPageChange = (updatedPage: number) => {
+      setCurrentPage(updatedPage);
+    };
+  
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">Payroll Management</h2>
-        <div className="space-x-2">
+        <h2 className="text:xl sm:text-2xl font-bold text-primary mb-4 sm:mb-0">Payroll Management</h2>
+        <div className="flex sm:flex:row space-x-2 sm:space-x-2 sm:justify-end">
           {/* Add Payroll */}
           <Dialog open={isAddPayrollOpen} onOpenChange={setIsAddPayrollOpen}>
             <DialogTrigger asChild>
@@ -233,7 +253,32 @@ export const Payroll: React.FC = () => {
       </div>
 
       <PayrollPolicy />
-
+      <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center gap-4">
+      <Label htmlFor="search" className="sr-only">
+        Search
+      </Label>
+      <Input
+        id="search"
+        placeholder="Search by name, role, category "
+        value={""}
+        className="max-w-sm"
+      />
+      <Select
+        value={""}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue
+            placeholder={"Filter By Status"}
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="All">All</SelectItem>
+          <SelectItem value={"Active"}>Active</SelectItem>
+          <SelectItem value={"Inactive"}>Inactive</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+      
         <div className="mt-8 w-full overflow-auto">
           <PayrollTable payrollData={initialPayrollData}/>
         </div>
@@ -255,6 +300,14 @@ export const Payroll: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+      <div className="mt-4 flex justify-between items-center">
+         <SaralPagination
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          totalPages={totalPages}
+        />
+                  
+      </div>
     </div>
   )
 }
