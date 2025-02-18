@@ -17,14 +17,14 @@ const SideBarItems = [
   { title: "Dashboard", url: "/d", icon: Home },
   { title: "Student", url: "/d/students", icon: Users },
   { title: "Staff", url: "/d/staff", icon: UserCheck },
-  { title: "Attendance", url: "/d/attendance", icon: ClipboardList},
-  { title: "Attendance Management", url: "/d/admin-attendance-mangement", icon: ClipboardList },
+  { title: "Mark Attendance ", url: "/d/mark-attendance", icon: ClipboardList },
   { title: "Leave", url: "/d/leave", icon: Bed },
   { title: "Payroll", url: "/d/payroll", icon: Landmark },
   { title: "Fees", url: "/d/fee", icon: IndianRupee },
   { title: "Time Table", url: "/d/timetable", icon: Clock },
   { title: "Result", url: "/d/results", icon: FileText },
-  { title: "Admin Leave Management", url: "/d/admin-leave-management", icon: Bed },
+  { title: "Attendance Management", url: "/d/admin-attendance-mangement", icon: ClipboardList},
+  { title: "Leave Management", url: "/d/admin-leave-management", icon: Bed },
 ]
 
 const SideBarFooter = [
