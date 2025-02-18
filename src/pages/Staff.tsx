@@ -1,72 +1,22 @@
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, FileDown, Upload, MoreHorizontal, Search } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { StaffForm } from "@/components/Staff/StaffForm"
+import StaffForm from "@/components/Staff/StaffForm"
+// import { StaffForm } from "@/components/Staff/StaffForm"
 import StaffTable from "@/components/Staff/StaffTable"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DialogDescription } from "@radix-ui/react-dialog"
+import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
+import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAuthState } from "@/redux/slices/authSlice"
+import { useLazyGetOtherStaffQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
 
-interface Staff {
-  id: number
-  name: string
-  email: string
-  mobile: number
-  address: string
-  designation: string
-  status: string
-  category: string
-}
-
-const teachingStaff: Staff[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    mobile: 1234567890,
-    address: "123 Main St",
-    designation: "Teacher",
-    status: "Active",
-    category: "teaching",
-  },
-  {
-    id: 2,
-    name: "Jane Doe",
-    email: "jane.doe@example.com",
-    mobile: 9876543210,
-    address: "456 Elm St",
-    designation: "Professor",
-    status: "Inactive",
-    category: "teaching",
-  },
-]
-
-const nonTeachingStaff: Staff[] = [
-  {
-    id: 3,
-    name: "Peter Jones",
-    email: "peter.jones@example.com",
-    mobile: 5551234567,
-    address: "789 Oak St",
-    designation: "Librarian",
-    status: "Active",
-    category: "non-teaching",
-  },
-  {
-    id: 4,
-    name: "Mary Brown",
-    email: "mary.brown@example.com",
-    mobile: 1112223333,
-    address: "101 Pine St",
-    designation: "Accountant",
-    status: "Inactive",
-    category: "non-teaching",
-  },
-]
 
 const FilterOptions: React.FC<{
   onSearchChange: (value: string) => void
@@ -101,36 +51,75 @@ const FilterOptions: React.FC<{
 }
 
 export const Staff: React.FC = () => {
+  const dispatch = useAppDispatch()
+  const authState = useAppSelector(selectAuthState)
+
+  const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
+  const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
+
   const [activeTab, setActiveTab] = useState<string>("teaching")
   const [isStaffFormOpen, setIsStaffFormOpen] = useState(false)
   const [searchValue, setSearchValue] = useState<string>("")
   const [statusValue, setStatusValue] = useState<string>("")
   const [staffFormMode, setStaffFormMode] = useState<"add" | "edit">("add")
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
-  const [currentDisplayData, setCurrentDisplayData] = useState<Staff[]>([])
+  const [selectedStaff, setSelectedStaff] = useState<StaffRole | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [currentDisplayDataForTeachers, setCurrentDisplayDataForTeachers]
+    = useState<{ satff: TeachingStaff[], page_meta: PageMeta } | null>(null)
+
+  const [currentDisplayDataForOtherStaff, setCurrentDisplayDataForOtherStaff]
+    = useState<{ satff: OtherStaff[], page_meta: PageMeta } | null>(null)
+
+  const [paginationMete, setPaginationMete] = useState<PageMeta | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
   const handleSearchFilter = (value: string) => {
-    setSearchValue(value)
-    setCurrentDisplayData([])
-    setStatusValue("")
-    const searchFiltersData = activeTab === "teaching" ? teachingStaff : nonTeachingStaff
-    const result = searchFiltersData.filter((person) =>
-      Object.values(person).some((field) => String(field).toLowerCase().includes(value.toLowerCase())),
-    )
-    setCurrentDisplayData(result)
+    // const searchValue = value.toLowerCase();
+    // setSearchValue(value);
+
+    // if (activeTab === 'teaching' && teachingStaff) {
+    //   const filteredTeachers = teachingStaff.filter((staff) =>
+    //     Object.values(staff).some((field) => 
+    //       String(field).toLowerCase().includes(searchValue)
+    //     )
+    //   );
+    //   setCurrentDisplayDataForTeachers(filteredTeachers);
+    // } else if (activeTab === 'non-teaching' && otherStaff) {
+    //   const filteredOthers = otherStaff.filter((staff) =>
+    //     Object.values(staff).some((field) => 
+    //       String(field).toLowerCase().includes(searchValue)
+    //     )
+    //   );
+    //   setCurrentDisplayDataForOtherStaff(filteredOthers);
+    // }
   }
 
   const handleStatusFilter = (value: string) => {
-    setStatusValue(value)
-    const filteredData = activeTab === "teaching" ? teachingStaff : nonTeachingStaff
-    if (value === "All") {
-      setCurrentDisplayData(filteredData)
-    } else {
-      const result = filteredData.filter((staff) => staff.status === value)
-      setCurrentDisplayData(result)
-    }
+    // setStatusValue(value);
+
+    // if (value === 'All') {
+    //   if (activeTab === 'teaching') {
+    //     setCurrentDisplayDataForTeachers(teachingStaff || null);
+    //   } else {
+    //     setCurrentDisplayDataForOtherStaff(otherStaff || null);
+    //   }
+    //   return;
+    // }
+
+    // if (activeTab === 'teaching' && teachingStaff) {
+    //   const filteredTeachers = teachingStaff.filter(
+    //     (staff) => staff.status === value
+    //   );
+    //   setCurrentDisplayDataForTeachers(filteredTeachers);
+    // } else if (activeTab === 'non-teaching' && otherStaff) {
+    //   const filteredOthers = otherStaff.filter(
+    //     (staff) => staff.status === value
+    //   );
+    //   setCurrentDisplayDataForOtherStaff(filteredOthers);
+    // }
   }
 
   const handleAddStaff = () => {
@@ -139,17 +128,16 @@ export const Staff: React.FC = () => {
     setIsStaffFormOpen(true)
   }
 
-  const handleEditStaff = (staff: Staff) => {
-    setStaffFormMode("edit")
-    setSelectedStaff({
-      ...staff,
-      category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
-    })
-    setIsStaffFormOpen(true)
+  const handleEditStaff = (staff_id: number) => {
+    // setStaffFormMode("edit")
+    // setSelectedStaff({
+    //   ...staff,
+    //   category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
+    // })
+    // setIsStaffFormOpen(true)
   }
 
   const handleStaffSubmit = (data: any) => {
-    console.log("Staff data submitted:", data)
     setIsStaffFormOpen(false)
   }
 
@@ -171,6 +159,50 @@ export const Staff: React.FC = () => {
     link.download = "demo-excel-file.xlsx"
     link.click()
   }
+
+  async function fetchDataForActiveTab(type: 'teaching' | 'non-teaching', page: number = 1) {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (type === 'teaching') {
+        const response = await getTeachingStaff({
+          school_id: authState.user!.schoolId,
+          page: page
+        });
+        if (response.data) {
+          setCurrentDisplayDataForTeachers({
+            satff: response.data.data,
+            page_meta: response.data.meta
+          });
+        }
+      } else {
+        const response = await getOtherStaff({
+          school_id: authState.user!.schoolId,
+          page: page
+        });
+        if (response.data)
+          setCurrentDisplayDataForOtherStaff({
+            satff: response.data.data,
+            page_meta: response.data.meta
+          });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function onPageChange(page: number) {
+    fetchDataForActiveTab(activeTab as 'teaching' | 'non-teaching', page);
+  }
+
+  useEffect(() => {
+    if (!currentDisplayDataForOtherStaff || !currentDisplayDataForTeachers) {
+      fetchDataForActiveTab(activeTab as 'teaching' | 'non-teaching', 1);
+    }
+  }, [activeTab]);
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full mx-auto">
@@ -216,7 +248,6 @@ export const Staff: React.FC = () => {
               <DropdownMenuItem>Print List</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
         </div>
       </div>
 
@@ -227,13 +258,15 @@ export const Staff: React.FC = () => {
         statusValue={statusValue}
       />
 
+      {error && (
+        <div className="text-red-500 mb-4">
+          {error}
+        </div>
+      )}
+
       <Tabs
         value={activeTab}
-        onValueChange={(value) => {
-          setActiveTab(value)
-          setStatusValue("")
-          setCurrentDisplayData([])
-        }}
+        onValueChange={(value) => setActiveTab(value)}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2">
@@ -241,16 +274,34 @@ export const Staff: React.FC = () => {
           <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
-          <StaffTable
-            staffList={currentDisplayData.length !== 0 ? currentDisplayData : teachingStaff}
-            onEdit={handleEditStaff}
-          />
+          {
+            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
+          }
+          {
+            currentDisplayDataForTeachers && (
+              <StaffTable
+                staffList={{ staff: currentDisplayDataForTeachers?.satff, page_meta: currentDisplayDataForTeachers?.page_meta }}
+                onEdit={handleEditStaff}
+                type="teaching"
+                onPageChange={onPageChange}
+              />
+            )
+          }
         </TabsContent>
         <TabsContent value="non-teaching">
-          <StaffTable
-            staffList={currentDisplayData.length !== 0 ? currentDisplayData : nonTeachingStaff}
-            onEdit={handleEditStaff}
-          />
+          {
+            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
+          }
+          {
+            currentDisplayDataForOtherStaff && (
+              <StaffTable
+                staffList={{ staff: currentDisplayDataForOtherStaff?.satff, page_meta: currentDisplayDataForOtherStaff?.page_meta }}
+                onEdit={handleEditStaff}
+                type="teaching"
+                onPageChange={onPageChange}
+              />
+            )
+          }
         </TabsContent>
       </Tabs>
 
@@ -262,8 +313,8 @@ export const Staff: React.FC = () => {
           <StaffForm
             onClose={() => setIsStaffFormOpen(false)}
             onSubmit={handleStaffSubmit}
-            mode={staffFormMode}
-          // initialData={selectedStaff || undefined}
+            formType="create"
+            // mode={staffFormMode}
           />
         </DialogContent>
       </Dialog>
@@ -296,4 +347,3 @@ export const Staff: React.FC = () => {
     </div>
   )
 }
-
