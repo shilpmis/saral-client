@@ -96,7 +96,7 @@ export default function StaffSettings() {
         role_id: null,
         formType: 'create',
         role_name: "",
-        role_type: 'teaching'
+        role_type: 'non-teaching'
       })
     }
     setIsDialogOpen(true)
@@ -107,7 +107,6 @@ export default function StaffSettings() {
   }
 
   const handleSubmit = async () => {
-    console.log("Check this I am inside")
 
     try {
       if (formForStaffRole.getValues('formType') === "edit") {
@@ -125,16 +124,24 @@ export default function StaffSettings() {
           description: `${formForStaffRole.getValues('role_name')} has been updated.`,
         })
       } else {
-        await dispatch(createStaffRole({
+        let new_staff = await dispatch(createStaffRole({
           role: formForStaffRole.getValues('role_name'),
           is_teaching_role: formForStaffRole.getValues('role_type') === 'teaching',
           school_id: authState.user!.schoolId
-        })).unwrap()
-        toast({
-          title: "Role Updated",
-          description: `${formForStaffRole.getValues('role_name')} has been created.`,
-        })
-        handleCloseDialog()
+        }))
+        if(new_staff.meta.requestStatus === 'rejected'){
+          toast({
+            variant : "destructive",
+            title: "Error !",
+            description: `${new_staff.payload.message} !`,
+          })
+        }else{
+          toast({
+            title: "Role Created !",
+            description: `${formForStaffRole.getValues('role_name')} has been created.`,
+          })
+          handleCloseDialog()
+        }
       }
     } catch (error) {
       toast({
@@ -170,7 +177,7 @@ export default function StaffSettings() {
   }, [])
 
 
-  
+
   if (isLoading) return <div>Loading...</div>
 
   return (
@@ -281,7 +288,11 @@ export default function StaffSettings() {
                     <FormItem>
                       <FormLabel>Role Type</FormLabel>
                       <FormControl>
-                        <Select {...field} disabled={formForStaffRole.getValues('formType') === "edit"}>
+                        <Select
+                          {...field}
+                          value={field.value}
+                          onValueChange={(value) => field.onChange(value)}
+                          disabled={formForStaffRole.getValues('formType') === "edit"}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select role type" />
                           </SelectTrigger>
