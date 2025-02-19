@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -110,6 +110,18 @@ export const Staff: React.FC = () => {
   const [currentDisplayData, setCurrentDisplayData] = useState<Staff[]>([])
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+//use effect 
+useEffect(()=>{
+if(activeTab === "teaching"){
+ setCurrentDisplayData(teachingStaff);
+  
+}
+else{
+  setCurrentDisplayData(nonTeachingStaff);
+}
+},[activeTab])
+
 
   const handleSearchFilter = (value: string) => {
     setSearchValue(value)
@@ -242,13 +254,13 @@ export const Staff: React.FC = () => {
         </TabsList>
         <TabsContent value="teaching">
           <StaffTable
-            staffList={currentDisplayData.length !== 0 ? currentDisplayData : teachingStaff}
+            staffList={currentDisplayData}
             onEdit={handleEditStaff}
           />
         </TabsContent>
         <TabsContent value="non-teaching">
           <StaffTable
-            staffList={currentDisplayData.length !== 0 ? currentDisplayData : nonTeachingStaff}
+            staffList={currentDisplayData}
             onEdit={handleEditStaff}
           />
         </TabsContent>
