@@ -20,8 +20,8 @@ export interface StudentMeta{
   category : 'ST' | 'SC' |'OBC' | 'OPEN';
   category_in_guj : string;
   admission_date : Date;
-  admission_std : 1| 2| 3| 4| 5| 6| 7| 8| 9| 10| 11| 12;
-  division: 'A' | 'B' | 'C' | 'D'| 'E'| 'F'| 'G'| 'H';
+  admission_class_id : Number;
+  // division: 'A' | 'B' | 'C' | 'D'| 'E'| 'F'| 'G'| 'H';
   secondary_mobile : BigInteger;
   privious_school : string;
   privious_school_in_guj : string;

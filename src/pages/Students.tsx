@@ -135,8 +135,7 @@ export const Students: React.FC = () => {
                 category: newStudentData.category,
                 category_in_guj: newStudentData.category_in_guj,
                 admission_date: newStudentData.admission_date,
-                admission_std: newStudentData.admission_std,
-                division: newStudentData.division,
+                admission_class_id: newStudentData.division,
                 secondary_mobile: newStudentData.secondary_mobile,
                 privious_school: newStudentData.privious_school,
                 privious_school_in_guj: newStudentData.privious_school_in_guj,
@@ -158,7 +157,7 @@ export const Students: React.FC = () => {
           description: "Student added successfully",
         })
         setIsAddStudentOpen(false)
-        getStudentForClass({ class_id: selectedDivision!.id })
+        getStudentForClass({ class_id: newStudentData.division })
       } catch (error) {
         console.log("error while adding student", error);
         toast({
