@@ -35,9 +35,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Console } from "console"
-
-
 
 
 const formSchemaForDivision = z.object({
@@ -99,7 +96,7 @@ export default function AcademicSettings() {
   const formForDivsion = useForm<z.infer<typeof formSchemaForDivision>>({
     resolver: zodResolver(formSchemaForDivision),
     defaultValues: {
-      class_id : null,   
+      class_id: null,
       class: newDivision?.class,
       division: newDivision?.division,
       aliases: newDivision?.aliases,
@@ -148,16 +145,15 @@ export default function AcademicSettings() {
     }
     // setAddingDivisionToClassId(classId)
     setIsDivisionForDialogOpen(true)
-    console.log("I am here ===>" , formForDivsion.getValues())
   }
 
-  const handleEditDivision = (classId: number, division: string, aliases: string , id : number) => {
+  const handleEditDivision = (classId: number, division: string, aliases: string, id: number) => {
     formForDivsion.reset({
       class: classId,
       division: division,
       aliases: aliases,
       formType: "edit",
-      class_id : id
+      class_id: id
     })
     setIsDivisionForDialogOpen(true);
   }
@@ -455,23 +451,24 @@ export default function AcademicSettings() {
                         <div className="flex gap-2 flex-wrap">
                           {std.divisions.map((division) => (
                             <Badge key={division.id} variant="secondary" className="flex items-center gap-1 p-3">
-                              ({division.class}- {division.division}) {division.aliases}
+                              <p>({division.class}- {division.division})</p> 
+                              <p>{division.aliases}</p>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-4 w-4 p-0 ml-1"
-                                // onClick={() => handleEditDivision(std.class, division.division, division.aliases ,division.id )}
+                                onClick={() => handleEditDivision(std.class, division.division, division.aliases, division.id)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
-                              <Button
+                              {/* <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-4 w-4 p-0"
                               // onClick={() => handleRemoveDivision(std.class, division.name)}
                               >
                                 <Trash2 className="h-3 w-3" />
-                              </Button>
+                              </Button> */}
                             </Badge>
                           ))}
                         </div>
@@ -574,7 +571,7 @@ export default function AcademicSettings() {
         <Dialog open={isDivisionForDialogOpen} onOpenChange={setIsDivisionForDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{formForDivsion.getValues().formType === 'create' ? "Add" : "Update"} Division</DialogTitle>
+              <DialogTitle>{formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division</DialogTitle>
               <DialogDescription>Confirm or modify the division alias.</DialogDescription>
             </DialogHeader>
             {<div className="grid gap-4 py-4">
@@ -625,7 +622,7 @@ export default function AcademicSettings() {
                       Cancel
                     </Button>
                     <Button onClick={confirmDivisionChanges}>
-                      {formForDivsion.getValues().formType === 'create' ? "Add" : "Update"} Division
+                      {formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division
                     </Button>
                   </DialogFooter>
                 </form>

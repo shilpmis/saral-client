@@ -79,8 +79,8 @@ export default function RootRoute() {
                 }
               />
               <Route path="admin-leave-management" element={<AdminLeaveManagement />}/>
-              <Route path="attendance" element={<AdminAttendanceView/>} />
-              <Route path="admin-attendance-mangement" element={<StudentAttendanceView/>} />
+              <Route path="admin-attendance-mangement" element={<AdminAttendanceView/>} />
+              <Route path="mark-attendance" element={<StudentAttendanceView/>} />
 
               <Route path="settings" element={<SettingsPage />}>
                 <Route path="" element={<GeneralSettings />} />

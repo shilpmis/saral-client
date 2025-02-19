@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import type { LeaveRequest } from "@/types/leave"
 import { useToast } from "@/hooks/use-toast"
+import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
 // Mock function to simulate fetching data from an API
 const fetchLeaveRequests = (page: number, status: string, search: string) => {
@@ -134,6 +135,19 @@ const AdminLeaveManagement: React.FC = () => {
         return "bg-yellow-500"
     }
   }
+   
+  const perPageData = 6;
+  const totalPages = Math.ceil(totalRequests / perPageData);
+
+  const paginatedData = (page: number): LeaveRequest[] => {
+    const startIndex = (page - 1) * perPageData;
+    return leaveRequests.slice(startIndex, startIndex + perPageData);
+  };
+
+  const onPageChange = (updatedPage: number) => {
+    setCurrentPage(updatedPage);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -204,28 +218,12 @@ const AdminLeaveManagement: React.FC = () => {
             </TableBody>
           </Table>
           <div className="mt-4 flex justify-between items-center">
-            <div>
-              Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalRequests)} of {totalRequests}{" "}
-              results
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => prev + 1)}
-                disabled={currentPage * 10 >= totalRequests}
-              >
-                Next
-              </Button>
-            </div>
+              <SaralPagination
+                      currentPage={currentPage}
+                      onPageChange={onPageChange}
+                      totalPages={totalPages}
+                    />
+            
           </div>
         </CardContent>
       </Card>

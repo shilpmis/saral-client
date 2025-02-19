@@ -89,28 +89,30 @@ export default function StudentTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>GR No</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Name in Guj</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Division</TableHead>
+              <TableHead>Roll No</TableHead>
               <TableHead>Gender</TableHead>
+              <TableHead>Guardian</TableHead>
               <TableHead>Contact Number</TableHead>
+              <TableHead>Aadhar No</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedData(currentPage).map((student , index ) => (
               <TableRow key={index}>
+                <TableCell>{student.gr_no}</TableCell>
                 <TableCell>
                   <Link to={`/studentForSelectedClass/${student.id}`} className="hover:underline">
                     {student.first_name} {student.middle_name} {student.last_name}
                   </Link>
                 </TableCell>
-                <TableCell >{student.first_name_in_guj} {student.middle_name_in_guj} {student.last_name_in_guj}</TableCell>
-                <TableCell>{selectedClass}</TableCell>
-                <TableCell>{selectedDivision?.aliases}</TableCell>
+                <TableCell >{student.roll_number}</TableCell>
                 <TableCell>{student.gender}</TableCell>
+                <TableCell>{student.father_name}</TableCell>
                 <TableCell>{student.primary_mobile}</TableCell>
+                <TableCell>{student.aadhar_no}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"

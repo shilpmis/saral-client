@@ -82,6 +82,12 @@ const authSlice = createSlice({
         // state.school = action.payload.user,
         state.token = action.payload.token
       })
+      .addCase(login.rejected , (state, action) => {
+        state.status = "idle"
+        state.isAuthenticated = false
+        state.user = null
+        state.token = null
+      })
       .addCase(logout.pending, (state, action) => {
         state.status = "failed"
         state.isSignOutInProgress = true
