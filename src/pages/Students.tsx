@@ -100,12 +100,12 @@ export const Students: React.FC = () => {
       try {
         const result = await 
         addStudent({
-          class_id: selectedDivision!.id,
+          class_id: newStudentData.division,
           students: [
             {
               students_data: {
                 school_id: authState.user!.schoolId,
-                class_id: selectedDivision!.id,
+                class_id: newStudentData.division,
                 first_name: newStudentData.first_name,
                 middle_name: newStudentData.middle_name,
                 last_name: newStudentData.last_name,
@@ -311,7 +311,7 @@ export const Students: React.FC = () => {
                     Classes
                   </SelectItem>
                   {AcademicClasses.map(
-                    (cls, index) =>
+                    (cls, index):any =>
                       cls.divisions.length > 0 ? ( // Replace 'trur' with your actual condition
                         <SelectItem key={index} value={cls.class.toString()}>
                           Class {cls.class}
