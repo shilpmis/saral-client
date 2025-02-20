@@ -24,7 +24,7 @@ interface StudentFormProps {
   initialData?: StudentFormData
   onSubmit: (data: any) => void
   onClose: () => void
-  form_type: "create" | "update"
+  form_type: "create" | "update" | "view"
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClose, form_type,  }) => {
@@ -33,16 +33,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
       getAcademicClasses,
       { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
     ] = useLazyGetAcademicClassesQuery()
-  const [
-      getStudentForClass,
-      {
-        data: studentDataForSelectedClass,
-        isLoading: isLoadingForStudents,
-        isError: isErrorWhileFetchingStudents,
-        error: errorWhileFetchingStudents,
-      },
-  ] = useLazyFetchStudentForClassQuery()
-  
+
+  useEffect(()=> {
+   console.log("initialData", initialData)
+  }, [initialData])
   const authState = useAppSelector(selectAuthState)
   const dispatch = useDispatch()
   const [selectedClass, setSelectedClass] = useState<string>("")
@@ -60,7 +54,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
     }
   }, [AcademicClasses, selectedClass])
   useEffect(() => {
-    console.log("AcademicClasses in student form", AcademicClasses)
     if (!AcademicClasses && authState.user) {
       getAcademicClasses(authState.user!.schoolId);
     }

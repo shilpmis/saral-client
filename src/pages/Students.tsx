@@ -16,9 +16,13 @@ import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
-import type { AddStudentsRequest, PageDetailsForStudents, Student } from "@/types/student"
+import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
-import { useAddStudentsMutation, useLazyFetchStudentForClassQuery } from "@/services/StundetServices"
+import {
+  useAddStudentsMutation,
+  useLazyFetchStudentForClassQuery,
+  useUpdateStudentMutation,
+} from "@/services/StundetServices"
 import { toast } from "@/hooks/use-toast"
 
 export const Students: React.FC = () => {
@@ -26,24 +30,15 @@ export const Students: React.FC = () => {
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
 
-  const [
-    getAcademicClasses,
-    { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
-  ] = useLazyGetAcademicClassesQuery()
-  const [
-    getStudentForClass,
-    {
-      data: studentDataForSelectedClass,
-      isLoading: isLoadingForStudents,
-      isError: isErrorWhileFetchingStudents,
-      error: errorWhileFetchingStudents,
-    },
-  ] = useLazyFetchStudentForClassQuery()
-  const [addStudent, { isLoading: isAddingStudent }] = useAddStudentsMutation()
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+  const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
+  const [addStudent] = useAddStudentsMutation()
+  const [updateStudent] = useUpdateStudentMutation()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [searchValue, setSearchValue] = useState<string>("")
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null)
 
   const [studentForSelectedClass, setStudentForSelectedClass] = useState<Student[] | null>(null)
   const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null)
@@ -85,97 +80,147 @@ export const Students: React.FC = () => {
 
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
-      return AcademicClasses!.filter((cls) => {
-        if (cls.class.toString() === selectedClass) {
-          return cls
-        }
-      })[0]
+      return AcademicClasses.filter((cls) => cls.class.toString() === selectedClass)[0]
     } else {
       return null
     }
   }, [AcademicClasses, selectedClass])
 
-  const handleAddStudent = useCallback(
-    async (newStudentData: any) => {
+  const handleAddOrUpdateStudent = useCallback(
+    async (studentData: any) => {
       try {
-        const result = await 
-        addStudent({
-          class_id: newStudentData.division,
-          students: [
-            {
-              students_data: {
-                school_id: authState.user!.schoolId,
-                class_id: newStudentData.division,
-                first_name: newStudentData.first_name,
-                middle_name: newStudentData.middle_name,
-                last_name: newStudentData.last_name,
-                first_name_in_guj: newStudentData.first_name_in_guj,
-                middle_name_in_guj: newStudentData.middle_name_in_guj,
-                last_name_in_guj: newStudentData.last_name_in_guj,
-                gender: newStudentData.gender,
-                birth_date: newStudentData.birth_date,
-                gr_no: newStudentData.gr_no,
-                primary_mobile: newStudentData.primary_mobile,
-                father_name: newStudentData.father_name,
-                father_name_in_guj: newStudentData.father_name_in_guj,
-                mother_name: newStudentData.mother_name,
-                mother_name_in_guj: newStudentData.mother_name_in_guj,
-                roll_number: newStudentData.roll_number,
-                aadhar_no: newStudentData.aadhar_no,
-                is_active: true,
-              },
-              student_meta_data: {
-                aadhar_dise_no: newStudentData.aadhar_dise_no,
-                birth_place: newStudentData.birth_place,
-                birth_place_in_guj: newStudentData.birth_place_in_guj,
-                religiion: newStudentData.religiion,
-                religiion_in_guj: newStudentData.religiion_in_guj,
-                caste: newStudentData.caste,
-                caste_in_guj: newStudentData.caste_in_guj,
-                category: newStudentData.category,
-                category_in_guj: newStudentData.category_in_guj,
-                admission_date: newStudentData.admission_date,
-                admission_class_id: newStudentData.division,
-                secondary_mobile: newStudentData.secondary_mobile,
-                privious_school: newStudentData.privious_school,
-                privious_school_in_guj: newStudentData.privious_school_in_guj,
-                address: newStudentData.address,
-                district: newStudentData.district,
-                city: newStudentData.city,
-                state: newStudentData.state,
-                postal_code: newStudentData.postal_code,
-                bank_name: newStudentData.bank_name,
-                account_no: newStudentData.account_no,
-                IFSC_code: newStudentData.IFSC_code,
-              },
+        let result
+        if (editingStudent) {
+          result = await updateStudent({
+            student_id: editingStudent.id,
+            student_data: {
+              first_name: studentData.first_name,
+              middle_name: studentData.middle_name,
+              last_name: studentData.last_name,
+              first_name_in_guj: studentData.first_name_in_guj,
+              middle_name_in_guj: studentData.middle_name_in_guj,
+              last_name_in_guj: studentData.last_name_in_guj,
+              gender: studentData.gender,
+              birth_date: studentData.birth_date,
+              gr_no: studentData.gr_no,
+              primary_mobile: studentData.primary_mobile,
+              father_name: studentData.father_name,
+              father_name_in_guj: studentData.father_name_in_guj,
+              mother_name: studentData.mother_name,
+              mother_name_in_guj: studentData.mother_name_in_guj,
+              roll_number: studentData.roll_number,
+              aadhar_no: studentData.aadhar_no,
+              is_active: true,
             },
-          ],
-        }).unwrap()
-
-        toast({
-          title: "Success",
-          description: "Student added successfully",
-        })
+            student_meta_data: {
+              aadhar_dise_no: studentData.aadhar_dise_no,
+              birth_place: studentData.birth_place,
+              birth_place_in_guj: studentData.birth_place_in_guj,
+              religiion: studentData.religiion,
+              religiion_in_guj: studentData.religiion_in_guj,
+              caste: studentData.caste,
+              caste_in_guj: studentData.caste_in_guj,
+              category: studentData.category,
+              category_in_guj: studentData.category_in_guj,
+              admission_date: studentData.admission_date,
+              admission_class_id: studentData.division,
+              secondary_mobile: studentData.secondary_mobile,
+              privious_school: studentData.privious_school,
+              privious_school_in_guj: studentData.privious_school_in_guj,
+              address: studentData.address,
+              district: studentData.district,
+              city: studentData.city,
+              state: studentData.state,
+              postal_code: studentData.postal_code,
+              bank_name: studentData.bank_name,
+              account_no: studentData.account_no,
+              IFSC_code: studentData.IFSC_code,
+            },
+          }).unwrap()
+          toast({
+            title: "Success",
+            description: "Student updated successfully",
+          })
+        } else {
+          result = await addStudent({
+            class_id: studentData.division,
+            students: [
+              {
+                students_data: {
+                  school_id: authState.user!.schoolId,
+                  class_id: studentData.division,
+                  first_name: studentData.first_name,
+                  middle_name: studentData.middle_name,
+                  last_name: studentData.last_name,
+                  first_name_in_guj: studentData.first_name_in_guj,
+                  middle_name_in_guj: studentData.middle_name_in_guj,
+                  last_name_in_guj: studentData.last_name_in_guj,
+                  gender: studentData.gender,
+                  birth_date: studentData.birth_date,
+                  gr_no: studentData.gr_no,
+                  primary_mobile: studentData.primary_mobile,
+                  father_name: studentData.father_name,
+                  father_name_in_guj: studentData.father_name_in_guj,
+                  mother_name: studentData.mother_name,
+                  mother_name_in_guj: studentData.mother_name_in_guj,
+                  roll_number: studentData.roll_number,
+                  aadhar_no: studentData.aadhar_no,
+                  is_active: true,
+                },
+                student_meta_data: {
+                  aadhar_dise_no: studentData.aadhar_dise_no,
+                  birth_place: studentData.birth_place,
+                  birth_place_in_guj: studentData.birth_place_in_guj,
+                  religiion: studentData.religiion,
+                  religiion_in_guj: studentData.religiion_in_guj,
+                  caste: studentData.caste,
+                  caste_in_guj: studentData.caste_in_guj,
+                  category: studentData.category,
+                  category_in_guj: studentData.category_in_guj,
+                  admission_date: studentData.admission_date,
+                  admission_class_id: studentData.division,
+                  secondary_mobile: studentData.secondary_mobile,
+                  privious_school: studentData.privious_school,
+                  privious_school_in_guj: studentData.privious_school_in_guj,
+                  address: studentData.address,
+                  district: studentData.district,
+                  city: studentData.city,
+                  state: studentData.state,
+                  postal_code: studentData.postal_code,
+                  bank_name: studentData.bank_name,
+                  account_no: studentData.account_no,
+                  IFSC_code: studentData.IFSC_code,
+                },
+              },
+            ],
+          }).unwrap()
+          toast({
+            title: "Success",
+            description: "Student added successfully",
+          })
+        }
         setIsAddStudentOpen(false)
-        getStudentForClass({ class_id: newStudentData.division })
+        setEditingStudent(null)
+        getStudentForClass({ class_id: studentData.division })
       } catch (error) {
-        console.log("error while adding student", error);
+        console.error("Error while adding/updating student", error)
         toast({
           title: "Error",
-          description: "Failed to add student",
+          description: "Failed to add/update student",
           variant: "destructive",
         })
       }
     },
-    [selectedDivision, addStudent, getStudentForClass],
+    [editingStudent, addStudent, updateStudent, getStudentForClass, authState.user],
   )
 
-  const handleEditStudent = useCallback((updatedStudent: Student) => {
-    // Implement edit functionality
-  }, [])
-
-  const handleDeleteStudent = useCallback((studentId: number) => {
-    // Implement delete functionality
+  const handleEditStudent = useCallback((student: Student) => {
+    setEditingStudent({
+      ...student,
+      class: student.class_id?.toString(),
+      division: student.student_meta?.admission_class_id?.toString(),
+    })
+    setIsAddStudentOpen(true)
   }, [])
 
   const handleChooseFile = useCallback(() => {
@@ -199,7 +244,7 @@ export const Students: React.FC = () => {
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user!.schoolId)
+      getAcademicClasses(authState.user.schoolId)
     }
   }, [AcademicClasses, authState.user, getAcademicClasses])
 
@@ -213,7 +258,6 @@ export const Students: React.FC = () => {
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
-      {/* Title bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Students</h2>
         <div className="flex space-x-2">
@@ -225,13 +269,17 @@ export const Students: React.FC = () => {
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
               <DialogHeader>
-                <DialogTitle>Add New Student</DialogTitle>
+                <DialogTitle>{editingStudent ? "Edit Student" : "Add New Student"}</DialogTitle>
               </DialogHeader>
               <div className="w-full lg:h-[600px] overflow-auto">
                 <StudentForm
-                  onClose={() => setIsAddStudentOpen(false)}
-                  form_type="create"
-                  onSubmit={handleAddStudent}
+                  onClose={() => {
+                    setIsAddStudentOpen(false)
+                    setEditingStudent(null)
+                  }}
+                  form_type={editingStudent ? "update" : "create"}
+                  onSubmit={handleAddOrUpdateStudent}
+                  initialData={editingStudent}
                 />
               </div>
             </DialogContent>
@@ -286,7 +334,6 @@ export const Students: React.FC = () => {
         </div>
       </div>
 
-      {/* Tool bar - search filter , class & divition selection */}
       {AcademicClasses && (
         <Card className="mb-6">
           <CardHeader>
@@ -309,18 +356,17 @@ export const Students: React.FC = () => {
                   <SelectItem value=" " disabled>
                     Classes
                   </SelectItem>
-                  {AcademicClasses.map(
-                    (cls, index):any =>
-                      cls.divisions.length > 0 ? ( // Replace 'trur' with your actual condition
-                        <SelectItem key={index} value={cls.class.toString()}>
-                          Class {cls.class}
-                        </SelectItem>
-                      ) : null, // Return null when the condition is false
+                  {AcademicClasses.map((cls, index) =>
+                    cls.divisions.length > 0 ? (
+                      <SelectItem key={index} value={cls.class.toString()}>
+                        Class {cls.class}
+                      </SelectItem>
+                    ) : null,
                   )}
                 </SelectContent>
               </Select>
               <Select
-                value={selectedDivision ? selectedDivision!.id.toString() : " "}
+                value={selectedDivision ? selectedDivision.id.toString() : " "}
                 onValueChange={handleDivisionChange}
               >
                 <SelectTrigger className="w-[180px]">
@@ -333,7 +379,7 @@ export const Students: React.FC = () => {
                   {availableDivisions &&
                     availableDivisions.divisions.map((division, index) => (
                       <SelectItem key={index} value={division.id.toString()}>
-                        {`${division.division} ${division.aliases ? "-" + (division.aliases) : ""}`}
+                        {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -342,11 +388,6 @@ export const Students: React.FC = () => {
           </CardContent>
         </Card>
       )}
-      {isLoadingForAcademicClasses && <div>Academic classes are fetching ....</div>}
-
-      {/* Table */}
-      {isLoadingForStudents && <div>Student are fetching ....</div>}
-
       {studentDataForSelectedClass && listedStudentForSelectedClass && (
         <StudentTable
           selectedClass={selectedClass}

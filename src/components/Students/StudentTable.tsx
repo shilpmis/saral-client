@@ -1,85 +1,55 @@
-import { ReactNode, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SaralPagination } from "../ui/common/SaralPagination";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { StudentFormData } from "@/utils/student.validation";
-import { PageDetailsForStudents, Student } from "@/types/student";
-import { editDivision } from "@/services/AcademicService";
-import { Division } from "@/types/academic";
-import { Link } from "react-router-dom";
+"use client"
 
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Edit, Trash } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SaralPagination } from "../ui/common/SaralPagination"
+import type { PageDetailsForStudents, Student } from "@/types/student"
+import type { Division } from "@/types/academic"
 
 interface StudentTableProps {
-  filteredStudents: Student[];
-  onEdit: (student: Student) => void;
-  onDelete?: (studentId: string) => void;
-  selectedClass : string,
-  selectedDivision : Division | null
-  PageDetailsForStudents : PageDetailsForStudents | null
+  filteredStudents: Student[]
+  onEdit: (student: Student) => void
+  onDelete?: (studentId: string) => void
+  selectedClass: string
+  selectedDivision: Division | null
+  PageDetailsForStudents: PageDetailsForStudents | null
 }
 
 export default function StudentTable({
   filteredStudents,
   onEdit,
+  onDelete,
   selectedClass,
   selectedDivision,
-  PageDetailsForStudents
-  // onDelete,
+  PageDetailsForStudents,
 }: StudentTableProps) {
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-
-  const perPageData = PageDetailsForStudents?.per_page ||  6;
-  const totalPages = Math.ceil(filteredStudents.length / perPageData);
+  const perPageData = PageDetailsForStudents?.per_page || 6
+  const totalPages = Math.ceil(filteredStudents.length / perPageData)
 
   const paginatedData = (page: number): Student[] => {
-    const startIndex = (page - 1) * perPageData;
-    return filteredStudents.slice(startIndex, startIndex + perPageData);
-  };
+    const startIndex = (page - 1) * perPageData
+    return filteredStudents.slice(startIndex, startIndex + perPageData)
+  }
 
   const onPageChange = (updatedPage: number) => {
-    setCurrentPage(updatedPage);
-  };
+    setCurrentPage(updatedPage)
+  }
 
   const handleEdit = (student: Student) => {
-    setSelectedStudent(student);
-    setIsEditDialogOpen(true);
-  };
+    onEdit(student)
+  }
 
-  const handleEditSubmit = (updatedStudentData: StudentFormData) => {
-    // if (selectedStudent) {
-    //   const updatedStudent: Student = {
-    //     ...selectedStudent,
-    //     ...updatedStudentData,
-    //     class: updatedStudentData.admission_std,
-    //     contactNumber: updatedStudentData.mobile_number_2,
-    //   };
-    //   onEdit(updatedStudent);
-    //   setIsEditDialogOpen(false);
-    // }
-  };
+  const handleDelete = (studentId: string) => {
+    if (onDelete) {
+      onDelete(studentId)
+    }
+  }
 
   return (
     <div className="p-1">
@@ -100,35 +70,29 @@ export default function StudentTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData(currentPage).map((student , index ) => (
+            {paginatedData(currentPage).map((student, index) => (
               <TableRow key={index}>
                 <TableCell>{student.gr_no}</TableCell>
                 <TableCell>
-                  <Link to={`/studentForSelectedClass/${student.id}`} className="hover:underline">
-                    {student.first_name} {student.middle_name} {student.last_name}
-                  </Link>
+                  {student.first_name} {student.middle_name} {student.last_name}
                 </TableCell>
-                <TableCell >{student.roll_number}</TableCell>
+                <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.gender}</TableCell>
                 <TableCell>{student.father_name}</TableCell>
                 <TableCell>{student.primary_mobile}</TableCell>
                 <TableCell>{student.aadhar_no}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mr-2"
-                    onClick={ ()=>{}}
-                  >
+                  <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(student)}>
                     <Edit className="h-4 w-4 mr-1" /> Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-
-                  }}
+                  {/* <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(student.id.toString())}
                     className="hover:bg-red-600 hover:text-white"
                   >
                     <Trash className="h-4 w-4 mr-1" /> Delete
-                  </Button>
+                  </Button> */}
                 </TableCell>
               </TableRow>
             ))}
@@ -142,15 +106,7 @@ export default function StudentTable({
           totalPages={PageDetailsForStudents!.last_page}
         />
       </div>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
-          </DialogHeader>
-          {/* {selectedStudent && <StudentForm onSubmit={handleEditSubmit} initialData={selectedStudent} />} */}
-        </DialogContent>
-      </Dialog>
     </div>
-  );
+  )
 }
+
