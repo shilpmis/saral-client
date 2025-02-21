@@ -143,12 +143,9 @@ const AdminLeaveManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between mb-4">
-            <Input
-              placeholder="Search by employee name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+            <div>
+              
+            </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />

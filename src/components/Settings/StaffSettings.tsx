@@ -97,6 +97,7 @@ export default function StaffSettings() {
         formType: 'create',
         role_name: "",
         role_type: 'teaching'
+        role_type: 'teaching'
       })
     }
     setIsDialogOpen(true)
@@ -121,7 +122,7 @@ export default function StaffSettings() {
           alert("Bug :: Role Id is not been provided !")
         }
         toast({
-          title: "Role Added",
+          title: "Role Updated",
           description: `${formForStaffRole.getValues('role_name')} has been updated.`,
         })
       } else {
@@ -131,15 +132,16 @@ export default function StaffSettings() {
           school_id: authState.user!.schoolId
         })).unwrap()
         toast({
-          title: "Role Updated",
+          title: "Role Created",
           description: `${formForStaffRole.getValues('role_name')} has been created.`,
         })
-        handleCloseDialog()
       }
+      getSchoolStaff(authState.user!.schoolId);
+      handleCloseDialog()
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to ${formForStaffRole.getValues('formType')} role. Please try again.`,
+        // title: "Error",
+        title: `Failed to ${formForStaffRole.getValues('formType')} role. Already Present`,
         variant: "destructive",
       })
     }
@@ -153,6 +155,8 @@ export default function StaffSettings() {
         description: "The role has been removed from the list.",
       })
       setIsDialogForDeleteStaffOpen(false)
+      getSchoolStaff(authState.user!.schoolId);
+      handleCloseDialog()
     } catch (error) {
       alert("Check error in console ! ")
       toast({
@@ -281,7 +285,7 @@ export default function StaffSettings() {
                     <FormItem>
                       <FormLabel>Role Type</FormLabel>
                       <FormControl>
-                        <Select {...field} disabled={formForStaffRole.getValues('formType') === "edit"}>
+                        <Select onValueChange={field.onChange} disabled={formForStaffRole.getValues('formType') === "edit"}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select role type" />
                           </SelectTrigger>

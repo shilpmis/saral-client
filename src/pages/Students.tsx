@@ -77,10 +77,6 @@ export const Students: React.FC = () => {
     }
   }
 
-  const handleSearchFilter = useCallback((value: string) => {
-    setSearchValue(value)
-  }, [])
-
   const filteredStudents = useMemo(() => {
     // return studentForSelectedClass.filter((student) =>
     //   Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
@@ -187,10 +183,20 @@ export const Students: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-
-          <Dialog>
-            <DialogTrigger asChild>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+              <div className="flex flex-col gap-3 ms-3 me-3">
+              <Dialog>
+            <DialogTrigger asChild>
+              <Button>
                 <Upload className="mr-2 h-4 w-4" /> Upload Excel
               </Button>
             </DialogTrigger>
@@ -218,20 +224,10 @@ export const Students: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-
           <Button variant="outline">
             <FileDown className="mr-2 h-4 w-4" /> Download Excel
           </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem>Print List</DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -243,13 +239,9 @@ export const Students: React.FC = () => {
           <CardTitle>Search Students</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
-          <Input
-            id="search"
-            placeholder="Search by name, email, mobile or designation"
-            value={searchValue}
-            onChange={(e) => handleSearchFilter(e.target.value)}
-            className="max-w-sm"
-          />
+          <div>
+
+          </div>
           <div className="flex gap-2">
             <Select value={selectedClass} onValueChange={handleClassChange}>
               <SelectTrigger className="w-[180px]">
