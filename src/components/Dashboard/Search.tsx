@@ -3,14 +3,11 @@ import { SearchIcon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { User, GraduationCap, Users, BookOpen } from "lucide-react"
 import React from "react"
+import SearchCategory from "@/types/searchCategory"
 
 
 export function Search() {
-  interface SearchCategory {
-    id: string
-    label: string
-    icon: React.ReactNode
-  }
+
   const searchCategories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
     { id: "grno", label: "GR Number", icon: <GraduationCap className="h-4 w-4" /> },
