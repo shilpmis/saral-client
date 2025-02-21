@@ -1,15 +1,4 @@
-/**
- * 
- * TODO : 
- * 
- * - Set Default selection for class at first time and also after re-rendering of component (use localhost to store selected class)
- * - Make search filter works 
- * - make pagination work , by fetching data as per page , backend api has been created for this , need to manage everything
- *   at front end side only 
- * - Code for Add student , update student (form UI has been created with UI and validation)
- * - Code for Upload excle (Advance task)
- * 
- */
+"use client"
 
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
@@ -17,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, FileDown, Edit, Trash } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, FileDown } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { Input } from "@/components/ui/input"
@@ -26,31 +15,36 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectAuthState } from "@/redux/slices/authSlice"
-import { AcademicClasses, Division } from "@/types/academic"
-import { useLazyFetchStudentForClassQuery } from "@/services/StundetServices"
-import { PageDetailsForStudents, Student } from "@/types/student"
+import type { AcademicClasses, Division } from "@/types/academic"
+import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
-
-
+import {
+  useAddStudentsMutation,
+  useLazyFetchStudentForClassQuery,
+  useUpdateStudentMutation,
+} from "@/services/StundetServices"
+import { toast } from "@/hooks/use-toast"
 
 export const Students: React.FC = () => {
-
   const dispatch = useAppDispatch()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
 
-  const [getAcademicClasses,
-    { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass }] = useLazyGetAcademicClassesQuery();
-  const [getStudentForClass,
-    { data: studentDataForSelectedClass, isLoading: isLoadingForStudents, isError: isErrorWhileFetchingStudents, error: errorWhileFetchingStudents }] = useLazyFetchStudentForClassQuery();
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+  const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
+  const [addStudent] = useAddStudentsMutation()
+  const [updateStudent] = useUpdateStudentMutation()
 
-  const [selectedClass, setSelectedClass] = useState<string>('')
+  const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [searchValue, setSearchValue] = useState<string>("")
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null)
 
-  const [studentForSelectedClass, setStudentForSelectedClass] = useState<Student[] | null>(null);
-  const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null);
-  const [paginationDataForSelectedClass, setPaginationDataForSelectedClass] = useState<PageDetailsForStudents | null>(null);
+  const [studentForSelectedClass, setStudentForSelectedClass] = useState<Student[] | null>(null)
+  const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null)
+  const [paginationDataForSelectedClass, setPaginationDataForSelectedClass] = useState<PageDetailsForStudents | null>(
+    null,
+  )
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
 
@@ -59,71 +53,170 @@ export const Students: React.FC = () => {
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
     setSelectedDivision(null)
-
-    // Filter Divition
   }, [])
 
   const handleDivisionChange = async (value: string) => {
     if (AcademicClasses) {
-
-      let selectedDiv = AcademicClasses
-        .filter((cls) => cls.class == parseInt(selectedClass))[0].divisions
-        .filter((div) => div.id == parseInt(value))
-      setSelectedDivision(selectedDiv[0]);
-      /**
-       * Fetch Student while division get change  
-       */
-      getStudentForClass({ class_id: parseInt(value) });
+      const selectedDiv = AcademicClasses.filter(
+        (cls) => cls.class == Number.parseInt(selectedClass),
+      )[0].divisions.filter((div) => div.id == Number.parseInt(value))
+      setSelectedDivision(selectedDiv[0])
+      getStudentForClass({ class_id: Number.parseInt(value) })
     }
   }
 
   const filteredStudents = useMemo(() => {
-    // return studentForSelectedClass.filter((student) =>
-    //   Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
-    // )
-  }, [studentForSelectedClass, searchValue])
+    if (listedStudentForSelectedClass) {
+      return listedStudentForSelectedClass.filter((student) =>
+        Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
+      )
+    }
+    return []
+  }, [listedStudentForSelectedClass, searchValue])
 
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
-      return AcademicClasses!.filter((cls) => {
-        if ((cls.class).toString() === selectedClass) {
-          return cls
-        }
-      })[0]
+      return AcademicClasses.filter((cls) => cls.class.toString() === selectedClass)[0]
     } else {
       return null
     }
-  }, [selectedClass])
+  }, [AcademicClasses, selectedClass])
 
-  const handleAddStudent = useCallback(
-    // (newStudentData: StudentFormData) => {
-    //   const newStudent: Student = {
-    //     ...newStudentData,
-    //     id: (studentForSelectedClass.length + 1).toString(),
-    //     class: newStudentData.admission_std,
-    //     rollNumber: (studentForSelectedClass.length + 1).toString().padStart(4, "0"),
-    //     gender: "Not specified",
-    //     dateOfBirth: "Not specified",
-    //     contactNumber: newStudentData.mobile_number_2,
-    //     email: "Not specified",
-    //   }
-    //   setStudentForSelectedClass((prevStudents) => [...prevStudents, newStudent])
-    //   setIsAddStudentOpen(false)
-    // },
-    () => {
-
+  const handleAddOrUpdateStudent = useCallback(
+    async (studentData: any) => {
+      try {
+        let result
+        if (editingStudent) {
+          result = await updateStudent({
+            student_id: editingStudent.id,
+            student_data: {
+              first_name: studentData.first_name,
+              middle_name: studentData.middle_name,
+              last_name: studentData.last_name,
+              first_name_in_guj: studentData.first_name_in_guj,
+              middle_name_in_guj: studentData.middle_name_in_guj,
+              last_name_in_guj: studentData.last_name_in_guj,
+              gender: studentData.gender,
+              birth_date: studentData.birth_date,
+              gr_no: studentData.gr_no,
+              primary_mobile: studentData.primary_mobile,
+              father_name: studentData.father_name,
+              father_name_in_guj: studentData.father_name_in_guj,
+              mother_name: studentData.mother_name,
+              mother_name_in_guj: studentData.mother_name_in_guj,
+              roll_number: studentData.roll_number,
+              aadhar_no: studentData.aadhar_no,
+              is_active: true,
+            },
+            student_meta_data: {
+              aadhar_dise_no: studentData.aadhar_dise_no,
+              birth_place: studentData.birth_place,
+              birth_place_in_guj: studentData.birth_place_in_guj,
+              religiion: studentData.religiion,
+              religiion_in_guj: studentData.religiion_in_guj,
+              caste: studentData.caste,
+              caste_in_guj: studentData.caste_in_guj,
+              category: studentData.category,
+              category_in_guj: studentData.category_in_guj,
+              admission_date: studentData.admission_date,
+              admission_class_id: studentData.division,
+              secondary_mobile: studentData.secondary_mobile,
+              privious_school: studentData.privious_school,
+              privious_school_in_guj: studentData.privious_school_in_guj,
+              address: studentData.address,
+              district: studentData.district,
+              city: studentData.city,
+              state: studentData.state,
+              postal_code: studentData.postal_code,
+              bank_name: studentData.bank_name,
+              account_no: studentData.account_no,
+              IFSC_code: studentData.IFSC_code,
+            },
+          }).unwrap()
+          toast({
+            title: "Success",
+            description: "Student updated successfully",
+          })
+        } else {
+          result = await addStudent({
+            class_id: studentData.division,
+            students: [
+              {
+                students_data: {
+                  school_id: authState.user!.schoolId,
+                  class_id: studentData.division,
+                  first_name: studentData.first_name,
+                  middle_name: studentData.middle_name,
+                  last_name: studentData.last_name,
+                  first_name_in_guj: studentData.first_name_in_guj,
+                  middle_name_in_guj: studentData.middle_name_in_guj,
+                  last_name_in_guj: studentData.last_name_in_guj,
+                  gender: studentData.gender,
+                  birth_date: studentData.birth_date,
+                  gr_no: studentData.gr_no,
+                  primary_mobile: studentData.primary_mobile,
+                  father_name: studentData.father_name,
+                  father_name_in_guj: studentData.father_name_in_guj,
+                  mother_name: studentData.mother_name,
+                  mother_name_in_guj: studentData.mother_name_in_guj,
+                  roll_number: studentData.roll_number,
+                  aadhar_no: studentData.aadhar_no,
+                  is_active: true,
+                },
+                student_meta_data: {
+                  aadhar_dise_no: studentData.aadhar_dise_no,
+                  birth_place: studentData.birth_place,
+                  birth_place_in_guj: studentData.birth_place_in_guj,
+                  religiion: studentData.religiion,
+                  religiion_in_guj: studentData.religiion_in_guj,
+                  caste: studentData.caste,
+                  caste_in_guj: studentData.caste_in_guj,
+                  category: studentData.category,
+                  category_in_guj: studentData.category_in_guj,
+                  admission_date: studentData.admission_date,
+                  admission_class_id: studentData.division,
+                  secondary_mobile: studentData.secondary_mobile,
+                  privious_school: studentData.privious_school,
+                  privious_school_in_guj: studentData.privious_school_in_guj,
+                  address: studentData.address,
+                  district: studentData.district,
+                  city: studentData.city,
+                  state: studentData.state,
+                  postal_code: studentData.postal_code,
+                  bank_name: studentData.bank_name,
+                  account_no: studentData.account_no,
+                  IFSC_code: studentData.IFSC_code,
+                },
+              },
+            ],
+          }).unwrap()
+          toast({
+            title: "Success",
+            description: "Student added successfully",
+          })
+        }
+        setIsAddStudentOpen(false)
+        setEditingStudent(null)
+        getStudentForClass({ class_id: studentData.division })
+      } catch (error) {
+        console.error("Error while adding/updating student", error)
+        toast({
+          title: "Error",
+          description: "Failed to add/update student",
+          variant: "destructive",
+        })
+      }
     },
-    [studentForSelectedClass],
+    [editingStudent, addStudent, updateStudent, getStudentForClass, authState.user],
   )
 
-  const handleEditStudent = useCallback((updatedStudent: Student) => {
-    // setStudentForSelectedClass((prevStudents) =>
-    //   prevStudents.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)),
-    // )
-  }, [])
-
-  const handleDeleteStudent = useCallback((studentId: number) => {
-    // setStudentForSelectedClass((prevStudents) => prevStudents.filter((student) => student.id !== studentId))
+  const handleEditStudent = useCallback((student: Student) => {
+    setEditingStudent({
+      ...student,
+      class: student.class_id?.toString(),
+      division: student.student_meta?.admission_class_id?.toString(),
+    })
+    setIsAddStudentOpen(true)
   }, [])
 
   const handleChooseFile = useCallback(() => {
@@ -146,11 +239,10 @@ export const Students: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (!AcademicClasses) {
-      getAcademicClasses(authState.user!.schoolId)
+    if (!AcademicClasses && authState.user) {
+      getAcademicClasses(authState.user.schoolId)
     }
-  }, [])
-
+  }, [AcademicClasses, authState.user, getAcademicClasses])
 
   useEffect(() => {
     if (studentDataForSelectedClass) {
@@ -160,11 +252,8 @@ export const Students: React.FC = () => {
     }
   }, [studentDataForSelectedClass])
 
-
   return (
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
-
-      {/* Title bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Students</h2>
         <div className="flex space-x-2">
@@ -176,10 +265,18 @@ export const Students: React.FC = () => {
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
               <DialogHeader>
-                <DialogTitle>Add New Student</DialogTitle>
+                <DialogTitle>{editingStudent ? "Edit Student" : "Add New Student"}</DialogTitle>
               </DialogHeader>
               <div className="w-full lg:h-[600px] overflow-auto">
-                <StudentForm onClose={() => setIsAddStudentOpen(false)} form_type="create" onSubmit={handleAddStudent} />
+                <StudentForm
+                  onClose={() => {
+                    setIsAddStudentOpen(false)
+                    setEditingStudent(null)
+                  }}
+                  form_type={editingStudent ? "update" : "create"}
+                  onSubmit={handleAddOrUpdateStudent}
+                  initialData={editingStudent}
+                />
               </div>
             </DialogContent>
           </Dialog>
@@ -268,28 +365,47 @@ export const Students: React.FC = () => {
                   <SelectItem key={index} value={(division.id).toString()}>
                     {`${division.division} ${division.aliases ? "-" + (division.aliases) : ""}`}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>)}
-      {isLoadingForAcademicClasses &&
-        <div>
-          Academic classes are fetching ....
-        </div>}
-
-      {/* Table */}
-      {isLoadingForStudents && (<div>Student are fetching ....</div>)}
-
+                  {AcademicClasses.map((cls, index) =>
+                    cls.divisions.length > 0 ? (
+                      <SelectItem key={index} value={cls.class.toString()}>
+                        Class {cls.class}
+                      </SelectItem>
+                    ) : null,
+                  )}
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedDivision ? selectedDivision.id.toString() : " "}
+                onValueChange={handleDivisionChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Division" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=" " disabled>
+                    Divisions
+                  </SelectItem>
+                  {availableDivisions &&
+                    availableDivisions.divisions.map((division, index) => (
+                      <SelectItem key={index} value={division.id.toString()}>
+                        {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {studentDataForSelectedClass && listedStudentForSelectedClass && (
         <StudentTable
           selectedClass={selectedClass}
           selectedDivision={selectedDivision}
           filteredStudents={listedStudentForSelectedClass}
           PageDetailsForStudents={paginationDataForSelectedClass}
-          onEdit={handleEditStudent} />)}
-
+          onEdit={handleEditStudent}
+        />
+      )}
     </div>
   )
 }

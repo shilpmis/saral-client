@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const AdminAttendanceView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
@@ -63,6 +65,16 @@ const AdminAttendanceView: React.FC = () => {
         <CardTitle>Attendance Overview</CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center gap-4">
+      <Label htmlFor="search" className="sr-only">
+        Search
+      </Label>
+      <Input
+        id="search"
+        placeholder="Search by Name, Roll Number"
+        value={""}
+        className="max-w-sm"
+      />
         <div className="flex flex-wrap gap-4 mb-4">
           <input
             type="date"
@@ -70,6 +82,7 @@ const AdminAttendanceView: React.FC = () => {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="border p-2 rounded"
           />
+          </div>
           <Select
             value={selectedGrade || ""}
             onValueChange={(value) => {
@@ -78,10 +91,10 @@ const AdminAttendanceView: React.FC = () => {
             }}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select grade" />
+              <SelectValue placeholder="Select Class" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="allGrades">All Grades</SelectItem>
+              <SelectItem value="allGrades">All Class</SelectItem>
               {grades.map((grade) => (
                 <SelectItem key={grade} value={grade}>
                   Grade {grade}
@@ -123,14 +136,20 @@ const AdminAttendanceView: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedAttendance.map((student) => (
+            {paginatedAttendance.length == 0 ? (
+              <TableRow>
+              <TableCell className="text-center text-gray-500" colSpan={4}>No Records Found</TableCell>
+              </TableRow>
+            ) : (
+            paginatedAttendance.map((student) => (
               <TableRow key={student.id}>
                 <TableCell>{student.rollNumber}</TableCell>
                 <TableCell>{student.name}</TableCell>
                 <TableCell>{student.className}</TableCell>
                 <TableCell>{student.status}</TableCell>
               </TableRow>
-            ))}
+            ))
+          )}
           </TableBody>
         </Table>
         <div className="mt-4">

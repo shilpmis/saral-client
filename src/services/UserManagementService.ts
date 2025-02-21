@@ -3,7 +3,7 @@ import ApiService from "./ApiService"
 
 export const userManagementService = {
   getUsers: async (): Promise<User[]> => {
-    const response = await ApiService.get("users");
+    const response = await ApiService.get("users/1");
     return response.data
   },
 

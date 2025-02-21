@@ -1,23 +1,24 @@
-"use client"
+"use client";
 
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar"
-import { useEffect } from "react"
-import Header from "./Components/Header"
-import { Outlet, useNavigate } from "react-router-dom"
-import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectVerificationStatus } from "@/redux/slices/authSlice"
-import AppSidebar from "./Components/Appsidebar"
-import { Toaster } from "@/components/ui/toaster"
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { useEffect } from "react";
+import Header from "./Components/Header";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/redux/hooks/useAppSelector";
+import { selectVerificationStatus } from "@/redux/slices/authSlice";
+import { Toaster } from "@/components/ui/toaster";
+import AppSidebar from "./Components/Appsidebar";
 
 export default function AdminLayout() {
-  const verificationStatus = useAppSelector(selectVerificationStatus)
-  const navigate = useNavigate()
+  const verificationStatus = useAppSelector(selectVerificationStatus);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("verificationStatus", verificationStatus);
     if (!verificationStatus.isAuthenticated && !verificationStatus.isVerificationInProgress) {
-      navigate("/")
+      navigate("/");
     }
-  }, [verificationStatus, navigate])
+  }, [verificationStatus, navigate]);
 
   return (
     <>
@@ -28,12 +29,12 @@ export default function AdminLayout() {
         </SidebarProvider>
       )}
     </>
-  )
+  );
 }
 
 function SidebarContent() {
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
     <>
@@ -43,9 +44,8 @@ function SidebarContent() {
         <div className="p-3 w-full h-auto mt-6">
           <Outlet />
         </div>
-        <Toaster/>
+        <Toaster />
       </main>
     </>
-  )
+  );
 }
-

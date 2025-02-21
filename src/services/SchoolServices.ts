@@ -1,8 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import ApiService from "./ApiService";
-import { selectCurrentUser } from "@/redux/slices/authSlice";
-import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { setSchoolCredential } from "@/redux/slices/schoolSlice";
 
 interface School {
@@ -49,7 +47,7 @@ export const SchoolApi = createApi({
                 dispatch(setSchoolCredential(data))
             }
         }),
-        updateSchool: builder.mutation<{ school: School }, { school_id: number, payload: TypeForUpdateSchoolData }>({
+        updateSchool: builder.mutation<{ school: School }, { school_id: number, payload: Omit<Partial<School> ,'id' | 'email' | 'username'> }>({
             query: ({ payload, school_id }) => ({
                 url: `/school/${school_id}`,
                 method: "PUT",
@@ -73,6 +71,7 @@ export const updateSchoolDetails = createAsyncThunk("school/updateSchool", async
         const response = await ApiService.put(`/school/${id}`, schoolData);
         return response.data;
     } catch (error: any) {
+        console.log("Error while updating basic school infromation" , error)
         return rejectWithValue(error.response?.data || "Failed to update school");
     }
 });
