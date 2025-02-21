@@ -1,8 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { StaffRole } from "@/types/staff";
+import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff";
 import { setStaffRole } from "@/redux/slices/staffSlice";
 import ApiService from "./ApiService";
+import { number } from "zod";
 
 
 export const StaffApi = createApi({
@@ -26,10 +27,26 @@ export const StaffApi = createApi({
                 dispatch(setStaffRole(data))
             }
         }),
+        getTeachingStaff: builder.query<{ data: TeachingStaff[] ,meta : PageMeta }, { school_id: number, page?: number }>({
+            query: ({school_id, page = 1}) => ({
+                url: `teachers/${school_id}?page=${page}`,
+                method: "GET"
+            })
+        }),
+        getOtherStaff: builder.query<{ data: OtherStaff[] , meta : PageMeta }, { school_id: number, page?: number }>({
+            query: ({school_id, page = 1}) => ({
+                url: `other-staff/${school_id}?page=${page}`,
+                method: "GET"
+            })
+        })
     })
 })
 
-export const { useGetSchoolStaffRoleQuery, useLazyGetSchoolStaffRoleQuery } = StaffApi;
+export const { useGetSchoolStaffRoleQuery
+    , useLazyGetSchoolStaffRoleQuery,
+    useLazyGetTeachingStaffQuery,
+    useLazyGetOtherStaffQuery
+} = StaffApi;
 
 
 /**
@@ -76,3 +93,4 @@ export const deleteStaffRole = createAsyncThunk('staff/create',
             return rejectWithValue(error.response?.data || "Failed to update school");
         }
     })
+

@@ -35,9 +35,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Console } from "console"
-
-
 
 
 const formSchemaForDivision = z.object({
@@ -99,7 +96,7 @@ export default function AcademicSettings() {
   const formForDivsion = useForm<z.infer<typeof formSchemaForDivision>>({
     resolver: zodResolver(formSchemaForDivision),
     defaultValues: {
-      class_id : null,   
+      class_id: null,
       class: newDivision?.class,
       division: newDivision?.division,
       aliases: newDivision?.aliases,
@@ -148,16 +145,15 @@ export default function AcademicSettings() {
     }
     // setAddingDivisionToClassId(classId)
     setIsDivisionForDialogOpen(true)
-    console.log("I am here ===>" , formForDivsion.getValues())
   }
 
-  const handleEditDivision = (classId: number, division: string, aliases: string , id : number) => {
+  const handleEditDivision = (classId: number, division: string, aliases: string, id: number) => {
     formForDivsion.reset({
       class: classId,
       division: division,
       aliases: aliases,
       formType: "edit",
-      class_id : id
+      class_id: id
     })
     setIsDivisionForDialogOpen(true);
   }
@@ -221,70 +217,159 @@ export default function AcademicSettings() {
     setSelectedClasses(selectedClasses);
     setIsConfirmSaveDialogOpen(true);
   }
-
+  
   const confirmSaveSelectionOfClasses = async () => {
-
     if (selectedClasses.length > 0) {
-
       let payload: Omit<Class, 'id' | 'school_id'>[] = [];
-
+  
       payload = selectedClasses.map((clas) => {
         return {
           class: clas.class,
           division: 'A',
           aliases: null
+        };
+      });
+  
+      try {
+        const added_class = await dispatch(createClasses(payload));
+  
+        if (added_class.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state with the new classes
+          const newClasses = payload.map((clas, index) => ({
+            class: clas.class,
+            divisions: [{
+              id: index + 1, // Assuming this is a temporary ID
+              schoolId: user!.schoolId, // Add the schoolId if required
+              class: clas.class.toString(), // Ensure this matches the Division type
+              division: clas.division,
+              aliases: clas.aliases
+            }]
+          }));
+  
+          setAcademicClasses((prevClasses) :any => [...prevClasses, ...newClasses]);
+  
+          // Clear the selected classes
+          setSelectedClasses([]);
+  
+          toast({
+            title: "Classes Added",
+            description: `New classes have been added successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to add classes. Please try again.`,
+            variant: "destructive",
+          });
         }
-      })
-
-      const added_class = await dispatch(createClasses(payload));
-      /**
-       * Reloading page here . 
-       * 
-       * adding new class can be create many dependeancies to manage ,  
-       * Reload page may reduce code , and set proper state accprdingly  
-       */
-      window.location.reload()
-      /**
-       * TODO : Handle failed api calls, by adding toast and other assentials    
-       */
-      if (added_class.meta.requestStatus === 'rejected') {
-        alert("Check Console");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `An error occurred while adding classes. Please try again.`,
+          variant: "destructive",
+        });
       }
     } else {
-      /***
-       * TODO : Add a toast here which shows please seleact a valid class in order to create one !
-       */
+      toast({
+        title: "No Classes Selected",
+        description: `Please select at least one class to add.`,
+        variant: "destructive",
+      });
     }
+  
     setIsConfirmSaveDialogOpen(false);
-
-  }
+  };
 
 
   const confirmDivisionChanges = async () => {
-
     let payload = formForDivsion.getValues();
-
-    if (payload.formType === "edit" && payload.class_id) {
-      const edited_division = await dispatch(editDivision({
-        class_id : payload.class_id,
-        aliases: payload.aliases || null
-      }));
-    } else {
-      const new_division = await dispatch(createDivision({        
-        class: payload.class,
-        division: payload.division,
-        aliases: payload.aliases || null
-      }));
+  
+    try {
+      if (payload.formType === "edit" && payload.class_id) {
+        // Edit division
+        const edited_division = await dispatch(editDivision({
+          class_id: payload.class_id,
+          aliases: payload.aliases || null,
+        }));
+  
+        if (edited_division.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state for the edited division
+          setAcademicClasses((prevClasses) =>
+            prevClasses.map((cls) => ({
+              ...cls,
+              divisions: cls.divisions.map((div) =>
+                div.id === payload.class_id
+                  ? { ...div, aliases: payload.aliases || null } // Update the division's aliases
+                  : div
+              ),
+            }))
+          );
+  
+          toast({
+            title: "Division Updated",
+            description: `Division has been updated successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to update division. Please try again.`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Create new division
+        const new_division = await dispatch(createDivision({
+          class: payload.class,
+          division: payload.division,
+          aliases: payload.aliases || null,
+        }));
+        console.log("new_division ===>", new_division?.payload?.id)
+  
+        if (new_division.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state with the new division
+          setAcademicClasses((prevClasses) :any =>
+            prevClasses.map((cls) =>
+              cls.class === payload.class
+                ? {
+                    ...cls,
+                    divisions: [
+                      ...cls.divisions,
+                      {
+                        id: new_division?.payload?.id, // Use the ID returned from the API
+                        schoolId: user!.schoolId,
+                        class: payload.class.toString(),
+                        division: payload.division,
+                        aliases: payload.aliases || null,
+                      },
+                    ],
+                  }
+                : cls
+            )
+          );
+  
+          toast({
+            title: "Division Added",
+            description: `New division has been added successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to add division. Please try again.`,
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `An error occurred. Please try again.`,
+        variant: "destructive",
+      });
     }
-
-    setIsDivisionForDialogOpen(false)
-    setNewDivision(null)
-
-    toast({
-      title: "Division Added",
-      description: `New division has been added successfully.`,
-    })
-  }
+  
+    setIsDivisionForDialogOpen(false);
+    setNewDivision(null);
+  };
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -366,23 +451,24 @@ export default function AcademicSettings() {
                         <div className="flex gap-2 flex-wrap">
                           {std.divisions.map((division) => (
                             <Badge key={division.id} variant="secondary" className="flex items-center gap-1 p-3">
-                              ({division.class}- {division.division}) {division.aliases}
+                              <p>({division.class}- {division.division})</p> 
+                              <p>{division.aliases}</p>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-4 w-4 p-0 ml-1"
-                                onClick={() => handleEditDivision(std.class, division.division, division.aliases ,division.id )}
+                                onClick={() => handleEditDivision(std.class, division.division, division.aliases, division.id)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
-                              <Button
+                              {/* <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-4 w-4 p-0"
                               // onClick={() => handleRemoveDivision(std.class, division.name)}
                               >
                                 <Trash2 className="h-3 w-3" />
-                              </Button>
+                              </Button> */}
                             </Badge>
                           ))}
                         </div>
@@ -485,7 +571,7 @@ export default function AcademicSettings() {
         <Dialog open={isDivisionForDialogOpen} onOpenChange={setIsDivisionForDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{formForDivsion.getValues().formType === 'create' ? "Add" : "Update"} Division</DialogTitle>
+              <DialogTitle>{formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division</DialogTitle>
               <DialogDescription>Confirm or modify the division alias.</DialogDescription>
             </DialogHeader>
             {<div className="grid gap-4 py-4">
@@ -536,7 +622,7 @@ export default function AcademicSettings() {
                       Cancel
                     </Button>
                     <Button onClick={confirmDivisionChanges}>
-                      {formForDivsion.getValues().formType === 'create' ? "Add" : "Update"} Division
+                      {formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division
                     </Button>
                   </DialogFooter>
                 </form>

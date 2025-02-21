@@ -11,14 +11,14 @@ export interface ClassData {
 }
 
 export interface Division {
-  id: number,
-  schoolId: number,
-  class: string,
-  division: string,
-  aliases: string
+  id: number;
+  schoolId: number;
+  class: string; // Ensure this matches the type used in your API response
+  division: string;
+  aliases: string | null;
 }
 
 export interface AcademicClasses {
-  class: number,
-  divisions: Division[]
+  class: number;
+  divisions: Division[];
 }
