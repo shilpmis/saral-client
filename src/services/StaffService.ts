@@ -34,8 +34,8 @@ export const StaffApi = createApi({
             })
         }),
         getOtherStaff: builder.query<{ data: OtherStaff[] , meta : PageMeta }, { school_id: number, page?: number }>({
-            query: (school_id, page = 1) => ({
-                url: `other-staff/${3}?page=${1}`,
+            query: ({school_id, page = 1}) => ({
+                url: `other-staff/${school_id}?page=${page}`,
                 method: "GET"
             })
         })
