@@ -10,7 +10,7 @@ export function Search() {
 
   const searchCategories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
-    { id: "grno", label: "GR Number", icon: <GraduationCap className="h-4 w-4" /> },
+    { id: "grno", label: "GR Number",icon: <GraduationCap className="h-4 w-4" /> },
     { id: "class", label: "Class", icon: <Users className="h-4 w-4" /> },
     { id: "subject", label: "Subject", icon: <BookOpen className="h-4 w-4" /> },
   ]
@@ -29,16 +29,16 @@ export function Search() {
         <Input
           type="text"
           placeholder="Search students..."
-          className="pl-8 pr-60"
+          className="pl-40 pr-10"
           value={searchQuery}
           onChange={(e) => {
-            setSearchQuery(e.target.value)
-                   
+            setSearchQuery(e.target.value)    
           }}
+          disabled={selectedCategory === null }
         />
         <DropdownMenu>
-          <DropdownMenuTrigger asChild disabled={searchQuery.length === 0}>
-            <button className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
+          <DropdownMenuTrigger asChild>
+            <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
               {selectedCategory ? selectedCategory.label : "Search by"}
             </button>
           </DropdownMenuTrigger>
