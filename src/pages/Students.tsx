@@ -365,37 +365,12 @@ export const Students: React.FC = () => {
                   <SelectItem key={index} value={(division.id).toString()}>
                     {`${division.division} ${division.aliases ? "-" + (division.aliases) : ""}`}
                   </SelectItem>
-                  {AcademicClasses.map((cls, index) =>
-                    cls.divisions.length > 0 ? (
-                      <SelectItem key={index} value={cls.class.toString()}>
-                        Class {cls.class}
-                      </SelectItem>
-                    ) : null,
-                  )}
-                </SelectContent>
-              </Select>
-              <Select
-                value={selectedDivision ? selectedDivision.id.toString() : " "}
-                onValueChange={handleDivisionChange}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Division" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value=" " disabled>
-                    Divisions
-                  </SelectItem>
-                  {availableDivisions &&
-                    availableDivisions.divisions.map((division, index) => (
-                      <SelectItem key={index} value={division.id.toString()}>
-                        {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
       )}
       {studentDataForSelectedClass && listedStudentForSelectedClass && (
         <StudentTable
@@ -411,4 +386,3 @@ export const Students: React.FC = () => {
 }
 
 export default Students
-
