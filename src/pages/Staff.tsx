@@ -27,14 +27,6 @@ const FilterOptions: React.FC<{
   return (
     <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
       <div className="relative w-full sm:w-auto">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-        <Input
-          id="search"
-          placeholder="Search staff..."
-          value={searchValue}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 w-full sm:w-64"
-        />
       </div>
       <Select value={statusValue} onValueChange={(value) => onStatusChange(value)}>
         <SelectTrigger className="w-full sm:w-[180px]">

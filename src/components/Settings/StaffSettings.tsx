@@ -96,7 +96,7 @@ export default function StaffSettings() {
         role_id: null,
         formType: 'create',
         role_name: "",
-        role_type: 'non-teaching'
+        role_type: 'teaching'
       })
     }
     setIsDialogOpen(true)
@@ -120,7 +120,7 @@ export default function StaffSettings() {
           alert("Bug :: Role Id is not been provided !")
         }
         toast({
-          title: "Role Added",
+          title: "Role Updated",
           description: `${formForStaffRole.getValues('role_name')} has been updated.`,
         })
       } else {
@@ -143,10 +143,12 @@ export default function StaffSettings() {
           handleCloseDialog()
         }
       }
+      getSchoolStaff(authState.user!.schoolId);
+      handleCloseDialog()
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to ${formForStaffRole.getValues('formType')} role. Please try again.`,
+        // title: "Error",
+        title: `Failed to ${formForStaffRole.getValues('formType')} role. Already Present`,
         variant: "destructive",
       })
     }
@@ -160,6 +162,8 @@ export default function StaffSettings() {
         description: "The role has been removed from the list.",
       })
       setIsDialogForDeleteStaffOpen(false)
+      getSchoolStaff(authState.user!.schoolId);
+      handleCloseDialog()
     } catch (error) {
       alert("Check error in console ! ")
       toast({

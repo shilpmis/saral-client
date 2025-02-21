@@ -4,6 +4,7 @@ import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { logout } from "@/services/AuthService"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {Search} from "@/components/Dashboard/Search"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,8 @@ export default function Header() {
   return (
     <div className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
       <SidebarTrigger />
+      <div className="flex gap-4">
+      <Search></Search>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -74,7 +77,7 @@ export default function Header() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
+      </div>
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">

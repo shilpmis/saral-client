@@ -65,10 +65,6 @@ export const Students: React.FC = () => {
     }
   }
 
-  const handleSearchFilter = useCallback((value: string) => {
-    setSearchValue(value)
-  }, [])
-
   const filteredStudents = useMemo(() => {
     if (listedStudentForSelectedClass) {
       return listedStudentForSelectedClass.filter((student) =>
@@ -284,10 +280,20 @@ export const Students: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-
-          <Dialog>
-            <DialogTrigger asChild>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+              <div className="flex flex-col gap-3 ms-3 me-3">
+              <Dialog>
+            <DialogTrigger asChild>
+              <Button>
                 <Upload className="mr-2 h-4 w-4" /> Upload Excel
               </Button>
             </DialogTrigger>
@@ -315,46 +321,49 @@ export const Students: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-
           <Button variant="outline">
             <FileDown className="mr-2 h-4 w-4" /> Download Excel
           </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem>Print List</DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {AcademicClasses && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Search Students</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
-            <Input
-              id="search"
-              placeholder="Search by name, email, mobile or designation"
-              value={searchValue}
-              onChange={(e) => handleSearchFilter(e.target.value)}
-              className="max-w-sm"
-            />
-            <div className="flex gap-2">
-              <Select value={selectedClass} onValueChange={handleClassChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Class" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value=" " disabled>
-                    Classes
+      {/* Tool bar - search filter , class & divition selection */}
+      {AcademicClasses && (<Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Search Students</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+
+          </div>
+          <div className="flex gap-2">
+            <Select value={selectedClass} onValueChange={handleClassChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Class" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" " disabled>Classes</SelectItem>
+                {AcademicClasses.map((cls, index) =>
+                  cls.divisions.length > 0 ? (   // Replace 'trur' with your actual condition
+                    <SelectItem key={index} value={(cls.class).toString()}>
+                      Class {cls.class}
+                    </SelectItem>
+                  ) : null   // Return null when the condition is false
+                )}
+              </SelectContent>
+            </Select>
+            <Select value={selectedDivision ? selectedDivision!.id.toString() : " "} onValueChange={handleDivisionChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Division" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" " disabled>Divisions</SelectItem>
+                {availableDivisions && availableDivisions.divisions.map((division, index) => (
+                  <SelectItem key={index} value={(division.id).toString()}>
+                    {`${division.division} ${division.aliases ? "-" + (division.aliases) : ""}`}
                   </SelectItem>
                   {AcademicClasses.map((cls, index) =>
                     cls.divisions.length > 0 ? (
