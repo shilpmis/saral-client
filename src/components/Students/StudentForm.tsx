@@ -1,43 +1,101 @@
+"use client"
 
 import type React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { personalSchema, StudentFormData, studentSchema } from "@/utils/student.validation"
-
-
-
-const mockClasses = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-const mockDivisions = {
-  "1": ["A", "B"],
-  "2": ["A", "B", "C"],
-  // ... add more classes and their divisions
-}
+import { personalSchema, type StudentFormData, studentSchema } from "@/utils/student.validation"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import type { AcademicClasses, Division } from "@/types/academic"
+import { useDispatch } from "react-redux"
+import { selectAuthState } from '@/redux/slices/authSlice';
+import { toast } from "@/hooks/use-toast"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { useAddStudentsMutation, useLazyFetchStudentForClassQuery } from "@/services/StundetServices"
 
 interface StudentFormProps {
   initialData?: StudentFormData
   onSubmit: (data: any) => void
-  onClose : ()=> void
-  form_type : "create" | "update"
+  onClose: () => void
+  form_type: "create" | "update" | "view"
 }
 
-const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
+const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClose, form_type,  }) => {
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const [
+      getAcademicClasses,
+      { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
+    ] = useLazyGetAcademicClassesQuery()
 
+  useEffect(()=> {
+   console.log("initialData", initialData)
+  }, [initialData])
+  const authState = useAppSelector(selectAuthState)
+  const dispatch = useDispatch()
+  const [selectedClass, setSelectedClass] = useState<string>("")
+  const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [activeTab, setActiveTab] = useState("personal")
+  const availableDivisions = useMemo<AcademicClasses | null>(() => {
+    if (AcademicClasses && selectedClass) {
+      return AcademicClasses!.filter((cls) => {
+        if (cls.class.toString() === selectedClass) {
+          return cls
+        }
+      })[0]
+    } else {
+      return null
+    }
+  }, [AcademicClasses, selectedClass])
+  useEffect(() => {
+    if (!AcademicClasses && authState.user) {
+      getAcademicClasses(authState.user!.schoolId);
+    }
+  }, [setSelectedClass, setSelectedDivision])
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: initialData || {},
   })
 
+  const isLoading = useAppSelector((state) => state.academic.loading)
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (!AcademicClasses || AcademicClasses.length === 0) {
+    return <div>No classes available. Please add classes first.</div>
+  }
+
+  const handleClassChange = useCallback(
+    (value: string) => {
+      setSelectedClass(value)
+      setSelectedDivision(null)
+      form.setValue("division", "") // Reset division when class changes
+    },
+    [setSelectedClass, setSelectedDivision, form.setValue],
+  )
+
+  const handleDivisionChange = useCallback(
+    (value: string) => {
+      const selectedDiv = availableDivisions?.divisions.find((div) => div.id.toString() === value)
+      setSelectedDivision(selectedDiv || null)
+    },
+    [availableDivisions, setSelectedDivision],
+  )
+
+
   const handleSubmit: SubmitHandler<StudentFormData> = (data) => {
+    console.log('====================================');
+    console.log("Form Data", data);
+    console.log('====================================');
     onSubmit(data)
   }
 
@@ -54,7 +112,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
     else if (activeTab === "academic") setActiveTab("other")
     else if (activeTab === "other") setActiveTab("address")
     else if (activeTab === "address") setActiveTab("bank")
-  }, [activeTab])
+  }, [activeTab, setActiveTab, form.getValues])
 
   const handlePreviousTab = useCallback(() => {
     if (activeTab === "family") setActiveTab("personal")
@@ -172,7 +230,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -237,7 +298,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Aadhar Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -250,7 +315,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Aadhar DISE Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -336,7 +405,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Primary Mobile</FormLabel>
                         <FormControl>
-                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="tel"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -349,7 +422,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Secondary Mobile</FormLabel>
                         <FormControl>
-                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="tel"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -358,7 +435,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -382,7 +463,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>GR Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -395,7 +480,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Roll Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -423,7 +512,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                       <FormItem>
                         <FormLabel>Admission Standard</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(+e.target.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -437,18 +530,33 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Class</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleClassChange(value);
+                          }}
+                        >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select class" />
+                            <SelectTrigger >
+                              <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {mockClasses.map((cls) => (
-                              <SelectItem key={cls} value={cls}>
-                                Class {cls}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value=" " disabled>
+                              Classes
+                            </SelectItem>
+                            {AcademicClasses.map(
+                              (cls, index) =>
+                                cls.divisions.length > 0 && (
+                                  <SelectItem
+                                    key={index}
+                                    value={cls.class.toString()}
+                                  >
+                                    Class {cls.class}
+                                  </SelectItem>
+                                )
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -461,19 +569,38 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Division</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleDivisionChange(value);
+                          }}
+                          disabled={!selectedClass}
+                        >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select division" />
+                            <SelectTrigger >
+                              <SelectValue placeholder="Select Division" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {form.watch("class") &&
-                              mockDivisions[form.watch("class") as keyof typeof mockDivisions]?.map((div) => (
-                                <SelectItem key={div} value={div}>
-                                  Division {div}
-                                </SelectItem>
-                              ))}
+                            <SelectItem value=" " disabled>
+                              Divisions
+                            </SelectItem>
+                            {availableDivisions &&
+                              availableDivisions.divisions.map(
+                                (division, index) => (
+                                  <SelectItem
+                                    key={index}
+                                    value={division.id.toString()}
+                                  >
+                                    {`${division.division} ${
+                                      division.aliases
+                                        ? "- " + division.aliases
+                                        : ""
+                                    }`}
+                                  </SelectItem>
+                                )
+                              )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -511,7 +638,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -589,7 +720,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -608,7 +742,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -695,7 +833,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -731,7 +873,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                     <FormItem>
                       <FormLabel>Account Number</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -752,17 +898,23 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData }) => {
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   Previous
                 </Button>
-                <Button type="submit">Submit</Button>
+                <Button type="submit">
+                  {form_type === "create" ? "Submit" : "Update"}
+                </Button>
               </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
       </form>
     </Form>
-  )
+  );
 }
 
 export default StudentForm

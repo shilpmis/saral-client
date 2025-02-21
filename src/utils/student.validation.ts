@@ -92,8 +92,8 @@ export const academicSchema = z.object({
     message: "Invalid date format",
   }),
   admission_std: z.number().int().positive("Admission standard must be positive"),
-  class: z.string().min(1, "Class is required"),
-  division: z.string().min(1, "Division is required"),
+  // class: z.string().min(1, "Class is required"),
+  // division: z.string().min(1, "Division is required"),
   privious_school: z.string().optional(),
   privious_school_in_guj: z.string().optional(),
 });

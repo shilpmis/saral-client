@@ -217,96 +217,159 @@ export default function AcademicSettings() {
     setSelectedClasses(selectedClasses);
     setIsConfirmSaveDialogOpen(true);
   }
-
+  
   const confirmSaveSelectionOfClasses = async () => {
-
     if (selectedClasses.length > 0) {
-
       let payload: Omit<Class, 'id' | 'school_id'>[] = [];
-
+  
       payload = selectedClasses.map((clas) => {
         return {
           class: clas.class,
           division: 'A',
           aliases: null
+        };
+      });
+  
+      try {
+        const added_class = await dispatch(createClasses(payload));
+  
+        if (added_class.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state with the new classes
+          const newClasses = payload.map((clas, index) => ({
+            class: clas.class,
+            divisions: [{
+              id: index + 1, // Assuming this is a temporary ID
+              schoolId: user!.schoolId, // Add the schoolId if required
+              class: clas.class.toString(), // Ensure this matches the Division type
+              division: clas.division,
+              aliases: clas.aliases
+            }]
+          }));
+  
+          setAcademicClasses((prevClasses) :any => [...prevClasses, ...newClasses]);
+  
+          // Clear the selected classes
+          setSelectedClasses([]);
+  
+          toast({
+            title: "Classes Added",
+            description: `New classes have been added successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to add classes. Please try again.`,
+            variant: "destructive",
+          });
         }
-      })
-
-      const added_class = await dispatch(createClasses(payload));
-      /**
-       * Reloading page here . 
-       * 
-       * adding new class can be create many dependeancies to manage ,  
-       * Reload page may reduce code , and set proper state accprdingly  
-       */
-      window.location.reload()
-      /**
-       * TODO : Handle failed api calls, by adding toast and other assentials    
-       */
-      if (added_class.meta.requestStatus === 'rejected') {
-        alert("Check Console");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `An error occurred while adding classes. Please try again.`,
+          variant: "destructive",
+        });
       }
     } else {
-      /***
-       * TODO : Add a toast here which shows please seleact a valid class in order to create one !
-       */
+      toast({
+        title: "No Classes Selected",
+        description: `Please select at least one class to add.`,
+        variant: "destructive",
+      });
     }
+  
     setIsConfirmSaveDialogOpen(false);
-
-  }
+  };
 
 
   const confirmDivisionChanges = async () => {
-
     let payload = formForDivsion.getValues();
-
-    if (payload.formType === "edit" && payload.class_id) {
-
-      let edited_division = await dispatch(editDivision({
-        class_id: payload.class_id,
-        aliases: payload.aliases || null
-      }));
-
-      if (edited_division.meta.requestStatus === 'rejected') {
-        toast({
-          variant : "destructive",
-          title: "Division did not Edited !",
-          // description: `${new_division.payload ? new_division.payload : " "}`
-        })        
-        return;
+  
+    try {
+      if (payload.formType === "edit" && payload.class_id) {
+        // Edit division
+        const edited_division = await dispatch(editDivision({
+          class_id: payload.class_id,
+          aliases: payload.aliases || null,
+        }));
+  
+        if (edited_division.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state for the edited division
+          setAcademicClasses((prevClasses) =>
+            prevClasses.map((cls) => ({
+              ...cls,
+              divisions: cls.divisions.map((div) =>
+                div.id === payload.class_id
+                  ? { ...div, aliases: payload.aliases || null } // Update the division's aliases
+                  : div
+              ),
+            }))
+          );
+  
+          toast({
+            title: "Division Updated",
+            description: `Division has been updated successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to update division. Please try again.`,
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: " Division Edited Successfully !",
-          // description: `${new_division.payload ? new_division.payload : " "}`
-        })
-        setIsDivisionForDialogOpen(false)
-        setNewDivision(null)
+        // Create new division
+        const new_division = await dispatch(createDivision({
+          class: payload.class,
+          division: payload.division,
+          aliases: payload.aliases || null,
+        }));
+        console.log("new_division ===>", new_division?.payload?.id)
+  
+        if (new_division.meta.requestStatus === 'fulfilled') {
+          // Update the academicClasses state with the new division
+          setAcademicClasses((prevClasses) :any =>
+            prevClasses.map((cls) =>
+              cls.class === payload.class
+                ? {
+                    ...cls,
+                    divisions: [
+                      ...cls.divisions,
+                      {
+                        id: new_division?.payload?.id, // Use the ID returned from the API
+                        schoolId: user!.schoolId,
+                        class: payload.class.toString(),
+                        division: payload.division,
+                        aliases: payload.aliases || null,
+                      },
+                    ],
+                  }
+                : cls
+            )
+          );
+  
+          toast({
+            title: "Division Added",
+            description: `New division has been added successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to add division. Please try again.`,
+            variant: "destructive",
+          });
+        }
       }
-
-    } else {
-      const new_division = await dispatch(createDivision({
-        class: payload.class,
-        division: payload.division,
-        aliases: payload.aliases || null
-      }));
-      if (new_division.meta.requestStatus === 'rejected') {
-        toast({
-          variant : "destructive",
-          title: "Creatioin of Division failed !",
-          description: `${new_division.payload ? new_division.payload : " "}`
-        })
-        return;
-      } else {
-        toast({
-          title: " Division created Successfully !",
-          // description: `${new_division.payload ? new_division.payload : " "}`
-        })
-        setIsDivisionForDialogOpen(false)
-        setNewDivision(null)
-      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `An error occurred. Please try again.`,
+        variant: "destructive",
+      });
     }
-
-  }
+  
+    setIsDivisionForDialogOpen(false);
+    setNewDivision(null);
+  };
 
   useEffect(() => {
     if (data && data.length > 0) {

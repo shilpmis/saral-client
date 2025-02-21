@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit"
 import ApiService from "./ApiService"
 import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
-import { AddStudentsRequest } from "@/types/student"
+import { AddStudentsRequest, Student, StudentMeta } from "@/types/student"
 
 /**
  * 
@@ -22,7 +22,7 @@ export const StudentApi = createApi({
     }),
     endpoints: (builder) => ({
       fetchStudentForClass: builder.query<any, { class_id: number, page?: number, student_meta?: boolean }>({
-        query: ({ class_id, page = 1, student_meta = false }) => ({
+        query: ({ class_id, page = 1, student_meta = true }) => ({
           url: `students/${class_id}?page=${page}&student_meta=${student_meta}`,
           method: "GET",
         }),
@@ -34,13 +34,24 @@ export const StudentApi = createApi({
           body: students,
         }),
       }),
+      updateStudent: builder.mutation<
+      any,
+      { student_id: number; student_data: Partial<Student>; student_meta_data: Partial<StudentMeta> }
+    >({
+      query: ({ student_id, student_data, student_meta_data }) => ({
+        url: `student/${student_id}`,
+        method: "PUT",
+        body: { student_data, student_meta_data },
+      }),
+    }),
     }),
   });
   
   export const { 
     useFetchStudentForClassQuery, 
     useLazyFetchStudentForClassQuery,
-    useAddStudentsMutation 
+    useAddStudentsMutation,
+    useUpdateStudentMutation
   } = StudentApi;
 
 /**
