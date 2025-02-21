@@ -3,7 +3,7 @@ import { SearchIcon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { User, GraduationCap, Users, BookOpen } from "lucide-react"
 import React from "react"
-import SearchCategory from "@/types/searchCategory"
+import { SearchCategory } from "@/types/searchCategory"
 
 
 export function Search() {
