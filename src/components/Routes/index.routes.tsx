@@ -31,6 +31,7 @@ import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
 import AdminAttendanceView from "../../pages/AdminAttendance";
 import StudentAttendanceView from "@/pages/StudentAttendance";
+import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -86,6 +87,7 @@ export default function RootRoute() {
                 <Route path="" element={<GeneralSettings />} />
                 <Route path="general" element={<GeneralSettings />} />
                 <Route path="academic" element={<AcademicSettings />} />
+                <Route path="leaves" element={<LeaveManagementSettings />} />
                 <Route path="staff" element={<StaffSettings />} />
                 <Route path="payroll" element={<PayrollSettings />} />
                 <Route path="fees" element={<FeesSettings />} />
