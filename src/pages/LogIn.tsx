@@ -22,8 +22,7 @@ import { selectVerificationStatus, setCredentials, setCredentialsForVerification
 import { useLocation, useNavigate } from 'react-router-dom'
 import { login, useVerifyQuery } from '@/services/AuthService'
 import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from '@/redux/slices/authSlice'
-// import ver
-
+import { toast } from '@/hooks/use-toast'
 
 const formSchema = z.object({
   email: z.string().email({
@@ -57,14 +56,25 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await dispatch(login(values));
-      dispatch(setCredentialsForVerificationStatus({
-        isVerificationInProgress: false,
-        isVerificationFails: false,
-        verificationError: null,
-        isVerificationSuccess: true
-      }))
-      window.location.reload();
+      let user = await dispatch(login(values));
+      if (user.meta.requestStatus === 'rejected') {
+        
+        /**
+         * FIX : Toast is not visible
+         */
+        toast({
+          variant: 'destructive',
+          title: `Your Email or password must be wrong ! Please try again !`,
+        })
+      } else {
+        dispatch(setCredentialsForVerificationStatus({
+          isVerificationInProgress: false,
+          isVerificationFails: false,
+          verificationError: null,
+          isVerificationSuccess: true
+        }))
+        window.location.reload();
+      }
     } catch (error) {
       console.error("Login failed:", error)
     }
