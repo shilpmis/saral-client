@@ -1,9 +1,9 @@
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 
 import AdminLayout from "@/layouts/Admin/AdminLayout";
@@ -31,6 +31,7 @@ import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
 import AdminAttendanceView from "../../pages/AdminAttendance";
 import StudentAttendanceView from "@/pages/StudentAttendance";
+import { Permission } from "@/types/user";
 import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 
 export default function RootRoute() {
@@ -43,59 +44,131 @@ export default function RootRoute() {
     useVerifyQuery();
 
   return (
-    <>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login />}></Route>
+    <Router>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Login />} />
+        <Route path="/auth" element={<AuthLayout />}>
+          <Route path="login" element={<Login />} />
+        </Route>
 
-          <Route path="/auth" element={<AuthLayout />}>
-            <Route path="login" element={<Login />} />
-          </Route>
+        {/* Protected routes under /d */}
+        <Route
+          path="/d"
+          element={
+            <PrivateRoute>
+              <AdminLayout />
+            </PrivateRoute>
+          }
+        >
+          {/* Dashboard */}
+          <Route index element={<DashboardPage />} />
 
-          <Route path="/d">
-            <Route element={<AdminLayout />}>
+          {/* Students */}
+          <Route
+            path="students"
+            element={
+              <PrivateRoute allowedPermissions={[Permission.MANAGE_STUDENTS]}>
+                <Students />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="" element={<DashboardPage />} />
+          {/* Staff */}
+          <Route
+            path="staff"
+            element={
+              <PrivateRoute allowedPermissions={[Permission.MANAGE_STAFF]}>
+                <Staff />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="students" element={<Students />} />
+          {/* Payroll */}
+          <Route
+            path="payroll"
+            element={
+              <PrivateRoute allowedPermissions={[Permission.MANAGE_PAYROLL]}>
+                <Payroll />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="staff" element={<Staff />} />
-              <Route path="payroll" element={<Payroll />} />
+          {/* Fees */}
+          <Route
+            path="fee"
+            element={
+              <PrivateRoute allowedPermissions={[Permission.MANAGE_FEES]}>
+                <Fees />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="fee" element={<Fees />} />
+          {/* User Management */}
+          <Route
+            path="user-management"
+            element={
+              <PrivateRoute allowedPermissions={[Permission.MANAGE_USERS]}>
+                <UserManagement />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="user-management" element={<UserManagement />} />
-              <Route
-                path="leave"
-                element={
-                  <LeaveManagement
+          {/* Leave */}
+          <Route
+            path="leave"
+            element={
+              <PrivateRoute>
+                <LeaveManagement
                   initialLeaveRequests={[]}
-                  totalLeaves={{
-                    sick: 10,
-                    vacation: 15,
-                    personal: 5,
-                  }}
+                  totalLeaves={{ sick: 10, vacation: 15, personal: 5 }}
                   monthlySalary={5000}
                 />
-                }
-              />
-              <Route path="admin-leave-management" element={<AdminLeaveManagement />}/>
-              <Route path="admin-attendance-mangement" element={<AdminAttendanceView/>} />
-              <Route path="mark-attendance" element={<StudentAttendanceView/>} />
+              </PrivateRoute>
+            }
+          />
 
-              <Route path="settings" element={<SettingsPage />}>
-                <Route path="" element={<GeneralSettings />} />
-                <Route path="general" element={<GeneralSettings />} />
-                <Route path="academic" element={<AcademicSettings />} />
-                <Route path="leaves" element={<LeaveManagementSettings />} />
-                <Route path="staff" element={<StaffSettings />} />
-                <Route path="payroll" element={<PayrollSettings />} />
-                <Route path="fees" element={<FeesSettings />} />
-              </Route>
-            </Route>
+          {/* Admin Leave Management */}
+          <Route
+            path="admin-leave-management"
+            element={
+              <PrivateRoute>
+                <AdminLeaveManagement />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Admin Attendance Management */}
+          <Route
+            path="admin-attendance-mangement"
+            element={
+              <PrivateRoute>
+                <AdminAttendanceView />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Student Attendance */}
+          <Route
+            path="mark-attendance"
+            element={
+              <PrivateRoute>
+                <StudentAttendanceView />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Settings - nested routes */}
+          <Route path="settings" element={<SettingsPage />}>
+            <Route index element={<GeneralSettings />} />
+            <Route path="general" element={<GeneralSettings />} />
+            <Route path="academic" element={<AcademicSettings />} />
+            <Route path="staff" element={<StaffSettings />} />
+            <Route path="payroll" element={<PayrollSettings />} />
+            <Route path="fees" element={<FeesSettings />} />
           </Route>
-        </Routes>
-      </Router>
-    </>
+        </Route>
+      </Routes>
+    </Router>
   );
 }

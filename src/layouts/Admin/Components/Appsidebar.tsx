@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,36 +10,51 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Home, Settings, FileText, Clock, Landmark, UserCheck, Users, IndianRupee, Bed, ClipboardList } from "lucide-react"
-import { Link } from "react-router-dom"
+} from "@/components/ui/sidebar";
+import {
+  Home,
+  Settings,
+  FileText,
+  Clock,
+  Landmark,
+  UserCheck,
+  Users,
+  IndianRupee,
+  Bed,
+  ClipboardList,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { Permission } from "@/types/user";
+import { useAuth } from "@/redux/hooks/useAuth";
 
 const SideBarItems = [
   { title: "Dashboard", url: "/d", icon: Home },
   { title: "Student", url: "/d/students", icon: Users },
   { title: "Staff", url: "/d/staff", icon: UserCheck },
-  { title: "Mark Attendance ", url: "/d/mark-attendance", icon: ClipboardList },
+  { title: "Mark Attendance", url: "/d/mark-attendance", icon: ClipboardList },
   { title: "Leave", url: "/d/leave", icon: Bed },
   { title: "Payroll", url: "/d/payroll", icon: Landmark },
   { title: "Fees", url: "/d/fee", icon: IndianRupee },
   { title: "Time Table", url: "/d/timetable", icon: Clock },
   { title: "Result", url: "/d/results", icon: FileText },
-  { title: "Attendance Management", url: "/d/admin-attendance-mangement", icon: ClipboardList},
+  { title: "Attendance Management", url: "/d/admin-attendance-mangement", icon: ClipboardList },
   { title: "Leave Management", url: "/d/admin-leave-management", icon: Bed },
-]
+];
 
 const SideBarFooter = [
-  { title: "User Management", url: "/d/user-management", icon: Users },
+  { title: "User Management", url: "/d/user-management", icon: Users, requiredPermission: Permission.MANAGE_USERS },
   { title: "Settings", url: "/d/settings", icon: Settings },
-]
+];
 
 interface AppSidebarProps {
-  isCollapsed: boolean
+  isCollapsed: boolean;
 }
 
 export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
+  const { hasPermission } = useAuth();
+
   return (
-    <Sidebar  variant="sidebar" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader className="p-2 bg-white rounded-lg">
         <div className="flex items-center justify-center p-2 bg-white rounded-lg">
           {isCollapsed ? (
@@ -73,7 +89,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
       <SidebarContent className="p-2 bg-white rounded-lg">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu  >
+            <SidebarMenu>
               {SideBarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -92,22 +108,27 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu >
-              {SideBarFooter.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      <item.icon className="mr-2" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+            <SidebarMenu>
+              {SideBarFooter.map((item) => {
+                // Conditionally render the menu item if a requiredPermission is provided.
+                if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+                  return null;
+                }
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url}>
+                        <item.icon className="mr-2" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
-
