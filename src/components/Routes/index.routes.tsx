@@ -33,6 +33,7 @@ import AdminAttendanceView from "../../pages/AdminAttendance";
 import StudentAttendanceView from "@/pages/StudentAttendance";
 import { Permission } from "@/types/user";
 import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
+import { SearchProvider } from "../Dashboard/searchContext";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -44,6 +45,7 @@ export default function RootRoute() {
     useVerifyQuery();
 
   return (
+    <SearchProvider>
     <Router>
       <Routes>
         {/* Public routes */}
@@ -170,5 +172,6 @@ export default function RootRoute() {
         </Route>
       </Routes>
     </Router>
+    </SearchProvider>
   );
 }
