@@ -1,4 +1,4 @@
-interface PageMeta {
+export interface PageMeta {
     total: number,
     per_page: number,
     current_page: number,

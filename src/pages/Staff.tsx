@@ -1,9 +1,11 @@
+"use client"
+
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, FileDown, Upload, MoreHorizontal, Search } from "lucide-react"
+import { Plus, FileDown, Upload, MoreHorizontal } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
@@ -15,7 +17,14 @@ import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAuthState } from "@/redux/slices/authSlice"
-import { useLazyGetOtherStaffQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
+import {
+  useLazyGetOtherStaffQuery,
+  useLazyGetTeachingStaffQuery,
+  useAddTeachingStaffMutation,
+  useAddOtherStaffMutation,
+} from "@/services/StaffService"
+import type { StaffFormData } from "@/utils/staff.validation"
+import { PageMeta } from "@/types/global"
 
 
 const FilterOptions: React.FC<{
@@ -26,8 +35,7 @@ const FilterOptions: React.FC<{
 }> = ({ onSearchChange, onStatusChange, searchValue, statusValue }) => {
   return (
     <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div className="relative w-full sm:w-auto">
-      </div>
+      <div className="relative w-full sm:w-auto"></div>
       <Select value={statusValue} onValueChange={(value) => onStatusChange(value)}>
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter By Status" />
@@ -48,6 +56,8 @@ export const Staff: React.FC = () => {
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
   const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
+  const [addTeachingStaff] = useAddTeachingStaffMutation()
+  const [addOtherStaff] = useAddOtherStaffMutation()
 
   const [activeTab, setActiveTab] = useState<string>("teaching")
   const [isStaffFormOpen, setIsStaffFormOpen] = useState(false)
@@ -121,17 +131,36 @@ export const Staff: React.FC = () => {
   }
 
   const handleEditStaff = (staff_id: number) => {
-    // setStaffFormMode("edit")
-    // setSelectedStaff({
-    //   ...staff,
-    //   category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
-    // })
-    // setIsStaffFormOpen(true)
+  //   setStaffFormMode("edit")
+  //   setSelectedStaff({
+  //     ...staff,
+  //     category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
+  //   })
+  //   setIsStaffFormOpen(true)
   }
 
-  const handleStaffSubmit = (data: any) => {
-    setIsStaffFormOpen(false)
-  }
+  const handleStaffSubmit = async (data: StaffFormData) => {
+    try {
+      const payload  = {
+        school_id: authState.user!.school_id,
+        staffData: [data], // Wrapping data in an array
+      };
+  
+      if (data.is_teaching_role) {
+        await addTeachingStaff(payload).unwrap();
+      } else {
+        await addOtherStaff(payload).unwrap();
+      }
+  
+      setIsStaffFormOpen(false);
+      // Refresh the staff list
+      fetchDataForActiveTab(activeTab as "teaching" | "non-teaching", 1);
+    } catch (error) {
+      console.error("Error adding staff:", error);
+      // Handle error (e.g., show an error message to the user)
+    }
+  };
+  
 
   const handleChooseFile = () => {
     fileInputRef.current?.click()
@@ -220,9 +249,7 @@ export const Staff: React.FC = () => {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Upload Excel</DialogTitle>
-                    <DialogDescription>
-                      Select an Excel file to upload.
-                    </DialogDescription>
+                    <DialogDescription>Select an Excel file to upload.</DialogDescription>
                   </DialogHeader>
                   <div>
                     <input type="file" accept=".xlsx,.xls" />
@@ -250,50 +277,40 @@ export const Staff: React.FC = () => {
         statusValue={statusValue}
       />
 
-      {error && (
-        <div className="text-red-500 mb-4">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value)}
-        className="w-full"
-      >
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="teaching">Teaching Staff</TabsTrigger>
           <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
-          {
-            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
-          }
-          {
-            currentDisplayDataForTeachers && (
-              <StaffTable
-                staffList={{ staff: currentDisplayDataForTeachers?.satff, page_meta: currentDisplayDataForTeachers?.page_meta }}
-                onEdit={handleEditStaff}
-                type="teaching"
-                onPageChange={onPageChange}
-              />
-            )
-          }
+          {isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>}
+          {currentDisplayDataForTeachers && (
+            <StaffTable
+              staffList={{
+                staff: currentDisplayDataForTeachers?.satff,
+                page_meta: currentDisplayDataForTeachers?.page_meta,
+              }}
+              onEdit={handleEditStaff}
+              type="teaching"
+              onPageChange={onPageChange}
+            />
+          )}
         </TabsContent>
         <TabsContent value="non-teaching">
-          {
-            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
-          }
-          {
-            currentDisplayDataForOtherStaff && (
-              <StaffTable
-                staffList={{ staff: currentDisplayDataForOtherStaff?.satff, page_meta: currentDisplayDataForOtherStaff?.page_meta }}
-                onEdit={handleEditStaff}
-                type="teaching"
-                onPageChange={onPageChange}
-              />
-            )
-          }
+          {isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>}
+          {currentDisplayDataForOtherStaff && (
+            <StaffTable
+              staffList={{
+                staff: currentDisplayDataForOtherStaff?.satff,
+                page_meta: currentDisplayDataForOtherStaff?.page_meta,
+              }}
+              onEdit={handleEditStaff}
+              type="teaching"
+              onPageChange={onPageChange}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
@@ -302,12 +319,7 @@ export const Staff: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{staffFormMode === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
           </DialogHeader>
-          <StaffForm
-            onClose={() => setIsStaffFormOpen(false)}
-            onSubmit={handleStaffSubmit}
-            formType="create"
-            // mode={staffFormMode}
-          />
+          <StaffForm onClose={() => setIsStaffFormOpen(false)} onSubmit={handleStaffSubmit} formType="create" />
         </DialogContent>
       </Dialog>
 
@@ -339,3 +351,4 @@ export const Staff: React.FC = () => {
     </div>
   )
 }
+
