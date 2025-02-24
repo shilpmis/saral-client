@@ -17,8 +17,8 @@ export const StaffApi = createApi({
     }),
     endpoints: (builder) => ({
         getSchoolStaffRole: builder.query<{ staff: StaffRole[] }, number>({
-            query: (schoolId) => ({
-                url: `staff/${schoolId}`,
+            query: (school_id) => ({
+                url: `staff/${school_id}`,
                 method: "GET"
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -67,7 +67,7 @@ export const createStaffRole = createAsyncThunk('staff/create',
             console.log("Error while adding staff", error)
             return rejectWithValue(error.response?.data || "Failed to update school");
         }
-    })
+})
 
 export const updateStaffRole = createAsyncThunk('staff/update',
     async ({ staff_id, paylaod }: { staff_id: number, paylaod: { role: string } }, { rejectWithValue }) => {

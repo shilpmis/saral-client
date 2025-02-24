@@ -8,11 +8,11 @@ interface School {
     name: string,
     email: string,
     username: string,
-    contactNumber: number,
+    contact_number: number,
     subscriptionType: string,
     status: string,
-    establishedYear: string,
-    schoolType: string,
+    established_year: string,
+    school_type: string,
     address: string
 }
 
@@ -37,8 +37,8 @@ export const SchoolApi = createApi({
     }),
     endpoints: (builder) => ({
         getSchool: builder.query<School , number>({
-            query: (schoolId) => ({
-                url: `/school/${schoolId}`,
+            query: (school_id) => ({
+                url: `/school/${school_id}`,
                 method: "GET",
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {

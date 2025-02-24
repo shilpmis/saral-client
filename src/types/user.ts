@@ -5,23 +5,24 @@ export enum UserStatus {
 }
 
 export interface User {
-  id: number
-  schoolId: number
-  roleId: number // this will be used to check the role of the user using roleId for the userRole
-  name: string
-  username: string
-  saralEmail: string
-  // password: string
-  // status: UserStatus
-  role: UserRole 
-  permissions: Permission[];
+  id: string;
+  username : string;
+  school_id: number;
+  saral_email: string;
+  name: string;
+  role: UserRole;
+  role_id: number;
+  is_teacher: boolean;
+  is_active: boolean;
+  teacher_id: number | null;
+  permissions: string[];
 }
 
 export enum UserRole {
   ADMIN = "ADMIN",
   PRINCIPAL = "PRINCIPAL",
   HEAD_TEACHER = "HEAD_TEACHER",
-  CLERK = "CLERK", // Changed from CLERCK to CLERK for consistency
+  CLERK = "CLERK",
   IT_ADMIN = "IT_ADMIN",
   SCHOOL_TEACHER = "SCHOOL_TEACHER",
 }

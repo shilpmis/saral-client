@@ -31,5 +31,5 @@ const staffSlice = createSlice({
 export const selectSchoolStaffRoles = (state : RootState) => state.staff.staffRoles
 
 export const {setStaffRole} = staffSlice.actions
-
+    
 export default staffSlice.reducer

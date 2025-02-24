@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
@@ -19,29 +17,82 @@ import { selectAuthState } from '@/redux/slices/authSlice';
 import { toast } from "@/hooks/use-toast"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { useAddStudentsMutation, useLazyFetchStudentForClassQuery } from "@/services/StundetServices"
+import { z } from "zod"
+import { Student, StudentEntry, UpdateStudent } from "@/types/student"
 
 interface StudentFormProps {
-  initialData?: StudentFormData
-  onSubmit: (data: any) => void
   onClose: () => void
   form_type: "create" | "update" | "view"
+  initial_data?: Student | null
+ 
 }
 
-const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClose, form_type,  }) => {
-  const AcademicClasses = useAppSelector(selectAcademicClasses)
-  const [
-      getAcademicClasses,
-      { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
-    ] = useLazyGetAcademicClassesQuery()
+const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_type }) => {
 
-  useEffect(()=> {
-   console.log("initialData", initialData)
-  }, [initialData])
-  const authState = useAppSelector(selectAuthState)
   const dispatch = useDispatch()
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const authState = useAppSelector(selectAuthState)
+  const isLoading = useAppSelector((state) => state.academic.loading)
+
+  const form = useForm<StudentFormData>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      first_name_in_guj: "",
+      middle_name_in_guj: "",
+      last_name_in_guj: "",
+      gender: "Male", // Default to "Male"
+      birth_date: "",
+      birth_place: "",
+      birth_place_in_guj: "",
+      aadhar_no: undefined,
+      aadhar_dise_no: undefined,
+
+      father_name: "",
+      father_name_in_guj: "",
+      mother_name: "",
+      mother_name_in_guj: "",
+      primary_mobile: undefined,
+      secondary_mobile: undefined,
+
+      gr_no: undefined,
+      roll_number: undefined,
+      admission_date: "",
+      admission_std: undefined,
+      class: "",
+      division: "",
+      privious_school: "",
+      privious_school_in_guj: "",
+
+      religiion: "",
+      religiion_in_guj: "",
+      caste: "",
+      caste_in_guj: "",
+      category: "OPEN", // Default to "OPEN"
+
+      address: "",
+      district: "",
+      city: "",
+      state: "",
+      postal_code: "",
+
+      bank_name: "",
+      account_no: undefined,
+      IFSC_code: "",
+    },
+  })
+
+  const [
+    getAcademicClasses,
+    { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
+  ] = useLazyGetAcademicClassesQuery()
+
   const [selectedClass, setSelectedClass] = useState<string>("")
-  const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [activeTab, setActiveTab] = useState("personal")
+  const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
+
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
       return AcademicClasses!.filter((cls) => {
@@ -53,26 +104,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
       return null
     }
   }, [AcademicClasses, selectedClass])
-  useEffect(() => {
-    if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user!.schoolId);
-    }
-  }, [setSelectedClass, setSelectedDivision])
-
-  const form = useForm<StudentFormData>({
-    resolver: zodResolver(studentSchema),
-    defaultValues: initialData || {},
-  })
-
-  const isLoading = useAppSelector((state) => state.academic.loading)
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (!AcademicClasses || AcademicClasses.length === 0) {
-    return <div>No classes available. Please add classes first.</div>
-  }
 
   const handleClassChange = useCallback(
     (value: string) => {
@@ -91,19 +122,159 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
     [availableDivisions, setSelectedDivision],
   )
 
+  const handleSubmit: SubmitHandler<StudentFormData> = (values: z.infer<typeof studentSchema>) => {
+    if (form_type === "create") {
 
-  const handleSubmit: SubmitHandler<StudentFormData> = (data) => {
-    console.log('====================================');
-    console.log("Form Data", data);
-    console.log('====================================');
-    onSubmit(data)
+    }
+    else if (form_type === "update") {
+
+    } else {
+
+    }
+
   }
 
-  const handleNextTab = useCallback(async() => {
-    
-    let isValidToChangeTab : boolean= false; 
+  // const handleUpdateStudent = useCallback(
+  //   async (studentData: UpdateStudent , student_id : number) => {
+  //     try {
+  //       // let result = await updateStudent({
+  //       //   student_id: student_id,
+  //       //   student_data: {
+  //       //     first_name: studentData.first_name,
+  //       //     middle_name: studentData.middle_name,
+  //       //     last_name: studentData.last_name,
+  //       //     first_name_in_guj: studentData.first_name_in_guj,
+  //       //     middle_name_in_guj: studentData.middle_name_in_guj,
+  //       //     last_name_in_guj: studentData.last_name_in_guj,
+  //       //     gender: studentData.gender,
+  //       //     birth_date: studentData.birth_date,
+  //       //     gr_no: studentData.gr_no,
+  //       //     primary_mobile: studentData.primary_mobile,
+  //       //     father_name: studentData.father_name,
+  //       //     father_name_in_guj: studentData.father_name_in_guj,
+  //       //     mother_name: studentData.mother_name,
+  //       //     mother_name_in_guj: studentData.mother_name_in_guj,
+  //       //     roll_number: studentData.roll_number,
+  //       //     aadhar_no: studentData.aadhar_no,
+  //       //     is_active: true,
+  //       //   },
+  //       //   student_meta_data: {
+  //       //     aadhar_dise_no: studentData.aadhar_dise_no,
+  //       //     birth_place: studentData.birth_place,
+  //       //     birth_place_in_guj: studentData.birth_place_in_guj,
+  //       //     religiion: studentData.religiion,
+  //       //     religiion_in_guj: studentData.religiion_in_guj,
+  //       //     caste: studentData.caste,
+  //       //     caste_in_guj: studentData.caste_in_guj,
+  //       //     category: studentData.category,
+  //       //     category_in_guj: studentData.category_in_guj,
+  //       //     admission_date: studentData.admission_date,
+  //       //     admission_class_id: studentData.division,
+  //       //     secondary_mobile: studentData.secondary_mobile,
+  //       //     privious_school: studentData.privious_school,
+  //       //     privious_school_in_guj: studentData.privious_school_in_guj,
+  //       //     address: studentData.address,
+  //       //     district: studentData.district,
+  //       //     city: studentData.city,
+  //       //     state: studentData.state,
+  //       //     postal_code: studentData.postal_code,
+  //       //     bank_name: studentData.bank_name,
+  //       //     account_no: studentData.account_no,
+  //       //     IFSC_code: studentData.IFSC_code,
+  //       //   },
+  //       // }).unwrap()
+  //       toast({
+  //         title: "Success",
+  //         description: "Student updated successfully",
+  //       })
+  //     } catch (error) {
 
-    if(activeTab === "personal"){
+  //     }
+  //   },
+  //   [updateStudent, getStudentForClass, authState.user],
+  // )
+
+  // const handleAddStudent = useCallback(async (studentData: any) => {
+  //   try {
+  //     let result = await addStudent({
+  //       class_id: studentData.division,
+  //       students: [
+  //         {
+  //           students_data: {
+  //             school_id: authState.user!.school_id,
+  //             class_id: studentData.division,
+  //             first_name: studentData.first_name,
+  //             middle_name: studentData.middle_name,
+  //             last_name: studentData.last_name,
+  //             first_name_in_guj: studentData.first_name_in_guj,
+  //             middle_name_in_guj: studentData.middle_name_in_guj,
+  //             last_name_in_guj: studentData.last_name_in_guj,
+  //             gender: studentData.gender,
+  //             birth_date: studentData.birth_date,
+  //             gr_no: studentData.gr_no,
+  //             primary_mobile: studentData.primary_mobile,
+  //             father_name: studentData.father_name,
+  //             father_name_in_guj: studentData.father_name_in_guj,
+  //             mother_name: studentData.mother_name,
+  //             mother_name_in_guj: studentData.mother_name_in_guj,
+  //             roll_number: studentData.roll_number,
+  //             aadhar_no: studentData.aadhar_no,
+  //             is_active: true,
+  //           },
+  //           student_meta_data: {
+  //             aadhar_dise_no: studentData.aadhar_dise_no,
+  //             birth_place: studentData.birth_place,
+  //             birth_place_in_guj: studentData.birth_place_in_guj,
+  //             religiion: studentData.religiion,
+  //             religiion_in_guj: studentData.religiion_in_guj,
+  //             caste: studentData.caste,
+  //             caste_in_guj: studentData.caste_in_guj,
+  //             category: studentData.category,
+  //             category_in_guj: studentData.category_in_guj,
+  //             admission_date: studentData.admission_date,
+  //             admission_class_id: studentData.division,
+  //             secondary_mobile: studentData.secondary_mobile,
+  //             privious_school: studentData.privious_school,
+  //             privious_school_in_guj: studentData.privious_school_in_guj,
+  //             address: studentData.address,
+  //             district: studentData.district,
+  //             city: studentData.city,
+  //             state: studentData.state,
+  //             postal_code: studentData.postal_code,
+  //             bank_name: studentData.bank_name,
+  //             account_no: studentData.account_no,
+  //             IFSC_code: studentData.IFSC_code,
+  //           },
+  //         },
+  //       ],
+  //     }).unwrap()
+  //     toast({
+  //       title: "Success",
+  //       description: "Student added successfully",
+  //     })
+  //     setOpenDialogForStudent({
+  //       isOpen: false,
+  //       selectedStudent: null,
+  //       type: "add"
+  //     })
+  //     getStudentForClass({ class_id: studentData.division })
+
+  //   } catch (error) {
+  //     console.error("Error while adding/updating student", error)
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to add/update student",
+  //       variant: "destructive",
+  //     })
+  //   }
+  // }, [addStudent, getStudentForClass, authState.user])
+
+
+  const handleNextTab = useCallback(async () => {
+
+    let isValidToChangeTab: boolean = false;
+
+    if (activeTab === "personal") {
       isValidToChangeTab = (await personalSchema.safeParseAsync(form.getValues())).success
     }
 
@@ -121,6 +292,28 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
     else if (activeTab === "address") setActiveTab("other")
     else if (activeTab === "bank") setActiveTab("address")
   }, [activeTab])
+
+
+  useEffect(() => {
+    if (!AcademicClasses && authState.user) {
+      getAcademicClasses(authState.user!.school_id);
+    }
+  }, [setSelectedClass, setSelectedDivision])
+
+
+  useEffect(() => {
+    if (form_type === "update") {
+
+    }
+  }, [AcademicClasses])
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (!AcademicClasses || AcademicClasses.length === 0) {
+    return <div>No classes available. Please add classes first.</div>
+  }
 
   return (
     <Form {...form}>
@@ -593,11 +786,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onSubmit, initialData, onClos
                                     key={index}
                                     value={division.id.toString()}
                                   >
-                                    {`${division.division} ${
-                                      division.aliases
-                                        ? "- " + division.aliases
-                                        : ""
-                                    }`}
+                                    {`${division.division} ${division.aliases
+                                      ? "- " + division.aliases
+                                      : ""
+                                      }`}
                                   </SelectItem>
                                 )
                               )}

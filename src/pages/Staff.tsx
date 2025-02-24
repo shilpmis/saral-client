@@ -159,7 +159,7 @@ export const Staff: React.FC = () => {
 
       if (type === 'teaching') {
         const response = await getTeachingStaff({
-          school_id: authState.user!.schoolId,
+          school_id: authState.user!.school_id,
           page: page
         });
         if (response.data) {
@@ -170,7 +170,7 @@ export const Staff: React.FC = () => {
         }
       } else {
         const response = await getOtherStaff({
-          school_id: authState.user!.schoolId,
+          school_id: authState.user!.school_id,
           page: page
         });
         if (response.data)

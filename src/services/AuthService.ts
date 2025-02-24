@@ -43,6 +43,7 @@ export const Authapi = createApi({
           }))
 
         } catch (error) {
+          console.log("ERROR DURING LOGIN TIME ===> " ,error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
             isVerificationFails: true,
@@ -71,7 +72,6 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials>(
     try {
       const response = await ApiService.post("/login", credentials);
       const { user, token } = response.data;
-
       // Store token properly
       ApiService.setTokenInLocal(token.token);
       return { user, token };
