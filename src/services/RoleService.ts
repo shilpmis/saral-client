@@ -14,8 +14,8 @@
 //     }),
 //     endpoints: (builder) => ({
 //         getSchoolStaff: builder.query<{ staff: StaffRole[] }, number>({
-//             query: (schoolId) => ({
-//                 url: `staff/${schoolId}`,
+//             query: (school_id) => ({
+//                 url: `staff/${school_id}`,
 //                 method: "GET"
 //             })
 //         }),

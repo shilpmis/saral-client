@@ -1,12 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import { login, logout } from "../../services/AuthService";
-import { 
-  Permission, 
-  RolePermissions, 
-  User, 
-  UserRole, 
-  UserStatus 
+import {
+  Permission,
+  RolePermissions,
+  User,
+  UserRole,
+  UserStatus
 } from "@/types/user";
 
 // Mapping from role_id (from your DB) to UserRole
@@ -54,7 +54,8 @@ const authSlice = createSlice({
     setCredentials: (state, action) => {
       const apiUser = action.payload.user;
       // Explicitly assert the derived role as a UserRole.
-      const derivedRole = (apiUser.role || roleMapping[apiUser.roleId]) as UserRole;
+      // const derivedRole = (apiUser.role || roleMapping[apiUser.roleId]) as UserRole;
+      const derivedRole = roleMapping[apiUser.role_id];
       state.user = {
         ...apiUser,
         role: derivedRole,
@@ -65,7 +66,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.status = "succeeded";
     },
-    
+
     setCredentialsForVerificationStatus: (state, action) => {
       console.log("check actions", action.payload);
       state.isVerificationInProgress = action.payload.isVerificationInProgress;
@@ -83,11 +84,19 @@ const authSlice = createSlice({
         state.status = "succeeded";
         state.isAuthenticated = true;
         const apiUser = action.payload.user;
-        const derivedRole =  roleMapping[apiUser.roleId];
+        const derivedRole = roleMapping[apiUser.role_id];
         state.user = {
-          ...apiUser,
+          id: apiUser.id,
+          saral_email: apiUser.saral_email,
+          name: apiUser.name,
           role: derivedRole,
+          role_id: apiUser.role_id,
+          is_teacher: apiUser.is_teacher,
+          is_active: apiUser.is_active,
+          teacher_id: apiUser.teacher_id,
+          school_id: apiUser.school_id,
           permissions: RolePermissions[derivedRole],
+          username: apiUser.username
         };
         state.token = action.payload.token;
       })

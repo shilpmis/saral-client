@@ -57,30 +57,30 @@ const formSchemaForDivision = z.object({
   formType: z.enum(["create", "edit"])
 })
 
+const defaultStandards = [
+  { id: 1, class: 1 },
+  { id: 2, class: 2 },
+  { id: 3, class: 3 },
+  { id: 4, class: 4 },
+  { id: 5, class: 5 },
+  { id: 6, class: 6 },
+  { id: 7, class: 7 },
+  { id: 8, class: 8 },
+  { id: 9, class: 9 },
+  { id: 10, class: 10 },
+  { id: 11, class: 11 },
+  { id: 12, class: 12 },
+]
+
 export default function AcademicSettings() {
 
   const currentYear = new Date().getFullYear()
 
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser)
-  const { isLoading, isSuccess, data, error } = useGetAcademicClassesQuery(user!.schoolId)
+  const { isLoading, isSuccess, data, error } = useGetAcademicClassesQuery(user!.school_id)
 
-  const [defaultStandards, setDefaultStandards] = useState<{ id: number, class: number }[]>([
-    { id: 1, class: 1 },
-    { id: 2, class: 2 },
-    { id: 3, class: 3 },
-    { id: 4, class: 4 },
-    { id: 5, class: 5 },
-    { id: 6, class: 6 },
-    { id: 7, class: 7 },
-    { id: 8, class: 8 },
-    { id: 9, class: 9 },
-    { id: 10, class: 10 },
-    { id: 11, class: 11 },
-    { id: 12, class: 12 },
-  ])
-
-  const [selectedClasses, setSelectedClasses] = useState<{ id: number, class: number }[]>([])
+  const [selectedClasses, setSelectedClasses] = useState<{ id: number, class: number }[] | null>(null)
   const [academicClasses, setAcademicClasses] = useState<AcademicClasses[]>([])
 
   const [editingClass, setEditingClass] = useState<ClassData | null>(null)
@@ -111,8 +111,8 @@ export default function AcademicSettings() {
   const checkedClasses = useMemo(() => {
 
     const checkedAcademicClasses = academicClasses.filter((c) => c.divisions.length > 0).map((c) => c.class);
-
-    const checkedClasses = selectedClasses.map((c) => c.class);
+    
+    const checkedClasses = selectedClasses ? selectedClasses.map((c) => c.class) : [];
 
     return new Set([...checkedAcademicClasses, ...checkedClasses])
   }, [academicClasses, selectedClasses])
@@ -120,13 +120,18 @@ export default function AcademicSettings() {
 
   const handleClassToggle = useCallback((clasObj: { id: number; class: number }) => {
     setSelectedClasses((prevSelectedClasses) => {
-      const isAlreadySelected = prevSelectedClasses.some((c) => c.id === clasObj.id);
-
-      if (isAlreadySelected) {
-        return prevSelectedClasses.filter((c) => c.id !== clasObj.id); // Remove if already selected
-      } else {
-        return [...prevSelectedClasses, clasObj]; // Add if not selected
+      if (!prevSelectedClasses) {
+        return [clasObj];
       }
+  
+      const isAlreadySelected = prevSelectedClasses.some((c) => c.id === clasObj.id);
+      
+      if (isAlreadySelected) {
+        const filtered = prevSelectedClasses.filter((c) => c.id !== clasObj.id);
+        return filtered.length === 0 ? null : filtered;
+      }
+  
+      return [...prevSelectedClasses, clasObj];
     });
   }, []);
 
@@ -147,13 +152,14 @@ export default function AcademicSettings() {
     setIsDivisionForDialogOpen(true)
   }
 
-  const handleEditDivision = (classId: number, division: string, aliases: string, id: number) => {
+  // const handleEditDivision = (classId: number, division: string, aliases: string , id: number) => {
+  const handleEditDivision = (division: Division) => {
     formForDivsion.reset({
-      class: classId,
-      division: division,
-      aliases: aliases,
+      class: parseInt(division.class),  // need to change class type for creation of class ,(API demands number format for create class)
+      division: division.division,
+      aliases: division.aliases || "",
       formType: "edit",
-      class_id: id
+      class_id: division.id
     })
     setIsDivisionForDialogOpen(true);
   }
@@ -217,11 +223,11 @@ export default function AcademicSettings() {
     setSelectedClasses(selectedClasses);
     setIsConfirmSaveDialogOpen(true);
   }
-  
+
   const confirmSaveSelectionOfClasses = async () => {
-    if (selectedClasses.length > 0) {
+    if (selectedClasses && selectedClasses.length > 0) {
       let payload: Omit<Class, 'id' | 'school_id'>[] = [];
-  
+
       payload = selectedClasses.map((clas) => {
         return {
           class: clas.class,
@@ -229,28 +235,28 @@ export default function AcademicSettings() {
           aliases: null
         };
       });
-  
+
       try {
         const added_class = await dispatch(createClasses(payload));
-  
+
         if (added_class.meta.requestStatus === 'fulfilled') {
           // Update the academicClasses state with the new classes
           const newClasses = payload.map((clas, index) => ({
             class: clas.class,
             divisions: [{
               id: index + 1, // Assuming this is a temporary ID
-              schoolId: user!.schoolId, // Add the schoolId if required
+              school_id: user!.school_id, // Add the school_id if required
               class: clas.class.toString(), // Ensure this matches the Division type
               division: clas.division,
               aliases: clas.aliases
             }]
           }));
-  
-          setAcademicClasses((prevClasses) :any => [...prevClasses, ...newClasses]);
-  
+
+          setAcademicClasses((prevClasses): any => [...prevClasses, ...newClasses]);
+
           // Clear the selected classes
           setSelectedClasses([]);
-  
+
           toast({
             title: "Classes Added",
             description: `New classes have been added successfully.`,
@@ -276,99 +282,92 @@ export default function AcademicSettings() {
         variant: "destructive",
       });
     }
-  
+
     setIsConfirmSaveDialogOpen(false);
   };
 
 
   const confirmDivisionChanges = async () => {
+
     let payload = formForDivsion.getValues();
-  
-    try {
-      if (payload.formType === "edit" && payload.class_id) {
+
+    if (payload.formType === "edit" && payload.class_id && payload.aliases) {
+
+      try {
         // Edit division
         const edited_division = await dispatch(editDivision({
           class_id: payload.class_id,
-          aliases: payload.aliases || null,
-        }));
-  
-        if (edited_division.meta.requestStatus === 'fulfilled') {
-          // Update the academicClasses state for the edited division
-          setAcademicClasses((prevClasses) =>
-            prevClasses.map((cls) => ({
-              ...cls,
-              divisions: cls.divisions.map((div) =>
-                div.id === payload.class_id
-                  ? { ...div, aliases: payload.aliases || null } // Update the division's aliases
-                  : div
-              ),
-            }))
-          );
-  
-          toast({
-            title: "Division Updated",
-            description: `Division has been updated successfully.`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: `Failed to update division. Please try again.`,
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Create new division
+          aliases: payload.aliases,
+        })).unwrap();
+
+        // Update the academicClasses state for the edited division
+        setAcademicClasses((prevClasses) =>
+          prevClasses.map((cls) => ({
+            ...cls,
+            divisions: cls.divisions.map((div) =>
+              div.id === payload.class_id
+                ? { ...div, aliases: payload.aliases || null } // Update the division's aliases
+                : div
+            ),
+          }))
+        );
+        setIsDivisionForDialogOpen(false);
+        setNewDivision(null);
+        toast({
+          title: "Division Updated",
+          description: `Division has been updated successfully.`,
+        });
+
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: `${error[0].message}`,
+          // description: `Failed to update division. Please try again.`,
+        });
+      }
+    } else {
+      // Create new division
+      try {
         const new_division = await dispatch(createDivision({
           class: payload.class,
           division: payload.division,
           aliases: payload.aliases || null,
-        }));
-        console.log("new_division ===>", new_division?.payload?.id)
-  
-        if (new_division.meta.requestStatus === 'fulfilled') {
-          // Update the academicClasses state with the new division
-          setAcademicClasses((prevClasses) :any =>
-            prevClasses.map((cls) =>
-              cls.class === payload.class
-                ? {
-                    ...cls,
-                    divisions: [
-                      ...cls.divisions,
-                      {
-                        id: new_division?.payload?.id, // Use the ID returned from the API
-                        schoolId: user!.schoolId,
-                        class: payload.class.toString(),
-                        division: payload.division,
-                        aliases: payload.aliases || null,
-                      },
-                    ],
-                  }
-                : cls
-            )
-          );
-  
-          toast({
-            title: "Division Added",
-            description: `New division has been added successfully.`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: `Failed to add division. Please try again.`,
-            variant: "destructive",
-          });
-        }
+        })).unwrap();
+        setAcademicClasses((prevClasses): any =>
+          prevClasses.map((cls) =>
+            cls.class === payload.class
+              ? {
+                ...cls,
+                divisions: [
+                  ...cls.divisions,
+                  {
+                    id: new_division.id, // Use the ID returned from the API
+                    school_id: user!.school_id,
+                    class: payload.class.toString(),
+                    division: payload.division,
+                    aliases: payload.aliases || null,
+                  },
+                ],
+              }
+              : cls
+          )
+        );
+
+        setIsDivisionForDialogOpen(false);
+        setNewDivision(null);
+
+        toast({
+          title: "Division Added",
+          description: `New division has been added successfully.`,
+        });
+
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: `${error[0].message}`,
+        });
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `An error occurred. Please try again.`,
-        variant: "destructive",
-      });
     }
-  
-    setIsDivisionForDialogOpen(false);
-    setNewDivision(null);
   };
 
   useEffect(() => {
@@ -424,7 +423,7 @@ export default function AcademicSettings() {
               ))}
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSaveButtonForSelectedClasses} disabled={selectedClasses.length === 0}>
+              <Button onClick={handleSaveButtonForSelectedClasses} disabled={!selectedClasses}>
                 <Save className="mr-2 h-4 w-4" />
                 Save
               </Button>
@@ -451,13 +450,13 @@ export default function AcademicSettings() {
                         <div className="flex gap-2 flex-wrap">
                           {std.divisions.map((division) => (
                             <Badge key={division.id} variant="secondary" className="flex items-center gap-1 p-3">
-                              <p>({division.class}- {division.division})</p> 
+                              <p>({division.class}- {division.division})</p>
                               <p>{division.aliases}</p>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-4 w-4 p-0 ml-1"
-                                onClick={() => handleEditDivision(std.class, division.division, division.aliases, division.id)}
+                                onClick={() => handleEditDivision(division)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>

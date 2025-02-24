@@ -9,6 +9,7 @@ import { SchoolApi } from "@/services/SchoolServices";
 import { AcademicApi } from "@/services/AcademicService";
 import { StaffApi } from "@/services/StaffService";
 import { StudentApi } from "@/services/StundetServices";
+import { UserManagementApi } from "@/services/UserManagementService";
 
 
 const store = configureStore({
@@ -22,14 +23,17 @@ const store = configureStore({
     [SchoolApi.reducerPath] : SchoolApi.reducer, 
     [AcademicApi.reducerPath] : AcademicApi.reducer,
     [StaffApi.reducerPath] : StaffApi.reducer,
-    [StudentApi.reducerPath] : StudentApi.reducer
+    [StudentApi.reducerPath] : StudentApi.reducer,
+    [UserManagementApi.reducerPath] : UserManagementApi.reducer
+
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
     Authapi.middleware ,
     SchoolApi.middleware,
     AcademicApi.middleware,
     StaffApi.middleware,
-    StudentApi.middleware
+    StudentApi.middleware,
+    UserManagementApi.middleware
   ),
 })
 

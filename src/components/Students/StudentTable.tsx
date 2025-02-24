@@ -10,7 +10,7 @@ import type { Division } from "@/types/academic"
 
 interface StudentTableProps {
   filteredStudents: Student[]
-  onEdit: (student: Student) => void
+  onEdit: (student_id: number , ) => void
   onDelete?: (studentId: string) => void
   selectedClass: string
   selectedDivision: Division | null
@@ -21,11 +21,11 @@ export default function StudentTable({
   filteredStudents,
   onEdit,
   onDelete,
-  selectedClass,
-  selectedDivision,
   PageDetailsForStudents,
-}: StudentTableProps) {
+}: StudentTableProps)
+ {
   const [currentPage, setCurrentPage] = useState<number>(1)
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
@@ -42,7 +42,7 @@ export default function StudentTable({
   }
 
   const handleEdit = (student: Student) => {
-    onEdit(student)
+    onEdit(student.id)
   }
 
   const handleDelete = (studentId: string) => {

@@ -6,19 +6,19 @@ export enum StaffStatus{
 
 export interface StaffRole {
   id: number,
-  schoolId: number,
+  school_id: number,
   role: string,
-  isTeachingRole: boolean,
+  is_teaching_role: boolean,
   permissions: object
 }
 
 
 export interface RoleType {
     id : number;
-    schoolId : number;
+    school_id : number;
     role : string;
     permissions : JSON;
-    isTeachingRole : boolean; 
+    is_teaching_role : boolean; 
 }
 
 

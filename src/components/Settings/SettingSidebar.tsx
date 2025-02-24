@@ -14,6 +14,7 @@ import {
   DollarSign,
   Bell,
   BookOpen,
+  Aperture,
 } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -56,6 +57,11 @@ const navigationSections: NavSection[] = [
         title: "Staff Management",
         icon: Users,
         href: "staff",
+      },
+      {
+        title: "Leave Management",
+        icon: Aperture,
+        href: "leave",
       },
       {
         title: "Payroll Management",

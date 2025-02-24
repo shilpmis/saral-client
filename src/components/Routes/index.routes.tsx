@@ -1,4 +1,3 @@
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -24,7 +23,6 @@ import FeesSettings from "../Settings/FeesSettings";
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
-import { useEffect } from "react";
 import { useVerifyQuery } from "@/services/AuthService";
 import LeaveManagement from "@/components/Leave/LeaveManagement";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
@@ -34,6 +32,7 @@ import StudentAttendanceView from "@/pages/StudentAttendance";
 import { Permission } from "@/types/user";
 import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 import { SearchProvider } from "../Dashboard/searchContext";
+
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -108,7 +107,7 @@ export default function RootRoute() {
 
           {/* User Management */}
           <Route
-            path="user-management"
+            path="users"
             element={
               <PrivateRoute allowedPermissions={[Permission.MANAGE_USERS]}>
                 <UserManagement />
@@ -166,8 +165,10 @@ export default function RootRoute() {
             <Route path="general" element={<GeneralSettings />} />
             <Route path="academic" element={<AcademicSettings />} />
             <Route path="staff" element={<StaffSettings />} />
+            <Route path="leave" element={<LeaveManagementSettings />} />
             <Route path="payroll" element={<PayrollSettings />} />
             <Route path="fees" element={<FeesSettings />} />
+            <Route path="leaves" element={<LeaveManagementSettings />} />
           </Route>
         </Route>
       </Routes>

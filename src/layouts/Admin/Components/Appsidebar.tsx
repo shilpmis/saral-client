@@ -42,7 +42,7 @@ const SideBarItems = [
 ];
 
 const SideBarFooter = [
-  { title: "User Management", url: "/d/user-management", icon: Users, requiredPermission: Permission.MANAGE_USERS },
+  { title: "User Management", url: "/d/users", icon: Users, requiredPermission: Permission.MANAGE_USERS },
   { title: "Settings", url: "/d/settings", icon: Settings },
 ];
 
