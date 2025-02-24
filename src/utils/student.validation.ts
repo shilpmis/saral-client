@@ -1,13 +1,14 @@
+import { Value } from "@radix-ui/react-select";
 import { z } from "zod";
 
 // Define the schema for student data
 export const studentSchema = z.object({
   // Personal Details
-  first_name: z.string().min(2, "First name is required"),
-  middle_name: z.string().optional(),
-  last_name: z.string().min(2, "Last name is required"),
+  first_name: z.string().min(3, "First name is required"),
+  middle_name: z.string().min(3, "Middle  name is required"),
+  last_name: z.string().min(3, "Last name is required"),
   first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
-  middle_name_in_guj: z.string().optional(),
+  middle_name_in_guj: z.string().min(2, "Middle name in Gujarati is required"),
   last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
   gender: z.enum(["Male", "Female"]),
   birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
@@ -32,11 +33,12 @@ export const studentSchema = z.object({
   admission_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
-  admission_std: z.number().int().positive("Admission standard must be positive"),
   class: z.string().min(1, "Class is required"),
   division: z.string().min(1, "Division is required"),
-  privious_school: z.string().optional(),
-  privious_school_in_guj: z.string().optional(),
+  admission_class: z.string().min(1, "Admission Class is required"),
+  admission_division: z.string().min(1, "Admission Division is required"),
+  privious_school: z.string().min(3, "Privious school name should be more then 3 char"),
+  privious_school_in_guj: z.string().min(3, "Privious school name should be more then 3 char"),
 
   // Other Details
   religiion: z.string().min(2, "Religion is required"),
@@ -50,7 +52,10 @@ export const studentSchema = z.object({
   district: z.string().min(2, "District is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
-  postal_code: z.string().regex(/^\d{6}$/, "Invalid postal code"),
+  postal_code: z.number().int().positive().refine((val)=>val.toString().length === 6 , {
+    message: "Postal code must be exactly 6 digits",
+  }), 
+  // .regex(/^\d{6}$/, "Invalid postal code"),
 
   // Bank Details
   bank_name: z.string().min(2, "Bank name is required"),
@@ -111,7 +116,9 @@ export const addressSchema = z.object({
   district: z.string().min(2, "District is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
-  postal_code: z.string().regex(/^\d{6}$/, "Invalid postal code"),
+  postal_code: z.number().int().positive().refine((val)=>val.toString().length === 6 , {
+    message: "Postal code must be exactly 6 digits",
+  }),
 });
 
 export const bankSchema = z.object({

@@ -10,7 +10,7 @@ export enum StudentStatus {
 
 
 export interface StudentMeta {
-  aadhar_dise_no: BigInteger;
+  aadhar_dise_no: number;
   birth_place: string;
   birth_place_in_guj: string;
   religiion: string;
@@ -18,20 +18,19 @@ export interface StudentMeta {
   caste: string;
   caste_in_guj: string;
   category: 'ST' | 'SC' | 'OBC' | 'OPEN';
-  category_in_guj: string;
-  admission_date: Date;
-  admission_class_id: Number;
-  // division: 'A' | 'B' | 'C' | 'D'| 'E'| 'F'| 'G'| 'H';
-  secondary_mobile: BigInteger;
+  // category_in_guj: string;
+  admission_date: string;
+  admission_class_id: number;
+  secondary_mobile: number;
   privious_school: string;
   privious_school_in_guj: string;
   address: string;
   district: string;
   city: string;
   state: string;
-  postal_code: BigInteger;
+  postal_code: string;
   bank_name: string;
-  account_no: BigInteger;
+  account_no: number;
   IFSC_code: string;
 }
 
@@ -46,7 +45,7 @@ export interface Student {
   last_name_in_guj: string;
   gender: 'Male' | 'Female';
   gr_no: number;
-  birth_date: Date;
+  birth_date: string;
   primary_mobile: number;
   father_name: string;
   father_name_in_guj: string;
@@ -54,7 +53,7 @@ export interface Student {
   mother_name_in_guj: string;
   class_id: number;
   roll_number: number;
-  aadhar_no: BigInteger;
+  aadhar_no: number;
   is_active: boolean;
   student_meta?: StudentMeta
 }
@@ -72,7 +71,7 @@ export interface PageDetailsForStudents {
 }
 
 export interface StudentEntry {
-  students_data: Student;
+  students_data: Omit<Student , 'id' | 'student_meta' | 'school_id'>;
   student_meta_data: StudentMeta;
 }
 
