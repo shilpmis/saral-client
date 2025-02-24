@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit"
 import ApiService from "./ApiService"
 import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
-import { AddStudentsRequest, Student, StudentMeta } from "@/types/student"
+import { AddStudentsRequest, Student, StudentEntry, StudentMeta, UpdateStudent } from "@/types/student"
 
 /**
  * 
@@ -27,24 +27,31 @@ export const StudentApi = createApi({
         method: "GET",
       }),
     }),
-    fetchSingleStundet: builder.query<any, { school_id: number, student_id : number , page?: number, student_meta?: boolean }>({
+    fetchSingleStundet: builder.query<any, { school_id: number, student_id: number, page?: number, student_meta?: boolean }>({
       query: ({ school_id, student_id, page = 1, student_meta = true }) => ({
         url: `student/${school_id}/${student_id}?student_meta=${student_meta}`,
         method: "GET",
       }),
     }),
-    addStudents: builder.mutation<any, AddStudentsRequest>({
+    addMultipleStudents: builder.mutation<any, AddStudentsRequest>({
       query: ({ class_id, students }) => ({
         url: `students/${class_id}`,
         method: "POST",
         body: students,
       }),
     }),
-    updateStudent: builder.mutation<any, { student_id: number; student_data: Partial<Student>; student_meta_data: Partial<StudentMeta> }>({
-      query: ({ student_id, student_data, student_meta_data }) => ({
+    addSingleStudent: builder.mutation<Student, StudentEntry>({
+      query: (payload) => ({
+        url: `student`,
+        method: "POST",
+        body: payload,
+      }),
+    }),
+    updateStudent: builder.mutation<Student, { student_id: number; payload: UpdateStudent }>({
+      query: ({ student_id, payload }) => ({
         url: `student/${student_id}`,
         method: "PUT",
-        body: { student_data, student_meta_data },
+        body: payload,
       }),
     }),
   }),
@@ -53,7 +60,8 @@ export const StudentApi = createApi({
 export const {
   useFetchStudentForClassQuery,
   useLazyFetchStudentForClassQuery,
-  useAddStudentsMutation,
+  useAddMultipleStudentsMutation,
+  useAddSingleStudentMutation,
   useUpdateStudentMutation,
   useLazyFetchSingleStundetQuery
 } = StudentApi;
