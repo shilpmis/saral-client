@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, FileDown } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, FileDown, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -15,7 +15,6 @@ import type { AcademicClasses, Division } from "@/types/academic"
 import type { PageDetailsForStudents, Student, StudentEntry, UpdateStudent } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
 import {
-  useAddStudentsMutation,
   useLazyFetchSingleStundetQuery,
   useLazyFetchStudentForClassQuery,
   useUpdateStudentMutation,
@@ -32,8 +31,6 @@ export const Students: React.FC = () => {
   const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
   const [getSingleStudent,
     { data: studentDataForEditStudent, isLoading: isStudentForEditLoading, isError }] = useLazyFetchSingleStundetQuery()
-  const [addStudent] = useAddStudentsMutation()
-  const [updateStudent] = useUpdateStudentMutation()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
@@ -133,17 +130,6 @@ export const Students: React.FC = () => {
     }
   }, [studentDataForSelectedClass])
 
-  // useEffect(() => {
-  //   if(studentDataForEditStudent){
-  //     setOpenDialogForStudent({
-  //       isOpen: true,
-  //       selectedStudent: studentDataForEditStudent,
-  //       type: "edit"
-  //     })
-  //   }
-  // }, [studentDataForEditStudent])
-
-  console.log("Check student fetchig status ", isStudentForEditLoading, studentDataForEditStudent, isError)
 
   return (
     <>
@@ -276,46 +262,49 @@ export const Students: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{openDialogForStudent.type === 'edit' ? "Edit Student" : "Add New Student"}</DialogTitle>
           </DialogHeader>
-          {
-            isStudentForEditLoading && <div>Loading For Student ....</div>
-          }
-          {
-            !isStudentForEditLoading  && (
-              <>
-                <div className="w-full lg:h-[600px] overflow-auto">
-                  {
-                    openDialogForStudent.type === "add" && (
-                      <StudentForm
-                        onClose={() => {
-                          setOpenDialogForStudent({
-                            isOpen: false,
-                            type: "add",
-                            selectedStudent: null
-                          })
-                        }}
-                        form_type='create'
-                      />
-                    )
-                  }
-                  {
-                    openDialogForStudent.type === "edit" && openDialogForStudent.selectedStudent && (
-                      <StudentForm
-                        onClose={() => {
-                          setOpenDialogForStudent({
-                            isOpen: false,
-                            type: "edit",
-                            selectedStudent: null
-                          })
-                        }}
-                        form_type="update"
-                        initial_data={studentDataForEditStudent}
-                      />
-                    )
-                  }
-                </div>
-              </>
-            )
-          }
+          {/* {
+            openDialogForStudent.selectedStudent  && ( */}
+          <>
+            <div className="w-full lg:h-[600px] overflow-auto">
+              {
+                openDialogForStudent.type === "add" && (
+                  <StudentForm
+                    onClose={() => {
+                      setOpenDialogForStudent({
+                        isOpen: false,
+                        type: "add",
+                        selectedStudent: null
+                      })
+                    }}
+                    form_type='create'
+                  />
+                )
+              }
+              {
+                openDialogForStudent.type === "edit" && !isStudentForEditLoading && (
+                  <StudentForm
+                    onClose={() => {
+                      setOpenDialogForStudent({
+                        isOpen: false,
+                        type: "edit",
+                        selectedStudent: null
+                      })
+                    }}
+                    form_type="update"
+                    initial_data={studentDataForEditStudent}
+                  />
+                )
+              }
+              {
+                openDialogForStudent.type === "edit" && isStudentForEditLoading && (
+                  <div className="w-full h-full flex justify-center items-center">
+                    <Loader2 className="animate-spin" />
+                  </div>
+                )
+              }
+            </div>
+          </>
+
         </DialogContent>
       </Dialog>
     </>
