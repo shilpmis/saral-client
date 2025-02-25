@@ -114,7 +114,7 @@ export default function StaffSettings() {
         if (role_id) {
           await dispatch(updateStaffRole({
             staff_id: role_id,
-            paylaod: { role: formForStaffRole.getValues('role_name') }
+            payload: { role: formForStaffRole.getValues('role_name') }
           }))
         } else {
           alert("Bug :: Role Id is not been provided !")
