@@ -6,7 +6,7 @@ export enum UserStatus {
 
 export interface User {
   id: string;
-  username : string;
+  username: string;
   school_id: number;
   saral_email: string;
   name: string;
@@ -38,6 +38,9 @@ export enum Permission {
   MANAGE_FEES = "MANAGE_FEES",
   VIEW_REPORTS = "VIEW_REPORTS",
   MANAGE_SETTINGS = "MANAGE_SETTINGS",
+  MANAGE_LEAVES = "MANAGE_LEAVES",
+  MARK_LEAVES = "MARK_LEAVES",
+  MARK_ATTENDANCE = "MARK_ATTENDANCE",
 }
 
 export const RolePermissions: Record<UserRole, Permission[]> = {
@@ -52,10 +55,14 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_FEES,
     Permission.VIEW_REPORTS,
     Permission.MANAGE_SETTINGS,
+    Permission.MANAGE_LEAVES,
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
+    Permission.MANAGE_STUDENTS,
     Permission.MANAGE_STAFF,
+    Permission.MANAGE_ATTENDANCE,
+    Permission.MANAGE_FEES,
     Permission.MANAGE_CLASSES,
     Permission.VIEW_REPORTS,
   ],
@@ -75,7 +82,10 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   ],
   [UserRole.SCHOOL_TEACHER]: [
     Permission.VIEW_DASHBOARD,
-    Permission.MANAGE_ATTENDANCE,
+    // Permission.MANAGE_ATTENDANCE,
+    // Permission.MANAGE_LEAVES,
+    Permission.MARK_LEAVES,
+    Permission.MARK_ATTENDANCE,
   ],
 };
 

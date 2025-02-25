@@ -9,7 +9,8 @@ export interface StaffRole {
   school_id: number,
   role: string,
   is_teaching_role: boolean,
-  permissions: object
+  permissions: object,
+  working_hours : number
 }
 
 
