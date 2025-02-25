@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import type { LeaveRequest } from "@/types/leave"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 // Mock function to simulate fetching data from an API
 const fetchLeaveRequests = (page: number, status: string, search: string) => {
@@ -102,6 +103,7 @@ const AdminLeaveManagement: React.FC = () => {
   const [totalRequests, setTotalRequests] = useState(0)
   const [statusFilter, setStatusFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
+    const [selectedDate, setSelectedDate] = useState<string | undefined>()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -158,7 +160,12 @@ const AdminLeaveManagement: React.FC = () => {
         <CardContent>
           <div className="flex justify-between mb-4">
             <div>
-              
+               <SaralDatePicker date={selectedDate ? new Date(selectedDate) : undefined} onDateChange={(date) => {
+                                    if (date) {
+                                      setSelectedDate(date.toString())
+                                    }
+                                  }}
+                />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
