@@ -18,6 +18,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { toast } from "@/hooks/use-toast"
 import { useLazyFetchManagementUsersQuery } from "@/services/UserManagementService"
 import { DialogDescription } from "@radix-ui/react-dialog"
+import { PageMeta } from "@/types/global"
 
 // Predefined management roles
 const managementRoles = [
