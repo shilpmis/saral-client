@@ -13,10 +13,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function SaralDatePicker() {
-  const [date, setDate] = React.useState<Date>()
-  const handleSelectDate = ()=>  {
-    setDate(date)
+interface SaralDatePickerProps {
+  date?: Date | undefined; // Optional date prop
+  onDateChange?: (date: Date | undefined) => void; // Add a callback for date changes
+}
+
+export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePickerProps) {
+  const [date, setDate] = React.useState<Date | undefined>(initialDate)
+  
+  const handleSelectDate = (newDate: Date | undefined) => {
+    setDate(newDate)
+    onDateChange?.(newDate)
   }
   return (
     <Popover>

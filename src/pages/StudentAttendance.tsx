@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AttendanceRecord } from "@/types/attendance"
 import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const StudentAttendanceView: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [selectedDate, setSelectedDate] = useState<string | undefined>()
   const [currentPage, setCurrentPage] = useState(1)
   const [filter, setFilter] = useState<"all" | "present" | "absent">("all")
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(mockAttendanceRecords)
@@ -43,7 +44,7 @@ const StudentAttendanceView: React.FC = () => {
           ...prevRecords,
           {
             id: Date.now().toString(),
-            date: selectedDate,
+            date: selectedDate || "",
             classId: teacherClass.id,
             studentId,
             status,
@@ -60,12 +61,20 @@ const StudentAttendanceView: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="flex justify-between mb-4">
-          <input
+           <SaralDatePicker
+                    date={selectedDate ? new Date(selectedDate) : undefined}
+                    onDateChange={(date) => {
+                      if (date) {
+                        setSelectedDate(date.toString())
+                      }
+                    }}
+                  />
+          {/* <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="border p-2 rounded"
-          />
+          /> */}
           <Select value={filter} onValueChange={(value: "all" | "present" | "absent") => setFilter(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter attendance" />
