@@ -3,6 +3,7 @@ import authReducer from "./slices/authSlice"
 import schoolReducer from './slices/schoolSlice'
 import academicReducer from "./slices/academicSlice";
 import staffReducer from "./slices/staffSlice";
+import leaveReducer from "./slices/leaveSlice";
 import userManagementReducer from "./slices/userManagementSlice";
 import { Authapi } from "@/services/AuthService";
 import { SchoolApi } from "@/services/SchoolServices";
@@ -18,6 +19,7 @@ const store = configureStore({
     school : schoolReducer,
     academic : academicReducer,
     staff : staffReducer,
+    leave : leaveReducer,
     userManagement: userManagementReducer,
     [Authapi.reducerPath]: Authapi.reducer,
     [SchoolApi.reducerPath] : SchoolApi.reducer, 

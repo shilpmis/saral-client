@@ -68,7 +68,6 @@ const authSlice = createSlice({
     },
 
     setCredentialsForVerificationStatus: (state, action) => {
-      console.log("check actions", action.payload);
       state.isVerificationInProgress = action.payload.isVerificationInProgress;
       state.isVerificationFails = action.payload.isVerificationFails;
       state.verificationError = action.payload.verificationError;
