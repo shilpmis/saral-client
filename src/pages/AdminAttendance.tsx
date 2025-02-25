@@ -9,9 +9,10 @@ import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const AdminAttendanceView: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -40,7 +41,7 @@ const AdminAttendanceView: React.FC = () => {
       .map((student) => {
         const record = mockAttendanceRecords.find(
           (r) =>
-            r.studentId === student.id && r.date === selectedDate && filteredClasses.some((c) => c.id === r.classId),
+            r.studentId === student.id && r.date === selectedDate?.toISOString().split('T')[0] && filteredClasses.some((c) => c.id === r.classId),
         )
         return {
           ...student,
@@ -69,19 +70,15 @@ const AdminAttendanceView: React.FC = () => {
       <Label htmlFor="search" className="sr-only">
         Search
       </Label>
-      <Input
-        id="search"
-        placeholder="Search by Name, Roll Number"
-        value={""}
-        className="max-w-sm"
-      />
         <div className="flex flex-wrap gap-4 mb-4">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border p-2 rounded"
-          />
+        <SaralDatePicker
+          date={selectedDate}
+          onDateChange={(date) => {
+            if (date) {
+              setSelectedDate(date)
+            }
+          }}
+        />
           </div>
           <Select
             value={selectedGrade || ""}
