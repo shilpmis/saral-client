@@ -24,26 +24,28 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Permission } from "@/types/user";
+import { Permission, UserRole } from "@/types/user";
 import { useAuth } from "@/redux/hooks/useAuth";
+import { useAppSelector } from "@/redux/hooks/useAppSelector";
+import { selectAuthState } from "@/redux/slices/authSlice";
 
 const SideBarItems = [
   { title: "Dashboard", url: "/d", icon: Home },
-  { title: "Student", url: "/d/students", icon: Users },
-  { title: "Staff", url: "/d/staff", icon: UserCheck },
-  { title: "Mark Attendance", url: "/d/mark-attendance", icon: ClipboardList },
-  { title: "Leave", url: "/d/leave", icon: Bed },
-  { title: "Payroll", url: "/d/payroll", icon: Landmark },
-  { title: "Fees", url: "/d/fee", icon: IndianRupee },
-  { title: "Time Table", url: "/d/timetable", icon: Clock },
-  { title: "Result", url: "/d/results", icon: FileText },
-  { title: "Attendance Management", url: "/d/admin-attendance-mangement", icon: ClipboardList },
-  { title: "Leave Management", url: "/d/admin-leave-management", icon: Bed },
+  { title: "Student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
+  { title: "Staff", url: "/d/staff", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
+  { title: "My Leaves", url: "/d/leave-applications", icon: Bed, requiredPermission: Permission.MARK_LEAVES },
+  { title: "Leave Management", url: "/d/leaves", icon: Bed, requiredPermission: Permission.MANAGE_LEAVES },
+  { title: "Attendance Management", url: "/d/attendance", icon: ClipboardList, requiredPermission: Permission.MANAGE_ATTENDANCE },
+  { title: "Attendance", url: "/d/mark-attendance", icon: ClipboardList, requiredPermission: Permission.MARK_ATTENDANCE },
+  { title: "Fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
+  // { title: "Time Table", url: "/d/timetable", icon: Clock , requiredPermission: Permission.MANAGE_SETTINGS},
+  // { title: "Result", url: "/d/results", icon: FileText , requiredPermission: Permission.MANAGE_SETTINGS},
+  // { title: "Payroll", url: "/d/payroll", icon: Landmark  , requiredPermission: Permission.MANAGE_PAYROLL},
 ];
 
 const SideBarFooter = [
   { title: "User Management", url: "/d/users", icon: Users, requiredPermission: Permission.MANAGE_USERS },
-  { title: "Settings", url: "/d/settings", icon: Settings },
+  { title: "Settings", url: "/d/settings", icon: Settings, requiredPermission: Permission.MANAGE_SETTINGS },
 ];
 
 interface AppSidebarProps {
@@ -51,7 +53,8 @@ interface AppSidebarProps {
 }
 
 export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
-  const { hasPermission } = useAuth();
+
+  const { hasPermission, hasRole } = useAuth();
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -90,21 +93,26 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {SideBarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      <item.icon className="mr-2" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {SideBarItems.map((item) => {
+                if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+                  return null;
+                }
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url}>
+                        <item.icon className="mr-2" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-2 bg-white rounded-lg">
+      {hasRole(UserRole.ADMIN) && (<SidebarFooter className="p-2 bg-white rounded-lg">
         <SidebarGroup>
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -128,7 +136,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarFooter>
+      </SidebarFooter>)}
     </Sidebar>
   );
 }
