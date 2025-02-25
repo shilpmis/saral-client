@@ -13,11 +13,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function SaralDatePicker() {
-  const [date, setDate] = React.useState<Date>()
-  const handleSelectDate = ()=>  {
-    setDate(date)
-  }
+export function SaralDatePicker(props: { date: any; setDate: any }) {
+  const { date, setDate } = props
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -36,7 +33,9 @@ export function SaralDatePicker() {
         <Calendar
           mode="single"
           selected={date}
-          onSelect={handleSelectDate}
+          onSelect={(date) => {
+            setDate(date)
+          }}
           initialFocus
         />
       </PopoverContent>

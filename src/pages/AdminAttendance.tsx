@@ -9,9 +9,10 @@ import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const AdminAttendanceView: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState<Date>()
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -40,7 +41,7 @@ const AdminAttendanceView: React.FC = () => {
       .map((student) => {
         const record = mockAttendanceRecords.find(
           (r) =>
-            r.studentId === student.id && r.date === selectedDate && filteredClasses.some((c) => c.id === r.classId),
+            r.studentId === student.id && filteredClasses.some((c) => c.id === r.classId),
         )
         return {
           ...student,
@@ -52,7 +53,7 @@ const AdminAttendanceView: React.FC = () => {
         if (filter === "all") return true
         return filter === student.status
       })
-  }, [filteredClasses, selectedDate, filter])
+  }, [filteredClasses, date, filter])
 
   const paginatedAttendance = filteredAttendance.slice(
     (currentPage - 1) * studentsPerPage,
@@ -62,26 +63,21 @@ const AdminAttendanceView: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Attendance Overview</CardTitle>
+        <CardTitle>Admin Attendance Overview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center gap-4">
-      <Label htmlFor="search" className="sr-only">
-        Search
-      </Label>
-      <Input
-        id="search"
-        placeholder="Search by Name, Roll Number"
-        value={""}
-        className="max-w-sm"
-      />
-        <div className="flex flex-wrap gap-4 mb-4">
-          <input
+        <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center">
+        <div className="flex flex-wrap">
+        <SaralDatePicker 
+            date={date}
+            setDate={setDate}
+              />
+          {/* <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="border p-2 rounded"
-          />
+            className="border p-1 rounded"
+          /> */}
           </div>
           <Select
             value={selectedGrade || ""}
