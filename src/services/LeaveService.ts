@@ -27,7 +27,7 @@ interface ApiErrorResponse {
 /**
  * RTK Query for simple queries that need caching
  */
-export const leaveApi = createApi({
+export const LeaveApi = createApi({
   reducerPath: "leaveApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1/",
@@ -37,23 +37,69 @@ export const leaveApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getLeaveTypeForSchool: builder.query<{ data: LeaveType[], page: PageMeta }, void>({
+    getLeaveTypeForSchoolPageWise: builder.query<{ data: LeaveType[], page: PageMeta }, { page: number }>({
+      query: ({ page }) => ({
+        url: `/leave-type?page=${page}`,
+        method: "GET"
+      })
+    }),
+    getAllLeaveTypeForSchool: builder.query<LeaveType[], void>({
       query: () => ({
+        url: `/leave-type?page=all`,
+        method: "GET"
+      })
+    }),
+    getLeavePolicyForSchoolPageWise: builder.query<{ data: LeavePolicy[], page: PageMeta }, { page: number }>({
+      query: ({ page }) => ({
+        url: `/leave-policy?page=${page}`,
+        method: "GET"
+      })
+    }),
+    createLeaveType: builder.mutation<LeaveType, Omit<LeaveType, 'id' | 'school_id'>>({
+      query: (payload) => ({
         url: `/leave-type`,
-        method: "GET"
+        method: "POST",
+        body: payload
       })
     }),
-    getLeavePolicyForSchool: builder.query<{ data: LeavePolicy[], page: PageMeta }, void>({
-      query: () => ({
+    updateLeaveType: builder.mutation<LeaveType, { leave_type_id: number, payload: Partial<Omit<LeaveType, 'id' | 'school_id'>> }>({
+      query: ({ leave_type_id, payload }) => ({
+        url: `/leave-type/${leave_type_id}`,
+        method: "PUT",
+        body: payload
+      })
+    }),
+    createLeavePolicy: builder.mutation<LeavePolicy, Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>>({
+      query: (payload) => ({
         url: `/leave-policy`,
-        method: "GET"
+        method: "POST",
+        body: payload
       })
     }),
+    updateLeavePolicy: builder.mutation<LeavePolicy, { policy_id: number, payload: Partial<Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>> }>({
+      query: ({ policy_id, payload }) => ({
+        url: `/leave-policy/${policy_id}`,
+        method: "PUT",
+        body: payload
+      })
+    }),
+
 
   }),
 })
 
-export const { useLazyGetLeaveTypeForSchoolQuery , useLazyGetLeavePolicyForSchoolQuery } = leaveApi
+export const {
+  useLazyGetLeaveTypeForSchoolPageWiseQuery,
+  useLazyGetLeavePolicyForSchoolPageWiseQuery,
+  useLazyGetAllLeaveTypeForSchoolQuery,
+  useGetAllLeaveTypeForSchoolQuery,
+
+  useCreateLeaveTypeMutation,
+  useUpdateLeaveTypeMutation,
+
+  useCreateLeavePolicyMutation,
+  useUpdateLeavePolicyMutation
+} = LeaveApi
 
 /**
  * Thunks for more complex operations

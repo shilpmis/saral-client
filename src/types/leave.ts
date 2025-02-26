@@ -36,7 +36,7 @@ export interface LeavePolicy {
   staff_role_id: number,
   leave_type_id: number,
   annual_quota: number,
-  can_carry_forward: number,
+  can_carry_forward: boolean,
   max_carry_forward_days: number,
   max_consecutive_days: number,
   requires_approval: number,
