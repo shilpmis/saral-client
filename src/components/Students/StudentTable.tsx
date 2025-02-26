@@ -74,7 +74,7 @@ export default function StudentTable({
               <TableRow key={index}>
                 <TableCell>{student.gr_no}</TableCell>
                 <TableCell>
-                  {student.first_name} {student.middle_name} {student.last_name}
+                  {student.first_name.charAt(0).toUpperCase()+ student.first_name.slice(1)} {student.middle_name.charAt(0).toUpperCase()+ student.middle_name.slice(1)} {student.last_name.charAt(0).toUpperCase()+ student.last_name.slice(1)}
                 </TableCell>
                 <TableCell>{student.roll_number}</TableCell>
                 <TableCell>{student.gender}</TableCell>
