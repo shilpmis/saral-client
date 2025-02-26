@@ -1,23 +1,45 @@
-"use client"
-
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import type { LeaveRequest } from "@/types/leave"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
+interface LeaveRequest {
+  id: string
+  userId: string
+  userName: string
+  startDate: string
+  endDate: string
+  reason: string
+  status: "pending" | "approved" | "rejected"
+  type: "vacation" | "sick" | "personal"
+  staffType: "teacher" | "other"
+  createdAt: string
+  updatedAt: string
+}
+
 // Mock function to simulate fetching data from an API
-const fetchLeaveRequests = (page: number, status: string, search: string) => {
-  return new Promise<{ requests: LeaveRequest[]; total: number }>((resolve) => {
+const fetchLeaveRequests = (
+  page: number,
+  status: string,
+  search: string,
+  staffType: string,
+  date?: string,
+): Promise<{ requests: LeaveRequest[]; total: number }> => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       const mockData: LeaveRequest[] = [
+        // ... (include the mock data from the previous example, adding the staffType field)
         {
           id: "1",
           userId: "user1",
@@ -27,7 +49,7 @@ const fetchLeaveRequests = (page: number, status: string, search: string) => {
           reason: "Family vacation",
           status: "approved",
           type: "vacation",
-          leaveType: "vacation",
+          staffType: "teacher",
           createdAt: "2023-05-15T10:00:00Z",
           updatedAt: "2023-05-16T14:00:00Z",
         },
@@ -40,54 +62,18 @@ const fetchLeaveRequests = (page: number, status: string, search: string) => {
           reason: "Doctor appointment",
           status: "pending",
           type: "sick",
-          leaveType: "sick",
+          staffType: "other",
           createdAt: "2023-06-30T09:00:00Z",
           updatedAt: "2023-06-30T09:00:00Z",
         },
-        {
-          id: "3",
-          userId: "user3",
-          userName: "Bob Johnson",
-          startDate: "2023-08-15",
-          endDate: "2023-08-15",
-          reason: "Personal errand",
-          status: "rejected",
-          type: "personal",
-          leaveType: "personal",
-          createdAt: "2023-07-20T11:00:00Z",
-          updatedAt: "2023-07-21T09:00:00Z",
-        },
-        {
-          id: "4",
-          userId: "user4",
-          userName: "Alice Brown",
-          startDate: "2023-09-01",
-          endDate: "2023-09-05",
-          reason: "Family emergency",
-          status: "approved",
-          type: "personal",
-          leaveType: "personal",
-          createdAt: "2023-08-20T08:00:00Z",
-          updatedAt: "2023-08-21T10:00:00Z",
-        },
-        {
-          id: "5",
-          userId: "user5",
-          userName: "Charlie Davis",
-          startDate: "2023-10-12",
-          endDate: "2023-10-14",
-          reason: "Conference attendance",
-          status: "pending",
-          type: "vacation",
-          leaveType: "vacation",
-          createdAt: "2023-09-25T14:30:00Z",
-          updatedAt: "2023-09-25T14:30:00Z",
-        },
+        // ... (add more mock data with varying staffType)
       ]
       const filteredData = mockData.filter(
         (request) =>
           (status === "all" || request.status === status) &&
-          (search === "" || request.userName.toLowerCase().includes(search.toLowerCase())),
+          (search === "" || request.userName.toLowerCase().includes(search.toLowerCase())) &&
+          (staffType === "all" || request.staffType === staffType) &&
+          (!date || new Date(request.startDate) >= new Date(date)),
       )
       resolve({
         requests: filteredData.slice((page - 1) * 10, page * 10),
@@ -103,28 +89,50 @@ const AdminLeaveManagement: React.FC = () => {
   const [totalRequests, setTotalRequests] = useState(0)
   const [statusFilter, setStatusFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
-    const [selectedDate, setSelectedDate] = useState<string | undefined>()
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  const [activeTab, setActiveTab] = useState("teacher")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
+  const [actionReason, setActionReason] = useState("")
   const { toast } = useToast()
+
+  const loadLeaveRequests = useCallback(async () => {
+    const { requests, total } = await fetchLeaveRequests(
+      currentPage,
+      statusFilter,
+      searchTerm,
+      activeTab,
+      selectedDate?.toISOString(),
+    )
+    setLeaveRequests(requests)
+    setTotalRequests(total)
+  }, [currentPage, statusFilter, searchTerm, activeTab, selectedDate])
 
   useEffect(() => {
     loadLeaveRequests()
-  }, [currentPage, statusFilter, searchTerm]) //This line was already correct
-
-  const loadLeaveRequests = async () => {
-    const { requests, total } = await fetchLeaveRequests(currentPage, statusFilter, searchTerm)
-    setLeaveRequests(requests)
-    setTotalRequests(total)
-  }
+  }, [loadLeaveRequests])
 
   const handleStatusChange = async (requestId: string, newStatus: "approved" | "rejected") => {
-    // In a real application, you would make an API call here
-    setLeaveRequests((prevRequests) =>
-      prevRequests.map((request) => (request.id === requestId ? { ...request, status: newStatus } : request)),
-    )
-    toast({
-      title: "Leave request updated",
-      description: `The leave request has been ${newStatus}.`,
-    })
+    setSelectedRequest(leaveRequests.find((request) => request.id === requestId) || null)
+    setIsDialogOpen(true)
+  }
+
+  const confirmStatusChange = async () => {
+    if (selectedRequest) {
+      // In a real application, you would make an API call here
+      setLeaveRequests((prevRequests) =>
+        prevRequests.map((request) =>
+          request.id === selectedRequest.id ? { ...request, status: selectedRequest.status } : request,
+        ),
+      )
+      toast({
+        title: "Leave request updated",
+        description: `The leave request has been ${selectedRequest.status}.`,
+      })
+      setIsDialogOpen(false)
+      setSelectedRequest(null)
+      setActionReason("")
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -137,19 +145,13 @@ const AdminLeaveManagement: React.FC = () => {
         return "bg-yellow-500"
     }
   }
-   
-  const perPageData = 6;
-  const totalPages = Math.ceil(totalRequests / perPageData);
 
-  const paginatedData = (page: number): LeaveRequest[] => {
-    const startIndex = (page - 1) * perPageData;
-    return leaveRequests.slice(startIndex, startIndex + perPageData);
-  };
+  const perPageData = 6
+  const totalPages = Math.ceil(totalRequests / perPageData)
 
   const onPageChange = (updatedPage: number) => {
-    setCurrentPage(updatedPage);
-  };
-
+    setCurrentPage(updatedPage)
+  }
 
   return (
     <div className="space-y-6">
@@ -158,80 +160,138 @@ const AdminLeaveManagement: React.FC = () => {
           <CardTitle className="text-3xl font-bold text-primary mb-4 sm:mb-0">Leave Requests Management</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between mb-4">
-            <div>
-               <SaralDatePicker date={selectedDate ? new Date(selectedDate) : undefined} onDateChange={(date) => {
-                                    if (date) {
-                                      setSelectedDate(date.toString())
-                                    }
-                                  }}
-                />
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="teacher">Teacher Leave Requests</TabsTrigger>
+              <TabsTrigger value="other">Other Staff Leave Requests</TabsTrigger>
+            </TabsList>
+            <TabsContent value="teacher">
+              <LeaveRequestsTable
+                leaveRequests={leaveRequests.filter((request) => request.staffType === "teacher")}
+                handleStatusChange={handleStatusChange}
+                getStatusColor={getStatusColor}
+              />
+            </TabsContent>
+            <TabsContent value="other">
+              <LeaveRequestsTable
+                leaveRequests={leaveRequests.filter((request) => request.staffType === "other")}
+                handleStatusChange={handleStatusChange}
+                getStatusColor={getStatusColor}
+              />
+            </TabsContent>
+          </Tabs>
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-4 space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-4">
+              <SaralDatePicker date={selectedDate} onDateChange={(date) => setSelectedDate(date)} />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              placeholder="Search by name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Leave Type</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leaveRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell>{request.userName}</TableCell>
-                  <TableCell>{request.type}</TableCell>
-                  <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {request.status === "pending" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusChange(request.id, "approved")}
-                          className="mr-2"
-                        >
-                          Approve
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.id, "rejected")}>
-                          Reject
-                        </Button>
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex justify-between items-center">
-              <SaralPagination
-                      currentPage={currentPage}
-                      onPageChange={onPageChange}
-                      totalPages={totalPages}
-                    />
-            
+          <div className="mt-4 flex justify-center">
+            <SaralPagination currentPage={currentPage} onPageChange={onPageChange} totalPages={totalPages} />
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedRequest?.status === "approved" ? "Approve" : "Reject"} Leave Request</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reason" className="text-right">
+                Reason (Optional)
+              </Label>
+              <Textarea
+                id="reason"
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmStatusChange}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  )
+}
+
+interface LeaveRequestsTableProps {
+  leaveRequests: LeaveRequest[]
+  handleStatusChange: (requestId: string, newStatus: "approved" | "rejected") => void
+  getStatusColor: (status: string) => string
+}
+
+const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
+  leaveRequests,
+  handleStatusChange,
+  getStatusColor,
+}) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Employee</TableHead>
+          <TableHead>Leave Type</TableHead>
+          <TableHead>Start Date</TableHead>
+          <TableHead>End Date</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {leaveRequests.map((request) => (
+          <TableRow key={request.id}>
+            <TableCell>{request.userName}</TableCell>
+            <TableCell>{request.type}</TableCell>
+            <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
+            <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
+            <TableCell>
+              <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
+            </TableCell>
+            <TableCell>
+              {request.status === "pending" && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStatusChange(request.id, "approved")}
+                    className="mr-2"
+                  >
+                    Approve
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.id, "rejected")}>
+                    Reject
+                  </Button>
+                </>
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   )
 }
 
