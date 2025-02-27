@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/popover"
 
 interface SaralDatePickerProps {
-  date?: Date | undefined; // Optional date prop
-  onDateChange?: (date: Date | undefined) => void; // Add a callback for date changes
+  date: Date | undefined; // Optional date prop
+  onDateChange : (date: Date | undefined) => void; // Add a callback for date changes
 }
 
 export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePickerProps) {
@@ -23,7 +23,7 @@ export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePi
   
   const handleSelectDate = (newDate: Date | undefined) => {
     setDate(newDate)
-    onDateChange?.(newDate)
+    onDateChange(newDate)
   }
   return (
     <Popover>

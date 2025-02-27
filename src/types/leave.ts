@@ -1,4 +1,4 @@
-import { StaffRole } from "./staff"
+import { OtherStaff, StaffRole, TeachingStaff } from "./staff"
 
 export interface LeaveRequest {
   id: string
@@ -45,3 +45,45 @@ export interface LeavePolicy {
   staff_role: StaffRole,
   leave_type: LeaveType
 }
+
+export interface LeaveApplicationForTeachingStaff {
+  id: number,
+  teacher_id: number,
+  leave_type_id: number,
+  from_date: string,
+  to_date: string,
+  reason: string,
+  is_half_day: boolean,
+  half_day_type: 'first_half' | 'second_half' | 'none',
+  is_hourly_leave: boolean,
+  total_hour: number,
+  documents: object,
+  uuid: string,
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled',
+  number_of_days: number,
+  applied_by_self: boolean,
+  applied_by: number,
+  leave_type: LeaveType,
+  staff: TeachingStaff
+}
+
+export interface LeaveApplicationForOtherStaff {
+  id: number,
+  other_staff_id: number,
+  leave_type_id: number,
+  from_date: string,
+  to_date: string,
+  reason: string,
+  is_half_day: boolean,
+  half_day_type: 'first_half' | 'second_half' | 'none',
+  is_hourly_leave: boolean,
+  total_hour: number,
+  documents: object,
+  uuid: string,
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled',
+  number_of_days: number,
+  applied_by_self: boolean,
+  applied_by: number,
+  leave_type: LeaveType,
+  staff: OtherStaff
+} 
