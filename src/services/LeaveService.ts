@@ -28,7 +28,7 @@ interface ApiErrorResponse {
 /**
  * RTK Query for simple queries that need caching
  */
-export const leaveApi = createApi({
+export const LeaveApi = createApi({
   reducerPath: "leaveApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1/",
@@ -38,7 +38,13 @@ export const leaveApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getLeaveTypeForSchool: builder.query<{ data: LeaveType[], page: PageMeta }, void>({
+    getLeaveTypeForSchoolPageWise: builder.query<{ data: LeaveType[], page: PageMeta }, { page: number }>({
+      query: ({ page }) => ({
+        url: `/leave-type?page=${page}`,
+        method: "GET"
+      })
+    }),
+    getAllLeaveTypeForSchool: builder.query<LeaveType[], void>({
       query: () => ({
         url: `/leave-type?page=all`,
         method: "GET"
@@ -72,15 +78,32 @@ export const leaveApi = createApi({
     createLeaveType: builder.mutation<LeaveType, Omit<LeaveType, 'id' | 'school_id'>>({
       query: (payload) => ({
         url: `/leave-type`,
-        method: "GET"
+        method: "POST",
+        body: payload
       })
     }),
-    getLeavePolicyForSchool: builder.query<{ data: LeavePolicy[], page: PageMeta }, void>({
-      query: () => ({
+    updateLeaveType: builder.mutation<LeaveType, { leave_type_id: number, payload: Partial<Omit<LeaveType, 'id' | 'school_id'>> }>({
+      query: ({ leave_type_id, payload }) => ({
+        url: `/leave-type/${leave_type_id}`,
+        method: "PUT",
+        body: payload
+      })
+    }),
+    createLeavePolicy: builder.mutation<LeavePolicy, Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>>({
+      query: (payload) => ({
         url: `/leave-policy`,
-        method: "GET"
+        method: "POST",
+        body: payload
       })
     }),
+    updateLeavePolicy: builder.mutation<LeavePolicy, { policy_id: number, payload: Partial<Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>> }>({
+      query: ({ policy_id, payload }) => ({
+        url: `/leave-policy/${policy_id}`,
+        method: "PUT",
+        body: payload
+      })
+    }),
+
     getTeachersLeaveAppication: builder
       .query<{ data: LeaveApplicationForTeachingStaff[], page: PageMeta }, { teacher_id: number, status: 'pending' | 'approved' | 'rejected' | 'cancelled', page: number }>({
         query: ({ teacher_id, page, status }) => ({
@@ -108,15 +131,15 @@ export const leaveApi = createApi({
       }),
 
     fetchTeachersLeaveApplicationForAdmin: builder
-      .query<{ data: LeaveApplicationForTeachingStaff[], meta: PageMeta }, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', page: number , date : string | undefined }>({
+      .query<{ data: LeaveApplicationForTeachingStaff[], meta: PageMeta }, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', page: number, date: string | undefined }>({
         query: ({ date, status, page = 1 }) => ({
-          url: date !== undefined ? 
-          `/leave-application?role=teacher&status=${status}&page=${page}`
-          : `/leave-application?role=teacher&status=${status}&page=${page}`
+          url: date ?
+            `/leave-application?role=teacher&status=${status}&date=${date}&page=${page}`
+            : `/leave-application?role=teacher&status=${status}&page=${page}`
           ,
           method: "GET"
         })
-    }),
+      }),
 
     fetchOtherStaffLeaveApplicationForAdmin: builder
       .query<{ data: LeaveApplicationForOtherStaff[], meta: PageMeta }, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', page: number }>({
@@ -124,7 +147,24 @@ export const leaveApi = createApi({
           url: `/leave-application?role=other&status=${status}&page=${page}`,
           method: "GET"
         })
-    }),
+      }),
+
+    approveOtherStaffLeaveApplication: builder
+      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: number }>({
+        query: ({ application_id, status }) => ({
+          url: `/leave-application/other/${application_id}?status=${status}`,
+          method: "GET"
+        })
+      }),
+
+    approveOtherTeachingLeaveApplication: builder
+      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: number }>({
+        query: ({ application_id, status }) => ({
+          url: `/leave-application/teacher/${application_id}?status=${status}`,
+          method: "PUT",
+          body: { status }
+        })
+      }),
 
 
   }),
@@ -150,47 +190,12 @@ export const {
   useLazyFetchTeachersLeaveApplicationForAdminQuery,
   useLazyFetchOtherStaffLeaveApplicationForAdminQuery,
 
-  useLazyGetTeachersLeaveAppicationQuery
+  useLazyGetTeachersLeaveAppicationQuery,
+
+  useApproveOtherTeachingLeaveApplicationMutation,
+  useApproveOtherStaffLeaveApplicationMutation
+
+
 } = LeaveApi
 
-/**
- * Thunks for more complex operations
- */
-// export const createLeaveRequest = createAsyncThunk<LeaveRequest, CreateLeaveRequestPayload>(
-//   "leave/createLeaveRequest",
-//   async (leaveRequest, { rejectWithValue }) => {
-//     try {
-//       const response = await ApiService.post("/leave", leaveRequest)
-//       return response.data
-//     } catch (error: any) {
-//       const errorResponse = error.response?.data as ApiErrorResponse
-//       return rejectWithValue(errorResponse?.message || "Failed to create leave request")
-//     }
-//   },
-// )
-
-// export const updateLeaveRequestStatus = createAsyncThunk<LeaveRequest, UpdateLeaveRequestStatusPayload>(
-//   "leave/updateLeaveRequestStatus",
-//   async ({ requestId, newStatus }, { rejectWithValue }) => {
-//     try {
-//       const response = await ApiService.put(`/leave/${requestId}`, { status: newStatus })
-//       return response.data
-//     } catch (error: any) {
-//       const errorResponse = error.response?.data as ApiErrorResponse
-//       return rejectWithValue(errorResponse?.message || "Failed to update leave request status")
-//     }
-//   },
-// )
-
-// export const deleteLeaveRequest = createAsyncThunk<void, string>(
-//   "leave/deleteLeaveRequest",
-//   async (requestId, { rejectWithValue }) => {
-//     try {
-//       await ApiService.delete(`/leave/${requestId}`)
-//     } catch (error: any) {
-//       const errorResponse = error.response?.data as ApiErrorResponse
-//       return rejectWithValue(errorResponse?.message || "Failed to delete leave request")
-//     }
-//   },
-// )
 

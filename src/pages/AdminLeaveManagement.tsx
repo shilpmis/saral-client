@@ -1,21 +1,23 @@
-"use client"
-
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import type { LeaveRequest } from "@/types/leave"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from "@/types/leave"
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
-import { useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
+import { useApproveOtherTeachingLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
+
 
 
 const AdminLeaveManagement: React.FC = () => {
@@ -23,6 +25,7 @@ const AdminLeaveManagement: React.FC = () => {
   const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
   const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
 
+  const [get] = useApproveOtherTeachingLeaveApplicationMutation()
   const [activeTab, setActiveTab] = useState("teacher")
 
   const [LeaveRequestsForTeachingStaff, setLeaveRequestsForTeachingStaff] =
@@ -75,7 +78,7 @@ const AdminLeaveManagement: React.FC = () => {
   // }
 
   const handleStatusChange = useCallback(async (requestId: number, newStatus: "approved" | "rejected") => {
-
+    
   }, [])
 
   const onPageChange = useCallback((page: number) => {
@@ -97,9 +100,6 @@ const AdminLeaveManagement: React.FC = () => {
       const res = await getApplicationForOther({ page: page, status: status })
     }
   }
-   
-  const perPageData = 6;
-  const totalPages = Math.ceil(totalRequests / perPageData);
 
   useEffect(() => {
     if (leaveRequestsForTeacher) {
@@ -134,13 +134,16 @@ const AdminLeaveManagement: React.FC = () => {
   }, [statusFilter])
 
   useEffect(() => {
+    /**
+     * FIX : Datapicker is not working fix this !
+     */
     if (selectedDate) {
       const date = new Date(selectedDate);
       const formattedDate = date.toISOString().split("T")[0];
+      console.log("formattedDate" ,formattedDate);
       fetchLeaveApplication(activeTab as 'teacher' | 'other', statusFilter, 1, formattedDate)
     }
   }, [selectedDate])
-
 
 
   return (
@@ -229,5 +232,6 @@ const AdminLeaveManagement: React.FC = () => {
   )
 }
 
-export default AdminLeaveManagement
 
+
+export default AdminLeaveManagement
