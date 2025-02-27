@@ -117,6 +117,8 @@ export function LeaveManagementSettings() {
     leave_type: LeaveType[], page: PageMeta
   } | null>(null)
 
+ 
+
   const [currentlyDispalyedLeavePolicy, setCurrentlyDispalyedLeavePolicy] = useState<{
     leave_policy: LeavePolicy[], page: PageMeta
   } | null>(null)
@@ -154,9 +156,11 @@ export function LeaveManagementSettings() {
       if (updated_type.data) {
         toast({
           variant: 'default',
-          title: 'Leave type updated successfully',
-          description: 'Leave type updated successfully'
+          title: 'Leave type updated successfully ✔️',
+          description: 'updated 🆗',
+          duration : 3000
         })
+        fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
       }
     } else {
       let new_type = await createLeaveType({
@@ -176,13 +180,26 @@ export function LeaveManagementSettings() {
       if (new_type.data) {
         toast({
           variant: 'default',
-          title: 'Leave type created successfully',
-          description: 'Leave type created successfully'
+          title: 'Leave type created successfully ✔️',
+          description: 'created 🆗',
+          duration : 3000
         })
+        fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
       }
     }
-
+    setDialogForLeaveType({
+      isOpen: false,
+      type: 'add',
+      leave_type: null
+    })
+    
   }
+  // for table dynamic render  
+  useEffect(()=>{
+    console.log(currentlyDispalyedLeaveTypes);
+
+  },[currentlyDispalyedLeaveTypes])
+
 
 
   /***
@@ -214,9 +231,11 @@ export function LeaveManagementSettings() {
       if (new_policy.data) {
         toast({
           variant: 'default',
-          title: 'Policy created successfully',
-          description: 'Policy created successfully'
+          title: 'Policy created successfully ✍🏾',
+          description: '🆗 successfully',
+          duration: 3000
         })
+        fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
       }
       if (new_policy.error) {
         toast({
@@ -245,9 +264,11 @@ export function LeaveManagementSettings() {
       if (policy.data) {
         toast({
           variant: 'default',
-          title: 'Policy updated successfully',
-          description: 'Policy updated successfully'
+          title: 'Policy updated successfully 👍🏾',
+          description: 'Updated',
+          duration: 3000
         })
+        fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
       }
       if (policy.error) {
         toast({
@@ -259,6 +280,11 @@ export function LeaveManagementSettings() {
 
     }
     leavePolicyForm.reset()
+    setDialogForLeavePolicy({
+      isOpen: false,
+      type: 'add',
+      leave_policy: null
+    })
   }
 
   const openLeaveTypeDialog = (type: 'add' | 'edit', leaveType: LeaveType | null) => {
@@ -271,8 +297,8 @@ export function LeaveManagementSettings() {
     leaveTypeForm.reset({
       name: leaveType?.leave_type_name,
       description: leaveType?.leave_type_name,
-      is_paid: leaveType?.is_paid,
-      affects_payroll: leaveType?.affects_payroll,
+      is_paid: leaveType!.is_paid,
+      affects_payroll: leaveType!.affects_payroll,
     })
 
   }
@@ -375,7 +401,8 @@ export function LeaveManagementSettings() {
                 </TableHeader>
                 <TableBody>
 
-                  {currentlyDispalyedLeaveTypes && currentlyDispalyedLeaveTypes.leave_type.map((leaveType) => (
+                  {
+                  currentlyDispalyedLeaveTypes?.leave_type.map((leaveType) => (
                     <TableRow key={leaveType.id}>
                       <TableCell>{leaveType.leave_type_name}</TableCell>
                       <TableCell>{""}</TableCell>
