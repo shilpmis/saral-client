@@ -13,145 +13,133 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
+import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from "@/types/leave"
+import { PageMeta } from "@/types/global"
+import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
+import { useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
 
-interface LeaveRequest {
-  id: string
-  userId: string
-  userName: string
-  startDate: string
-  endDate: string
-  reason: string
-  status: "pending" | "approved" | "rejected"
-  type: "vacation" | "sick" | "personal"
-  staffType: "teacher" | "other"
-  createdAt: string
-  updatedAt: string
-}
 
-// Mock function to simulate fetching data from an API
-const fetchLeaveRequests = (
-  page: number,
-  status: string,
-  search: string,
-  staffType: string,
-  date?: string,
-): Promise<{ requests: LeaveRequest[]; total: number }> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const mockData: LeaveRequest[] = [
-        // ... (include the mock data from the previous example, adding the staffType field)
-        {
-          id: "1",
-          userId: "user1",
-          userName: "John Doe",
-          startDate: "2023-06-01",
-          endDate: "2023-06-03",
-          reason: "Family vacation",
-          status: "approved",
-          type: "vacation",
-          staffType: "teacher",
-          createdAt: "2023-05-15T10:00:00Z",
-          updatedAt: "2023-05-16T14:00:00Z",
-        },
-        {
-          id: "2",
-          userId: "user2",
-          userName: "Jane Smith",
-          startDate: "2023-07-10",
-          endDate: "2023-07-11",
-          reason: "Doctor appointment",
-          status: "pending",
-          type: "sick",
-          staffType: "other",
-          createdAt: "2023-06-30T09:00:00Z",
-          updatedAt: "2023-06-30T09:00:00Z",
-        },
-        // ... (add more mock data with varying staffType)
-      ]
-      const filteredData = mockData.filter(
-        (request) =>
-          (status === "all" || request.status === status) &&
-          (search === "" || request.userName.toLowerCase().includes(search.toLowerCase())) &&
-          (staffType === "all" || request.staffType === staffType) &&
-          (!date || new Date(request.startDate) >= new Date(date)),
-      )
-      resolve({
-        requests: filteredData.slice((page - 1) * 10, page * 10),
-        total: filteredData.length,
-      })
-    }, 500)
-  })
-}
 
 const AdminLeaveManagement: React.FC = () => {
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalRequests, setTotalRequests] = useState(0)
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+
+  const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
+  const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
+
   const [activeTab, setActiveTab] = useState("teacher")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
+
+  const [LeaveRequestsForTeachingStaff, setLeaveRequestsForTeachingStaff] =
+    useState<{ applications: LeaveApplicationForTeachingStaff[], page: PageMeta } | null>(null)
+
+  const [LeaveRequestsForOtherStaff, setLeaveRequestsForOtherStaff] =
+    useState<{ applications: LeaveApplicationForOtherStaff[], page: PageMeta } | null>(null)
+
+
+  const [DialogForApplication, setDialogForApplication] = useState<{
+    isOpen: boolean,
+    application: LeaveApplicationForTeachingStaff | LeaveApplicationForOtherStaff | null,
+    // staff_type: "teacher" | "other",
+    dialog_type: "create" | "edit"
+  }>()
+
+  // const [currentPage, setCurrentPage] = useState(1)
+  // const [totalRequests, setTotalRequests] = useState(0)
+  // const [searchTerm, setSearchTerm] = useState("")
   const [actionReason, setActionReason] = useState("")
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'cancelled'>("pending")
+
   const { toast } = useToast()
 
   const loadLeaveRequests = useCallback(async () => {
-    const { requests, total } = await fetchLeaveRequests(
-      currentPage,
-      statusFilter,
-      searchTerm,
-      activeTab,
-      selectedDate?.toISOString(),
-    )
-    setLeaveRequests(requests)
-    setTotalRequests(total)
-  }, [currentPage, statusFilter, searchTerm, activeTab, selectedDate])
 
-  useEffect(() => {
-    loadLeaveRequests()
-  }, [loadLeaveRequests])
+  }, [])
 
-  const handleStatusChange = async (requestId: string, newStatus: "approved" | "rejected") => {
-    setSelectedRequest(leaveRequests.find((request) => request.id === requestId) || null)
-    setIsDialogOpen(true)
-  }
+  // const handleStatusChange = async (requestId: number, newStatus: "approved" | "rejected") => {
+  //   // setSelectedRequest(leaveRequests.find((request) => request.id === requestId) || null)
+  //   // setIsDialogOpen(true)
+  // }
 
   const confirmStatusChange = async () => {
-    if (selectedRequest) {
-      // In a real application, you would make an API call here
-      setLeaveRequests((prevRequests) =>
-        prevRequests.map((request) =>
-          request.id === selectedRequest.id ? { ...request, status: selectedRequest.status } : request,
-        ),
-      )
-      toast({
-        title: "Leave request updated",
-        description: `The leave request has been ${selectedRequest.status}.`,
+    // if (DialogForApplication?.isOpen) {
+
+
+    //   toast({
+    //     title: "Leave request updated",
+    //     description: `The leave request has been ${selectedRequest.status}.`,
+    //   })
+    // }
+  }
+
+
+  // const onPageChange = (page: number) => {
+  //   // setCurrentPage(updatedPage)
+  // }
+
+  const handleStatusChange = useCallback(async (requestId: number, newStatus: "approved" | "rejected") => {
+
+  }, [])
+
+  const onPageChange = useCallback((page: number) => {
+
+  }, [])
+
+
+  async function fetchLeaveApplication(
+    type: 'teacher' | 'other',
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled',
+    page: number = 1,
+    date?: string) {
+
+    if (type === 'teacher') {
+      const res = await getApplicationForTeacher({ page: page, status: status ,date : undefined })
+    }
+
+    if (type === 'other') {
+      const res = await getApplicationForOther({ page: page, status: status })
+    }
+  }
+
+  useEffect(() => {
+    if (leaveRequestsForTeacher) {
+      setLeaveRequestsForTeachingStaff({
+        applications: leaveRequestsForTeacher.data,
+        page: leaveRequestsForTeacher.meta
       })
-      setIsDialogOpen(false)
-      setSelectedRequest(null)
-      setActionReason("")
     }
-  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-500"
-      case "rejected":
-        return "bg-red-500"
-      default:
-        return "bg-yellow-500"
+    if (leaveRequestsForOther) {
+      setLeaveRequestsForOtherStaff({
+        applications: leaveRequestsForOther.data,
+        page: leaveRequestsForOther.meta
+      })
     }
-  }
+  }, [leaveRequestsForOther, leaveRequestsForTeacher])
 
-  const perPageData = 6
-  const totalPages = Math.ceil(totalRequests / perPageData)
 
-  const onPageChange = (updatedPage: number) => {
-    setCurrentPage(updatedPage)
-  }
+  useEffect(() => {
+    if (!LeaveRequestsForTeachingStaff || !LeaveRequestsForOtherStaff) {
+      fetchLeaveApplication(activeTab as 'teacher' | 'other', statusFilter, 1)
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab == 'teacher' && LeaveRequestsForTeachingStaff) {
+      fetchLeaveApplication('teacher', statusFilter, 1)
+    }
+    if (activeTab == 'other' && LeaveRequestsForOtherStaff) {
+      fetchLeaveApplication('other', statusFilter, 1)
+    }
+  }, [statusFilter])
+
+  useEffect(() => {
+    if (selectedDate) {
+      const date = new Date(selectedDate);
+      const formattedDate = date.toISOString().split("T")[0];
+      fetchLeaveApplication(activeTab as 'teacher' | 'other', statusFilter, 1, formattedDate)
+    }
+  }, [selectedDate])
+
 
   return (
     <div className="space-y-6">
@@ -166,52 +154,53 @@ const AdminLeaveManagement: React.FC = () => {
               <TabsTrigger value="other">Other Staff Leave Requests</TabsTrigger>
             </TabsList>
             <TabsContent value="teacher">
-              <LeaveRequestsTable
-                leaveRequests={leaveRequests.filter((request) => request.staffType === "teacher")}
+              {LeaveRequestsForTeachingStaff && (<LeaveRequestsTable
+                leaveRequests={LeaveRequestsForTeachingStaff}
                 handleStatusChange={handleStatusChange}
-                getStatusColor={getStatusColor}
-              />
+                staff_type="teacher"
+                onPageChange={onPageChange}
+              />)}
             </TabsContent>
             <TabsContent value="other">
-              <LeaveRequestsTable
-                leaveRequests={leaveRequests.filter((request) => request.staffType === "other")}
+              {LeaveRequestsForOtherStaff && (<LeaveRequestsTable
+                leaveRequests={LeaveRequestsForOtherStaff}
                 handleStatusChange={handleStatusChange}
-                getStatusColor={getStatusColor}
-              />
+                staff_type="other"
+                onPageChange={onPageChange}
+              />)}
             </TabsContent>
           </Tabs>
           <div className="flex flex-col sm:flex-row justify-between items-center mt-4 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
               <SaralDatePicker date={selectedDate} onDateChange={(date) => setSelectedDate(date)} />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value: 'pending' | 'approved' | 'rejected' | 'cancelled') => setStatusFilter(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
+                  {/* <SelectItem value="all">All</SelectItem> */}
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Input
-              placeholder="Search by name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
-          </div>
-          <div className="mt-4 flex justify-center">
-            <SaralPagination currentPage={currentPage} onPageChange={onPageChange} totalPages={totalPages} />
           </div>
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={DialogForApplication?.isOpen} onOpenChange={(value) => {
+        if (!value) {
+          setDialogForApplication({
+            isOpen: false,
+            application: null,
+            dialog_type: "create"
+          })
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedRequest?.status === "approved" ? "Approve" : "Reject"} Leave Request</DialogTitle>
+            <DialogTitle> Leave Request</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -238,62 +227,7 @@ const AdminLeaveManagement: React.FC = () => {
   )
 }
 
-interface LeaveRequestsTableProps {
-  leaveRequests: LeaveRequest[]
-  handleStatusChange: (requestId: string, newStatus: "approved" | "rejected") => void
-  getStatusColor: (status: string) => string
-}
 
-const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
-  leaveRequests,
-  handleStatusChange,
-  getStatusColor,
-}) => {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Employee</TableHead>
-          <TableHead>Leave Type</TableHead>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {leaveRequests.map((request) => (
-          <TableRow key={request.id}>
-            <TableCell>{request.userName}</TableCell>
-            <TableCell>{request.type}</TableCell>
-            <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
-            <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
-            <TableCell>
-              <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
-            </TableCell>
-            <TableCell>
-              {request.status === "pending" && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusChange(request.id, "approved")}
-                    className="mr-2"
-                  >
-                    Approve
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.id, "rejected")}>
-                    Reject
-                  </Button>
-                </>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  )
-}
 
 export default AdminLeaveManagement
 

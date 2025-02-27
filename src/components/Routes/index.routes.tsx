@@ -24,7 +24,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
 import { useVerifyQuery } from "@/services/AuthService";
-import LeaveManagement from "@/components/Leave/LeaveManagement";
+import LeaveManagement from "@/pages/LeaveDashboardForTeachers";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
 import AdminAttendanceView from "../../pages/AdminAttendance";
@@ -33,6 +33,7 @@ import { Permission, UserRole } from "@/types/user";
 import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
+import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 
 
 export default function RootRoute() {
@@ -134,11 +135,7 @@ export default function RootRoute() {
                 <PrivateRoute
                   allowedRoles={[UserRole.SCHOOL_TEACHER]}
                 >
-                  <LeaveManagement
-                    initialLeaveRequests={[]}
-                    totalLeaves={{ sick: 10, vacation: 15, personal: 5 }}
-                    monthlySalary={5000}
-                  />
+                  <LeaveDashboardForTeachers/>
                 </PrivateRoute>
               }
             />
