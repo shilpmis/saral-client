@@ -7,7 +7,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { User } from "@/types/user"
 import { use, useEffect } from "react"
 import { SaralPagination } from "../ui/common/SaralPagination"
-import { PageMeta } from "@/types/global"
 
 type Role = {
     id: number

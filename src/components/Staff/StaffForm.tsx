@@ -20,7 +20,7 @@ interface StaffFormProps {
 }
 
 const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
-  const [activeTab, setActiveTab] = useState("role")
+  const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<{ id: number; name: string }[]>([])
   const [nonTeachingRoles, setNonTeachingRoles] = useState<{ id: number; name: string }[]>([])
 
@@ -59,7 +59,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
   }, [activeTab])
 
   const handlePreviousTab = useCallback(() => {
-    if (activeTab === "personal") setActiveTab("role")
+    if (activeTab === "personal") setActiveTab(formType === "update" ? "personal" : "role")    
     else if (activeTab === "contact") setActiveTab("personal")
     else if (activeTab === "other") setActiveTab("contact")
     else if (activeTab === "address") setActiveTab("other")
@@ -72,8 +72,8 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-            <TabsTrigger value="role">Role</TabsTrigger>
-            <TabsTrigger value="personal">Personal</TabsTrigger>
+          {(formType === "view" || formType === "create") && <TabsTrigger value="role">Role</TabsTrigger>}
+          <TabsTrigger value="personal">Personal</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="other">Other</TabsTrigger>
             <TabsTrigger value="address">Address</TabsTrigger>
@@ -81,7 +81,8 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
             <TabsTrigger value="employment">Employment</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="role">
+          {formType != 'update' && (
+            <TabsContent value="role">
             <Card>
               <CardHeader>
                 <CardTitle>Role Selection</CardTitle>
@@ -158,6 +159,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardFooter>
             </Card>
           </TabsContent>
+          )}
 
           <TabsContent value="personal">
             <Card>

@@ -1,15 +1,14 @@
+"use client"
+
 import type React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import type { LeaveRequest } from "@/types/leave"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
@@ -17,7 +16,6 @@ import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from 
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
 import { useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
-
 
 
 const AdminLeaveManagement: React.FC = () => {
@@ -99,6 +97,9 @@ const AdminLeaveManagement: React.FC = () => {
       const res = await getApplicationForOther({ page: page, status: status })
     }
   }
+   
+  const perPageData = 6;
+  const totalPages = Math.ceil(totalRequests / perPageData);
 
   useEffect(() => {
     if (leaveRequestsForTeacher) {
@@ -139,6 +140,7 @@ const AdminLeaveManagement: React.FC = () => {
       fetchLeaveApplication(activeTab as 'teacher' | 'other', statusFilter, 1, formattedDate)
     }
   }, [selectedDate])
+
 
 
   return (
@@ -226,8 +228,6 @@ const AdminLeaveManagement: React.FC = () => {
     </div>
   )
 }
-
-
 
 export default AdminLeaveManagement
 

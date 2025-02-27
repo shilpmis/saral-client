@@ -3,7 +3,6 @@ import ApiService from "./ApiService"
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { setUsers } from "@/redux/slices/userManagementSlice";
-import { PageMeta } from "@/types/global";
 
 
 export const UserManagementApi = createApi({

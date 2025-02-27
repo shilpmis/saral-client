@@ -28,7 +28,7 @@ interface ApiErrorResponse {
 /**
  * RTK Query for simple queries that need caching
  */
-export const LeaveApi = createApi({
+export const leaveApi = createApi({
   reducerPath: "leaveApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:3333/api/v1/",
@@ -38,13 +38,7 @@ export const LeaveApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getLeaveTypeForSchoolPageWise: builder.query<{ data: LeaveType[], page: PageMeta }, { page: number }>({
-      query: ({ page }) => ({
-        url: `/leave-type?page=${page}`,
-        method: "GET"
-      })
-    }),
-    getAllLeaveTypeForSchool: builder.query<LeaveType[], void>({
+    getLeaveTypeForSchool: builder.query<{ data: LeaveType[], page: PageMeta }, void>({
       query: () => ({
         url: `/leave-type?page=all`,
         method: "GET"
@@ -78,32 +72,15 @@ export const LeaveApi = createApi({
     createLeaveType: builder.mutation<LeaveType, Omit<LeaveType, 'id' | 'school_id'>>({
       query: (payload) => ({
         url: `/leave-type`,
-        method: "POST",
-        body: payload
+        method: "GET"
       })
     }),
-    updateLeaveType: builder.mutation<LeaveType, { leave_type_id: number, payload: Partial<Omit<LeaveType, 'id' | 'school_id'>> }>({
-      query: ({ leave_type_id, payload }) => ({
-        url: `/leave-type/${leave_type_id}`,
-        method: "PUT",
-        body: payload
-      })
-    }),
-    createLeavePolicy: builder.mutation<LeavePolicy, Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>>({
-      query: (payload) => ({
+    getLeavePolicyForSchool: builder.query<{ data: LeavePolicy[], page: PageMeta }, void>({
+      query: () => ({
         url: `/leave-policy`,
-        method: "POST",
-        body: payload
+        method: "GET"
       })
     }),
-    updateLeavePolicy: builder.mutation<LeavePolicy, { policy_id: number, payload: Partial<Omit<LeavePolicy, 'id' | 'staff_role' | 'leave_type'>> }>({
-      query: ({ policy_id, payload }) => ({
-        url: `/leave-policy/${policy_id}`,
-        method: "PUT",
-        body: payload
-      })
-    }),
-
     getTeachersLeaveAppication: builder
       .query<{ data: LeaveApplicationForTeachingStaff[], page: PageMeta }, { teacher_id: number, status: 'pending' | 'approved' | 'rejected' | 'cancelled', page: number }>({
         query: ({ teacher_id, page, status }) => ({

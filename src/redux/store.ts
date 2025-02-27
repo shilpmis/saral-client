@@ -11,7 +11,6 @@ import { AcademicApi } from "@/services/AcademicService";
 import { StaffApi } from "@/services/StaffService";
 import { StudentApi } from "@/services/StundetServices";
 import { UserManagementApi } from "@/services/UserManagementService";
-import { LeaveApi } from "@/services/LeaveService";
 
 
 const store = configureStore({
@@ -27,8 +26,7 @@ const store = configureStore({
     [AcademicApi.reducerPath] : AcademicApi.reducer,
     [StaffApi.reducerPath] : StaffApi.reducer,
     [StudentApi.reducerPath] : StudentApi.reducer,
-    [UserManagementApi.reducerPath] : UserManagementApi.reducer,
-    [LeaveApi.reducerPath] : LeaveApi.reducer
+    [UserManagementApi.reducerPath] : UserManagementApi.reducer
 
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
@@ -37,8 +35,7 @@ const store = configureStore({
     AcademicApi.middleware,
     StaffApi.middleware,
     StudentApi.middleware,
-    UserManagementApi.middleware,
-    LeaveApi.middleware
+    UserManagementApi.middleware
   ),
 })
 

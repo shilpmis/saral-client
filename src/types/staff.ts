@@ -33,7 +33,7 @@ export interface TeachingStaff {
    first_name_in_guj: string,
    middle_name_in_guj: string,
    last_name_in_guj: string,
-   gender: string,
+   gender: "male" | "female" | undefined; 
    birth_date: string,
    mobile_number: number,
    email: string,
@@ -41,13 +41,13 @@ export interface TeachingStaff {
    subject_specialization: string,
    class_id: number,
    joining_date: string,
-   employment_status: string,
+   employment_status: EmploymentStatusType,
    aadhar_no: number,
    religiion: string,
    religiion_in_guj: string,
    caste: string,
    caste_in_guj: string,
-   category: string,
+   category: CategoryType,
    address: string,
    district: string,
    city: string,
@@ -74,7 +74,7 @@ export interface OtherStaff {
    mobile_number: number,
    email: string,
    joining_date: string,
-   employment_status: string,
+   employment_status: EmploymentStatusType,
    aadhar_no: number,
    religiion: string,
    religiion_in_guj: string,
@@ -91,3 +91,6 @@ export interface OtherStaff {
    IFSC_code: string,
    role_meta : RoleType
 }
+
+export type CategoryType = "ST" | "SC" | "OBC" | "OPEN";
+export type EmploymentStatusType = "Permanent" | "Trial_period" | "Resigned"
