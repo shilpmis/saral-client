@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import type { User } from "@/types/user"
+import { useAddUserMutation } from "@/services/UserManagementService"
 
 const userSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -31,6 +32,8 @@ type UserFormProps = {
 
 export const UserForm: React.FC<UserFormProps> = ({initialData, roles, isEditing , onCloseDialogBox }) => {
 
+  const [createUser , {isError , isLoading}] = useAddUserMutation()
+
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -43,6 +46,9 @@ export const UserForm: React.FC<UserFormProps> = ({initialData, roles, isEditing
 
   const handleSubmit = (data: z.infer<typeof userSchema>) => {
     console.log("Check this updated data !" , data),
+    // createUser({
+
+    // })
     onCloseDialogBox()
   }
 

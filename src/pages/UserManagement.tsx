@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast"
 import { useLazyFetchManagementUsersQuery } from "@/services/UserManagementService"
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { PageMeta } from "@/types/global"
+import { UserForm } from "@/components/Users/UserForm"
 
 // Predefined management roles
 const managementRoles = [
@@ -195,12 +196,12 @@ export const UserManagement: React.FC = () => {
                 : "Fill in the details to create a new user."}
             </DialogDescription>
           </DialogHeader>
-          {/* <UserForm
+          <UserForm
             initialData={isDialogForManagmentUserOpen.user}
             roles={managementRoles}
             isEditing={isDialogForManagmentUserOpen.type === 'edit'}
             onCloseDialogBox={handleCloseDialogBox}
-          /> */}
+          />
         </DialogContent>
       </Dialog>
     </Card>
