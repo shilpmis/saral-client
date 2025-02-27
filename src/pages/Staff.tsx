@@ -290,12 +290,9 @@ export const Staff: React.FC = () => {
             <DropdownMenuContent>
               <Dialog>
                 <DialogTrigger asChild>
-                   {/* <DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                  </DropdownMenuItem>  before fix*/}
-                  <Button variant="outline">
-                    <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                 </Button>
+                  </DropdownMenuItem>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
