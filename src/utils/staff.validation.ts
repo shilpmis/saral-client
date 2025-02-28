@@ -56,14 +56,14 @@ export const staffSchema = z.object({
   first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
   middle_name_in_guj: z.string().min(2, "Middle name in Gujarati is required"),
   last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
-  gender: z.enum(["Male", "Female"]),
+  gender:z.union([z.literal("male"), z.literal("female")]),
   birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
   aadhar_no: z.number().int().positive("Aadhar number is required"),
 
   // Contact details
-  mobile_number: z.string().regex(/^[6-9]\d{9}$/, "Invalid mobile number"),
+  mobile_number: z.number().int().positive("Mobile number is required"),
   email: z.string().email("Invalid email address"),
 
   // Other details

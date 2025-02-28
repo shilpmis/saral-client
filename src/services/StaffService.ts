@@ -54,6 +54,26 @@ export const StaffApi = createApi({
       }),
     }),
     
+    updateTeacher: builder.mutation<TeachingStaff,{ school_id: number; teacher_id: number; data: StaffFormData}>({
+      query: ({ school_id, teacher_id, data }) => ({
+        url: `teacher/${school_id}/${teacher_id}`,
+        method: "PUT",
+        body: data,
+      }),
+    }),
+    
+    bulkUploadTeachers: builder.mutation({
+      query: ({ school_id, file }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        return {
+          url: `teachers/bulk-upload/${school_id}`,
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
   }),
 })
 
@@ -64,6 +84,8 @@ export const {
   useLazyGetOtherStaffQuery,
   useAddTeachingStaffMutation,
   useAddOtherStaffMutation,
+  useUpdateTeacherMutation,
+  useBulkUploadTeachersMutation,
 } = StaffApi
 
 export const createStaffRole = createAsyncThunk(
@@ -101,30 +123,30 @@ export const deleteStaffRole = createAsyncThunk("staff/delete", async (staff_id:
   }
 })
 
-export const addTeachingStaff = createAsyncThunk(
-  "staff/addTeaching",
-  async ({ school_id, staffData }: { school_id: number; staffData: StaffFormData[] }, { rejectWithValue }) => {
-    try {
-      const added_staff = await ApiService.post(`teachers/${school_id}`, staffData);
-      return added_staff.data;
-    } catch (error: any) {
-      console.log("Error while adding teaching staff", error);
-      return rejectWithValue(error.response?.data || "Failed to add teaching staff");
-    }
-  }
-);
+// export const addTeachingStaff = createAsyncThunk(
+//   "staff/addTeaching",
+//   async ({ school_id, staffData }: { school_id: number; staffData: StaffFormData[] }, { rejectWithValue }) => {
+//     try {
+//       const added_staff = await ApiService.post(`teachers/${school_id}`, staffData);
+//       return added_staff.data;
+//     } catch (error: any) {
+//       console.log("Error while adding teaching staff", error);
+//       return rejectWithValue(error.response?.data || "Failed to add teaching staff");
+//     }
+//   }
+// );
 
 
-export const addOtherStaff = createAsyncThunk(
-  "staff/addOther",
-  async ({ school_id, staffData }: { school_id: number; staffData: StaffFormData[] }, { rejectWithValue }) => {
-    try {
-      const added_staff = await ApiService.post(`other-staff/${school_id}`, staffData)
-      return added_staff.data
-    } catch (error: any) {
-      console.log("Error while adding other staff", error)
-      return rejectWithValue(error.response?.data || "Failed to add other staff")
-    }
-  },
-)
+// export const addOtherStaff = createAsyncThunk(
+//   "staff/addOther",
+//   async ({ school_id, staffData }: { school_id: number; staffData: StaffFormData[] }, { rejectWithValue }) => {
+//     try {
+//       const added_staff = await ApiService.post(`other-staff/${school_id}`, staffData)
+//       return added_staff.data
+//     } catch (error: any) {
+//       console.log("Error while adding other staff", error)
+//       return rejectWithValue(error.response?.data || "Failed to add other staff")
+//     }
+//   },
+// )
 

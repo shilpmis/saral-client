@@ -118,7 +118,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
                           control={form.control}
                           render={({ field }) => (
                             <Checkbox
-                              checked={field.value?.includes(leaveType)}
+                              checked={field.value?.includes(leaveType as "sick" | "vacation" | "personal")}
                               onCheckedChange={(checked) => {
                                 const updatedValue = checked
                                   ? [...field.value, leaveType]

@@ -48,13 +48,15 @@ export default function StaffTable({
   onEdit,
   onPageChange
 }: {
-  staffList: { staff: TeachingStaff[] | OtherStaff[], page_meta: PageMeta };
-  onEdit: (staff_id: number) => void;
+  staffList: { staff: TeachingStaff[] | OtherStaff[] , page_meta: PageMeta };
+  onEdit: (staff_id: TeachingStaff | OtherStaff) => void;
   onPageChange: (page: number) => void;
   setDefaultRoute?: number;
   type: 'teaching' | 'non-teaching'
 }) {
 
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState<TeachingStaff | OtherStaff | null>(null)
 
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
@@ -62,6 +64,8 @@ export default function StaffTable({
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
   };
+
+ console.log("I am staff table ")
 
   return (
     <div className="w-full overflow-auto">
@@ -105,10 +109,10 @@ export default function StaffTable({
                       <Button
                         variant="ghost"
                         className="h-8 w-8 p-0"
-                      // disabled={
-                      //   !isValidEmail(staff.email) ||
-                      //   !isValidMobile(staff.mobile)
-                      // }
+                        disabled={
+                        !isValidEmail(staff.email) ||
+                        !isValidMobile(staff.mobile_number)
+                      }
                       >
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
@@ -124,7 +128,7 @@ export default function StaffTable({
                         Copy staff ID
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onEdit(staff.id)}>
+                      <DropdownMenuItem onClick={() => onEdit(staff)}>
                         Edit staff
                       </DropdownMenuItem>
                       <DropdownMenuItem>Delete staff</DropdownMenuItem>

@@ -9,9 +9,9 @@ import { Authapi } from "@/services/AuthService";
 import { SchoolApi } from "@/services/SchoolServices";
 import { AcademicApi } from "@/services/AcademicService";
 import { StaffApi } from "@/services/StaffService";
+import { LeaveApi } from "@/services/LeaveService";
 import { StudentApi } from "@/services/StundetServices";
 import { UserManagementApi } from "@/services/UserManagementService";
-import { LeaveApi } from "@/services/LeaveService";
 
 
 const store = configureStore({
@@ -28,7 +28,7 @@ const store = configureStore({
     [StaffApi.reducerPath] : StaffApi.reducer,
     [StudentApi.reducerPath] : StudentApi.reducer,
     [UserManagementApi.reducerPath] : UserManagementApi.reducer,
-    [LeaveApi.reducerPath] : LeaveApi.reducer
+    [LeaveApi.reducerPath] : LeaveApi.reducer 
 
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
@@ -38,7 +38,7 @@ const store = configureStore({
     StaffApi.middleware,
     StudentApi.middleware,
     UserManagementApi.middleware,
-    LeaveApi.middleware
+    LeaveApi.middleware    
   ),
 })
 
