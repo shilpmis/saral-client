@@ -28,7 +28,7 @@ import LeaveManagement from "@/pages/LeaveDashboardForTeachers";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
 import AdminAttendanceView from "../../pages/AdminAttendance";
-import StudentAttendanceView from "@/pages/StudentAttendance";
+import StudentAttendanceView from "@/pages/AttendancePage";
 import { Permission, UserRole } from "@/types/user";
 import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 import { SearchProvider } from "../Dashboard/searchContext";
@@ -167,6 +167,18 @@ export default function RootRoute() {
             {/* Student Attendance */}
             <Route
               path="mark-attendance"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.SCHOOL_TEACHER]}
+                >
+                  <StudentAttendanceView />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Student Attendance */}
+            <Route
+              path="mark-attendance/:classId"
               element={
                 <PrivateRoute
                   allowedRoles={[UserRole.SCHOOL_TEACHER]}
