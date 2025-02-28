@@ -22,14 +22,14 @@ export const UserManagementApi = createApi({
         method: "GET"
       }),
     }),
-    addUser: builder.mutation<User, Pick<User , 'name' | 'username' | 'role_id'>>({
+    addUser: builder.mutation<User, Omit<User, "id">>({
       query: (user) => ({
-        url: "user",
+        url: "users",
         method: "POST",
         body: user
       })
     }),
-    updateUser: builder.mutation<Partial<Pick<User , 'name' | 'username' | 'role_id'>>, User>({
+    updateUser: builder.mutation<Pick<User , 'name' | 'username' | 'role_id'>, User>({
       query: (user) => ({
         url: `users/${user.id}`,
         method: "PUT",

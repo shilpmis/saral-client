@@ -48,8 +48,8 @@ export default function StaffTable({
   onEdit,
   onPageChange
 }: {
-  staffList: { staff: TeachingStaff[] | OtherStaff[] , page_meta: PageMeta };
-  onEdit: (staff_id: TeachingStaff | OtherStaff) => void;
+  staffList: { staff: TeachingStaff[] | OtherStaff[], page_meta: PageMeta };
+  onEdit: (staff_id: number) => void;
   onPageChange: (page: number) => void;
   setDefaultRoute?: number;
   type: 'teaching' | 'non-teaching'
@@ -64,8 +64,6 @@ export default function StaffTable({
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
   };
-
- console.log("I am staff table ")
 
   return (
     <div className="w-full overflow-auto">
@@ -128,7 +126,7 @@ export default function StaffTable({
                         Copy staff ID
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onEdit(staff)}>
+                      <DropdownMenuItem onClick={() => onEdit(staff.id)}>
                         Edit staff
                       </DropdownMenuItem>
                       <DropdownMenuItem>Delete staff</DropdownMenuItem>
