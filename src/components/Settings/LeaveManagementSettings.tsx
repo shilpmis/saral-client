@@ -109,27 +109,224 @@ export function LeaveManagementSettings() {
     },
   })
 
-  const onLeaveTypeSubmit: SubmitHandler<LeaveType> = (data) => {
+  const [activeTab, setActiveTab] = useState("leave-types")
+
+  const [DialogForLeaveType, setDialogForLeaveType] = useState<{
+    type: 'add' | 'edit',
+    leave_type: LeaveType | null,
+    isOpen: boolean
+  }>({
+    isOpen: false,
+    type: 'add',
+    leave_type: null
+  })
+
+  const [DialogForLeavePolicy, setDialogForLeavePolicy] = useState<{
+    type: 'add' | 'edit',
+    leave_policy: LeavePolicy | null,
+    isOpen: boolean
+  }>({
+    isOpen: false,
+    type: 'add',
+    leave_policy: null
+  })
+
+
+  const [currentlyDispalyedLeaveTypes, setCurrentlyDispalyedLeaveTypes] = useState<{
+    leave_type: LeaveType[], page: PageMeta
+  } | null>(null)
+
+ 
+
+  const [currentlyDispalyedLeavePolicy, setCurrentlyDispalyedLeavePolicy] = useState<{
+    leave_policy: LeavePolicy[], page: PageMeta
+  } | null>(null)
+
+
+  /***
+ * 
+ * TODO : 
+ *  -need to handle error here for both update nad create 
+ *  -Need to add loader while api is executing 
+ *  -Need to reflect data in UI as it get change  
+ *  -close dialog and clear state after successfull submit
+ */
+  const onLeaveTypeSubmit: SubmitHandler<LeaveTypeSchema> = async (data) => {
     console.log(data)
     // Here you would typically save the data to your backend
-    setIsLeaveTypeDialogOpen(false)
-    leaveTypeForm.reset()
+
+    if (DialogForLeaveType.type === 'edit') {
+      let updated_type = await updateLeaveType({
+        leave_type_id: DialogForLeaveType.leave_type!.id, payload: {
+          leave_type_name: data.name,
+          is_paid: data.is_paid,
+          affects_payroll: data.affects_payroll,
+          requires_proof: false,
+          is_active: true
+        }
+      })
+      if (updated_type.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+        })
+        console.log(updated_type)
+      }
+      if (updated_type.data) {
+        toast({
+          variant: 'default',
+          title: 'Leave type updated successfully ✔️',
+          description: 'updated 🆗',
+          duration : 3000
+        })
+        fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
+      }
+    } else {
+      let new_type = await createLeaveType({
+        leave_type_name: data.name,
+        is_paid: data.is_paid,
+        affects_payroll: data.affects_payroll,
+        requires_proof: false,
+        is_active: true
+      })
+      if (new_type.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+        })
+        console.log(new_type)
+      }
+      if (new_type.data) {
+        toast({
+          variant: 'default',
+          title: 'Leave type created successfully ✔️',
+          description: 'created 🆗',
+          duration : 3000
+        })
+        fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
+      }
+    }
+    setDialogForLeaveType({
+      isOpen: false,
+      type: 'add',
+      leave_type: null
+    })
+    
+
   }
+  // for table dynamic render  
+  useEffect(()=>{
+    console.log(currentlyDispalyedLeaveTypes);
+
+  },[currentlyDispalyedLeaveTypes])
+
 
   const onLeavePolicySubmit: SubmitHandler<LeavePolicy> = (data) => {
     console.log(data)
     // Here you would typically save the data to your backend
-    setIsLeavePolicyDialogOpen(false)
+
+
+    if (DialogForLeavePolicy.type === "add") {
+      let new_policy = await createLeavePolicy({
+        annual_quota: data.annual_quota,
+        staff_role_id: Number(data.staff_role_id),
+        leave_type_id: Number(data.leave_type_id),
+        can_carry_forward: data.can_carry_forward,
+        max_carry_forward_days: data.max_carry_forward_days,
+        max_consecutive_days: data.max_consecutive_days,
+        deduction_rules: {},
+        approval_hierarchy: {},
+        requires_approval: 0
+      })
+      if (new_policy.data) {
+        toast({
+          variant: 'default',
+          title: 'Policy created successfully ✍🏾',
+          description: '🆗 successfully',
+          duration: 3000
+        })
+        fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
+      }
+      if (new_policy.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+        })
+        console.log(new_policy)
+      }
+    }
+    if (DialogForLeavePolicy.type === 'edit') {
+      let policy_id = DialogForLeavePolicy.leave_policy!.id
+
+      let payload = {
+        annual_quota: data.annual_quota,
+        staff_role_id: Number(data.staff_role_id),
+        leave_type_id: Number(data.leave_type_id),
+        can_carry_forward: data.can_carry_forward,
+        max_carry_forward_days: data.max_carry_forward_days,
+        max_consecutive_days: data.max_consecutive_days,
+        deduction_rules: {},
+        approval_hierarchy: {},
+        requires_approval: 0,
+
+      }
+      let policy = await updateLeavePolicy({ policy_id: policy_id, payload: payload })
+      if (policy.data) {
+        toast({
+          variant: 'default',
+          title: 'Policy updated successfully 👍🏾',
+          description: 'Updated',
+          duration: 3000
+        })
+        fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
+      }
+      if (policy.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+        })
+        console.log(policy.error)
+      }
+
+    }
     leavePolicyForm.reset()
+    setDialogForLeavePolicy({
+      isOpen: false,
+      type: 'add',
+      leave_policy: null
+    })
   }
 
-  const openLeaveTypeDialog = (leaveType?: LeaveType) => {
-    if (leaveType) {
-      setEditingLeaveType(leaveType)
-      leaveTypeForm.reset(leaveType)
-    } else {
-      setEditingLeaveType(null)
-      leaveTypeForm.reset()
+  const openLeaveTypeDialog = (type: 'add' | 'edit', leaveType: LeaveType | null) => {
+    setDialogForLeaveType({
+      isOpen: true,
+      type: type,
+      leave_type: leaveType
+    })
+
+    leaveTypeForm.reset({
+      name: leaveType?.leave_type_name,
+      description: leaveType?.leave_type_name,
+      is_paid: leaveType!.is_paid,
+      affects_payroll: leaveType!.affects_payroll,
+    })
+
+  }
+
+  const openLeavePolicyDialog = (type: 'add' | 'edit', leavePolicy: LeavePolicy | null) => {
+    setDialogForLeavePolicy({
+      isOpen: true,
+      type: type,
+      leave_policy: leavePolicy
+    })
+
+    /**
+     * Fetch Staff role and type of leaved accordingly
+     */
+
+    if (!staffRole) {
+      getStaffForSchool(auth.user!.school_id)
+
     }
     setIsLeaveTypeDialogOpen(true)
   }
@@ -175,7 +372,10 @@ export function LeaveManagementSettings() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leaveTypes.map((leaveType) => (
+
+                  {
+                  currentlyDispalyedLeaveTypes?.leave_type.map((leaveType) => (
+
                     <TableRow key={leaveType.id}>
                       <TableCell>{leaveType.name}</TableCell>
                       <TableCell>{leaveType.description}</TableCell>
