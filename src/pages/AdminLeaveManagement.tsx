@@ -16,7 +16,7 @@ import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from "@/types/leave"
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
-import { useApproveOtherTeachingLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
+import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
 
 
 
@@ -25,7 +25,9 @@ const AdminLeaveManagement: React.FC = () => {
   const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
   const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
 
-  const [get] = useApproveOtherTeachingLeaveApplicationMutation()
+  const [approveTeachersApplication, { isLoading: loadingForApproveTeachersApplication }] = useApproveTeachingLeaveApplicationMutation()
+  const [approveOtherStaffsApplication, { isLoading: loadingForApproveStaffApplication }] = useApproveOtherStaffLeaveApplicationMutation()
+
   const [activeTab, setActiveTab] = useState("teacher")
 
   const [LeaveRequestsForTeachingStaff, setLeaveRequestsForTeachingStaff] =
@@ -38,8 +40,8 @@ const AdminLeaveManagement: React.FC = () => {
   const [DialogForApplication, setDialogForApplication] = useState<{
     isOpen: boolean,
     application: LeaveApplicationForTeachingStaff | LeaveApplicationForOtherStaff | null,
-    // staff_type: "teacher" | "other",
     dialog_type: "create" | "edit"
+    // staff_type: "teacher" | "other",
   }>()
 
   // const [currentPage, setCurrentPage] = useState(1)
@@ -77,8 +79,36 @@ const AdminLeaveManagement: React.FC = () => {
   //   // setCurrentPage(updatedPage)
   // }
 
-  const handleStatusChange = useCallback(async (requestId: number, newStatus: "approved" | "rejected") => {
-    
+  const handleStatusChange = useCallback(async (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => {
+    if (staff_type === 'teacher') {
+      let status = await approveTeachersApplication({
+        application_id: requestId,
+        status: newStatus,
+      })
+      if (status.data) {
+        fetchLeaveApplication('teacher', newStatus, 1)
+        toast({
+          title: "Leave request updated",
+          description: `The leave request has been ${newStatus}.`,
+        })
+      }
+      if(status.error){
+        console.log("Check this" ,status)
+      }
+    }
+    if (staff_type === 'other') {
+      let status = await approveOtherStaffsApplication({
+        application_id: requestId,
+        status: newStatus,
+      })
+      if(status.error){
+        console.log("Check this" ,status , {
+          application_id: requestId,
+          status: newStatus,
+        })
+      }
+      fetchLeaveApplication('other', newStatus, 1)
+    }
   }, [])
 
   const onPageChange = useCallback((page: number) => {
@@ -93,7 +123,7 @@ const AdminLeaveManagement: React.FC = () => {
     date?: string) {
 
     if (type === 'teacher') {
-      const res = await getApplicationForTeacher({ page: page, status: status ,date : undefined })
+      const res = await getApplicationForTeacher({ page: page, status: status, date: undefined })
     }
 
     if (type === 'other') {
@@ -140,7 +170,7 @@ const AdminLeaveManagement: React.FC = () => {
     if (selectedDate) {
       const date = new Date(selectedDate);
       const formattedDate = date.toISOString().split("T")[0];
-      console.log("formattedDate" ,formattedDate);
+      console.log("formattedDate", formattedDate);
       fetchLeaveApplication(activeTab as 'teacher' | 'other', statusFilter, 1, formattedDate)
     }
   }, [selectedDate])
