@@ -27,6 +27,7 @@ interface StudentFormProps {
   initial_data?: Student | null
 }
 
+
 const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_type }) => {
 
   const formatData = (value: any): string => {
@@ -80,7 +81,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       district: "",
       city: "",
       state: "",
-      postal_code: 0,
+      postal_code: undefined,
 
       bank_name: "",
       account_no: undefined,
@@ -170,6 +171,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
   const handleSubmit: SubmitHandler<StudentFormData> = async (values: z.infer<typeof studentSchema>) => {
 
+    console.log("Check this , I am in function")
 
     if (form_type === "create") {
 
@@ -178,7 +180,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
       let payload: StudentEntry = {
         students_data: {
-          class_id: CurrentClass!.id ,
+          class_id: CurrentClass!.id,
           first_name: values.first_name,
           middle_name: values.middle_name,
           last_name: values.last_name,
@@ -215,54 +217,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
           district: values.district,
           city: values.city,
           state: values.state,
-          postal_code: values.postal_code,
+          postal_code: values.postal_code.toString(),
           bank_name: values.bank_name,
           account_no: values.account_no,
           IFSC_code: values.IFSC_code,
         }
-          // students_data: {
-          //   class_id: 1, 
-          //   first_name: "Rahul",
-          //   middle_name: "Kumar",
-          //   last_name: "Sharma",
-          //   first_name_in_guj: "રાહુલ",
-          //   middle_name_in_guj: "કુમાર",
-          //   last_name_in_guj: "શર્મા",
-          //   gender: "Male",
-          //   birth_date: "2010-05-15",
-          //   gr_no: 123456,
-          //   primary_mobile: 9876543210,
-          //   father_name: "Amit Sharma",
-          //   father_name_in_guj: "અમિત શર્મા",
-          //   mother_name: "Pooja Sharma",
-          //   mother_name_in_guj: "પૂજા શર્મા",
-          //   roll_number: 12,
-          //   aadhar_no: 1234-5678-9101,
-          //   is_active: true
-          // },
-          // student_meta_data: {
-          //   aadhar_dise_no: 123456786756,
-          //   birth_place: "Ahmedabad",
-          //   birth_place_in_guj: "અમદાવાદ",
-          //   religiion: "Hindu",
-          //   religiion_in_guj: "હિન્દુ",
-          //   caste: "Brahmin",
-          //   caste_in_guj: "બ્રાહ્મણ",
-          //   category: "SC",
-          //   admission_date: "2023-06-10",
-          //   admission_class_id: 1,
-          //   secondary_mobile: 9876543222,
-          //   privious_school: "Delhi Public School",
-          //   privious_school_in_guj: "દિલ્હી પબ્લિક સ્કૂલ",
-          //   address: "15, Shree Nagar Society, Ahmedabad",
-          //   district: "Ahmedabad",
-          //   city: "Ahmedabad",
-          //   state: "Gujarat",
-          //   postal_code: 380015,
-          //   bank_name: "State Bank of India",
-          //   account_no: 123456789012,
-          //   IFSC_code: "SBIN0001234"
-          // }
       }
 
       let new_student: any = await createStudent(payload);
@@ -342,8 +301,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       if (values.state !== initial_data?.student_meta?.state) {
         payload.student_meta_data.state = values.state
       }
-      if (values.postal_code !== initial_data?.student_meta?.postal_code) {
-        payload.student_meta_data.postal_code = values.postal_code
+      if (values.postal_code.toString() !== initial_data?.student_meta?.postal_code) {
+        payload.student_meta_data.postal_code = values.postal_code.toString()
       }
       if (values.bank_name !== initial_data?.student_meta?.bank_name) {
         payload.student_meta_data.bank_name = values.bank_name
@@ -486,7 +445,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         district: initial_data?.student_meta?.district,
         city: initial_data?.student_meta?.city,
         state: initial_data?.student_meta?.state,
-        postal_code: initial_data?.student_meta?.postal_code,
+        postal_code: Number(initial_data?.student_meta?.postal_code),
         bank_name: initial_data?.student_meta?.bank_name,
         account_no: Number(initial_data?.student_meta?.account_no),
         admission_date: formatData(initial_data!.student_meta!.admission_date),

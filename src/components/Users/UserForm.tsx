@@ -44,14 +44,12 @@ export const UserForm: React.FC<UserFormProps> = ({initialData, roles, isEditing
     },
   })
 
-  const handleSubmit = async(data: z.infer<typeof userSchema>) => {
-    const new_user = await createUser({
-      name : data.name,
-      username : data.username,
-      role_id : Number(data.role_id),
-    })
-    console.log("New User Created !", new_user)
-    if(new_user.data) onCloseDialogBox()
+  const handleSubmit = (data: z.infer<typeof userSchema>) => {
+    console.log("Check this updated data !" , data),
+    // createUser({
+
+    // })
+    onCloseDialogBox()
   }
 
   console.log("User Form renders!!!")
