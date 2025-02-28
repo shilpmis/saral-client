@@ -1,3 +1,5 @@
+import { TeachingStaff } from "./staff";
+
 export enum UserStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
@@ -5,8 +7,7 @@ export enum UserStatus {
 }
 
 export interface User {
-  id: string;
-  username: string;
+  id: number;
   school_id: number;
   saral_email: string;
   name: string;
@@ -16,6 +17,7 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
+  teacher : TeachingStaff | null
 }
 
 export enum UserRole {
