@@ -16,7 +16,7 @@ export const StudentApi = createApi({
     baseUrl: "http://localhost:3333/api/v1/",
     prepareHeaders: (headers) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`);
-      headers.set("Content-Type", "application/json");
+      headers.set('Accept', '*/*');
       return headers;
     },
   }),
@@ -54,6 +54,22 @@ export const StudentApi = createApi({
         body: payload,
       }),
     }),
+
+    bulkUploadStudents: builder.mutation<
+      { message: string; totalInserted: number },
+      { school_id: number; class_id: number; file: File }
+    >({
+      query: ({ school_id, class_id, file }) => {
+        const formData = new FormData()
+        formData.append("file", file)
+        console.log("file",file);
+        return {
+          url: `students/bulk-upload/${school_id}?class_id=${class_id}`,
+          method: "POST",
+          body: formData,
+        }
+      },
+    }),
   }),
 });
 
@@ -63,7 +79,8 @@ export const {
   useAddMultipleStudentsMutation,
   useAddSingleStudentMutation,
   useUpdateStudentMutation,
-  useLazyFetchSingleStundetQuery
+  useLazyFetchSingleStundetQuery,
+  useBulkUploadStudentsMutation
 } = StudentApi;
 
 /**
