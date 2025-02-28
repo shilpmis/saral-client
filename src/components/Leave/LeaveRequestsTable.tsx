@@ -16,7 +16,7 @@ import { Badge } from "../ui/badge";
 interface LeaveRequestsTableProps {
     staff_type: "teacher" | "other",
     leaveRequests: { applications: LeaveApplicationForTeachingStaff[], page: PageMeta } | { applications: LeaveApplicationForOtherStaff[], page: PageMeta } | null
-    handleStatusChange: (requestId: number, newStatus: "approved" | "rejected") => void
+    handleStatusChange: (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => void
     onPageChange: (page: number) => void
 }
 
@@ -42,7 +42,6 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         onPageChange(page);
     }
 
-    console.log("leaveRequests from here ", leaveRequests)
 
     return (
         <div>
@@ -73,12 +72,12 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleStatusChange(request.id, "approved")}
+                                            onClick={() => handleStatusChange(request.uuid, "approved" ,  staff_type)}
                                             className="mr-2"
                                         >
                                             Approve
                                         </Button>
-                                        <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.id, "rejected")}>
+                                        <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.uuid, "rejected" , staff_type)}>
                                             Reject
                                         </Button>
                                     </>
