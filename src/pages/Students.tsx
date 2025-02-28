@@ -19,7 +19,6 @@ import {
   useLazyFetchStudentForClassQuery,
   useUpdateStudentMutation,
 } from "@/services/StundetServices"
-import { toast } from "@/hooks/use-toast"
 
 export const Students: React.FC = () => {
 

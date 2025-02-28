@@ -11,25 +11,27 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { StaffFormData, staffSchema } from "@/utils/staff.validation"
+import { OtherStaff, TeachingStaff } from "@/types/staff"
 
 interface StaffFormProps {
-  initialData?: Partial<StaffFormData>
+  initialData?: TeachingStaff | OtherStaff | null
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
+  role : "teaching" | "non-teaching"
 }
 
-const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
+const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType , role }) => {
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<{ id: number; name: string }[]>([])
   const [nonTeachingRoles, setNonTeachingRoles] = useState<{ id: number; name: string }[]>([])
 
   const form = useForm<StaffFormData>({
     // resolver: zodResolver(staffSchema),
-    defaultValues: initialData || {
-      is_teaching_role: true,
-      employment_status: "Permanent",
-    },
+    defaultValues: {
+      aadhar_no : undefined,
+      account_no : undefined,
+    }
   })
 
   // Simulated API call to fetch roles
@@ -66,6 +68,9 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
     else if (activeTab === "bank") setActiveTab("address")
     else if (activeTab === "employment") setActiveTab("bank")
   }, [activeTab])
+
+
+  console.log("initialData" , initialData)
 
   return (
     <Form {...form}>
