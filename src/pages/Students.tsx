@@ -54,9 +54,9 @@ export const Students: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [bulkUploadStudents] = useBulkUploadStudentsMutation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-
+  const [currentPage, setCurrentPage] = useState<number>(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
+  const [dialogOpenForBulkUpload, setDialogOpenForBulkUpload] = useState(false)
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
     setSelectedDivision(null)
@@ -190,6 +190,7 @@ export const Students: React.FC = () => {
       }
 
       // Reset file selection
+      setDialogOpenForBulkUpload(false);
       setFileName(null)
       setSelectedFile(null)
       console.log("fileInputRef.current", fileInputRef.current)
@@ -211,16 +212,19 @@ export const Students: React.FC = () => {
       setIsUploading(false)
     }
   }
+  
+  const handlePageChange = useCallback(
+    async(page: number) => {
+      setCurrentPage(page)
+      if (selectedDivision) {
+        await getStudentForClass({ class_id: selectedDivision.id, page: page }).then((response) => {
+          setPaginationDataForSelectedClass(response.data.meta)
+        })
+      }
+    },
+    [setCurrentPage, selectedDivision, getStudentForClass],
+  ) 
 
-  // Helper function to read file as base64
-  // const readFileAsBase64 = (file: File): Promise<string> => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader()
-  //     reader.onload = () => resolve(reader.result as string)
-  //     reader.onerror = (error) => reject(error)
-  //     reader.readAsDataURL(file)
-  //   })
-  // }
 
   return (
     <>
@@ -244,9 +248,18 @@ export const Students: React.FC = () => {
                 <DropdownMenuItem>
                   <FileDown className="mr-2 h-4 w-4" /> Download Excel
                 </DropdownMenuItem>
-                <Dialog>
+                <Dialog
+                  open={dialogOpenForBulkUpload}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setFileName(null)
+                      setSelectedFile(null)
+                      setUploadError(null)
+                    }
+                  }}
+                >
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
                       <Upload className="mr-2 h-4 w-4" /> Upload Excel
                     </Button>
                   </DialogTrigger>
@@ -344,8 +357,10 @@ export const Students: React.FC = () => {
           <StudentTable
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
-            filteredStudents={listedStudentForSelectedClass}
-            PageDetailsForStudents={paginationDataForSelectedClass}
+            PageDetailsForStudents = {paginationDataForSelectedClass}
+            // onSearchChange={setSearchValue}
+            filteredStudents={filteredStudents}
+            onPageChange={handlePageChange}
             onEdit={handleEditStudent}
           />
         )}
