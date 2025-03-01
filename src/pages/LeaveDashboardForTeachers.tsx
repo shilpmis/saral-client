@@ -189,7 +189,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
               </DialogHeader>
               <LeaveApplicationForm
                 initialData={DialogForLeaveApplication.application}
-                tpye={DialogForLeaveApplication.type}
+                type={DialogForLeaveApplication.type}
                 onCancel={handleCloseDialog}
               />
             </DialogContent>

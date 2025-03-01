@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -12,25 +14,25 @@ import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
-import type { PageDetailsForStudents, Student, StudentEntry, UpdateStudent } from "@/types/student"
+import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
 import {
   useLazyFetchSingleStundetQuery,
   useLazyFetchStudentForClassQuery,
-  useUpdateStudentMutation,
+  useBulkUploadStudentsMutation,
 } from "@/services/StundetServices"
 import { toast } from "@/hooks/use-toast"
+import { Input } from "@/components/ui/input"
 
 export const Students: React.FC = () => {
-
   // const dispatch = useAppDispatch()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
 
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
-  const [getSingleStudent,
-    { data: studentDataForEditStudent, isLoading: isStudentForEditLoading, isError }] = useLazyFetchSingleStundetQuery()
+  const [getSingleStudent, { data: studentDataForEditStudent, isLoading: isStudentForEditLoading, isError }] =
+    useLazyFetchSingleStundetQuery()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
@@ -42,9 +44,16 @@ export const Students: React.FC = () => {
   )
   // const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
 
-  const [openDialogForStudent, setOpenDialogForStudent] =
-    useState<{ isOpen: boolean, type: 'add' | 'edit', selectedStudent: Student | null }>({ isOpen: false, type: "add", selectedStudent: null })
+  const [openDialogForStudent, setOpenDialogForStudent] = useState<{
+    isOpen: boolean
+    type: "add" | "edit"
+    selectedStudent: Student | null
+  }>({ isOpen: false, type: "add", selectedStudent: null })
   const [fileName, setFileName] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [bulkUploadStudents] = useBulkUploadStudentsMutation()
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -80,22 +89,22 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass])
 
+  const handleEditStudent = useCallback(
+    (student_id: number) => {
+      /**
+       * Fetch Student detil for upate
+       */
 
-  const handleEditStudent = useCallback((student_id: number) => {
+      getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
 
-    /**
-     * Fetch Student detil for upate
-     */
-
-    getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
-
-    setOpenDialogForStudent({
-      isOpen: true,
-      selectedStudent: studentDataForEditStudent,
-      type: "edit"
-    })
-
-  }, [])
+      setOpenDialogForStudent({
+        isOpen: true,
+        selectedStudent: studentDataForEditStudent,
+        type: "edit",
+      })
+    },
+    [getSingleStudent, authState.user, studentDataForEditStudent],
+  )
 
   const handleChooseFile = useCallback(() => {
     fileInputRef.current?.click()
@@ -105,6 +114,8 @@ export const Students: React.FC = () => {
     const file = event.target.files?.[0]
     if (file) {
       setFileName(file.name)
+      setSelectedFile(file)
+      setUploadError(null)
     }
   }, [])
 
@@ -130,6 +141,86 @@ export const Students: React.FC = () => {
     }
   }, [studentDataForSelectedClass])
 
+  const handleFileUploadSubmit = async () => {
+    if (!selectedFile) {
+      setUploadError("Please select a file to upload")
+      return
+    }
+
+    if (!selectedClass || !selectedDivision) {
+      setUploadError("Please select a class and division first")
+      return
+    }
+
+    try {
+      setIsUploading(true)
+      setUploadError(null)
+     console.log(typeof selectedFile)
+      const response = await bulkUploadStudents({
+        school_id: authState.user!.school_id,
+        class_id: selectedDivision.id,
+        file: selectedFile,
+      }).unwrap()
+      
+      // Close the dialog
+      const dialogElement = document.querySelector('[role="dialog"]')
+      if (dialogElement) {
+        const closeButton = dialogElement.querySelector('button[aria-label="Close"]')
+        if (closeButton instanceof HTMLElement) {
+          closeButton.click()
+        }
+      }
+
+      // Show success toast
+      toast({
+        title: "Upload Successful",
+        description: `Successfully uploaded ${response.totalInserted} students`,
+        variant: "default",
+      })
+
+      // Refresh the student list
+      if (selectedDivision) {
+        await getStudentForClass({ class_id: selectedDivision.id })
+
+        // Make sure the UI updates with the new data
+        if (studentDataForSelectedClass) {
+          setListedStudentForSelectedClass(studentDataForSelectedClass.data)
+          setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
+        }
+      }
+
+      // Reset file selection
+      setFileName(null)
+      setSelectedFile(null)
+      console.log("fileInputRef.current", fileInputRef.current)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      
+    } catch (error: any) {
+      console.error("Upload error:", error)
+      setUploadError(error.data?.message || "Failed to upload students. Please try again.")
+
+      // Show error toast
+      toast({
+        title: "Upload Failed",
+        description: error.data?.message || "Failed to upload students. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Helper function to read file as base64
+  // const readFileAsBase64 = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader()
+  //     reader.onload = () => resolve(reader.result as string)
+  //     reader.onerror = (error) => reject(error)
+  //     reader.readAsDataURL(file)
+  //   })
+  // }
 
   return (
     <>
@@ -169,17 +260,31 @@ export const Students: React.FC = () => {
                         Choose Excel File
                       </Button>
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      id="excel-file"
-                      type="file"
-                      accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
+                      <Input
+                        ref={fileInputRef}
+                        id="excel-file"
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
                     {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+                    {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
                     <div className="flex justify-end">
-                      <Button className="w-1/2">Upload</Button>
+                      <Button
+                        className="w-1/2"
+                        onClick={handleFileUploadSubmit}
+                        disabled={isUploading || !selectedFile}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          "Upload"
+                        )}
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -253,58 +358,51 @@ export const Students: React.FC = () => {
             setOpenDialogForStudent({
               isOpen: false,
               type: "add",
-              selectedStudent: null
+              selectedStudent: null,
             })
           }
         }}
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{openDialogForStudent.type === 'edit' ? "Edit Student" : "Add New Student"}</DialogTitle>
+            <DialogTitle>{openDialogForStudent.type === "edit" ? "Edit Student" : "Add New Student"}</DialogTitle>
           </DialogHeader>
           {/* {
             openDialogForStudent.selectedStudent  && ( */}
           <>
             <div className="w-full lg:h-[600px] overflow-auto">
-              {
-                openDialogForStudent.type === "add" && (
-                  <StudentForm
-                    onClose={() => {
-                      setOpenDialogForStudent({
-                        isOpen: false,
-                        type: "add",
-                        selectedStudent: null
-                      })
-                    }}
-                    form_type='create'
-                  />
-                )
-              }
-              {
-                openDialogForStudent.type === "edit" && !isStudentForEditLoading && (
-                  <StudentForm
-                    onClose={() => {
-                      setOpenDialogForStudent({
-                        isOpen: false,
-                        type: "edit",
-                        selectedStudent: null
-                      })
-                    }}
-                    form_type="update"
-                    initial_data={studentDataForEditStudent}
-                  />
-                )
-              }
-              {
-                openDialogForStudent.type === "edit" && isStudentForEditLoading && (
-                  <div className="w-full h-full flex justify-center items-center">
-                    <Loader2 className="animate-spin" />
-                  </div>
-                )
-              }
+              {openDialogForStudent.type === "add" && (
+                <StudentForm
+                  onClose={() => {
+                    setOpenDialogForStudent({
+                      isOpen: false,
+                      type: "add",
+                      selectedStudent: null,
+                    })
+                  }}
+                  form_type="create"
+                />
+              )}
+              {openDialogForStudent.type === "edit" && !isStudentForEditLoading && (
+                <StudentForm
+                  onClose={() => {
+                    setOpenDialogForStudent({
+                      isOpen: false,
+                      type: "edit",
+                      selectedStudent: null,
+                    })
+                  }}
+                  form_type="update"
+                  initial_data={studentDataForEditStudent}
+                />
+              )}
+              {openDialogForStudent.type === "edit" && isStudentForEditLoading && (
+                <div className="w-full h-full flex justify-center items-center">
+                  <Loader2 className="animate-spin" />
+                </div>
+              )}
             </div>
           </>
-
         </DialogContent>
       </Dialog>
     </>
@@ -312,3 +410,4 @@ export const Students: React.FC = () => {
 }
 
 export default Students
+

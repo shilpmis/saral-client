@@ -55,8 +55,6 @@ export default function StaffTable({
   type: 'teaching' | 'non-teaching'
 }) {
 
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [selectedStaff, setSelectedStaff] = useState<TeachingStaff | OtherStaff | null>(null)
 
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
@@ -107,10 +105,10 @@ export default function StaffTable({
                       <Button
                         variant="ghost"
                         className="h-8 w-8 p-0"
-                        disabled={
-                        !isValidEmail(staff.email) ||
-                        !isValidMobile(staff.mobile_number)
-                      }
+                      // disabled={
+                      //   !isValidEmail(staff.email) ||
+                      //   !isValidMobile(staff.mobile)
+                      // }
                       >
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />

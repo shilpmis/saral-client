@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { User } from "@/types/user"
 import { use, useEffect } from "react"
 import { SaralPagination } from "../ui/common/SaralPagination"
+import { PageMeta } from "@/types/global"
 
 type Role = {
     id: number
@@ -24,7 +25,7 @@ type ManagementUserTableProps = {
 console.log("Management Table renders!!!")
 
 const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, roles, onPageChange, onEditUser }) => {
-    
+
     const onPageUpdate = (page: number) => {
         onPageChange(page)
     }
@@ -35,7 +36,7 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                 <TableHeader>
                     <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead>Username</TableHead>
+                        {/* <TableHead>Username</TableHead> */}
                         <TableHead>Email</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Status</TableHead>
@@ -48,7 +49,7 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                         return (
                             <TableRow key={user.id}>
                                 <TableCell className="font-medium">{user.name}</TableCell>
-                                <TableCell>{user.username}</TableCell>
+                                {/* <TableCell>{user.username}</TableCell> */}
                                 <TableCell>{user.saral_email}</TableCell>
                                 <TableCell>{userRole?.role || "Unknown"}</TableCell>
                                 <TableCell>
@@ -57,7 +58,11 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                                     {/* </Badge> */}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <DropdownMenu>
+                                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onEditUser(user)}>
+                                        <span className="sr-only">Edit</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                    {/* <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 p-0">
                                                 <span className="sr-only">Open menu</span>
@@ -67,7 +72,7 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => onEditUser(user)}>Edit</DropdownMenuItem>
                                         </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    </DropdownMenu> */}
                                 </TableCell>
                             </TableRow>
                         )

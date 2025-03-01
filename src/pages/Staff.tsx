@@ -312,9 +312,10 @@ export const Staff: React.FC = () => {
             <DropdownMenuContent>
               <Dialog>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>
-                    <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                  </DropdownMenuItem>
+                 <button className="flex items-center space-x-2 gap-3"> 
+                  <Upload className="h-4 w-4 ms-2" />
+                    <span>Upload Excel</span>
+                 </button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogTitle>Upload Excel File</DialogTitle>

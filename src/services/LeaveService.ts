@@ -122,10 +122,10 @@ export const LeaveApi = createApi({
       }),
 
     updateLeaveForTeacher: builder
-      .mutation<LeaveApplicationForTeachingStaff, Partial<LeaveApplicationForTeachingStaff>>({
-        query: (payload) => ({
-          url: `/leave-application?staff=teachers`,
-          method: "POST",
+      .mutation<LeaveApplicationForTeachingStaff, {payload :  Partial<LeaveApplicationForTeachingStaff> , application_id: string}>({
+        query: ({payload , application_id}) => ({
+          url: `/leave-application/${application_id}?staff=teacher`,
+          method: "PUT" ,
           body: payload
         })
       }),
@@ -150,17 +150,18 @@ export const LeaveApi = createApi({
       }),
 
     approveOtherStaffLeaveApplication: builder
-      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: number }>({
+      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: string }>({
         query: ({ application_id, status }) => ({
-          url: `/leave-application/other/${application_id}?status=${status}`,
-          method: "GET"
+          url: `/leave-application/other/status/${application_id}?status=${status}`,
+          method: "PUT",
+          body: { status }
         })
       }),
 
-    approveOtherTeachingLeaveApplication: builder
-      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: number }>({
+    approveTeachingLeaveApplication: builder
+      .mutation<LeaveApplicationForTeachingStaff, { status: 'pending' | 'approved' | 'rejected' | 'cancelled', application_id: string }>({
         query: ({ application_id, status }) => ({
-          url: `/leave-application/teacher/${application_id}?status=${status}`,
+          url: `/leave-application/teacher/status/${application_id}?status=${status}`,
           method: "PUT",
           body: { status }
         })
@@ -192,7 +193,7 @@ export const {
 
   useLazyGetTeachersLeaveAppicationQuery,
 
-  useApproveOtherTeachingLeaveApplicationMutation,
+  useApproveTeachingLeaveApplicationMutation,
   useApproveOtherStaffLeaveApplicationMutation
 
 
