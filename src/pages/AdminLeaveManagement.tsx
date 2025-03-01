@@ -22,6 +22,7 @@ import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveAp
 
 const AdminLeaveManagement: React.FC = () => {
 
+
   const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
   const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
 
@@ -44,9 +45,6 @@ const AdminLeaveManagement: React.FC = () => {
     // staff_type: "teacher" | "other",
   }>()
 
-  // const [currentPage, setCurrentPage] = useState(1)
-  // const [totalRequests, setTotalRequests] = useState(0)
-  // const [searchTerm, setSearchTerm] = useState("")
   const [actionReason, setActionReason] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -183,6 +181,12 @@ const AdminLeaveManagement: React.FC = () => {
           <CardTitle className="text-3xl font-bold text-primary mb-4 sm:mb-0">Leave Requests Management</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex justify-between mb-4">
+            <div className="flex flex-wrap">
+              <SaralDatePicker 
+              date={date}
+              setDate={setdate}
+              />
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="teacher">Teacher Leave Requests</TabsTrigger>
