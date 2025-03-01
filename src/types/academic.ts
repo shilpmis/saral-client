@@ -12,7 +12,7 @@ export interface ClassData {
 
 export interface Division {
   id: number;
-  schoolId: number;
+  school_id: number;
   class: string; // Ensure this matches the type used in your API response
   division: string;
   aliases: string | null;

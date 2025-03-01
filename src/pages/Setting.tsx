@@ -22,18 +22,18 @@ const CompactSettingsPage: React.FC = () => {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="p-6">
-            <AnimatePresence mode="wait">
+            {/* <AnimatePresence mode="wait">
               <motion.div
                 key={activeCategory}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
-              >
+              > */}
                 {/* Child Component for setting will render here */}
                 <Outlet />
-              </motion.div>
-            </AnimatePresence>
+              {/* </motion.div>
+            </AnimatePresence> */}
           </div>
         </ScrollArea>
       </div>

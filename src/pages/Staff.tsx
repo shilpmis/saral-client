@@ -1,9 +1,11 @@
+"use client"
+
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, FileDown, Upload, MoreHorizontal, Search } from "lucide-react"
+import { Plus, FileDown, Upload, MoreHorizontal } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
@@ -15,7 +17,16 @@ import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAuthState } from "@/redux/slices/authSlice"
-import { useLazyGetOtherStaffQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
+import {
+  useLazyGetOtherStaffQuery,
+  useLazyGetTeachingStaffQuery,
+  useAddTeachingStaffMutation,
+  useAddOtherStaffMutation,
+  useUpdateTeacherMutation,
+  useBulkUploadTeachersMutation,
+} from "@/services/StaffService"
+import type { StaffFormData } from "@/utils/staff.validation"
+import { PageMeta } from "@/types/global"
 
 
 const FilterOptions: React.FC<{
@@ -26,8 +37,7 @@ const FilterOptions: React.FC<{
 }> = ({ onSearchChange, onStatusChange, searchValue, statusValue }) => {
   return (
     <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div className="relative w-full sm:w-auto">
-      </div>
+      <div className="relative w-full sm:w-auto"></div>
       <Select value={statusValue} onValueChange={(value) => onStatusChange(value)}>
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter By Status" />
@@ -48,13 +58,12 @@ export const Staff: React.FC = () => {
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
   const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
+  const [addTeachingStaff] = useAddTeachingStaffMutation()
+  const [addOtherStaff] = useAddOtherStaffMutation()
 
   const [activeTab, setActiveTab] = useState<string>("teaching")
-  const [isStaffFormOpen, setIsStaffFormOpen] = useState(false)
   const [searchValue, setSearchValue] = useState<string>("")
   const [statusValue, setStatusValue] = useState<string>("")
-  const [staffFormMode, setStaffFormMode] = useState<"add" | "edit">("add")
-  const [selectedStaff, setSelectedStaff] = useState<StaffRole | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -67,7 +76,43 @@ export const Staff: React.FC = () => {
   const [paginationMete, setPaginationMete] = useState<PageMeta | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [openDialogForTeacher, setOpenDialogForTeacher] =
+    useState<{ isOpen: boolean, type: 'add' | 'edit' | 'view', selectedTeacher: TeachingStaff | null }>({ isOpen: false, type: "add", selectedTeacher: null });
+  
+  const [openDialogForOtherStaff, setOpenDialogForOtherStaff] =
+    useState<{ isOpen: boolean, type: 'add' | 'edit' | 'view', selectedOtherStaff: OtherStaff | null }>({ isOpen: false, type: "add", selectedOtherStaff: null });
 
+  const [teacherInitialData, setTeacherInitialData] = useState<TeachingStaff>();
+  const [otherInitialData, setOtherInitialData] = useState<OtherStaff>();
+
+  const [bulkUploadTeachers] = useBulkUploadTeachersMutation();
+  const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false) 
+
+
+  const handleUpload = async (schoolId : number) => {
+    if (!fileName) return alert("Please select a file.");
+    try {
+      await bulkUploadTeachers({ school_id: schoolId, fileName }).unwrap();
+      alert("File uploaded successfully!");
+    } catch (error) {
+      alert("Upload failed! Try again.");
+    }
+  };
+  
+  const handleStaffFormOpenChange = (open :boolean) => {
+   if(!open) {
+    setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null });
+   }
+  }
+
+  const handleStaffFormClose = () => {
+    console.log("Close form event");
+    setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
+  }
+
+  const [updateTeacher] = useUpdateTeacherMutation()
+
+  
   const handleSearchFilter = (value: string) => {
     // const searchValue = value.toLowerCase();
     // setSearchValue(value);
@@ -114,24 +159,67 @@ export const Staff: React.FC = () => {
     // }
   }
 
-  const handleAddStaff = () => {
-    setStaffFormMode("add")
-    setSelectedStaff(null)
-    setIsStaffFormOpen(true)
-  }
 
-  const handleEditStaff = (staff_id: number) => {
-    // setStaffFormMode("edit")
-    // setSelectedStaff({
-    //   ...staff,
-    //   category: staff.designation.toLowerCase().includes("teacher") ? "teaching" : "non-teaching",
-    // })
-    // setIsStaffFormOpen(true)
-  }
+  const handleEditStaff = useCallback((staff_id: number) => {
 
-  const handleStaffSubmit = (data: any) => {
-    setIsStaffFormOpen(false)
+    const teacherInitialData = currentDisplayDataForTeachers?.satff.find((teacher) => teacher.id === staff_id);
+    if (teacherInitialData) {
+      setOpenDialogForTeacher({ ...openDialogForTeacher, isOpen: true, type: "edit", selectedTeacher: null });
+      setTeacherInitialData(teacherInitialData);
+    }
+  }, [currentDisplayDataForTeachers]); 
+
+  const handleEditOtherStaff = useCallback((staff_id: number) => {
+    const otherInitialData = currentDisplayDataForOtherStaff?.satff.find((other) => other.id === staff_id);
+    if (otherInitialData) {
+      setOpenDialogForOtherStaff({ ...openDialogForOtherStaff, isOpen: true, type: "edit", selectedOtherStaff: null });
+      setOtherInitialData(otherInitialData);
+    }
+  }, [currentDisplayDataForOtherStaff]);
+
+  const handleAddStaffSubmit = async (data: StaffFormData) => {
+    try {
+      const payload  = {
+        school_id: authState.user!.school_id,
+        staffData: [data], // Wrapping data in an array
+      };
+  
+      if (data.is_teaching_role) {
+        await addTeachingStaff(payload).unwrap();
+      } else {
+        await addOtherStaff(payload).unwrap();
+      }
+      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
+      fetchDataForActiveTab(activeTab as "teaching" , 1);
+    } catch (error) {
+      console.error("Error adding staff:", error);
+      // Handle error (e.g., show an error message to the user)
+    }
+  };
+
+  const handleEditStaffSubmit = async (data : any) => {
+    console.log("edit staff data id", data?.id)
+
+    try {
+      const payload = {
+        school_id: authState.user!.school_id,
+        teacher_id: data?.id,
+        data : {
+          ...teacherInitialData,
+          ...data
+        }       
+      }
+      await updateTeacher(payload).unwrap();
+
+      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
+      fetchDataForActiveTab(activeTab as "teaching" , 1);
+    } catch (error) {
+      console.error("Error editing staff:", error);
+      
+    }
+
   }
+  
 
   const handleChooseFile = () => {
     fileInputRef.current?.click()
@@ -159,7 +247,7 @@ export const Staff: React.FC = () => {
 
       if (type === 'teaching') {
         const response = await getTeachingStaff({
-          school_id: authState.user!.schoolId,
+          school_id: authState.user!.school_id,
           page: page
         });
         if (response.data) {
@@ -170,7 +258,7 @@ export const Staff: React.FC = () => {
         }
       } else {
         const response = await getOtherStaff({
-          school_id: authState.user!.schoolId,
+          school_id: authState.user!.school_id,
           page: page
         });
         if (response.data)
@@ -199,9 +287,20 @@ export const Staff: React.FC = () => {
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">Staff Management</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">
+          Staff Management
+        </h2>
         <div className="flex flex-wrap justify-center sm:justify-end gap-2">
-          <Button onClick={handleAddStaff} size="sm">
+          <Button
+            onClick={() =>
+              setOpenDialogForTeacher({
+                isOpen: true,
+                type: "add",
+                selectedTeacher: null,
+              })
+            }
+            size="sm"
+          >
             <Plus className="mr-2 h-4 w-4" /> Add Staff
           </Button>
           <DropdownMenu>
@@ -213,24 +312,45 @@ export const Staff: React.FC = () => {
             <DropdownMenuContent>
               <Dialog>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>
-                    <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                  </DropdownMenuItem>
+                 <button className="flex items-center space-x-2 gap-3"> 
+                  <Upload className="h-4 w-4 ms-2" />
+                    <span>Upload Excel</span>
+                 </button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Upload Excel</DialogTitle>
-                    <DialogDescription>
-                      Select an Excel file to upload.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div>
-                    <input type="file" accept=".xlsx,.xls" />
+                  <DialogTitle>Upload Excel File</DialogTitle>
+                  <div className="flex justify-between mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadDemo}
+                      className="w-1/2 mr-2"
+                    >
+                      Download Demo Excel Sheet
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleChooseFile}
+                      className="w-1/2 mr-2"
+                    >
+                      Choose Excel File
+                    </Button>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline">Cancel</Button>
-                    <Button>Upload</Button>
-                  </DialogFooter>
+                  <Input
+                    ref={fileInputRef}
+                    id="excel-file"
+                    type="file"
+                    accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  {fileName && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {fileName}
+                    </p>
+                  )}
+                  <div className="flex justify-end">
+                    <Button className="w-1/2">Upload</Button>
+                  </div>
                 </DialogContent>
               </Dialog>
               <DropdownMenuItem>
@@ -250,11 +370,7 @@ export const Staff: React.FC = () => {
         statusValue={statusValue}
       />
 
-      {error && (
-        <div className="text-red-500 mb-4">
-          {error}
-        </div>
-      )}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
 
       <Tabs
         value={activeTab}
@@ -266,52 +382,71 @@ export const Staff: React.FC = () => {
           <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
-          {
-            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
-          }
-          {
-            currentDisplayDataForTeachers && (
-              <StaffTable
-                staffList={{ staff: currentDisplayDataForTeachers?.satff, page_meta: currentDisplayDataForTeachers?.page_meta }}
-                onEdit={handleEditStaff}
-                type="teaching"
-                onPageChange={onPageChange}
-              />
-            )
-          }
+          {isTeachingOtherLoading && (
+            <div className="flex justify-center p-4">Loading...</div>
+          )}
+          {currentDisplayDataForTeachers && (
+            <StaffTable
+              staffList={{
+                staff: currentDisplayDataForTeachers?.satff,
+                page_meta: currentDisplayDataForTeachers?.page_meta,
+              }}
+              onEdit={handleEditStaff}
+              type="teaching"
+              onPageChange={onPageChange}
+            />
+          )}
         </TabsContent>
         <TabsContent value="non-teaching">
-          {
-            isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>
-          }
-          {
-            currentDisplayDataForOtherStaff && (
-              <StaffTable
-                staffList={{ staff: currentDisplayDataForOtherStaff?.satff, page_meta: currentDisplayDataForOtherStaff?.page_meta }}
-                onEdit={handleEditStaff}
-                type="teaching"
-                onPageChange={onPageChange}
-              />
-            )
-          }
+          {isTeachingOtherLoading && (
+            <div className="flex justify-center p-4">Loading...</div>
+          )}
+          {currentDisplayDataForOtherStaff && (
+            <StaffTable
+              staffList={{
+                staff: currentDisplayDataForOtherStaff?.satff,
+                page_meta: currentDisplayDataForOtherStaff?.page_meta,
+              }}
+              onEdit={handleEditOtherStaff}
+              type="teaching"
+              onPageChange={onPageChange}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isStaffFormOpen} onOpenChange={setIsStaffFormOpen}>
+      <Dialog
+        open={openDialogForTeacher.isOpen}
+        // id="staff-form-dialog"
+        onOpenChange={(open) => handleStaffFormOpenChange(open)}
+      >
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>{staffFormMode === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
+            <DialogTitle>
+              {openDialogForTeacher.type === "add"
+                ? "Add New Staff"
+                : "Edit Staff"}
+            </DialogTitle>
           </DialogHeader>
-          <StaffForm
-            onClose={() => setIsStaffFormOpen(false)}
-            onSubmit={handleStaffSubmit}
-            formType="create"
-            // mode={staffFormMode}
-          />
+          {openDialogForTeacher.type === "add" ? (
+            <StaffForm
+              onSubmit={handleAddStaffSubmit}
+              formType="create"
+              onClose={handleStaffFormClose}
+            />
+          ) : (
+            <StaffForm
+              onSubmit={handleEditStaffSubmit}
+              initialData={teacherInitialData}
+              formType="update"
+              onClose={handleStaffFormClose}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
-      <Dialog>
+// persitence dialog
+      {/* <Dialog>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Upload Excel File</DialogTitle>
@@ -331,11 +466,14 @@ export const Staff: React.FC = () => {
               className="hidden"
               onChange={handleFileChange}
             />
-            {fileName && <p className="text-sm text-muted-foreground">{fileName}</p>}
+            {fileName && (
+              <p className="text-sm text-muted-foreground">{fileName}</p>
+            )}
             <Button>Upload</Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
-  )
+  );
 }
+

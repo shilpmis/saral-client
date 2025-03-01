@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
@@ -13,8 +11,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function SaralDatePicker(props: { date: any; setDate: any }) {
-  const { date, setDate } = props
+
+interface SaralDatePickerProps {
+  date: Date | undefined; // Optional date prop
+  onDateChange : (date: Date | undefined) => void; // Add a callback for date changes
+}
+
+export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePickerProps) {
+  const [date, setDate] = React.useState<Date | undefined>(initialDate)
+  
+  const handleSelectDate = (newDate: Date | undefined) => {
+    setDate(newDate)
+    onDateChange(newDate)
+  }
   return (
     <Popover>
       <PopoverTrigger asChild>

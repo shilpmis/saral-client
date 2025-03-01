@@ -12,7 +12,9 @@ import { Label } from "@/components/ui/label"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const AdminAttendanceView: React.FC = () => {
+
   const [date, setDate] = useState<Date>()
+
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -78,6 +80,7 @@ const AdminAttendanceView: React.FC = () => {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="border p-1 rounded"
           /> */}
+
           </div>
           <Select
             value={selectedGrade || ""}

@@ -7,11 +7,11 @@ interface School {
     name: string,
     email: string,
     username: string,
-    contactNumber: number,
+    contact_number: number,
     subscriptionType: string,
     status: string,
-    establishedYear: string,
-    schoolType: string,
+    established_year: string,
+    school_type: string,
     address: string
 }
 

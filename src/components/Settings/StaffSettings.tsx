@@ -89,7 +89,7 @@ export default function StaffSettings() {
         role_id: role.id,
         formType: 'edit',
         role_name: role.role,
-        role_type: role.isTeachingRole ? 'teaching' : 'non-teaching'
+        role_type: role.is_teaching_role ? 'teaching' : 'non-teaching'
       })
     } else {
       formForStaffRole.reset({
@@ -114,7 +114,7 @@ export default function StaffSettings() {
         if (role_id) {
           await dispatch(updateStaffRole({
             staff_id: role_id,
-            paylaod: { role: formForStaffRole.getValues('role_name') }
+            payload: { role: formForStaffRole.getValues('role_name') }
           }))
         } else {
           alert("Bug :: Role Id is not been provided !")
@@ -127,7 +127,7 @@ export default function StaffSettings() {
         let new_staff = await dispatch(createStaffRole({
           role: formForStaffRole.getValues('role_name'),
           is_teaching_role: formForStaffRole.getValues('role_type') === 'teaching',
-          school_id: authState.user!.schoolId
+          school_id: authState.user!.school_id
         }))
         if(new_staff.meta.requestStatus === 'rejected'){
           toast({
@@ -143,7 +143,7 @@ export default function StaffSettings() {
           handleCloseDialog()
         }
       }
-      getSchoolStaff(authState.user!.schoolId);
+      getSchoolStaff(authState.user!.school_id);
       handleCloseDialog()
     } catch (error) {
       toast({
@@ -162,7 +162,7 @@ export default function StaffSettings() {
         description: "The role has been removed from the list.",
       })
       setIsDialogForDeleteStaffOpen(false)
-      getSchoolStaff(authState.user!.schoolId);
+      getSchoolStaff(authState.user!.school_id);
       handleCloseDialog()
     } catch (error) {
       alert("Check error in console ! ")
@@ -176,7 +176,7 @@ export default function StaffSettings() {
 
   useEffect(() => {
     if (!StaffRoleState) {
-      getSchoolStaff(authState.user!.schoolId)
+      getSchoolStaff(authState.user!.school_id)
     }
   }, [])
 
@@ -213,7 +213,7 @@ export default function StaffSettings() {
                 {StaffRoleState.map((staff) => (
                   <TableRow key={staff.id}>
                     <TableCell className="font-medium">{staff.role}</TableCell>
-                    <TableCell>{staff.isTeachingRole ? "Teaching" : "Non-Teaching"}</TableCell>
+                    <TableCell>{staff.is_teaching_role ? "Teaching" : "Non-Teaching"}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="outline"

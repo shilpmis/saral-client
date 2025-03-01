@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit"
 import ApiService from "./ApiService"
 import { Class } from "@/types/class"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { AcademicClasses } from "@/types/academic"
+import { AcademicClasses, Division } from "@/types/academic"
 import { setAcademicClasses } from "@/redux/slices/academicSlice"
 
 
@@ -22,8 +22,8 @@ export const AcademicApi = createApi({
   }),
   endpoints: (builder) => ({
     getAcademicClasses: builder.query<AcademicClasses[], number>({
-      query: (schoolId) => ({
-        url: `/classes/${schoolId}`,
+      query: (school_id) => ({
+        url: `/classes/${school_id}`,
         method: "GET",
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -58,7 +58,7 @@ export const createClasses = createAsyncThunk<Class[], Omit<Class, 'id' | 'schoo
   },
 )
 
-export const createDivision = createAsyncThunk<Class[], Omit<Class, 'id' | 'school_id'>>(
+export const createDivision = createAsyncThunk<Class, Omit<Class, 'id' | 'school_id'>>(
   "academic/createDivision",
   async (paylaod, { rejectWithValue }) => {
     try {
@@ -85,9 +85,9 @@ export const editDivision = createAsyncThunk<Class[], {aliases : string | null ,
 // Get all classes for a school
 export const getClasses = createAsyncThunk<Class[], number>(
   "academic/getClasses",
-  async (schoolId, { rejectWithValue }) => {
+  async (school_id, { rejectWithValue }) => {
     try {
-      const response = await ApiService.get(`/classes/${schoolId}`)
+      const response = await ApiService.get(`/classes/${school_id}`)
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to fetch classes")
@@ -136,9 +136,9 @@ export const updateClass = createAsyncThunk<Class, Class>(
 // Get current academic year
 // export const getCurrentAcademicYear = createAsyncThunk<AcademicYear, number>(
 //   "academic/getCurrentAcademicYear",
-//   async (schoolId, { rejectWithValue }) => {
+//   async (school_id, { rejectWithValue }) => {
 //     try {
-//       const response = await ApiService.get(`/academic-year?school_id=${schoolId}`)
+//       const response = await ApiService.get(`/academic-year?school_id=${school_id}`)
 //       return response.data
 //     } catch (error: any) {
 //       return rejectWithValue(error.response?.data || "Failed to fetch current academic year")

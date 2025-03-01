@@ -1,3 +1,5 @@
+import { TeachingStaff } from "./staff";
+
 export enum UserStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
@@ -5,23 +7,24 @@ export enum UserStatus {
 }
 
 export interface User {
-  id: number
-  schoolId: number
-  roleId: number // this will be used to check the role of the user using roleId for the userRole
-  name: string
-  username: string
-  saralEmail: string
-  // password: string
-  // status: UserStatus
-  role: UserRole 
-  permissions: Permission[];
+  id: number;
+  school_id: number;
+  saral_email: string;
+  name: string;
+  role: UserRole;
+  role_id: number;
+  is_teacher: boolean;
+  is_active: boolean;
+  teacher_id: number | null;
+  permissions: string[];
+  teacher : TeachingStaff | null
 }
 
 export enum UserRole {
   ADMIN = "ADMIN",
   PRINCIPAL = "PRINCIPAL",
   HEAD_TEACHER = "HEAD_TEACHER",
-  CLERK = "CLERK", // Changed from CLERCK to CLERK for consistency
+  CLERK = "CLERK",
   IT_ADMIN = "IT_ADMIN",
   SCHOOL_TEACHER = "SCHOOL_TEACHER",
 }
@@ -37,6 +40,9 @@ export enum Permission {
   MANAGE_FEES = "MANAGE_FEES",
   VIEW_REPORTS = "VIEW_REPORTS",
   MANAGE_SETTINGS = "MANAGE_SETTINGS",
+  MANAGE_LEAVES = "MANAGE_LEAVES",
+  MARK_LEAVES = "MARK_LEAVES",
+  MARK_ATTENDANCE = "MARK_ATTENDANCE",
 }
 
 export const RolePermissions: Record<UserRole, Permission[]> = {
@@ -51,10 +57,14 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_FEES,
     Permission.VIEW_REPORTS,
     Permission.MANAGE_SETTINGS,
+    Permission.MANAGE_LEAVES,
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
+    Permission.MANAGE_STUDENTS,
     Permission.MANAGE_STAFF,
+    Permission.MANAGE_ATTENDANCE,
+    Permission.MANAGE_FEES,
     Permission.MANAGE_CLASSES,
     Permission.VIEW_REPORTS,
   ],
@@ -74,7 +84,10 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   ],
   [UserRole.SCHOOL_TEACHER]: [
     Permission.VIEW_DASHBOARD,
-    Permission.MANAGE_ATTENDANCE,
+    // Permission.MANAGE_ATTENDANCE,
+    // Permission.MANAGE_LEAVES,
+    Permission.MARK_LEAVES,
+    Permission.MARK_ATTENDANCE,
   ],
 };
 

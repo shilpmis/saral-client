@@ -7,7 +7,7 @@ type SaralUser = {
   lastlogin : string,
   role : string,
   saralemail : string,
-  schoolId : number
+  school_id : number
 }
 
 type SaralSchool = {

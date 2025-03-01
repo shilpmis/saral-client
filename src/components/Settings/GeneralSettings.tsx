@@ -15,10 +15,8 @@ import { selectCurrentUser } from '@/redux/slices/authSlice'
 import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
-// import { useToast } from "@/components/hooks/use-toast"
 import { toast } from '@/hooks/use-toast'
-
-
+// import { useToast } from "@/components/hooks/use-toast"
 
 
 interface TypeForUpdateSchoolData {
@@ -31,16 +29,16 @@ interface TypeForUpdateSchoolData {
 }
 
 const basicSchoolDataSchema = z.object({
-  schoolName: z.string().min(2, {
+  name: z.string().min(2, {
     message: "School name must be at least 2 characters.",
   }),
   username: z.string().min(3, {
     message: "School short-key must be at least 3 characters.",
   }).trim(),
-  establishedYear: z.string().regex(/^\d{4}$/, {
+  established_year: z.string().regex(/^\d{4}$/, {
     message: "Please enter a valid year (YYYY).",
   }),
-  schoolType: z.string({
+  school_type: z.string({
     required_error: "Please select a school type.",
   }),
 })
@@ -80,15 +78,15 @@ export default function GeneralSettings() {
    * Need to think and fix this 
   */
 
-  const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.schoolId);
+  const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.school_id);
 
   const basicSchoolDataForm = useForm<z.infer<typeof basicSchoolDataSchema>>({
     resolver: zodResolver(basicSchoolDataSchema),
     defaultValues: {
-      schoolName: "",
+      name: "",
       username: "",
-      establishedYear: "",
-      schoolType: " ",
+      established_year: "",
+      school_type: " ",
     },
   })
 
@@ -114,11 +112,11 @@ export default function GeneralSettings() {
     // Simulate API call
     let payload: TypeForUpdateSchoolData = {}
 
-    if (data?.name !== values.schoolName.trim()) payload.name = values.schoolName.trim()
-    if (data?.schoolType !== values.schoolType.trim()) payload.school_type = values.schoolType.trim()
-    if (data?.establishedYear !== values.establishedYear.trim()) payload.established_year = values.establishedYear.trim()
+    if (data?.name !== values.name.trim()) payload.name = values.name.trim()
+    if (data?.school_type !== values.school_type.trim()) payload.school_type = values.school_type.trim()
+    if (data?.established_year !== values.established_year.trim()) payload.established_year = values.established_year.trim()
 
-    const updated_school = await dispatch(updateSchoolDetails({ id: user!.schoolId, schoolData: payload })); 
+    const updated_school = await dispatch(updateSchoolDetails({ id: user!.school_id, schoolData: payload })); 
     if(updated_school?.meta.requestStatus === "rejected"){
       toast({
         variant: "destructive",
@@ -141,9 +139,9 @@ export default function GeneralSettings() {
     let payload: TypeForUpdateSchoolData = {}
 
     if (data?.address !== values.address.trim()) payload.address = values.address.trim();
-    if (data?.contactNumber != parseInt(values.phone.trim())) payload.contact_number = parseInt(values.phone.trim());
+    if (data?.contact_number != parseInt(values.phone.trim())) payload.contact_number = parseInt(values.phone.trim());
 
-    const updated_school = await dispatch(updateSchoolDetails({ id: user!.schoolId, schoolData: payload }));
+    const updated_school = await dispatch(updateSchoolDetails({ id: user!.school_id, schoolData: payload }));
     setLoading(prev => ({ ...prev, contactInformation: false }))
 
   }
@@ -169,16 +167,16 @@ export default function GeneralSettings() {
 
 
   /**
-   * FIXME :: Fix this use regarding schoolType , 
-   * while fetching data from server , it is not setting the value of schoolType
+   * FIXME :: Fix this use regarding school_type , 
+   * while fetching data from server , it is not setting the value of school_type
    * 
    */
   useEffect(() => {
     basicSchoolDataForm.reset({
-      schoolName: data?.name,
+      name: data?.name,
       username: data?.username,
-      establishedYear: data?.establishedYear,
-      schoolType: data?.schoolType == "Private" ? "Private" : data?.schoolType == "Public" ? "Public" : "Charter"
+      established_year: data?.established_year,
+      school_type: data?.school_type == "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter"
     })
   }, [data])
 
@@ -186,9 +184,11 @@ export default function GeneralSettings() {
     contactInformationForm.reset({
       email: data?.email,
       address: data?.address,
-      phone: (data?.contactNumber)?.toString()
+      phone: (data?.contact_number)?.toString()
     })
   }, [data])
+
+  console.log("Check data " ,data)
 
   return (
     <>
@@ -215,7 +215,7 @@ export default function GeneralSettings() {
               <CardContent className="space-y-4">
                 <FormField
                   control={basicSchoolDataForm.control}
-                  name="schoolName"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>School Name</FormLabel>
@@ -243,7 +243,7 @@ export default function GeneralSettings() {
 
                 <FormField
                   control={basicSchoolDataForm.control}
-                  name="establishedYear"
+                  name="established_year"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Established Year</FormLabel>
@@ -257,7 +257,7 @@ export default function GeneralSettings() {
 
                 <FormField
                   control={basicSchoolDataForm.control}
-                  name="schoolType"
+                  name="school_type"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>School Type</FormLabel>

@@ -6,22 +6,26 @@ interface LoginCredentials {
 
 interface LoginResponse {
   user: {
-    id: number,
-    schoolId: number,
-    roleId: number,
-    name: string,
-    username: string,
-    saralEmail: string,
+id: string;
+  username : string;
+  school_id: number;
+  saral_email: string;
+  name: string;
+  role_id: number;
+  is_teacher: boolean;
+  is_active: boolean;
+  teacher_id: number | null;
+  permissions: string[];
     school: {
       id: number,
       name: string,
       email: string,
       username: string,
-      contactNumber: number,
-      subscriptionType: string,
+      contact_number: number,
+      subscription_type: string,
       status: string,
-      establishedYear: string,
-      schoolType: string,
+      established_year: string,
+      school_type: string,
       address: string
     }
   },
