@@ -1,6 +1,7 @@
+import baseUrl from '@/utils/base-urls';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const BASE_URL = "http://localhost:3333/api/v1/";
+const BASE_URL = `${baseUrl.serverUrl}api/v1/`;
 
 class ApiService {
     static axiosInstance: any;

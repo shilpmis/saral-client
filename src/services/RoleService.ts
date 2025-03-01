@@ -1,3 +1,4 @@
+// import { baseUrl } from '@/utils/base-urls';
 // import { createAsyncThunk } from "@reduxjs/toolkit";
 // import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 // import { StaffRole } from "@/types/staff";
@@ -6,7 +7,7 @@
 // export const StaffApi = createApi({
 //     reducerPath: "staffApi",
 //     baseQuery: fetchBaseQuery({
-//         baseUrl: "http://localhost:3333/api/v1/",
+//         baseUrl: `${baseUrl.serverUrl}api/v1/`,
 //         prepareHeaders: (headers, { getState }) => {
 //             headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
 //             return headers

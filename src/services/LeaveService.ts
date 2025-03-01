@@ -5,6 +5,7 @@ import type { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff, L
 import { url } from "inspector"
 import { PageMeta } from "@/types/global"
 import { setLeavePolicy } from "@/redux/slices/leaveSlice"
+import baseUrl from "@/utils/base-urls"
 
 // Types for request payloads and responses
 interface CreateLeaveRequestPayload {
@@ -31,7 +32,7 @@ interface ApiErrorResponse {
 export const LeaveApi = createApi({
   reducerPath: "leaveApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
       return headers
