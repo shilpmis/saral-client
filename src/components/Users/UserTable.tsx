@@ -15,7 +15,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, searchTerm, statusF
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.saral_email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter ? true : true
     return matchesSearch && matchesStatus
@@ -26,10 +26,10 @@ export const UserTable: React.FC<UserTableProps> = ({ users, searchTerm, statusF
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Username</TableHead>
+          {/* <TableHead>Username</TableHead> */}
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
-          {/* <TableHead>Status</TableHead> */}
+          <TableHead>Status</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -37,7 +37,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, searchTerm, statusF
         {filteredUsers.map((user) => (
           <TableRow key={user.id}>
             <TableCell>{user.name}</TableCell>
-            <TableCell>{user.username}</TableCell>
+            {/* <TableCell>{user.username}</TableCell> */}
             <TableCell>{user.saral_email}</TableCell>
             <TableCell>{user.role_id}</TableCell>
             {/* <TableCell>{user.status}</TableCell> */}

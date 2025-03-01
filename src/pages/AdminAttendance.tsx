@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,8 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const AdminAttendanceView: React.FC = () => {
@@ -69,18 +65,14 @@ const AdminAttendanceView: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center">
-        <div className="flex flex-wrap">
-        <SaralDatePicker 
-            date={date}
-            setDate={setDate}
-              />
-          {/* <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border p-1 rounded"
-          /> */}
-
+          <div className="flex flex-wrap">
+            <SaralDatePicker
+              date={date}
+              onDateChange={(date) => {
+                setDate(date)
+                setCurrentPage(1)
+              }}
+            />
           </div>
           <Select
             value={selectedGrade || ""}
@@ -137,18 +129,18 @@ const AdminAttendanceView: React.FC = () => {
           <TableBody>
             {paginatedAttendance.length == 0 ? (
               <TableRow>
-              <TableCell className="text-center text-gray-500" colSpan={4}>No Records Found</TableCell>
+                <TableCell className="text-center text-gray-500" colSpan={4}>No Records Found</TableCell>
               </TableRow>
             ) : (
-            paginatedAttendance.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.className}</TableCell>
-                <TableCell>{student.status}</TableCell>
-              </TableRow>
-            ))
-          )}
+              paginatedAttendance.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell>{student.rollNumber}</TableCell>
+                  <TableCell>{student.name}</TableCell>
+                  <TableCell>{student.className}</TableCell>
+                  <TableCell>{student.status}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         <div className="mt-4">
