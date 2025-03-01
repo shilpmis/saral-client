@@ -1,11 +1,8 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -21,6 +18,7 @@ import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveAp
 
 
 const AdminLeaveManagement: React.FC = () => {
+
 
   const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
   const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
@@ -44,9 +42,6 @@ const AdminLeaveManagement: React.FC = () => {
     // staff_type: "teacher" | "other",
   }>()
 
-  // const [currentPage, setCurrentPage] = useState(1)
-  // const [totalRequests, setTotalRequests] = useState(0)
-  // const [searchTerm, setSearchTerm] = useState("")
   const [actionReason, setActionReason] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -92,8 +87,8 @@ const AdminLeaveManagement: React.FC = () => {
           description: `The leave request has been ${newStatus}.`,
         })
       }
-      if(status.error){
-        console.log("Check this" ,status)
+      if (status.error) {
+        console.log("Check this", status)
       }
     }
     if (staff_type === 'other') {
@@ -101,8 +96,8 @@ const AdminLeaveManagement: React.FC = () => {
         application_id: requestId,
         status: newStatus,
       })
-      if(status.error){
-        console.log("Check this" ,status , {
+      if (status.error) {
+        console.log("Check this", status, {
           application_id: requestId,
           status: newStatus,
         })
@@ -261,7 +256,4 @@ const AdminLeaveManagement: React.FC = () => {
     </div>
   )
 }
-
-
-
-export default AdminLeaveManagement
+export default AdminLeaveManagement;

@@ -10,10 +10,11 @@ import type { Division } from "@/types/academic"
 
 interface StudentTableProps {
   filteredStudents: Student[]
-  onEdit: (student_id: number , ) => void
+  onEdit: (student_id: number) => void
   onDelete?: (studentId: string) => void
   selectedClass: string
   selectedDivision: Division | null
+  onPageChange: (page: number) => Promise<void>
   PageDetailsForStudents: PageDetailsForStudents | null
 }
 
@@ -22,6 +23,7 @@ export default function StudentTable({
   onEdit,
   onDelete,
   PageDetailsForStudents,
+  onPageChange
 }: StudentTableProps)
  {
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -37,12 +39,16 @@ export default function StudentTable({
     return filteredStudents.slice(startIndex, startIndex + perPageData)
   }
 
-  const onPageChange = (updatedPage: number) => {
-    setCurrentPage(updatedPage)
+  const handlePageChange = async (page: number) => {
+    await onPageChange(page)
   }
 
   const handleEdit = (student: Student) => {
     onEdit(student.id)
+  }
+
+  if (!PageDetailsForStudents) {
+    return <div className="text-center py-4 text-gray-500">Loading...</div>
   }
 
   const handleDelete = (studentId: string) => {
@@ -101,8 +107,8 @@ export default function StudentTable({
       )}
       <div className="w-full flex text-right p-1 mt-3">
         <SaralPagination
-          currentPage={PageDetailsForStudents!.current_page}
-          onPageChange={onPageChange}
+          currentPage={PageDetailsForStudents.current_page}
+          onPageChange={handlePageChange}
           totalPages={PageDetailsForStudents!.last_page}
         />
       </div>
@@ -110,3 +116,79 @@ export default function StudentTable({
   )
 }
 
+// "use client"
+// import { Button } from "@/components/ui/button"
+// import { Edit } from "lucide-react"
+// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+// import { SaralPagination } from "../ui/common/SaralPagination"
+// import type { PageDetailsForStudents, Student } from "@/types/student"
+// import type { Division } from "@/types/academic"
+
+
+// export default function StudentTable({
+//   filteredStudents,
+//   onEdit,
+//   onDelete,
+//   PageDetailsForStudents,
+//   onPageChange,
+// }: StudentTableProps) {
+//   const handleEdit = (student: Student) => {
+//     onEdit(student.id)
+//   }
+
+//   const handlePageChange = async (updatedPage: number) => {
+//     await onPageChange(updatedPage)
+//   }
+
+  
+
+//   return (
+//     <div className="p-1">
+//       {filteredStudents.length === 0 ? (
+//         <div className="text-center py-4 text-gray-500">No records found</div>
+//       ) : (
+//         <Table>
+//           <TableHeader>
+//             <TableRow>
+//               <TableHead>GR No</TableHead>
+//               <TableHead>Name</TableHead>
+//               <TableHead>Roll No</TableHead>
+//               <TableHead>Gender</TableHead>
+//               <TableHead>Guardian</TableHead>
+//               <TableHead>Contact Number</TableHead>
+//               <TableHead>Aadhar No</TableHead>
+//               <TableHead>Actions</TableHead>
+//             </TableRow>
+//           </TableHeader>
+//           <TableBody>
+//             {filteredStudents.map((student) => (
+//               <TableRow key={student.id}>
+//                 <TableCell>{student.gr_no}</TableCell>
+//                 <TableCell>
+//                   {student.first_name} {student.middle_name} {student.last_name}
+//                 </TableCell>
+//                 <TableCell>{student.roll_number}</TableCell>
+//                 <TableCell>{student.gender}</TableCell>
+//                 <TableCell>{student.father_name}</TableCell>
+//                 <TableCell>{student.primary_mobile}</TableCell>
+//                 <TableCell>{student.aadhar_no}</TableCell>
+//                 <TableCell>
+//                   <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(student)}>
+//                     <Edit className="h-4 w-4 mr-1" /> Edit
+//                   </Button>
+//                 </TableCell>
+//               </TableRow>
+//             ))}
+//           </TableBody>
+//         </Table>
+//       )}
+//       <div className="w-full flex text-right p-1 mt-3">
+//         <SaralPagination
+//           currentPage={PageDetailsForStudents.current_page}
+//           onPageChange={handlePageChange}
+//           totalPages={PageDetailsForStudents.last_page}
+//         />
+//       </div>
+//     </div>
+//   )
+// }

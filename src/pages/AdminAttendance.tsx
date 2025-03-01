@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,12 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { mockAttendanceRecords, mockClasses } from "@/mock/attendanceData"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 
 const AdminAttendanceView: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+
+  const [date, setDate] = useState<Date>()
+
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -41,7 +39,7 @@ const AdminAttendanceView: React.FC = () => {
       .map((student) => {
         const record = mockAttendanceRecords.find(
           (r) =>
-            r.studentId === student.id && r.date === selectedDate?.toISOString().split('T')[0] && filteredClasses.some((c) => c.id === r.classId),
+            r.studentId === student.id && filteredClasses.some((c) => c.id === r.classId),
         )
         return {
           ...student,
@@ -53,7 +51,7 @@ const AdminAttendanceView: React.FC = () => {
         if (filter === "all") return true
         return filter === student.status
       })
-  }, [filteredClasses, selectedDate, filter])
+  }, [filteredClasses, date, filter])
 
   const paginatedAttendance = filteredAttendance.slice(
     (currentPage - 1) * studentsPerPage,
@@ -63,22 +61,18 @@ const AdminAttendanceView: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Attendance Overview</CardTitle>
+        <CardTitle>Admin Attendance Overview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center gap-4">
-      <Label htmlFor="search" className="sr-only">
-        Search
-      </Label>
-        <div className="flex flex-wrap gap-4 mb-4">
-        <SaralDatePicker
-          date={selectedDate}
-          onDateChange={(date) => {
-            if (date) {
-              setSelectedDate(date)
-            }
-          }}
-        />
+        <div className="mb-4 mt-4 flex flex-row sm:flex-row justify-between items-center">
+          <div className="flex flex-wrap">
+            <SaralDatePicker
+              date={date}
+              onDateChange={(date) => {
+                setDate(date)
+                setCurrentPage(1)
+              }}
+            />
           </div>
           <Select
             value={selectedGrade || ""}
@@ -135,18 +129,18 @@ const AdminAttendanceView: React.FC = () => {
           <TableBody>
             {paginatedAttendance.length == 0 ? (
               <TableRow>
-              <TableCell className="text-center text-gray-500" colSpan={4}>No Records Found</TableCell>
+                <TableCell className="text-center text-gray-500" colSpan={4}>No Records Found</TableCell>
               </TableRow>
             ) : (
-            paginatedAttendance.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.className}</TableCell>
-                <TableCell>{student.status}</TableCell>
-              </TableRow>
-            ))
-          )}
+              paginatedAttendance.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell>{student.rollNumber}</TableCell>
+                  <TableCell>{student.name}</TableCell>
+                  <TableCell>{student.className}</TableCell>
+                  <TableCell>{student.status}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         <div className="mt-4">

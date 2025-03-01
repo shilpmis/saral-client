@@ -58,21 +58,11 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                                     {/* </Badge> */}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onEditUser(user)}>
-                                        <span className="sr-only">Edit</span>
-                                        <MoreHorizontal className="h-4 w-4" />
+                                    <Button variant="outline" onClick={() => onEditUser(user)}>
+                                        {/* <span className=""> */}
+                                        Edit
+                                        {/* </span> */}
                                     </Button>
-                                    {/* <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => onEditUser(user)}>Edit</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu> */}
                                 </TableCell>
                             </TableRow>
                         )
