@@ -12,14 +12,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileDown, Upload, Plus } from "lucide-react"
 import type { User } from "@/types/user"
 import ManagementUserTable from "@/components/Users/ManagementUserTable"
-import TeacherTable from "@/components/Users/TeacherTable"
+import TeacherAsUserTable from "@/components/Users/TeacherAsUserTable"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { toast } from "@/hooks/use-toast"
-import { useLazyFetchManagementUsersQuery } from "@/services/UserManagementService"
+import { useLazyFetchManagementUsersQuery, useLazyFetchUserAsTeacherQuery } from "@/services/UserManagementService"
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { PageMeta } from "@/types/global"
 import { UserForm } from "@/components/Users/UserForm"
+import StaffTable from "@/components/Staff/StaffTable"
 
 // Predefined management roles
 const managementRoles = [
@@ -44,6 +45,8 @@ export const UserManagement: React.FC = () => {
 
   const [fetchUsers, { isLoading, isError }] = useLazyFetchManagementUsersQuery();
 
+  const [fetchTeacherAsUser, { isLoading: loadingForFetchTeacherAsUser }] = useLazyFetchUserAsTeacherQuery()
+
   const [activeTab, setActiveTab] = useState("management")
   const [isDialogForManagmentUserOpen, setIsDialogForManagmentUserOpen]
     = useState<{ isOpen: boolean, type: "create" | "edit", user: User | null }>({
@@ -56,7 +59,7 @@ export const UserManagement: React.FC = () => {
   const [currentDisplayedManagementUser, setCurrentDisplayedManagementUser]
     = useState<{ users: User[], page_meta: PageMeta } | null>(null)
 
-  const [currentDisplayedStaffUser, setCurrentDisplayedStaffUser]
+  const [currentDisplayedOnBoardTeachera, setCurrentDisplayedOnBoardTeachera]
     = useState<{ users: User[], page_meta: PageMeta } | null>(null)
 
 
@@ -108,8 +111,8 @@ export const UserManagement: React.FC = () => {
       }
     } else {
       try {
-        const response = await fetchUsers({ type: 'staff', school_id: users!.school_id, page });
-        setCurrentDisplayedStaffUser({
+        const response = await fetchTeacherAsUser({ page: 1 });
+        setCurrentDisplayedOnBoardTeachera({
           users: response.data!.data,
           page_meta: response.data!.meta
         });
@@ -123,8 +126,34 @@ export const UserManagement: React.FC = () => {
     fetchDataForActiveTab(activeTab as 'management' | 'staff', page);
   }
 
+  function onSucssesfullChange(user: User | null) {
+    if (isDialogForManagmentUserOpen.type === 'create') {
+      let new_displayedManagementUser = currentDisplayedManagementUser;
+      if (new_displayedManagementUser) {
+        new_displayedManagementUser.users.unshift(user!);
+        setCurrentDisplayedManagementUser(new_displayedManagementUser);
+      }
+    } else {
+      let new_displayedManagementUser = currentDisplayedManagementUser;
+      if (new_displayedManagementUser) {
+        new_displayedManagementUser.users = new_displayedManagementUser.users.map((u) => {
+          if (u.id === user!.id) {
+            return user!;
+          }
+          return u;
+        });
+        setCurrentDisplayedManagementUser(new_displayedManagementUser);
+      }
+      setIsDialogForManagmentUserOpen({
+        isOpen: false,
+        type: "create",
+        user: null
+      })
+    }
+  }
+
   useEffect(() => {
-    if (!currentDisplayedManagementUser || !currentDisplayedStaffUser) {
+    if (!currentDisplayedManagementUser || !currentDisplayedOnBoardTeachera) {
       fetchDataForActiveTab(activeTab as 'management' | 'staff', 1);
     }
   }, [activeTab]);
@@ -139,14 +168,14 @@ export const UserManagement: React.FC = () => {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">User Management</h2>
-          <div className="space-x-2">
+          {/* <div className="space-x-2">
             <Button variant="outline">
               <Upload className="mr-2 h-4 w-4" /> Import
             </Button>
             <Button variant="outline">
               <FileDown className="mr-2 h-4 w-4" /> Export
             </Button>
-          </div>
+          </div> */}
         </div>
       </CardHeader>
       <CardContent>
@@ -157,7 +186,7 @@ export const UserManagement: React.FC = () => {
           </TabsList>
           <TabsContent value="management">
             {currentDisplayedManagementUser && <>
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between flex-row-reverse items-center m-4">
                 <Button onClick={handleAddUser}>
                   <Plus className="mr-2 h-4 w-4" /> Add User
                 </Button>
@@ -177,11 +206,9 @@ export const UserManagement: React.FC = () => {
           </TabsContent>
           <TabsContent value="staff">
             <div className="overflow-x-auto">
-              <TeacherTable
-                staff={staff}
-                onConfigureStaff={handleConfigureStaff}
-                onToggleStatus={handleToggleStaffStatus}
-              />
+              {currentDisplayedOnBoardTeachera && (<TeacherAsUserTable
+                initailData={{users : currentDisplayedOnBoardTeachera.users , page : currentDisplayedOnBoardTeachera.page_meta }}
+              />)}
             </div>
           </TabsContent>
         </Tabs>
@@ -200,7 +227,7 @@ export const UserManagement: React.FC = () => {
             initialData={isDialogForManagmentUserOpen.user}
             roles={managementRoles}
             isEditing={isDialogForManagmentUserOpen.type === 'edit'}
-            onCloseDialogBox={handleCloseDialogBox}
+            onSucssesfullChange={onSucssesfullChange}
           />
         </DialogContent>
       </Dialog>
