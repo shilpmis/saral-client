@@ -224,7 +224,7 @@ export const Students: React.FC = () => {
     },
     [setCurrentPage, selectedDivision, getStudentForClass],
   ) 
-
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   return (
     <>
@@ -236,7 +236,7 @@ export const Students: React.FC = () => {
               <Plus className="mr-2 h-4 w-4" /> Add New Student
             </Button>
 
-            <DropdownMenu>
+            <DropdownMenu  open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <MoreHorizontal className="h-4 w-4" />
@@ -248,6 +248,14 @@ export const Students: React.FC = () => {
                 <DropdownMenuItem>
                   <FileDown className="mr-2 h-4 w-4" /> Download Excel
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setDialogOpenForBulkUpload(true);
+                  setDropdownOpen(false)
+                  }}>
+                   <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                </DropdownMenuItem>
+             </DropdownMenuContent>
+            </DropdownMenu>
                 <Dialog
                   open={dialogOpenForBulkUpload}
                   onOpenChange={(open) => {
@@ -255,14 +263,11 @@ export const Students: React.FC = () => {
                       setFileName(null)
                       setSelectedFile(null)
                       setUploadError(null)
+                      setDialogOpenForBulkUpload(false)
                     }
                   }}
+                  
                 >
-                  <DialogTrigger asChild>
-                    <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
-                      <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                    </Button>
-                  </DialogTrigger>
                   <DialogContent>
                     <DialogTitle>Upload Excel File</DialogTitle>
                     <div className="flex justify-between mt-4">
@@ -301,8 +306,6 @@ export const Students: React.FC = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
