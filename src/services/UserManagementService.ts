@@ -1,10 +1,6 @@
 import { User } from "@/types/user"
-import ApiService from "./ApiService"
-import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { setUsers } from "@/redux/slices/userManagementSlice";
 import { PageMeta } from "@/types/global";
-import { Teacher } from "@/types/attendance";
 import { TeachingStaff } from "@/types/staff";
 import baseUrl from "@/utils/base-urls";
 
@@ -32,33 +28,33 @@ export const UserManagementApi = createApi({
         body: user
       })
     }),
-    updateUser: builder.mutation<User, { payload: Partial<Pick<User, 'name' | 'role_id'>>, user_id: number }>({
+    updateUser: builder.mutation<User, { payload: Partial<{ name : string , is_active : boolean }>, user_id: number }>({
       query: ({ user_id, payload }) => ({
         url: `user/${user_id}`,
         method: "PUT",
         body: payload
       })
     }),
-    fetchUserAsTeacher: builder.query<{data : User[]  , meta : PageMeta}, { page: number, school_id ?: number }>({
+    fetchUserAsTeacher: builder.query<{ data: User[], meta: PageMeta }, { page: number, school_id?: number }>({
       query: ({ page = 1 }) => ({
         url: `users?type=teacher&page=${page}`,
         method: "GET"
       })
     }),
-    fetchTecherAsNotUser: builder.query<TeachingStaff, { page: number, school_id: number }>({
+    fetchNonOnBoardedTeacher: builder.query<TeachingStaff[], { page: number, school_id: number }>({
       query: ({ page, school_id }) => ({
         url: `teachers/non-activeuser/${school_id}`,
         method: "GET"
       })
     }),
-    onBoardTeacherAsUser: builder.mutation<User, Partial<User>>({
-      query: (payload) => ({
+    onBoardTeacherAsUser: builder.mutation<User, { payload: { class_id: number, teacher_id: number, is_active: boolean } }>({
+      query: ({payload}) => ({
         url: `user/onboard/teacher`,
         method: "POST",
         body: payload
       })
     }),
-    updateOnBoardTeacherAsUser: builder.mutation<User, { user_id: number, payload: Partial<User> }>({
+    updateOnBoardTeacherAsUser: builder.mutation<User, { user_id: number, payload: { class_id: number, is_active: boolean } }>({
       query: ({ user_id, payload }) => ({
         url: `user/onboard/teacher/${user_id}`,
         method: "PUT",
@@ -69,13 +65,18 @@ export const UserManagementApi = createApi({
   })
 })
 
-export const { 
-  useLazyFetchManagementUsersQuery, 
+export const {
+  useLazyFetchManagementUsersQuery,
   useAddUserMutation,
-  useUpdateUserMutation ,
+  useUpdateUserMutation,
 
-  useLazyFetchUserAsTeacherQuery
-  
-  } = UserManagementApi
+  useUpdateOnBoardTeacherAsUserMutation,
+  useOnBoardTeacherAsUserMutation,
+
+  useLazyFetchUserAsTeacherQuery,
+  useLazyFetchNonOnBoardedTeacherQuery
+
+
+} = UserManagementApi
 
 
