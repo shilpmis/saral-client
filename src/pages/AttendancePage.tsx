@@ -3,6 +3,10 @@ import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import TeacherClassSelection from "@/components/Attendance/TeacherClassSelection"
 import StudentAttendanceView from "@/components/Attendance/StudentAttendanceView"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
+import { Division } from "@/types/academic"
 
 
 /**
@@ -48,6 +52,13 @@ const mockStudents = {
 }
 
 const Attendance: React.FC = () => {
+
+  const user = useAppSelector((state) => state.auth.user)
+  const allAcademicClasses = useAppSelector(selectAllAcademicClasses)
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+
+
+  const [allocatedClasses, setAllocatedClasses] = useState<Division[] | null>(null)
   const [selectedClass, setSelectedClass] = useState<string | null>(null)
   const params = useParams<{ classId: string }>()
 
@@ -57,21 +68,41 @@ const Attendance: React.FC = () => {
     }
   }, [params.classId])
 
-  if (!selectedClass) {
-    return <TeacherClassSelection classes={mockClasses} />
+  useEffect(() => {
+    if (!allAcademicClasses) {
+      getAcademicClasses(user!.school_id)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (allAcademicClasses) {
+      if (user?.teacher?.class_id) {
+        let allocatedClass = allAcademicClasses.filter((cls) => cls.id === user?.teacher?.class_id)
+        setAllocatedClasses(allocatedClass)
+      } else {
+        setAllocatedClasses([]);
+      }
+    }
+  }, [allAcademicClasses])
+
+  if (!allocatedClasses) {
+    return <div>Loading...</div>
+  }
+
+  if (!selectedClass && allocatedClasses) {
+    return <TeacherClassSelection classes={allocatedClasses} />
   }
 
   const selectedClassName = mockClasses.find((cls) => cls.id === selectedClass)?.name || ""
   const studentsForClass = mockStudents[selectedClass as keyof typeof mockStudents] || []
 
-  return (
-    <StudentAttendanceView
-      classId={selectedClass}
-      className={selectedClassName}
-      students={studentsForClass}
-      initialAttendanceRecords={[]}
-    />
-  )
+  if (selectedClass) {
+    return (
+      <StudentAttendanceView
+        classId={selectedClass}
+      />
+    )
+  }
 }
 
 export default Attendance
