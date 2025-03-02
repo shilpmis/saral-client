@@ -16,6 +16,7 @@ export interface Division {
   class: string; // Ensure this matches the type used in your API response
   division: string;
   aliases: string | null;
+  is_assigned : boolean
 }
 
 export interface AcademicClasses {
