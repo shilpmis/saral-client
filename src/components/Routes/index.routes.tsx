@@ -24,7 +24,6 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
 import { useVerifyQuery } from "@/services/AuthService";
-import LeaveManagement from "@/pages/LeaveDashboardForTeachers";
 import AdminLeaveManagement from "@/pages/AdminLeaveManagement";
 import DashboardPage from "@/pages/Dashboard";
 import AdminAttendanceView from "../../pages/AdminAttendance";
@@ -34,7 +33,9 @@ import { LeaveManagementSettings } from "../Settings/LeaveManagementSettings";
 import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
-
+import { Toaster } from "@/components/ui/toaster";
+import { AdmissionDashboard } from "../Admission/AdmissionDashboard";
+import { AdmissionModule } from "@/pages/AdmissionPage";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -44,6 +45,8 @@ export default function RootRoute() {
    */
   const { data, error, isLoading, isFetching, isSuccess, isError } =
     useVerifyQuery();
+
+  console.log("I am route")
 
   return (
     <SearchProvider>
@@ -188,6 +191,17 @@ export default function RootRoute() {
               }
             />
 
+            <Route
+              path="admissions"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN , UserRole.CLERK]}
+                >
+                  <AdmissionModule />
+                </PrivateRoute>
+              }
+            />
+
             {/* Settings - nested routes */}
             <Route path="settings"
               element={
@@ -223,6 +237,7 @@ export default function RootRoute() {
           <Route path="*" element={<NotFound />}></Route>
         </Routes>
       </Router>
+      <Toaster />
     </SearchProvider>
   );
 }

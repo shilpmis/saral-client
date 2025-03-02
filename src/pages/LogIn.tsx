@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogIn } from 'lucide-react'
+import { Loader2, LogIn } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { useAppSelector } from '@/redux/hooks/useAppSelector'
 import { selectVerificationStatus, setCredentials, setCredentialsForVerificationStatus } from '@/redux/slices/authSlice'
@@ -56,41 +56,42 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      let user = await dispatch(login(values));
-      if (user.meta.requestStatus === 'rejected') {
-        
-        /**
-         * FIX : Toast is not visible
-         */
-        toast({
-          variant: 'destructive',
-          title: `Your Email or password must be wrong ! Please try again !`,
-        })
-      } else {
-        dispatch(setCredentialsForVerificationStatus({
-          isVerificationInProgress: false,
-          isVerificationFails: false,
-          verificationError: null,
-          isVerificationSuccess: true
-        }))
-        window.location.reload();
-      }
+      let user = await dispatch(login(values)).unwrap(); // ✅ Ensure we get resolved/rejected values properly
+      
+      dispatch(setCredentialsForVerificationStatus({
+        isVerificationInProgress: false,
+        isVerificationFails: false,
+        verificationError: null,
+        isVerificationSuccess: true
+      }));
+  
+      toast({
+        title: "Login successful!",
+        description: "Welcome back!",
+      });
+  
+      setTimeout(() => {
+        window.location.reload(); // ✅ Delay reload to ensure toast appears
+      }, 500);
+      
     } catch (error) {
-      console.error("Login failed:", error)
+      console.error("Login failed:", error);
+  
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Your Email or password must be wrong! Please try again.",
+      });
     }
   }
+  
 
   useEffect(() => {
-
     const isRootOrLogin = pathname === '/' || pathname === '/login';
-
     if (isAuthenticated && isRootOrLogin) {
       navigate('/d/');
     }
   }, [isAuthenticated]);
-
-  console.log("I am Login Page")
-
 
   return (
     <>
@@ -136,7 +137,7 @@ export default function Login() {
                   />
                   <Button type="submit" className="w-full" disabled={authStatus === "loading"}>
                     <LogIn className="mr-2 h-4 w-4" />
-                    {authStatus === "loading" ? "Logging in..." : "Log In"}
+                    {authStatus === "loading" ? <Loader2 className="animate-spin" /> : "Log In"}
                   </Button>
                   {authError && <p className="text-red-500 text-sm">{authError}</p>}
                 </form>

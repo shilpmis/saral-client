@@ -14,7 +14,6 @@ import { toast } from "@/hooks/use-toast"
 const userSchema = z.object({
   name: z.string().min(2, "Name is required"),
   role_id: z.string().min(1, "Role is required"),
-  // is_active: z.boolean().optional(),
   is_active: z.boolean().optional(),
 })
 
@@ -36,20 +35,27 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
   const [createUser, { isError, isLoading }] = useAddUserMutation();
   const [updateUser, { }] = useUpdateUserMutation()
 
+  const checkIsActive = (value: any): boolean => {
+    return value == 1
+  }
+
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: initialData?.name || "",
       role_id: initialData?.role_id ? initialData.role_id.toString() : "",
-      is_active: initialData?.is_active ?? false,
+      is_active: checkIsActive(initialData?.is_active),
     },
   })
 
   const handleSubmit = async (data: z.infer<typeof userSchema>) => {
 
     if (isEditing) {
-      if (initialData?.name.trim() != data.name) {
-        const updated_user = await updateUser({ payload: { name: data.name }, user_id: initialData!.id });
+      if (initialData?.name.trim() != data.name || checkIsActive(initialData?.is_active) != data.is_active) {
+        let payload: Partial<{ name: string, is_active: boolean }> = {}
+        if (initialData?.name.trim() != data.name) payload.name = data.name
+        if (checkIsActive(initialData?.is_active) != data.is_active) payload.is_active = data.is_active
+        const updated_user = await updateUser({ payload, user_id: initialData!.id });
         if (updated_user.data) {
           onSucssesfullChange(updated_user.data)
           toast({
@@ -72,11 +78,20 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
         })
       }
     } else {
-      const new_user = await createUser({
+      const new_user: any = await createUser({
         name: data.name,
         role_id: Number(data.role_id),
       })
       if (new_user.data) onSucssesfullChange(new_user.data)
+      if (new_user.error) {
+        console.log("Error creating user", new_user.error)
+        if (new_user.error.data.message.code == 'ER_DUP_ENTRY') {
+          toast({
+            variant: "destructive",
+            title: `User for this role already crated !`,
+          })
+        }
+      }
     }
   }
 
@@ -122,7 +137,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
             )}
           />
         )}
-        {isEditing && (
+        {initialData?.role_id !== 1 && isEditing && (
           <FormField
             control={form.control}
             name="is_active"

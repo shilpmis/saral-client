@@ -74,8 +74,6 @@ const LeaveDashboardForTeachers: React.FC = () => {
         type: "edit",
         isOpen: true,
       })
-
-
     }
   }
 
@@ -96,15 +94,33 @@ const LeaveDashboardForTeachers: React.FC = () => {
     })
   }
 
+  const onSucessesfullApplication = (application: LeaveApplicationForTeachingStaff) => {
+
+    if (DialogForLeaveApplication.type === "create" && authState.user?.teacher_id) {
+      getTeacherLeaveApplcation({ page: 1, status: 'pending', teacher_id: authState.user.teacher_id })
+    } else {
+      setLeaveApplications({
+        applications: leaveApplications!.applications.map((app) => {
+          if (app.id === application.id) {
+            return application
+          }
+          return app
+        }),
+        page: leaveApplications!.page,
+      })
+    }
+    handleCloseDialog();
+  }
+
   const handleStatusFilterChange = (value: "pending" | "approved" | "rejected" | "cancelled") => {
     setStatusFilter(value)
     if (authState.user?.teacher_id) {
       getTeacherLeaveApplcation({ page: 1, status: value, teacher_id: authState.user.teacher_id })
     }
   }
-  
-  const handlePageChange = (page : number) =>{
-    if(authState.user!.teacher_id)
+
+  const handlePageChange = (page: number) => {
+    if (authState.user!.teacher_id)
       getTeacherLeaveApplcation({ page: page, status: statusFilter, teacher_id: authState.user!.teacher_id })
   }
 
@@ -124,7 +140,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
   }, [leaveApplicationsData])
 
   return (
-    
+
     <div className="space-y-6">
       <Card>
         <CardHeader>
@@ -191,6 +207,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
                 initialData={DialogForLeaveApplication.application}
                 type={DialogForLeaveApplication.type}
                 onCancel={handleCloseDialog}
+                onSucessesfullApplication={onSucessesfullApplication}
               />
             </DialogContent>
           </Dialog>

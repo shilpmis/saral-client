@@ -14,12 +14,12 @@ import {
 
 interface SaralDatePickerProps {
   date: Date | undefined; // Optional date prop
-  onDateChange : (date: Date | undefined) => void; // Add a callback for date changes
+  onDateChange: (date: Date | undefined) => void; // Add a callback for date changes
 }
 
 export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(initialDate)
-  
+
   const handleSelectDate = (newDate: Date | undefined) => {
     setDate(newDate)
     onDateChange(newDate)
@@ -43,7 +43,7 @@ export function SaralDatePicker({ date: initialDate, onDateChange }: SaralDatePi
           mode="single"
           selected={date}
           onSelect={(date) => {
-            setDate(date)
+            handleSelectDate(date)
           }}
           initialFocus
         />

@@ -47,7 +47,7 @@ export const { useGetAcademicClassesQuery , useLazyGetAcademicClassesQuery } = A
  */
 
 
-export const createClasses = createAsyncThunk<Class[], Omit<Class, 'id' | 'school_id'>[]>(
+export const createClasses = createAsyncThunk<Division, Omit<Class, 'id' | 'school_id'>[]>(
   "academic/createClass",
   async (newClass, { rejectWithValue }) => {
     try {

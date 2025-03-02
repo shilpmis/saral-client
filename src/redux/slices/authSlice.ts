@@ -95,7 +95,8 @@ const authSlice = createSlice({
           teacher_id: apiUser.teacher_id,
           school_id: apiUser.school_id,
           permissions: RolePermissions[derivedRole],
-          username: apiUser.username
+          teacher : apiUser.teacher
+          // username: apiUser.username
         };
         state.token = action.payload.token;
       })
@@ -125,6 +126,7 @@ const authSlice = createSlice({
 });
 
 export const selectCurrentUser = (state: RootState) => state.auth.user;
+export const selectCurrentTeacher = (state: RootState) => state.auth.user?.teacher;
 export const selectVerificationStatus = (state: RootState) => state.auth;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthStatus = (state: RootState) => state.auth.status;

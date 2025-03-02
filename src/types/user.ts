@@ -43,6 +43,7 @@ export enum Permission {
   MANAGE_LEAVES = "MANAGE_LEAVES",
   MARK_LEAVES = "MARK_LEAVES",
   MARK_ATTENDANCE = "MARK_ATTENDANCE",
+  MARK_ADMISSION = "MARK_ADMISSION",
 }
 
 export const RolePermissions: Record<UserRole, Permission[]> = {
@@ -58,6 +59,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_REPORTS,
     Permission.MANAGE_SETTINGS,
     Permission.MANAGE_LEAVES,
+    Permission.MARK_ADMISSION
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
@@ -76,6 +78,8 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   [UserRole.CLERK]: [
     Permission.VIEW_DASHBOARD,
     Permission.MANAGE_FEES,
+    Permission.MARK_ADMISSION,
+    Permission.MANAGE_LEAVES
   ],
   [UserRole.IT_ADMIN]: [
     Permission.VIEW_DASHBOARD,
@@ -84,8 +88,6 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   ],
   [UserRole.SCHOOL_TEACHER]: [
     Permission.VIEW_DASHBOARD,
-    // Permission.MANAGE_ATTENDANCE,
-    // Permission.MANAGE_LEAVES,
     Permission.MARK_LEAVES,
     Permission.MARK_ATTENDANCE,
   ],

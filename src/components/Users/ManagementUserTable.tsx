@@ -22,7 +22,9 @@ type ManagementUserTableProps = {
     onEditUser: (user: User) => void
 }
 
-console.log("Management Table renders!!!")
+const checkIsActive = (value : any) : boolean =>{
+    return value == 1
+}
 
 const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, roles, onPageChange, onEditUser }) => {
 
@@ -49,13 +51,12 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                         return (
                             <TableRow key={user.id}>
                                 <TableCell className="font-medium">{user.name}</TableCell>
-                                {/* <TableCell>{user.username}</TableCell> */}
                                 <TableCell>{user.saral_email}</TableCell>
                                 <TableCell>{userRole?.role || "Unknown"}</TableCell>
                                 <TableCell>
-                                    {/* <Badge variant={user.status === "ACTIVE" ? "success" : "secondary"}> */}
-                                    {user.is_active ? "Active" : "Inactive"}
-                                    {/* </Badge> */}
+                                    <Badge variant={checkIsActive(user.is_active) ? "secondary" : "destructive"}>
+                                        {checkIsActive(user.is_active) ? "Active" : "Inactive"}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="outline" onClick={() => onEditUser(user)}>
