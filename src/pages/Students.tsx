@@ -242,11 +242,11 @@ export const Students: React.FC = () => {
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="mr-8">
                 <DropdownMenuItem>Export Data</DropdownMenuItem>
                 <DropdownMenuItem>Print List</DropdownMenuItem>
                 <DropdownMenuItem>
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  <FileDown className="mr-2 h-4 w-4" />Download Excel
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   setDialogOpenForBulkUpload(true);

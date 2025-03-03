@@ -310,6 +310,11 @@ export const Staff: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileDown className="mr-2 h-4 w-4" /> Download Excel
+              </DropdownMenuItem>
               <Dialog>
                 <DialogTrigger asChild>
                  <button className="flex items-center space-x-2 gap-3"> 
@@ -353,11 +358,6 @@ export const Staff: React.FC = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              <DropdownMenuItem>
-                <FileDown className="mr-2 h-4 w-4" /> Download Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem>Print List</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

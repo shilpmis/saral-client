@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { use, useEffect, useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { logout } from "@/services/AuthService"
@@ -26,6 +26,7 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { toast } from "@/hooks/use-toast"
 
 const shortFormForRole: any = {
    1 : "AD",
@@ -40,13 +41,43 @@ export default function Header() {
   const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const handleLogout = async () => {
     setIsLogoutDialogOpen(false)
     await dispatch(logout())
   }
+  useEffect(() => {
+    const handleOnlineStatusChange = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    window.addEventListener("online", handleOnlineStatusChange);
+    window.addEventListener("offline", handleOnlineStatusChange);
+
+    return () => {
+      window.removeEventListener("online", handleOnlineStatusChange);
+      window.removeEventListener("offline", handleOnlineStatusChange);
+    };
+  }, []);
 
   return (
+    <>
+    {!isOnline && (
+        <div
+          className="w-full h-auto shadow-lg rounded-md flex justify-center items-center p-2"
+          style={{
+            position: "fixed", 
+            top: 0,
+            height: "30px",
+            backgroundColor: "#f8d7da",
+            color: "#721c24",
+            zIndex: 9
+          }}
+        >
+          <span className="text-sm font-medium">No Internet Connection (·•᷄‎ࡇ•᷅ )</span>
+        </div>
+      )}
     <div className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
       <SidebarTrigger />
       <div className="flex gap-4">
@@ -115,6 +146,7 @@ export default function Header() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   )
 }
 
