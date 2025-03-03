@@ -1,28 +1,16 @@
-export interface Student {
-    id: string
-    name: string
-    rollNumber: string
-  }
-  
-  export interface Class {
-    id: string
-    name: string
-    teacherId: string
-    students: Student[]
-  }
-  
-  export interface AttendanceRecord {
-    id: string
-    date: string
-    classId: string
-    studentId: string
-    status: "present" | "absent"
-  }
-  
-  export interface Teacher {
-    id: string
-    name: string
-    assignedClassId: string
-  }
-  
-  
+import { Student } from "./student";
+
+
+export interface AttendanceDetails {
+  date: string,
+  is_marked: boolean,
+  class_id: number,
+  marked_by: number,
+  attendance_data: {
+    student_id: number,
+    student_name: string,
+    roll_number: number,
+    status: 'present' | 'absent' | 'late' | 'half_day',
+    remarks: string | null
+  }[]
+}
