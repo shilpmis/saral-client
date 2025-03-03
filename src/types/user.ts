@@ -17,7 +17,7 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
-  teacher : TeachingStaff | null
+  teacher: TeachingStaff | null
 }
 
 export enum UserRole {
@@ -43,7 +43,7 @@ export enum Permission {
   MANAGE_LEAVES = "MANAGE_LEAVES",
   MARK_LEAVES = "MARK_LEAVES",
   MARK_ATTENDANCE = "MARK_ATTENDANCE",
-  MARK_ADMISSION = "MARK_ADMISSION",
+  MANAGE_ADMISSION = "MANAGE_ADMISSION",
 }
 
 export const RolePermissions: Record<UserRole, Permission[]> = {
@@ -59,7 +59,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_REPORTS,
     Permission.MANAGE_SETTINGS,
     Permission.MANAGE_LEAVES,
-    Permission.MARK_ADMISSION
+    Permission.MANAGE_ADMISSION
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
@@ -69,6 +69,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_FEES,
     Permission.MANAGE_CLASSES,
     Permission.VIEW_REPORTS,
+    Permission.MANAGE_ADMISSION
   ],
   [UserRole.HEAD_TEACHER]: [
     Permission.VIEW_DASHBOARD,
@@ -78,13 +79,18 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   [UserRole.CLERK]: [
     Permission.VIEW_DASHBOARD,
     Permission.MANAGE_FEES,
-    Permission.MARK_ADMISSION,
+    Permission.MANAGE_ADMISSION,
     Permission.MANAGE_LEAVES
   ],
   [UserRole.IT_ADMIN]: [
     Permission.VIEW_DASHBOARD,
-    Permission.MANAGE_USERS,
-    Permission.MANAGE_SETTINGS,
+    Permission.MANAGE_STUDENTS,
+    Permission.MANAGE_STAFF,
+    Permission.MANAGE_ATTENDANCE,
+    Permission.MANAGE_FEES,
+    Permission.MANAGE_CLASSES,
+    Permission.VIEW_REPORTS,
+    // Permission.MANAGE_ADMISSION
   ],
   [UserRole.SCHOOL_TEACHER]: [
     Permission.VIEW_DASHBOARD,
