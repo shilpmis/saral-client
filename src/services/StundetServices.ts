@@ -4,6 +4,7 @@ import ApiService from "./ApiService"
 import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
 import { AddStudentsRequest, Student, StudentEntry, StudentMeta, UpdateStudent } from "@/types/student"
+import baseUrl from "@/utils/base-urls"
 
 /**
  * 
@@ -13,7 +14,7 @@ import { AddStudentsRequest, Student, StudentEntry, StudentMeta, UpdateStudent }
 export const StudentApi = createApi({
   reducerPath: "studentApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`);
       headers.set('Accept', '*/*');

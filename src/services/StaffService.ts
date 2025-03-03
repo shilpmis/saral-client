@@ -5,11 +5,12 @@ import { setStaffRole } from "@/redux/slices/staffSlice"
 import ApiService from "./ApiService"
 import type { StaffFormData } from "@/utils/staff.validation"
 import { PageMeta } from "@/types/global"
+import baseUrl from "@/utils/base-urls"
 
 export const StaffApi = createApi({
   reducerPath: "staffApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
       return headers

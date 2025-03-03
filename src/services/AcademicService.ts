@@ -4,6 +4,7 @@ import { Class } from "@/types/class"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { AcademicClasses, Division } from "@/types/academic"
 import { setAcademicClasses } from "@/redux/slices/academicSlice"
+import baseUrl from "@/utils/base-urls"
 
 
 /**
@@ -14,7 +15,7 @@ import { setAcademicClasses } from "@/redux/slices/academicSlice"
 export const AcademicApi = createApi({
   reducerPath: 'AcademicApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
       return headers

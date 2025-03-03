@@ -3,6 +3,7 @@ import ApiService from "./ApiService"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
+import baseUrl from "@/utils/base-urls"
 
 
 /**
@@ -13,7 +14,7 @@ import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/sli
 export const Authapi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/", // Updated to match your API URL
+    baseUrl: `${baseUrl.serverUrl}api/v1/`, // Updated to match your API URL
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
       return headers

@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import ApiService from "./ApiService";
 import { setSchoolCredential } from "@/redux/slices/schoolSlice";
+import baseUrl from "@/utils/base-urls";
 
 interface School {
     id: number,
@@ -29,7 +30,7 @@ interface TypeForUpdateSchoolData {
 export const SchoolApi = createApi({
     reducerPath : 'schoolApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: "http://localhost:3333/api/v1/",
+        baseUrl: `${baseUrl.serverUrl}api/v1/`,
         prepareHeaders: (headers, { getState }) => {
             headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
             return headers

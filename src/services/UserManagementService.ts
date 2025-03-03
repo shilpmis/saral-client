@@ -6,12 +6,13 @@ import { setUsers } from "@/redux/slices/userManagementSlice";
 import { PageMeta } from "@/types/global";
 import { Teacher } from "@/types/attendance";
 import { TeachingStaff } from "@/types/staff";
+import baseUrl from "@/utils/base-urls";
 
 
 export const UserManagementApi = createApi({
   reducerPath: "userManagementApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
       return headers
