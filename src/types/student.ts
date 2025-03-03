@@ -71,7 +71,7 @@ export interface PageDetailsForStudents {
 }
 
 export interface StudentEntry {
-  students_data: Omit<Student , 'id' | 'student_meta' | 'school_id'>;
+  students_data: Omit<Student, 'id' | 'student_meta' | 'school_id'>;
   student_meta_data: StudentMeta;
 }
 
@@ -83,4 +83,17 @@ export interface UpdateStudent {
 export interface AddStudentsRequest {
   class_id: number;
   students: StudentEntry[];
+}
+
+export interface InquiriesForStudent {
+  id: number,
+  student_name: string,
+  parent_name: string,
+  contact_number: number,
+  email: string,
+  grade_applying: number,
+  status: 'pendding' | 'rejected' | 'approved',
+  admin_notes: string,
+  created_by: number,
+  is_converted_to_student: number,
 }

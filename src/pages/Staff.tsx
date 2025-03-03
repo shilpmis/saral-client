@@ -445,6 +445,34 @@ export const Staff: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* <Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Excel File</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Button variant="outline" onClick={handleDownloadDemo}>
+              Download Demo Excel Sheet
+            </Button>
+            <Button variant="outline" onClick={handleChooseFile}>
+              Choose Excel File
+            </Button>
+            <input
+              ref={fileInputRef}
+              id="excel-file"
+              type="file"
+              accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            {fileName && (
+              <p className="text-sm text-muted-foreground">{fileName}</p>
+            )}
+            <Button>Upload</Button>
+          </div>
+        </DialogContent>
+      </Dialog> */}
     </div>
   );
 }

@@ -91,31 +91,8 @@ export const Students: React.FC = () => {
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
-      /**
-       * Fetch Student detil for upate
-       */
-      // if(openDialogForStudent.type === "edit"){
-      //   setOpenDialogForStudent({
-      //     isOpen: true,
-      //     selectedStudent: studentDataForEditStudent,
-      //     type: "edit",
-      //   })
-      // }
-      // else{
-      //   setOpenDialogForStudent({
-      //     isOpen: true,
-      //     selectedStudent: null,
-      //     type: "add",
-      //   })
-      // }
 
-      console.log("student_id", student_id);
-      console.log("openDialogForStudent", openDialogForStudent);
-
-
-      console.log("student_id", student_id);
       const student = await getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
-      console.log("student to ", student);
       setOpenDialogForStudent({
         isOpen: true,
         selectedStudent: studentDataForEditStudent,
@@ -147,7 +124,7 @@ export const Students: React.FC = () => {
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user.school_id)
+      getAcademicClasses(authState.user.school_id);
     }
   }, [AcademicClasses, authState.user, getAcademicClasses])
 

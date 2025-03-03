@@ -237,14 +237,15 @@ export default function AcademicSettings() {
       });
 
       try {
-        const added_class = await dispatch(createClasses(payload));
+        const added_class : any = await dispatch(createClasses(payload));
 
         if (added_class.meta.requestStatus === 'fulfilled') {
+          console.log("Check this here" , added_class)
           // Update the academicClasses state with the new classes
           const newClasses = payload.map((clas, index) => ({
             class: clas.class,
             divisions: [{
-              id: index + 1, // Assuming this is a temporary ID
+              id: added_class.payload[0].id , // Assuming this is a temporary ID
               school_id: user!.school_id, // Add the school_id if required
               class: clas.class.toString(), // Ensure this matches the Division type
               division: clas.division,

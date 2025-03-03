@@ -157,12 +157,12 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
   )
 
   const handleDivisionChange = useCallback(
-    (value: string, type: "admission_Class" | "class") => {
+    (division_id: string, type: "admission_Class" | "class") => {
       if (type === 'admission_Class') {
-        const selectedDiv = availableDivisions?.divisions.find((div) => div.id.toString() === value)
+        const selectedDiv = availableDivisions?.divisions.find((div) => div.id.toString() === division_id)
         setSelectedDivision(selectedDiv || null)
       } else {
-        const selectedDiv = availableDivisionsForAdmissionClass?.divisions.find((div) => div.id.toString() === value)
+        const selectedDiv = availableDivisionsForAdmissionClass?.divisions.find((div) => div.id.toString() === division_id)
         setselectedAdmissionDivision(selectedDiv || null)
       }
     },
@@ -171,7 +171,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
   const handleSubmit: SubmitHandler<StudentFormData> = async (values: z.infer<typeof studentSchema>) => {
 
-    console.log("Check this , I am in function")
 
     if (form_type === "create") {
 
@@ -365,13 +364,17 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       }
 
       let updated_student: any = await updateStudent({ student_id: initial_data!.id, payload: payload });
-      console.log("Updated Student", updated_student)
+
       if (updated_student.data) {
+        toast({
+          variant: 'default',
+          title: "Student has been updated !"
+        })
         onClose()
       }
 
       if (updated_student.error) {
-        console.log("Check this", updated_student.error.data.errors[0].message, payload)
+        console.log("Check this", updated_student.error)
         updated_student.error.data.errors.map((error: any) => {
           toast({
             variant: 'destructive',
@@ -380,7 +383,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         })
       }
     } else {
-
+      toast({
+        variant: 'destructive',
+        title: "Internal Error !"
+      })
     }
 
   }
@@ -406,15 +412,17 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
   useEffect(() => {
     if (form_type === "update") {
 
-      let CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0].class
-      if (CurrentClass) handleClassChange(CurrentClass.toString(), "class")
+      let CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      if (CurrentClass) handleClassChange(CurrentClass.class, "class")
+      if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
 
-      let CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0].division
+      let CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
 
-      let AdmissionClass = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)
-      console.log("AdmissionClass", AdmissionClass)
-      if (AdmissionClass) handleClassChange(AdmissionClass.toString(), "admission_Class")
-      // let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
+      let AdmissionClass = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0]
+      if (AdmissionClass) handleClassChange(AdmissionClass.class, "admission_Class")
+      if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
+
+      let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0]
 
       // // // if (AdmissionClass) handleClassChange(AdmissionClass.toString(), "admission_Class")
       // let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
@@ -456,10 +464,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         IFSC_code: initial_data?.student_meta?.IFSC_code,
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-        admission_class: initial_data?.student_meta?.admission_class_id?.toString(),
-        // admission_division: AdmissionDivision,
-        class: CurrentClass,
-        division: CurrentDivision
+        // admission_class: initial_data?.student_meta?.admission_class_id?.toString(),
+        admission_class: AdmissionDivision?.class,
+        admission_division: AdmissionDivision?.division,
+        class: CurrentDivision?.class,
+        division: CurrentDivision?.division
       })
     }
   }, [AcademicClasses])
