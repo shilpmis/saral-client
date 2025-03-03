@@ -4,6 +4,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
 import baseUrl from "@/utils/base-urls"
+import { LoginCredentials, LoginResponse } from "@/types/login"
 
 
 /**
@@ -44,7 +45,6 @@ export const Authapi = createApi({
           }))
 
         } catch (error) {
-          console.log("ERROR DURING LOGIN TIME ===> " ,error)
           localStorage.removeItem('access_token')
           dispatch(setCredentialsForVerificationStatus({
             isVerificationFails: true,

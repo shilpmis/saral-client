@@ -9,38 +9,27 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileDown, Upload, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import type { User } from "@/types/user"
 import ManagementUserTable from "@/components/Users/ManagementUserTable"
 import TeacherAsUserTable from "@/components/Users/TeacherAsUserTable"
-import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { toast } from "@/hooks/use-toast"
 import { useLazyFetchManagementUsersQuery, useLazyFetchUserAsTeacherQuery } from "@/services/UserManagementService"
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { PageMeta } from "@/types/global"
 import { UserForm } from "@/components/Users/UserForm"
-import StaffTable from "@/components/Staff/StaffTable"
 
 // Predefined management roles
 const managementRoles = [
   { id: 1, role: "ADMIN", permissions: {} },
   { id: 2, role: "PRINCIPAL", permissions: {} },
-  { id: 3, role: "HEAD_TEACHER", permissions: {} },
+  { id: 3, role: "HEAD TEACHER", permissions: {} },
   { id: 4, role: "CLERCK", permissions: {} },
-  { id: 5, role: "IT_ADMIN", permissions: {} },
-]
-
-// Dummy data for staff
-const dummyStaff = [
-  { id: 1, name: "John Doe", email: "john@example.com", role: "Teacher", status: "Active", class: "5A" },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Administrator", status: "Active", class: null },
-  { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Teacher", status: "Inactive", class: "3B" },
+  { id: 5, role: "IT ADMIN", permissions: {} },
 ]
 
 export const UserManagement: React.FC = () => {
 
-  const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
 
   const [fetchUsers, { isLoading, isError }] = useLazyFetchManagementUsersQuery();
@@ -54,7 +43,7 @@ export const UserManagement: React.FC = () => {
       type: "create",
       user: null
     })
-  const [staff, setStaff] = useState(dummyStaff)
+
 
   const [currentDisplayedManagementUser, setCurrentDisplayedManagementUser]
     = useState<{ users: User[], page_meta: PageMeta } | null>(null)
@@ -87,15 +76,6 @@ export const UserManagement: React.FC = () => {
     });
   }, []);
 
-  const handleConfigureStaff = (id: number) => {
-    // Implement staff configuration logic
-    toast({ title: "Configure Staff", description: "Staff configuration not implemented yet" })
-  }
-
-  const handleToggleStaffStatus = (id: number) => {
-    setStaff(staff.map((s) => (s.id === id ? { ...s, status: s.status === "Active" ? "Inactive" : "Active" } : s)))
-    toast({ title: "Staff status updated successfully" })
-  }
 
   async function fetchDataForActiveTab(tab: 'management' | 'staff', page: number) {
 
@@ -152,6 +132,19 @@ export const UserManagement: React.FC = () => {
     }
   }
 
+  function onSucssesfullOnBoardUpdateOfTeacher(user: User | null) {
+    let new_displayedOnBoardTeacher = currentDisplayedOnBoardTeachera;
+    if (new_displayedOnBoardTeacher) {
+      new_displayedOnBoardTeacher.users = new_displayedOnBoardTeacher.users.map((u) => {
+        if (u.id === user!.id) {
+          return user!;
+        }
+        return u;
+      });
+      setCurrentDisplayedOnBoardTeachera(new_displayedOnBoardTeacher);
+    }
+  }
+
   useEffect(() => {
     if (!currentDisplayedManagementUser || !currentDisplayedOnBoardTeachera) {
       fetchDataForActiveTab(activeTab as 'management' | 'staff', 1);
@@ -168,14 +161,7 @@ export const UserManagement: React.FC = () => {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">User Management</h2>
-          {/* <div className="space-x-2">
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" /> Import
-            </Button>
-            <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" /> Export
-            </Button>
-          </div> */}
+
         </div>
       </CardHeader>
       <CardContent>
@@ -206,13 +192,16 @@ export const UserManagement: React.FC = () => {
           </TabsContent>
           <TabsContent value="staff">
             <div className="overflow-x-auto">
-              {currentDisplayedOnBoardTeachera && (<TeacherAsUserTable
-                initailData={{users : currentDisplayedOnBoardTeachera.users , page : currentDisplayedOnBoardTeachera.page_meta }}
-              />)}
+              {currentDisplayedOnBoardTeachera && (
+                <TeacherAsUserTable
+                  initialData={{ users: currentDisplayedOnBoardTeachera.users, page: currentDisplayedOnBoardTeachera.page_meta }}
+                  onSucssesfullChange={onSucssesfullOnBoardUpdateOfTeacher}
+                />)}
             </div>
           </TabsContent>
         </Tabs>
       </CardContent>
+
       <Dialog open={isDialogForManagmentUserOpen.isOpen} onOpenChange={handleCloseDialogBox}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
