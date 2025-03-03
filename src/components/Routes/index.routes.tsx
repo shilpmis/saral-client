@@ -2,9 +2,7 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
-
 import AdminLayout from "@/layouts/Admin/AdminLayout";
 import AuthLayout from "@/layouts/Auth/AuthLayout";
 import SettingsPage from "@/pages/Setting";
@@ -34,7 +32,6 @@ import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
-import { AdmissionDashboard } from "../Admission/AdmissionDashboard";
 import { AdmissionModule } from "@/pages/AdmissionPage";
 
 export default function RootRoute() {
@@ -45,8 +42,6 @@ export default function RootRoute() {
    */
   const { data, error, isLoading, isFetching, isSuccess, isError } =
     useVerifyQuery();
-
-  console.log("I am route")
 
   return (
     <SearchProvider>
@@ -75,7 +70,7 @@ export default function RootRoute() {
               path="students"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK, UserRole.HEAD_TEACHER, UserRole.IT_ADMIN]}
                   allowedPermissions={[Permission.MANAGE_STUDENTS]}
                 >
                   <Students />
@@ -88,7 +83,7 @@ export default function RootRoute() {
               path="staff"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK, UserRole.IT_ADMIN]}
                   allowedPermissions={[Permission.MANAGE_STAFF]}>
                   <Staff />
                 </PrivateRoute>
@@ -100,7 +95,7 @@ export default function RootRoute() {
               path="payroll"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
                   allowedPermissions={[Permission.MANAGE_PAYROLL]}>
                   <Payroll />
                 </PrivateRoute>
@@ -112,7 +107,7 @@ export default function RootRoute() {
               path="fee"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
                   allowedPermissions={[Permission.MANAGE_FEES]}>
                   <Fees />
                 </PrivateRoute>
@@ -124,7 +119,7 @@ export default function RootRoute() {
               path="users"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}
                   allowedPermissions={[Permission.MANAGE_USERS]}>
                   <UserManagement />
                 </PrivateRoute>
@@ -136,9 +131,9 @@ export default function RootRoute() {
               path="leave-applications"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.SCHOOL_TEACHER]}
+                  allowedRoles={[UserRole.SCHOOL_TEACHER ,UserRole.CLERK ]}
                 >
-                  <LeaveDashboardForTeachers/>
+                  <LeaveDashboardForTeachers />
                 </PrivateRoute>
               }
             />
@@ -148,7 +143,7 @@ export default function RootRoute() {
               path="leaves"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.HEAD_TEACHER, UserRole.PRINCIPAL]}
                 >
                   <AdminLeaveManagement />
                 </PrivateRoute>
@@ -160,7 +155,7 @@ export default function RootRoute() {
               path="attendance"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.HEAD_TEACHER]}
                 >
                   <AdminAttendanceView />
                 </PrivateRoute>
@@ -172,7 +167,7 @@ export default function RootRoute() {
               path="mark-attendance"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.SCHOOL_TEACHER]}
+                  allowedRoles={[UserRole.SCHOOL_TEACHER, UserRole.HEAD_TEACHER]}
                 >
                   <StudentAttendanceView />
                 </PrivateRoute>
@@ -184,7 +179,7 @@ export default function RootRoute() {
               path="mark-attendance/:classId"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.SCHOOL_TEACHER]}
+                  allowedRoles={[UserRole.SCHOOL_TEACHER, UserRole.HEAD_TEACHER]}
                 >
                   <StudentAttendanceView />
                 </PrivateRoute>
@@ -195,7 +190,7 @@ export default function RootRoute() {
               path="admissions"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN , UserRole.CLERK]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}
                 >
                   <AdmissionModule />
                 </PrivateRoute>
@@ -205,31 +200,51 @@ export default function RootRoute() {
             {/* Settings - nested routes */}
             <Route path="settings"
               element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN]}>
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <SettingsPage />
                 </PrivateRoute>
 
               }>
               <Route index element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN]}>
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <GeneralSettings />
                 </PrivateRoute>
               } />
               <Route path="general" element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN]}>
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <GeneralSettings />
                 </PrivateRoute>
               } />
               <Route path="academic" element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN]}>
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <AcademicSettings />
                 </PrivateRoute>
               } />
-              <Route path="staff" element={<StaffSettings />} />
-              <Route path="leave" element={<LeaveManagementSettings />} />
-              <Route path="payroll" element={<PayrollSettings />} />
-              <Route path="fees" element={<FeesSettings />} />
-              <Route path="leaves" element={<LeaveManagementSettings />} />
+              <Route path="staff" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                  <StaffSettings />
+                </PrivateRoute>
+              } />
+              <Route path="leave" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                  <LeaveManagementSettings />
+                </PrivateRoute>
+              } />
+              <Route path="payroll" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                  <PayrollSettings />
+                </PrivateRoute>
+              } />
+              <Route path="fees" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                  <FeesSettings />
+                </PrivateRoute>
+              } />
+              <Route path="leaves" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                  <LeaveManagementSettings />
+                </PrivateRoute>
+              } />
             </Route>
 
 

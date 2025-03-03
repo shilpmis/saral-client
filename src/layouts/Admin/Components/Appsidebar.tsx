@@ -38,7 +38,7 @@ const SideBarItems = [
   { title: "Attendance Management", url: "/d/attendance", icon: ClipboardList, requiredPermission: Permission.MANAGE_ATTENDANCE },
   { title: "Attendance", url: "/d/mark-attendance", icon: ClipboardList, requiredPermission: Permission.MARK_ATTENDANCE },
   { title: "Fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
-  { title: "Admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_FEES },
+  { title: "Admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_ADMISSION },
   // { title: "Time Table", url: "/d/timetable", icon: Clock , requiredPermission: Permission.MANAGE_SETTINGS},
   // { title: "Result", url: "/d/results", icon: FileText , requiredPermission: Permission.MANAGE_SETTINGS},
   // { title: "Payroll", url: "/d/payroll", icon: Landmark  , requiredPermission: Permission.MANAGE_PAYROLL},
