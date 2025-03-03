@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, FileDown, Loader2 } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, FileDown, Loader2, AlertTriangle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -23,6 +23,7 @@ import {
 } from "@/services/StundetServices"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export const Students: React.FC = () => {
   // const dispatch = useAppDispatch()
@@ -356,7 +357,7 @@ export const Students: React.FC = () => {
             </CardContent>
           </Card>
         )}
-        {studentDataForSelectedClass && listedStudentForSelectedClass && (
+        {studentDataForSelectedClass && listedStudentForSelectedClass ? (
           <StudentTable
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
@@ -366,6 +367,18 @@ export const Students: React.FC = () => {
             onPageChange={handlePageChange}
             onEdit={handleEditStudent}
           />
+        ):(
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+             <Alert variant="destructive" className="max-w-md w-full">
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <AlertTriangle className="h-4 w-4" />
+                 <AlertTitle className="font-medium ml-2">Please Select the Filter</AlertTitle>
+               </div>
+               <AlertDescription className="text-sm text-center mt-2">
+               કૃપા કરીને વિદ્યાર્થીઓ માટે ફિલ્ટર પસંદ કરો.
+               </AlertDescription>
+             </Alert>
+           </div>
         )}
       </div>
 
