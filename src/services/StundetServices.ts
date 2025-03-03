@@ -14,7 +14,7 @@ import baseUrl from "@/utils/base-urls"
 export const StudentApi = createApi({
   reducerPath: "studentApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${baseUrl.serverUrl}api/v1/`,
+    baseUrl: `${baseUrl.localServerUrl}api/v1/`,
     prepareHeaders: (headers) => {
       headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`);
       headers.set('Accept', '*/*');
@@ -41,8 +41,8 @@ export const StudentApi = createApi({
         body: students,
       }),
     }),
-    addSingleStudent: builder.mutation<Student, StudentEntry>({
-      query: (payload) => ({
+    addSingleStudent: builder.mutation<any, {payload : StudentEntry}>({
+      query: ({payload}) => ({
         url: `student`,
         method: "POST",
         body: payload,
