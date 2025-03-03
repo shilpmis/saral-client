@@ -28,7 +28,7 @@ export interface StudentMeta {
   district: string;
   city: string;
   state: string;
-  postal_code: number;
+  postal_code: string;
   bank_name: string;
   account_no: number;
   IFSC_code: string;

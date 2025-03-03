@@ -217,7 +217,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
           district: values.district,
           city: values.city,
           state: values.state,
-          postal_code: Number(values.postal_code),
+          postal_code: values.postal_code,
           bank_name: values.bank_name,
           account_no: values.account_no,
           IFSC_code: values.IFSC_code,
@@ -301,8 +301,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       if (values.state !== initial_data?.student_meta?.state) {
         payload.student_meta_data.state = values.state
       }
-      if (Number(values.postal_code) === initial_data?.student_meta?.postal_code) {
-        payload.student_meta_data.postal_code = Number(values.postal_code)
+      if ((values.postal_code) === initial_data?.student_meta?.postal_code) {
+        payload.student_meta_data.postal_code = (values.postal_code)
       }
       if (values.bank_name !== initial_data?.student_meta?.bank_name) {
         payload.student_meta_data.bank_name = values.bank_name

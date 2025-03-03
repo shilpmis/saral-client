@@ -52,10 +52,10 @@ export const studentSchema = z.object({
   district: z.string().min(2, "District is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
-  postal_code: z.string().refine((val)=>val.length === 6 , {
-    message: "Postal code must be exactly 6 digits",
-  }), 
-  // postal_code : z.string().regex(/^\d{6}$/, "Invalid postal code"),
+  // postal_code: z.string().refine((val)=>val.length === 6 , {
+  //   message: "Postal code must be exactly 6 digits",
+  // }), 
+  postal_code : z.string().regex(/^\d{6}$/, "Invalid postal code"),
 
   // Bank Details
   bank_name: z.string().min(2, "Bank name is required"),
