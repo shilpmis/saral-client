@@ -23,6 +23,7 @@ import {
 } from "@/services/StundetServices"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
+import { downloadCSVTemplate } from "@/utils/csv-helper"
 
 export const Students: React.FC = () => {
   // const dispatch = useAppDispatch()
@@ -91,15 +92,19 @@ export const Students: React.FC = () => {
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
-
-      const student = await getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
+      const student = await getSingleStudent({
+        student_id: student_id,
+        school_id: authState.user!.school_id,
+        student_meta: true,
+      })
       setOpenDialogForStudent({
         isOpen: true,
         selectedStudent: studentDataForEditStudent,
         type: "edit",
       })
     },
-    [getSingleStudent, authState.user])
+    [getSingleStudent, authState.user],
+  )
 
   const handleChooseFile = useCallback(() => {
     fileInputRef.current?.click()
@@ -114,17 +119,13 @@ export const Students: React.FC = () => {
     }
   }, [])
 
-  const handleDownloadDemo = useCallback(() => {
-    const demoExcelUrl = "/path/to/demo-excel-file.xlsx"
-    const link = document.createElement("a")
-    link.href = demoExcelUrl
-    link.download = "demo-excel-file.xlsx"
-    link.click()
+  const handleDownloadDemo = useCallback(async() => {
+    await downloadCSVTemplate()
   }, [])
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user.school_id);
+      getAcademicClasses(authState.user.school_id)
     }
   }, [AcademicClasses, authState.user, getAcademicClasses])
 
@@ -150,7 +151,7 @@ export const Students: React.FC = () => {
     try {
       setIsUploading(true)
       setUploadError(null)
-      console.log(typeof selectedFile)
+
       const response = await bulkUploadStudents({
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
@@ -158,13 +159,7 @@ export const Students: React.FC = () => {
       }).unwrap()
 
       // Close the dialog
-      const dialogElement = document.querySelector('[role="dialog"]')
-      if (dialogElement) {
-        const closeButton = dialogElement.querySelector('button[aria-label="Close"]')
-        if (closeButton instanceof HTMLElement) {
-          closeButton.click()
-        }
-      }
+      setDialogOpenForBulkUpload(false)
 
       // Show success toast
       toast({
@@ -185,10 +180,8 @@ export const Students: React.FC = () => {
       }
 
       // Reset file selection
-      setDialogOpenForBulkUpload(false)
       setFileName(null)
       setSelectedFile(null)
-      console.log("fileInputRef.current", fileInputRef.current)
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -224,23 +217,22 @@ export const Students: React.FC = () => {
     if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass) {
       // Find first class with divisions
       const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
-  
+
       if (firstClassWithDivisions) {
         // Set the first class
         setSelectedClass(firstClassWithDivisions.class.toString())
-  
+
         // Set the first division of that class
         if (firstClassWithDivisions.divisions.length > 0) {
           const firstDivision = firstClassWithDivisions.divisions[0]
           setSelectedDivision(firstDivision)
-  
+
           // Fetch students for this division
           getStudentForClass({ class_id: firstDivision.id })
         }
       }
     }
   }, [AcademicClasses, selectedClass, getStudentForClass])
-  
 
   return (
     <>
@@ -248,10 +240,118 @@ export const Students: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Students</h2>
           <div className="flex space-x-2">
-            <Button onClick={() => setOpenDialogForStudent({...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })}>
+            <Button
+              onClick={() =>
+                setOpenDialogForStudent({ ...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })
+              }
+            >
               <Plus className="mr-2 h-4 w-4" /> Add New Student
             </Button>
+            <Dialog
+              open={dialogOpenForBulkUpload}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setFileName(null)
+                  setSelectedFile(null)
+                  setUploadError(null)
+                  setDialogOpenForBulkUpload(false)
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
+                  <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogTitle>Upload Excel File</DialogTitle>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="upload-class" className="text-sm font-medium">
+                        Class
+                      </label>
+                      <Select value={selectedClass} onValueChange={handleClassChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=" " disabled>
+                            Classes
+                          </SelectItem>
+                          {AcademicClasses?.map((cls, index) =>
+                            cls.divisions.length > 0 ? (
+                              <SelectItem key={index} value={cls.class.toString()}>
+                                Class {cls.class}
+                              </SelectItem>
+                            ) : null,
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label htmlFor="upload-division" className="text-sm font-medium">
+                        Division
+                      </label>
+                      <Select
+                        value={selectedDivision ? selectedDivision.id.toString() : " "}
+                        onValueChange={handleDivisionChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Division" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=" " disabled>
+                            Divisions
+                          </SelectItem>
+                          {availableDivisions &&
+                            availableDivisions.divisions.map((division, index) => (
+                              <SelectItem key={index} value={division.id.toString()}>
+                                {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
+                      Download Demo CSV Template
+                    </Button>
+                    <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
+                      Choose CSV File
+                    </Button>
+                  </div>
+                  <Input
+                    ref={fileInputRef}
+                    id="excel-file"
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+                  {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
+                  <div className="flex justify-end">
+                    <Button
+                      className="w-1/2"
+                      onClick={handleFileUploadSubmit}
+                      disabled={isUploading || !selectedFile || !selectedClass || !selectedDivision}
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        "Upload"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -264,60 +364,6 @@ export const Students: React.FC = () => {
                 <DropdownMenuItem>
                   <FileDown className="mr-2 h-4 w-4" /> Download Excel
                 </DropdownMenuItem>
-                <Dialog
-                  open={dialogOpenForBulkUpload}
-                  onOpenChange={(open) => {
-                    if (!open) {
-                      setFileName(null)
-                      setSelectedFile(null)
-                      setUploadError(null)
-                      setDialogOpenForBulkUpload(false)
-                    }
-                  }}
-                >
-                  <DialogTrigger asChild>
-                    <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
-                      <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogTitle>Upload Excel File</DialogTitle>
-                    <div className="flex justify-between mt-4">
-                      <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
-                        Download Demo Excel Sheet
-                      </Button>
-                      <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
-                        Choose Excel File
-                      </Button>
-                    </div>
-                    <Input
-                      ref={fileInputRef}
-                      id="excel-file"
-                      type="file"
-                      accept=".csv"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                    {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
-                    {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
-                    <div className="flex justify-end">
-                      <Button
-                        className="w-1/2"
-                        onClick={handleFileUploadSubmit}
-                        disabled={isUploading || !selectedFile}
-                      >
-                        {isUploading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          "Upload"
-                        )}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
