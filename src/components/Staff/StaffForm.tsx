@@ -1,8 +1,6 @@
 import type React from "react"
 import { useState, useCallback, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

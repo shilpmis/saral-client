@@ -89,22 +89,40 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass])
 
-  const handleEditStudent = useCallback(
-    (student_id: number) => {
+  const handleAddEditStudent = useCallback(
+    async (student_id: number) => {
       /**
        * Fetch Student detil for upate
        */
+      // if(openDialogForStudent.type === "edit"){
+      //   setOpenDialogForStudent({
+      //     isOpen: true,
+      //     selectedStudent: studentDataForEditStudent,
+      //     type: "edit",
+      //   })
+      // }
+      // else{
+      //   setOpenDialogForStudent({
+      //     isOpen: true,
+      //     selectedStudent: null,
+      //     type: "add",
+      //   })
+      // }
 
-      getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
+      console.log("student_id", student_id);
+      console.log("openDialogForStudent", openDialogForStudent);
 
+
+      console.log("student_id", student_id);
+      const student = await getSingleStudent({ student_id: student_id, school_id: authState.user!.school_id, student_meta: true })
+      console.log("student to ", student);
       setOpenDialogForStudent({
         isOpen: true,
         selectedStudent: studentDataForEditStudent,
         type: "edit",
       })
     },
-    [getSingleStudent, authState.user, studentDataForEditStudent],
-  )
+    [getSingleStudent, authState.user])
 
   const handleChooseFile = useCallback(() => {
     fileInputRef.current?.click()
@@ -155,13 +173,13 @@ export const Students: React.FC = () => {
     try {
       setIsUploading(true)
       setUploadError(null)
-     console.log(typeof selectedFile)
+      console.log(typeof selectedFile)
       const response = await bulkUploadStudents({
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
         file: selectedFile,
       }).unwrap()
-      
+
       // Close the dialog
       const dialogElement = document.querySelector('[role="dialog"]')
       if (dialogElement) {
@@ -190,14 +208,13 @@ export const Students: React.FC = () => {
       }
 
       // Reset file selection
-      setDialogOpenForBulkUpload(false);
+      setDialogOpenForBulkUpload(false)
       setFileName(null)
       setSelectedFile(null)
       console.log("fileInputRef.current", fileInputRef.current)
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
-      
     } catch (error: any) {
       console.error("Upload error:", error)
       setUploadError(error.data?.message || "Failed to upload students. Please try again.")
@@ -212,9 +229,9 @@ export const Students: React.FC = () => {
       setIsUploading(false)
     }
   }
-  
+
   const handlePageChange = useCallback(
-    async(page: number) => {
+    async (page: number) => {
       setCurrentPage(page)
       if (selectedDivision) {
         await getStudentForClass({ class_id: selectedDivision.id, page: page }).then((response) => {
@@ -223,8 +240,30 @@ export const Students: React.FC = () => {
       }
     },
     [setCurrentPage, selectedDivision, getStudentForClass],
-  ) 
-  const [dropdownOpen, setDropdownOpen] = useState(false)
+  )
+
+  useEffect(() => {
+    // Auto-select first class and division when AcademicClasses are loaded
+    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass) {
+      // Find first class with divisions
+      const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
+  
+      if (firstClassWithDivisions) {
+        // Set the first class
+        setSelectedClass(firstClassWithDivisions.class.toString())
+  
+        // Set the first division of that class
+        if (firstClassWithDivisions.divisions.length > 0) {
+          const firstDivision = firstClassWithDivisions.divisions[0]
+          setSelectedDivision(firstDivision)
+  
+          // Fetch students for this division
+          getStudentForClass({ class_id: firstDivision.id })
+        }
+      }
+    }
+  }, [AcademicClasses, selectedClass, getStudentForClass])
+  
 
   return (
     <>
@@ -232,11 +271,11 @@ export const Students: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Students</h2>
           <div className="flex space-x-2">
-            <Button onClick={() => setOpenDialogForStudent({ isOpen: true, type: "add", selectedStudent: null })}>
+            <Button onClick={() => setOpenDialogForStudent({...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })}>
               <Plus className="mr-2 h-4 w-4" /> Add New Student
             </Button>
 
-            <DropdownMenu  open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <MoreHorizontal className="h-4 w-4" />
@@ -248,14 +287,6 @@ export const Students: React.FC = () => {
                 <DropdownMenuItem>
                   <FileDown className="mr-2 h-4 w-4" /> Download Excel
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  setDialogOpenForBulkUpload(true);
-                  setDropdownOpen(false)
-                  }}>
-                   <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                </DropdownMenuItem>
-             </DropdownMenuContent>
-            </DropdownMenu>
                 <Dialog
                   open={dialogOpenForBulkUpload}
                   onOpenChange={(open) => {
@@ -266,8 +297,12 @@ export const Students: React.FC = () => {
                       setDialogOpenForBulkUpload(false)
                     }
                   }}
-                  
                 >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
+                      <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                    </Button>
+                  </DialogTrigger>
                   <DialogContent>
                     <DialogTitle>Upload Excel File</DialogTitle>
                     <div className="flex justify-between mt-4">
@@ -278,14 +313,14 @@ export const Students: React.FC = () => {
                         Choose Excel File
                       </Button>
                     </div>
-                      <Input
-                        ref={fileInputRef}
-                        id="excel-file"
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
+                    <Input
+                      ref={fileInputRef}
+                      id="excel-file"
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
                     {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
                     {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
                     <div className="flex justify-end">
@@ -306,10 +341,21 @@ export const Students: React.FC = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {AcademicClasses && (
+        {!AcademicClasses || AcademicClasses.length === 0 ? (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Search Students</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-yellow-600">Please create Classes for your school.</p>
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Search Students</CardTitle>
@@ -360,11 +406,11 @@ export const Students: React.FC = () => {
           <StudentTable
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
-            PageDetailsForStudents = {paginationDataForSelectedClass}
+            PageDetailsForStudents={paginationDataForSelectedClass}
             // onSearchChange={setSearchValue}
             filteredStudents={filteredStudents}
             onPageChange={handlePageChange}
-            onEdit={handleEditStudent}
+            onEdit={handleAddEditStudent}
           />
         )}
       </div>

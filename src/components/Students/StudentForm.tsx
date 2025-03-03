@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { personalSchema, type StudentFormData, studentSchema } from "@/utils/student.validation"
+import { type StudentFormData, studentSchema } from "@/utils/student.validation"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import type { AcademicClasses, Division } from "@/types/academic"
@@ -217,14 +217,14 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
           district: values.district,
           city: values.city,
           state: values.state,
-          postal_code: values.postal_code.toString(),
+          postal_code: values.postal_code,
           bank_name: values.bank_name,
           account_no: values.account_no,
           IFSC_code: values.IFSC_code,
         }
       }
 
-      let new_student: any = await createStudent(payload);
+      let new_student: any = await createStudent({payload: payload});
 
       if (new_student.data) {
         toast({
@@ -243,7 +243,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         })
       }
     } else if (form_type === "update") {
-
+          console.log("Initial Data", initial_data)
       let payload: UpdateStudent = {
         student_meta_data: {},
         students_data: {}
@@ -301,8 +301,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       if (values.state !== initial_data?.student_meta?.state) {
         payload.student_meta_data.state = values.state
       }
-      if (values.postal_code.toString() !== initial_data?.student_meta?.postal_code) {
-        payload.student_meta_data.postal_code = values.postal_code.toString()
+      if ((values.postal_code) === initial_data?.student_meta?.postal_code) {
+        payload.student_meta_data.postal_code = (values.postal_code)
       }
       if (values.bank_name !== initial_data?.student_meta?.bank_name) {
         payload.student_meta_data.bank_name = values.bank_name
@@ -365,7 +365,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       }
 
       let updated_student: any = await updateStudent({ student_id: initial_data!.id, payload: payload });
-
+      console.log("Updated Student", updated_student)
       if (updated_student.data) {
         onClose()
       }
@@ -411,9 +411,13 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
       let CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0].division
 
-      let AdmissionClass = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
+      let AdmissionClass = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)
+      console.log("AdmissionClass", AdmissionClass)
       if (AdmissionClass) handleClassChange(AdmissionClass.toString(), "admission_Class")
-      let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
+      // let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
+
+      // // // if (AdmissionClass) handleClassChange(AdmissionClass.toString(), "admission_Class")
+      // let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
 
       form.reset({
         first_name: initial_data?.first_name,
@@ -445,15 +449,15 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         district: initial_data?.student_meta?.district,
         city: initial_data?.student_meta?.city,
         state: initial_data?.student_meta?.state,
-        postal_code: Number(initial_data?.student_meta?.postal_code),
+        postal_code: initial_data?.student_meta?.postal_code ? initial_data.student_meta.postal_code.toString() : undefined,
         bank_name: initial_data?.student_meta?.bank_name,
         account_no: Number(initial_data?.student_meta?.account_no),
         admission_date: formatData(initial_data!.student_meta!.admission_date),
         IFSC_code: initial_data?.student_meta?.IFSC_code,
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-        admission_class: AdmissionClass,
-        admission_division: AdmissionDivision,
+        admission_class: initial_data?.student_meta?.admission_class_id?.toString(),
+        // admission_division: AdmissionDivision,
         class: CurrentClass,
         division: CurrentDivision
       })
@@ -926,7 +930,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                                 (division, index) => (
                                   <SelectItem
                                     key={index}
-                                    value={division.id.toString()}
+                                    value={division.division}
                                   >
                                     {`${division.division} ${division.aliases
                                       ? "- " + division.aliases
@@ -1010,7 +1014,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                                 (division, index) => (
                                   <SelectItem
                                     key={index}
-                                    value={division.id.toString()}
+                                    value={division.division}
                                   >
                                     {`${division.division} ${division.aliases
                                       ? "- " + division.aliases
