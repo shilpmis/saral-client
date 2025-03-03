@@ -133,7 +133,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
     if (AcademicClasses && selectedAdmissionClass) {
       return AcademicClasses!.filter((cls) => {
         if (cls.class.toString() === selectedAdmissionClass) {
-          console.log("Check this", cls)
           return cls
         }
       })[0]
@@ -142,7 +141,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
     }
   }, [AcademicClasses, selectedAdmissionClass])
 
-  console.log(availableDivisionsForAdmissionClass)
   const handleClassChange = useCallback(
     (value: string, type: "admission_Class" | "class") => {
       if (type === 'admission_Class') {
@@ -179,9 +177,6 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
       let CurrentClass = available_classes?.filter((cls) => cls.class == values?.class && cls.division == values.division)[0];
       let AdmissionClass = available_classes?.filter((cls) => cls.class == values?.admission_class && cls.division == values.admission_division)[0];
-      console.log("AdmissionClass", available_classes , values)
-      console.log("Check this", "CurrentClass", CurrentClass);
-      console.log("Check this", "AdmissionClass", AdmissionClass);
 
       let payload: StudentEntry = {
         students_data: {

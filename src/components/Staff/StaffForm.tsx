@@ -701,9 +701,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
-                <div inert> 
                 <Button type="submit">Submit</Button>
-                </div>
               </CardFooter>
             </Card>
           </TabsContent>
