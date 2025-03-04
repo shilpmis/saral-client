@@ -1,11 +1,12 @@
+
 import { Input } from "@/components/ui/input"
 import { SearchIcon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { User, GraduationCap, Users, BookOpen, ShieldCheck, IdCard, UserPen, CircleHelp, Grip, ChartPie, Hand, Shapes, UserRoundCheck, UsersRound, Type, PersonStanding } from "lucide-react"
-import React, { useContext, useEffect } from "react"
+import React, { useContext, useEffect,useMemo } from "react"
 import { SearchCategory } from "@/types/searchCategory"
 import { SearchContext } from "./searchContext"
-
+import { useLocation } from 'react-router-dom';
 
 
 export function Search() {
@@ -47,44 +48,50 @@ export function Search() {
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
     { id: "roleNumber", label: "Roll Number", icon: <Hand className="h-4 w-4" /> },
   ]
-
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<SearchCategory | null>(null);
   const { activePage, setActivePage }: any = useContext(SearchContext);
 
-
-  const handleSearch = (category: SearchCategory) => {
+  const handleSearch = (category:SearchCategory) => {
     setSelectedCategory(category)
   }
+  const onChangeSearch = (value:any)=>{
+    setSearchQuery(value); 
+  }
+  const searchTrigger = (event:any)=>{
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if(window.location.pathname === '/d/students'){
+        console.log("from Student",searchQuery,selectedCategory?.id);
+      }
+      else if(window.location.pathname === '/d/staff'){
+        console.log("from Staff",searchQuery,selectedCategory?.id); 
+      }
+      else if (window.location.pathname === '/d/leaves') {
+      console.log("from leaves",searchQuery,selectedCategory?.id);
+      }
+      else if (window.location.pathname === '/d/fee') {
+      console.log("from fee",searchQuery,selectedCategory?.id);
+      }
+  }
+  else if(event === 'Enter'){
+    console.log("value is ==>>",searchQuery,selectedCategory?.id);
+  }
+  }
+
+  const pageTitles:any = useMemo(() => ({
+    '/d/students': 'Search for Students',
+    '/d/staff': 'Search for Staff',
+    '/d/leaves': 'Search for Leave',
+    '/d/fee': 'Search for Fee',
+  }), []);
 
   useEffect(() => {
-    if (window.location.pathname === '/d/students') {
-      setActivePage('Search for Students');
-    } else if (window.location.pathname === '/d/staff') {
-      setActivePage('Search for Staff');
-    }
-    else if (window.location.pathname === '/d') {
-      setActivePage('')
-    }
-    else if (window.location.pathname === '/d/payroll') {
-      setActivePage('Search for payroll');
-    }
-    else if (window.location.pathname === '/d/attendance') {
-      setActivePage('Search for Attendance');
-    }
-    else if (window.location.pathname === '/d/leaves') {
-      setActivePage('Search for Leave');
-    }
-    else if (window.location.pathname === '/d/fee') {
-      setActivePage('Search for Fee');
-    }
-    else if (window.location.pathname === '/d/mark-attendance') {
-      setActivePage('Search for mark attendance');
-    }
-    // else if(window.location.pathname === '/d/leaves'){
-    //   setActivePage('');
-    // }
-  }, [window.location.pathname]);
+    setSearchQuery('');
+    setSelectedCategory(null);
+    setActivePage(pageTitles[location.pathname]);
+  }, [location.pathname, pageTitles, setActivePage]);
 
   useEffect(() => {
     if (searchQuery === "") {
@@ -95,16 +102,38 @@ export function Search() {
   return (
     <div className="relative w-full max-w-xl mx-auto">
       {
-        activePage !== '' ? (
+        activePage === 'Search for Students' || activePage === 'Search for Staff' || activePage === 'Search for Leave' || activePage === 'Search for Fee' ? (
           <div className="relative flex items-center">
             <Input
               type="text"
               placeholder={activePage}
               className="pl-[120px] pr-10"
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value) }}
+              onChange={(e) => onChangeSearch(e.target.value)}
               disabled={selectedCategory === null}
+              onKeyDown={(event)=>searchTrigger(event)} 
             />
+              <button
+        onClick={() => {
+          if (searchQuery !== '' && selectedCategory !== null) {
+            searchTrigger('Enter');
+          }
+        }}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 focus:outline-none"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-5 h-5 text-gray-500"
+        >
+          <path
+            fillRule="evenodd"
+            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
             {
               activePage === "Search for Students" ? (
                 <DropdownMenu>
@@ -146,47 +175,7 @@ export function Search() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              ) : activePage === "Search for payroll" ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
-                      {selectedCategory ? selectedCategory.label : "Search by"}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[200px]">
-                    {payrollCategories.map((category) => (
-                      <DropdownMenuItem
-                        key={category.id}
-                        onClick={() => handleSearch(category)}
-                        className="flex items-center gap-2"
-                      >
-                        {category.icon}
-                        <span>{category.label}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : activePage === "Search for Attendance" ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
-                      {selectedCategory ? selectedCategory.label : "Search by"}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[200px]">
-                    {attendanceCategories.map((category) => (
-                      <DropdownMenuItem
-                        key={category.id}
-                        onClick={() => handleSearch(category)}
-                        className="flex items-center gap-2"
-                      >
-                        {category.icon}
-                        <span>{category.label}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : activePage === "Search for Leave" ? (
+              ): activePage === "Search for Leave" ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
@@ -226,27 +215,7 @@ export function Search() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              ) : activePage === "Search for mark attendance" ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
-                      {selectedCategory ? selectedCategory.label : "Search by"}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[200px]">
-                    {mark_Attendance_Categories.map((category) => (
-                      <DropdownMenuItem
-                        key={category.id}
-                        onClick={() => handleSearch(category)}
-                        className="flex items-center gap-2"
-                      >
-                        {category.icon}
-                        <span>{category.label}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : ''
+              ): ([])
             }
 
           </div>
