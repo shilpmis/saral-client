@@ -92,18 +92,30 @@ export const Students: React.FC = () => {
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
-      const student = await getSingleStudent({
-        student_id: student_id,
-        school_id: authState.user!.school_id,
-        student_meta: true,
-      })
-      setOpenDialogForStudent({
-        isOpen: true,
-        selectedStudent: studentDataForEditStudent,
-        type: "edit",
-      })
+      try {
+        const response = await getSingleStudent({
+          student_id: student_id,
+          school_id: authState.user!.school_id,
+          student_meta: true,
+        })
+
+        if (response.data) {
+          setOpenDialogForStudent({
+            isOpen: true,
+            selectedStudent: response.data,
+            type: "edit",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching student data:", error)
+        toast({
+          variant: "destructive",
+          title: "Failed to load student data",
+          description: "Please try again later",
+        })
+      }
     },
-    [getSingleStudent, authState.user],
+    [getSingleStudent, authState.user, toast],
   )
 
   const handleChooseFile = useCallback(() => {
@@ -120,7 +132,7 @@ export const Students: React.FC = () => {
   }, [])
 
   const handleDownloadDemo = useCallback(() => {
-     downloadCSVTemplate()
+    downloadCSVTemplate()
   }, [])
 
   useEffect(() => {
@@ -478,9 +490,20 @@ export const Students: React.FC = () => {
                       type: "edit",
                       selectedStudent: null,
                     })
+
+                    // Refresh the student list if a division is selected
+                    if (selectedDivision) {
+                      getStudentForClass({
+                        class_id: selectedDivision.id,
+                        page: currentPage,
+                        student_meta: true,
+                      })
+                    }
                   }}
                   form_type="update"
                   initial_data={studentDataForEditStudent}
+                  setListedStudentForSelectedClass={setListedStudentForSelectedClass}
+                  setPaginationDataForSelectedClass={setPaginationDataForSelectedClass}
                 />
               )}
               {openDialogForStudent.type === "edit" && isStudentForEditLoading && (
