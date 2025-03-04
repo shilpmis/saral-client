@@ -3,10 +3,10 @@ import { Input } from "@/components/ui/input"
 import { SearchIcon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { User, GraduationCap, Users, BookOpen, ShieldCheck, IdCard, UserPen, CircleHelp, Grip, ChartPie, Hand, Shapes, UserRoundCheck, UsersRound, Type, PersonStanding } from "lucide-react"
-import React, { useContext, useEffect } from "react"
+import React, { useContext, useEffect,useMemo } from "react"
 import { SearchCategory } from "@/types/searchCategory"
 import { SearchContext } from "./searchContext"
-
+import { useLocation } from 'react-router-dom';
 
 
 export function Search() {
@@ -48,7 +48,7 @@ export function Search() {
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
     { id: "roleNumber", label: "Roll Number", icon: <Hand className="h-4 w-4" /> },
   ]
-
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<SearchCategory | null>(null);
   const { activePage, setActivePage }: any = useContext(SearchContext);
@@ -80,28 +80,18 @@ export function Search() {
   }
   }
 
+  const pageTitles:any = useMemo(() => ({
+    '/d/students': 'Search for Students',
+    '/d/staff': 'Search for Staff',
+    '/d/leaves': 'Search for Leave',
+    '/d/fee': 'Search for Fee',
+  }), []);
+
   useEffect(() => {
-    setActivePage(undefined);
-    if (window.location.pathname === '/d/students') {
-      setSearchQuery('');
-      setSelectedCategory(null)
-      setActivePage('Search for Students');
-    } else if (window.location.pathname === '/d/staff') {
-      setSearchQuery('');
-      setSelectedCategory(null)
-      setActivePage('Search for Staff');
-    }
-    else if (window.location.pathname === '/d/leaves') {
-      setSearchQuery('');
-      setSelectedCategory(null)
-      setActivePage('Search for Leave');
-    }
-    else if (window.location.pathname === '/d/fee') {
-      setSearchQuery('');
-      setSelectedCategory(null)
-      setActivePage('Search for Fee');
-    }
-  }, [window.location.pathname]);
+    setSearchQuery('');
+    setSelectedCategory(null);
+    setActivePage(pageTitles[location.pathname]);
+  }, [location.pathname, pageTitles, setActivePage]);
 
   useEffect(() => {
     if (searchQuery === "") {
