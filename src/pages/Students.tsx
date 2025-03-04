@@ -119,8 +119,8 @@ export const Students: React.FC = () => {
     }
   }, [])
 
-  const handleDownloadDemo = useCallback(async() => {
-    await downloadCSVTemplate()
+  const handleDownloadDemo = useCallback(() => {
+     downloadCSVTemplate()
   }, [])
 
   useEffect(() => {
