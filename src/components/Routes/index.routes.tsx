@@ -33,7 +33,7 @@ import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
 import { AdmissionModule } from "@/pages/AdmissionPage";
-import TimeTableManager from "../Settings/time-table-manager";
+import TimeTableManager from "../Settings/TimeTableManager";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
