@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { logout } from "@/services/AuthService"
@@ -22,10 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog"
-import { AlertTriangle } from "lucide-react";
+import { AlertCircle, AlertTriangle, LogOut, Settings, Upload, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 const shortFormForRole: any = {
    1 : "AD",
@@ -38,60 +41,138 @@ const shortFormForRole: any = {
 
 export default function Header() {
   const dispatch = useAppDispatch()
-  const users = useAppSelector((state) => state.auth.user)
+  const users = useAppSelector((state) => state.auth.user);
+
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
 
   const handleLogout = async () => {
-    setIsLogoutDialogOpen(false)
     await dispatch(logout())
   }
 
+
+  
+
   return (
-    <div className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
-      <SidebarTrigger />
-      <div className="flex gap-4">
-        <Search></Search>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatars/01.png" alt="@johndoe" />
-                <AvatarFallback>{users?.role_id ? shortFormForRole[users.role_id] : ""}</AvatarFallback>
-              </Avatar>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{users?.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">{users?.saral_email}</p>
+    <main className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
+        <SidebarTrigger />
+    <div className="flex gap-4">
+    <Search></Search>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className="h-11 w-11 cursor-pointer border-2 border-primary hover:border-primary/80 transition-colors">
+            <AvatarImage src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg?t=st=1741157072~exp=1741160672~hmac=ed96e089fd628b2ab1f81ea8e2bb6ecdda05224e16db03ed8a1745e8b9787c4f&w=900" alt="User" />
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="max-w-[90rem]" align="end" forceMount>
+        <Dialog>
+        <DialogTrigger asChild className="hover:bg-gray-100 px-2 w-60 py-1">
+                 <button className="flex items-center space-x-2 gap-3 mb-1"> 
+                 <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                 </button>
+                </DialogTrigger>
+        <DialogContent className="sm:max-w-[350px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[600px] mx-5">
+          <DialogHeader>
+            <DialogTitle>View Profile</DialogTitle>
+            <DialogDescription>You Can See Your Profile Here.</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center my-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage
+                src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg?t=st=1741157072~exp=1741160672~hmac=ed96e089fd628b2ab1f81ea8e2bb6ecdda05224e16db03ed8a1745e8b9787c4f&w=900"
+                alt="User"
+              />
+            </Avatar>
+          </div>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input id="name" defaultValue={users?.name} className="col-span-3" />
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                Profile
-                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Settings
-                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setIsLogoutDialogOpen(true)}
-              className="bg-red-600 text-white hover:bg-red-600 cursor-pointer rounded-md"
-            >
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="schoolName" className="text-right">
+                  School Name
+                </Label>
+                <Input id="schoolName" defaultValue={users?.school.name} type="text" className="col-span-3" />
+              </div>
+            </div>
+            <div className="space-y-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Input id="status" defaultValue={users?.school.status} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="contactNumber" className="text-right">
+                  Contact Number
+                </Label>
+                <Input id="contactNumber" defaultValue={users?.school.contact_number} className="col-span-3" />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog>
+      <DialogTrigger asChild className="hover:bg-gray-100 px-2 w-60 py-1">
+                 <button className="flex items-center space-x-2 gap-3 mb-2"> 
+                  <Settings className="mr-2 h-4 w-4"/>
+                    <span>Setting</span>
+                 </button>
+                </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>Adjust your account settings here.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="theme" className="text-right">
+              Theme
+            </Label>
+            <div className="col-span-3 flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                Light
+              </Button>
+              <Button variant="outline" size="sm">
+                Dark
+              </Button>
+              <Button variant="outline" size="sm">
+                System
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notifications" className="text-right">
+              Notifications
+            </Label>
+            <div className="col-span-3">
+              <Input id="notifications" type="checkbox" className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit">
+            Save settings
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+    <DialogTrigger asChild className="bg-red-400 hover:bg-gray-100 rounded border px-2 w-60 py-1">
+                 <button className="flex items-center space-x-2 gap-3 mt-2 "> 
+                   <LogOut />
+                    <span>Logout</span>
+                 </button>
+                </DialogTrigger>
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">
-            <motion.div
+             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 10 }}
@@ -114,7 +195,10 @@ export default function Header() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </DropdownMenuContent>
+      </DropdownMenu>
     </div>
+  </main>
   )
 }
 

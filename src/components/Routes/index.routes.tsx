@@ -33,6 +33,7 @@ import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
 import { AdmissionModule } from "@/pages/AdmissionPage";
+import TimeTableManager from "../Settings/time-table-manager";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -243,6 +244,11 @@ export default function RootRoute() {
               <Route path="leaves" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <LeaveManagementSettings />
+                </PrivateRoute>
+              } />
+              <Route path="timeTable" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <TimeTableManager></TimeTableManager>
                 </PrivateRoute>
               } />
             </Route>

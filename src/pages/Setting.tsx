@@ -19,7 +19,7 @@ const CompactSettingsPage: React.FC = () => {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-white">
       <SettingsSidebar currentPath='' />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden no-custom-scroll">
         <ScrollArea className="h-full">
           <div className="p-6">
             {/* <AnimatePresence mode="wait">
