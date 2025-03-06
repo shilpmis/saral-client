@@ -70,13 +70,23 @@ export default function Header() {
               />
             </Avatar>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-w-[90rem]" align="end" forceMount>
+          <DropdownMenuContent className="max-w-[90rem]" align="end">
+          <DropdownMenuItem>
+               <div className="flex flex-col"> {/* Container for the inputs */}
+               <p className="border-none">
+                      {users?.name?.toUpperCase()}
+               </p>
+               <p className="border-none focus:ring-0">
+                      {users?.saral_email}
+              </p>
+              </div>
+          </DropdownMenuItem>
             <Dialog>
               <DialogTrigger
                 asChild
                 className="hover:bg-gray-100 px-2 w-60 py-1"
               >
-                <button className="flex items-center space-x-2 gap-3 mb-1">
+                <button className="flex items-center space-x-2 gap-3 my-2">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </button>
@@ -205,7 +215,7 @@ export default function Header() {
             >
               <DialogTrigger
                 asChild
-                className="bg-red-400 hover:bg-gray-100 rounded border px-2 w-60 py-1"
+                className="bg-red-600 hover:bg-gray-100 rounded border px-2 w-60 py-1"
               >
                 <button className="flex items-center space-x-2 gap-3 mt-2 ">
                   <LogOut />
