@@ -43,3 +43,4 @@ const CompactSettingsPage: React.FC = () => {
 
 export default CompactSettingsPage
 
+
