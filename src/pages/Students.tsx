@@ -16,6 +16,8 @@ import { selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
 import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
+// import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 import {
   useLazyFetchSingleStundetQuery,
   useLazyFetchStudentForClassQuery,
@@ -53,6 +55,7 @@ export const Students: React.FC = () => {
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadErrors, setUploadErrors] = useState<string[]>([])
   const [bulkUploadStudents] = useBulkUploadStudentsMutation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -163,22 +166,31 @@ export const Students: React.FC = () => {
     try {
       setIsUploading(true)
       setUploadError(null)
+      setUploadErrors([])
 
-      const response = await bulkUploadStudents({
+      const response : any = await bulkUploadStudents({
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
         file: selectedFile,
-      }).unwrap()
-
-      // Close the dialog
-      setDialogOpenForBulkUpload(false)
-
-      // Show success toast
-      toast({
-        title: "Upload Successful",
-        description: `Successfully uploaded ${response.totalInserted} students`,
-        variant: "default",
       })
+
+      if(response.error) {
+        console.log("response error" ,response)
+        setUploadErrors(response.error.data.errors || ["Failed to upload students. Please try again."])
+      }
+      if(response.data) {
+        console.log("response" ,response)
+        // Close the dialog
+        setDialogOpenForBulkUpload(false)
+  
+        // Show success toast
+        toast({
+          title: "Upload Successful",
+          description: `Successfully uploaded ${response.data.totalInserted} students`,
+          variant: "default",
+        })
+      }
+
 
       // Refresh the student list
       if (selectedDivision) {
@@ -201,6 +213,7 @@ export const Students: React.FC = () => {
       console.error("Upload error:", error)
       setUploadError(error.data?.message || "Failed to upload students. Please try again.")
 
+      setUploadErrors(error.data?.errors || ["Failed to upload students. Please try again."])
       // Show error toast
       toast({
         title: "Upload Failed",
@@ -345,6 +358,43 @@ export const Students: React.FC = () => {
                   />
                   {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
                   {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
+                  {uploadErrors.length > 0 && (
+      <Card className="mt-4 max-h-30 overflow-y-auto">
+        <CardHeader className="pb-2">
+          
+        </CardHeader>
+        <CardContent>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                  Row
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                  Error Message
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {uploadErrors.map((error: any, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {error.row}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">
+                    {error.errors.map((fieldError: any, fieldIndex: number) => (
+                      <div key={fieldIndex}>
+                        {fieldError.message}
+                      </div>
+                    ))}
+          </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    )}
                   <div className="flex justify-end">
                     <Button
                       className="w-1/2"
