@@ -24,6 +24,7 @@ import {
   useAddOtherStaffMutation,
   useUpdateTeacherMutation,
   useBulkUploadTeachersMutation,
+  useUpdateOtherStaffMutation,
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
 import { PageMeta } from "@/types/global"
@@ -104,6 +105,11 @@ export const Staff: React.FC = () => {
     setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null });
    }
   }
+  const handleOtherStaffFormOpenChange = (open :boolean) => {
+    if(!open) {
+    setOpenDialogForOtherStaff({ isOpen: open, type: "add", selectedOtherStaff: null });
+    }
+   }
 
   const handleStaffFormClose = () => {
     console.log("Close form event");
@@ -111,6 +117,7 @@ export const Staff: React.FC = () => {
   }
 
   const [updateTeacher] = useUpdateTeacherMutation()
+  const [updateOtherStaff] = useUpdateOtherStaffMutation()
 
   
   const handleSearchFilter = (value: string) => {
@@ -212,11 +219,32 @@ export const Staff: React.FC = () => {
       }
       await updateTeacher(payload).unwrap();
 
-      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
+      setOpenDialogForTeacher({ isOpen: false, type: "edit", selectedTeacher: null });
       fetchDataForActiveTab(activeTab as "teaching" , 1);
     } catch (error) {
       console.error("Error editing staff:", error);
       
+    }
+
+  }
+  const handleEditOtherStaffSubmit = async (data : any) => {
+    console.log("edit other staff data id", data?.id)
+
+    try {
+      const payload = {
+        school_id: authState.user!.school_id,
+        otherStaff_id: data?.id,
+        data : {
+          ...otherInitialData,
+          ...data
+        }       
+      }
+      await updateOtherStaff(payload).unwrap();
+
+      setOpenDialogForOtherStaff({ isOpen: false, type: "edit", selectedOtherStaff: null });
+      fetchDataForActiveTab(activeTab as "non-teaching" , 1);
+    } catch (error) {
+      console.error("Error editing staff:", error);    
     }
 
   }
@@ -409,7 +437,7 @@ export const Staff: React.FC = () => {
                 page_meta: currentDisplayDataForOtherStaff?.page_meta,
               }}
               onEdit={handleEditOtherStaff}
-              type="teaching"
+              type="non-teaching"
               onPageChange={onPageChange}
             />
           )}
@@ -439,6 +467,36 @@ export const Staff: React.FC = () => {
             <StaffForm
               onSubmit={handleEditStaffSubmit}
               initialData={teacherInitialData}
+              formType="update"
+              onClose={handleStaffFormClose}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={openDialogForOtherStaff.isOpen}
+        // id="staff-form-dialog"
+        onOpenChange={(open) => handleOtherStaffFormOpenChange(open)}
+      >
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>
+              {openDialogForOtherStaff.type === "add"
+                ? "Add New Staff"
+                : "Edit Staff"}
+            </DialogTitle>
+          </DialogHeader>
+          {openDialogForOtherStaff.type === "add" ? (
+            <StaffForm
+              onSubmit={handleAddStaffSubmit}
+              formType="create"
+              onClose={handleStaffFormClose}
+            />
+          ) : (
+            <StaffForm
+              onSubmit={handleEditOtherStaffSubmit}
+              initialData={otherInitialData}
               formType="update"
               onClose={handleStaffFormClose}
             />
