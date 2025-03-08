@@ -35,6 +35,7 @@ export interface StudentMeta {
 }
 
 export interface Student {
+  Student: any;
   id: number,
   school_id: number;
   first_name: string;
@@ -44,7 +45,7 @@ export interface Student {
   middle_name_in_guj: string;
   last_name_in_guj: string;
   gender: 'Male' | 'Female';
-  gr_no: number;
+  gr_no: string;
   birth_date: string;
   primary_mobile: number;
   father_name: string;
