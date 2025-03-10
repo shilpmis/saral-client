@@ -89,7 +89,6 @@ export default function GeneralSettings() {
   */
 
   const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.school_id);
-  console.log(data?.organization);
   
   const basicSchoolDataForm = useForm<z.infer<typeof basicSchoolDataSchema>>({
     resolver: zodResolver(basicSchoolDataSchema),
@@ -228,116 +227,118 @@ export default function GeneralSettings() {
         <CardHeader>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
+          {
+            basicSchoolDataForm.getValues('organization.organization_logo') !== "" ? (
+              <img
+            src={basicSchoolDataForm.getValues('organization.organization_logo')} // Replace with your image path
+            alt="Organization Icon"
+            className="h-20 w-20 rounded-full" // Adjust size and style as needed
+          />
+            ):(
+              <img
             src="https://upload.wikimedia.org/wikipedia/commons/0/08/Seal_of_Gujarat.svg" // Replace with your image path
             alt="Organization Icon"
             className="h-20 w-20 rounded-full" // Adjust size and style as needed
           />
+            )
+          }
           <div className="flex flex-col">
             <CardTitle>Organization Details </CardTitle>
-            <CardDescription>
-             your Organization fundamental information
-            </CardDescription>
           </div>
         </div>
       </div>
     </CardHeader>
-          <Form {...basicSchoolDataForm}>
-            <form onSubmit={basicSchoolDataForm.handleSubmit(onSubmitBasicSchoolData)}>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+    <Form {...basicSchoolDataForm}>
+      <form onSubmit={basicSchoolDataForm.handleSubmit(onSubmitBasicSchoolData)}>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                 <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.head_contact_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Head Contact Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder=" " {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.head_contact_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Head Contact Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder=" " {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                 <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.head_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Head Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="" {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.head_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Head Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.pincode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pincode</FormLabel>
-                      <FormControl>
-                        <Input placeholder="pincode" {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.pincode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pincode</FormLabel>
+                  <FormControl>
+                    <Input placeholder="pincode" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="address" {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="address" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.subscription_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subscription Type</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={loading.basicSchoolData}>
-                  {loading.basicSchoolData ? "Saving..." : "Save"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.subscription_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Type</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </CardContent>
+      </form>
+    </Form>
         </Card>
 
         <Card>
