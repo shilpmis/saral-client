@@ -227,21 +227,11 @@ export default function GeneralSettings() {
         <CardHeader>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {
-            basicSchoolDataForm.getValues('organization.organization_logo') !== "" ? (
               <img
             src={basicSchoolDataForm.getValues('organization.organization_logo')} // Replace with your image path
             alt="Organization Icon"
             className="h-20 w-20 rounded-full" // Adjust size and style as needed
           />
-            ):(
-              <img
-            src="https://upload.wikimedia.org/wikipedia/commons/0/08/Seal_of_Gujarat.svg" // Replace with your image path
-            alt="Organization Icon"
-            className="h-20 w-20 rounded-full" // Adjust size and style as needed
-          />
-            )
-          }
           <div className="flex flex-col">
             <CardTitle>Organization Details </CardTitle>
           </div>
