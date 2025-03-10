@@ -4,6 +4,17 @@ import ApiService from "./ApiService";
 import { setSchoolCredential } from "@/redux/slices/schoolSlice";
 import baseUrl from "@/utils/base-urls";
 
+interface Organization {
+    name:string,
+    organization_id:number,
+    organization_logo: any,
+    pincode: number,
+    username: string,
+    head_contact_number: number,
+    heade_name: string,
+    address: string,
+}
+
 interface School {
     id: number,
     name: string,
@@ -14,7 +25,11 @@ interface School {
     status: string,
     established_year: string,
     school_type: string,
-    address: string
+    address: string,
+    branch_code:string,
+    city: string,
+    created_at: Date,
+    organization: Organization
 }
 
 interface TypeForUpdateSchoolData {

@@ -29,18 +29,26 @@ interface TypeForUpdateSchoolData {
 }
 
 const basicSchoolDataSchema = z.object({
+  organization: z.object({
+    name: z.string(),
+    organization_id: z.number(),
+    organization_logo: z.string(),
+    head_contact_number: z.number(),
+    head_name: z.string(),
+    pincode: z.number(),
+    username: z.string(),
+    address: z.any()
+  }),
   name: z.string().min(2, {
     message: "School name must be at least 2 characters.",
   }),
-  username: z.string().min(3, {
-    message: "School short-key must be at least 3 characters.",
-  }).trim(),
+  branch_code: z.string(),
   established_year: z.string().regex(/^\d{4}$/, {
     message: "Please enter a valid year (YYYY).",
   }),
   school_type: z.string({
     required_error: "Please select a school type.",
-  }),
+  }), 
 })
 
 const contactInformationSchema = z.object({
@@ -79,12 +87,23 @@ export default function GeneralSettings() {
   */
 
   const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.school_id);
-
+  console.log(data?.branch_code);
+  
   const basicSchoolDataForm = useForm<z.infer<typeof basicSchoolDataSchema>>({
     resolver: zodResolver(basicSchoolDataSchema),
     defaultValues: {
+      organization: {
+        name: "",
+        organization_id: 0,
+        organization_logo: "",
+        head_contact_number: 0,
+        head_name: "",
+        pincode: 0,
+        username: "",
+        address: ""
+      },
       name: "",
-      username: "",
+      branch_code: "",
       established_year: "",
       school_type: " ",
     },
@@ -173,11 +192,15 @@ export default function GeneralSettings() {
    */
   useEffect(() => {
     basicSchoolDataForm.reset({
+      organization: data?.organization,
       name: data?.name,
-      username: data?.username,
+      branch_code: data?.branch_code,
       established_year: data?.established_year,
-      school_type: data?.school_type == "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter"
+      school_type: data?.school_type === "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter",
     })
+   console.log(basicSchoolDataForm.getValues('organization.organization_logo'));
+   
+    
   }, [data])
 
   useEffect(() => {
@@ -188,8 +211,6 @@ export default function GeneralSettings() {
     })
   }, [data])
 
-  console.log("Check data " ,data)
-
   return (
     <>
       {isSuccess && (<div className="space-y-6">
@@ -199,6 +220,128 @@ export default function GeneralSettings() {
             Manage your school's basic information, contact details, and subscription
           </p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {/* <Building2 className="h-5 w-5" /> */}
+              Basic Organization Data
+            </CardTitle>
+            <CardDescription>
+              Update your Organization fundamental information
+            </CardDescription>
+          </CardHeader>
+          <Form {...basicSchoolDataForm}>
+            <form onSubmit={basicSchoolDataForm.handleSubmit(onSubmitBasicSchoolData)}>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter Org name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.organization_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Id</FormLabel>
+                      <FormControl>
+                        <Input placeholder="" {...field}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                  <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.organization_logo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization logo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="" {...field}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                 <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.head_contact_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Head Contact Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder=" " {...field}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                 <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.head_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Head Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="" {...field}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.pincode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pincode</FormLabel>
+                      <FormControl>
+                        <Input placeholder="pincode" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" disabled={loading.basicSchoolData}>
+                  {loading.basicSchoolData ? "Saving..." : "Save"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -229,12 +372,12 @@ export default function GeneralSettings() {
 
                 <FormField
                   control={basicSchoolDataForm.control}
-                  name="username"
+                  name="branch_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Short-Key/username</FormLabel>
+                      <FormLabel>Branch Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter short-key/username for school" {...field} disabled />
+                        <Input placeholder="Enter short-key/username for school" {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
