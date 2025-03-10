@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, FileDown, Upload, MoreHorizontal } from "lucide-react"
+import { Plus, FileDown, Upload, MoreHorizontal, AlertTriangle, Trash } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
@@ -27,6 +27,7 @@ import {
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
 import { PageMeta } from "@/types/global"
+import { motion } from "framer-motion"
 
 
 const FilterOptions: React.FC<{
@@ -88,6 +89,8 @@ export const Staff: React.FC = () => {
   const [bulkUploadTeachers] = useBulkUploadTeachersMutation();
   const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false) 
 
+
+    const [isdelete, setIsDelete] = useState(false)
 
   const handleUpload = async (schoolId : number) => {
     if (!fileName) return alert("Please select a file.");
@@ -221,6 +224,10 @@ export const Staff: React.FC = () => {
 
   }
   
+  const handleDelete = async () => {
+    setIsDelete(true)
+    //delete function call here
+  } 
 
   const handleChooseFile = () => {
     fileInputRef.current?.click()
@@ -393,6 +400,7 @@ export const Staff: React.FC = () => {
                 page_meta: currentDisplayDataForTeachers?.page_meta,
               }}
               onEdit={handleEditStaff}
+              onDelete={handleDelete}
               type="teaching"
               onPageChange={onPageChange}
             />
@@ -409,6 +417,7 @@ export const Staff: React.FC = () => {
                 page_meta: currentDisplayDataForOtherStaff?.page_meta,
               }}
               onEdit={handleEditOtherStaff}
+              onDelete={handleDelete}
               type="teaching"
               onPageChange={onPageChange}
             />
@@ -445,6 +454,33 @@ export const Staff: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+         <Dialog open={isdelete} onOpenChange={(open)=> setIsDelete(open)}>
+              <DialogContent className="max-w-md rounded-2xl shadow-lg">
+                <DialogHeader className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
+                  >
+                    <Trash className="text-red-600 w-7 h-7" />
+                  </motion.div>
+                  <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+                  <DialogDescription className="text-gray-600">
+                    Are you sure you want to Delete Staff?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="mt-4 flex justify-center space-x-4">
+                  <Button type="button" variant="outline" onClick={() => setIsDelete(false)} className="px-6 py-2 rounded-lg">
+                    Cancel
+                  </Button>
+                  <Button type="button" variant="destructive" className="px-6 py-2 rounded-lg bg-red-600 text-white">
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
       {/* <Dialog>
         <DialogContent>
