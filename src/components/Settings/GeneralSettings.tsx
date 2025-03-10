@@ -284,7 +284,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.basicSchoolData}>
-                  {loading.basicSchoolData ? "Saving..." : "Save"}
+                  {loading.basicSchoolData ? "Saving..." : t("save")}
                 </Button>
               </CardFooter>
             </form>
@@ -350,7 +350,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.contactInformation}>
-                  {loading.contactInformation ? "Saving..." : "Save"}
+                  {loading.contactInformation ? "Saving..." : t("save")}
                 </Button>
               </CardFooter>
             </form>
@@ -398,7 +398,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.subscription}>
-                  {loading.subscription ? "Updating..." : "Update Subscription"}
+                  {loading.subscription ? "Updating..." : t("update_subcription")}
                 </Button>
               </CardFooter>
             </form>

@@ -574,7 +574,7 @@ export default function AcademicSettings() {
         <Dialog open={isDivisionForDialogOpen} onOpenChange={setIsDivisionForDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division</DialogTitle>
+              <DialogTitle>{formForDivsion.getValues('formType') === 'create' ? t("add_division") : "Update"}</DialogTitle>
               <DialogDescription>{t("confirm_or_modify_the_division_alias.")}</DialogDescription>
             </DialogHeader>
             {<div className="grid gap-4 py-4">
@@ -625,7 +625,7 @@ export default function AcademicSettings() {
                     {t("cancel")}
                     </Button>
                     <Button onClick={confirmDivisionChanges}>
-                      {formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division
+                      {formForDivsion.getValues('formType') === 'create' ? t("add_division") : t("update_division")}
                     </Button>
                   </DialogFooter>
                 </form>

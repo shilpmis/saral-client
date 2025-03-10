@@ -6,7 +6,7 @@ export default function PayrollSettings() {
 
   const { t } = useTranslation();
   return (
-    <SaralCard title="Notifications" description="Manage your notification preferences">
+    <SaralCard title={t("notifications")} description={t("manage_your_notification_preferences")}>
                 <h3>{t("setting_page")}</h3>
             </SaralCard>
   )

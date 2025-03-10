@@ -264,11 +264,11 @@ export default function StaffSettings() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? "Add New Role" : "Edit Role"}</DialogTitle>
+            <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? t("add_new_role") : t("edit_role")}</DialogTitle>
             <DialogDescription>
               {formForStaffRole.getValues('formType') === "create"
-                ? "Enter the details of the new role here."
-                : "Update the details of the role here."}
+                ? t("enter_the_details_of_the_new_role_here.")
+                : t("update_the_details_of_the_role_here.")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -317,7 +317,7 @@ export default function StaffSettings() {
                     {t("cancel")}
                   </Button>
                   <Button type="submit">
-                    {formForStaffRole.getValues('formType') === "create" ? "Add Role" : "Update Role"}
+                    {formForStaffRole.getValues('formType') === "create" ? t("add_role") : t("update_role")}
                   </Button>
                 </div>
               </form>
@@ -330,17 +330,17 @@ export default function StaffSettings() {
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">
             <AlertTriangle className="text-red-600 w-7 h-7" />
-            <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Are you sure you want to Delete ?
+            {t("are_you_sure_you_want_to_delete ?")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex justify-center space-x-4">
             <Button type="button" variant="outline" onClick={() => setIsDialogForDeleteStaffOpen(false)} className="px-6 py-2 rounded-lg">
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="button" variant="destructive" onClick={() => handleDeleteRole(formForStaffRole.getValues('role_id')!)} className="px-6 py-2 rounded-lg bg-red-600 text-white">
-              Delete
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

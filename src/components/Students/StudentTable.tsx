@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SaralPagination } from "../ui/common/SaralPagination"
 import type { PageDetailsForStudents, Student } from "@/types/student"
 import type { Division } from "@/types/academic"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentTableProps {
   filteredStudents: Student[]
@@ -27,7 +28,7 @@ export default function StudentTable({
 }: StudentTableProps)
  {
   const [currentPage, setCurrentPage] = useState<number>(1)
-
+  const {t} = useTranslation()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
@@ -56,23 +57,23 @@ export default function StudentTable({
       onDelete(studentId)
     }
   }
-
+  
   return (
     <div className="p-1">
       {paginatedData(currentPage).length === 0 ? (
-        <div className="text-center py-4 text-gray-500">No records found</div>
+        <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>GR No</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Roll No</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Guardian</TableHead>
-              <TableHead>Contact Number</TableHead>
-              <TableHead>Aadhar No</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t("gr_no")}</TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead>{t("roll_no")}</TableHead>
+              <TableHead>{t("gender")}</TableHead>
+              <TableHead>{t("father_name")}</TableHead>
+              <TableHead>{t("contact_number")}</TableHead>
+              <TableHead>{t("aadhar_no")}</TableHead>
+              <TableHead>{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

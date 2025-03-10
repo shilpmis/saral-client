@@ -483,9 +483,9 @@ export function LeaveManagementSettings() {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{DialogForLeaveType.type === 'edit' ? "Edit Leave Type" : "Add Leave Type"}</DialogTitle>
+            <DialogTitle>{DialogForLeaveType.type === 'edit' ? t("edit_leave_type") : t("add_leave_type")}</DialogTitle>
             <DialogDescription>
-              {DialogForLeaveType.type === 'edit' ? "Edit the details of the leave type." : "Enter the details of the new leave type."}
+              {DialogForLeaveType.type === 'edit' ? t("edit_the_details_of_the_new_leave_type.") : t("edit_the_details_of_the_new_leave_type.")}
             </DialogDescription>
           </DialogHeader>
           <Form {...leaveTypeForm}>
@@ -547,7 +547,7 @@ export function LeaveManagementSettings() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">{DialogForLeaveType.type === 'edit' ? "Update" : "Create"}</Button>
+                <Button type="submit">{DialogForLeaveType.type === 'edit' ? t("update") : "Create"}</Button>
               </DialogFooter>
             </form>
           </Form>
@@ -565,11 +565,11 @@ export function LeaveManagementSettings() {
       }}>
         <DialogContent className="sm:max-w-[425px] h-[500px] overflow-auto">
           <DialogHeader>
-            <DialogTitle>{DialogForLeavePolicy.type === 'edit' ? "Edit Leave Policy" : "Add Leave Policy"}</DialogTitle>
+            <DialogTitle>{DialogForLeavePolicy.type === 'edit' ? "Edit Leave Policy" : t("add_leave_policy")}</DialogTitle>
             <DialogDescription>
               {DialogForLeavePolicy.type === 'edit'
                 ? "Edit the details of the leave policy."
-                : "Enter the details of the new leave policy."}
+                : t("edit_the_details_of_the_new_leave_policy.")}
             </DialogDescription>
           </DialogHeader>
           <Form {...leavePolicyForm}>
@@ -708,7 +708,7 @@ export function LeaveManagementSettings() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">{DialogForLeavePolicy.type === 'edit' ? "Update" : "Create"}</Button>
+                <Button type="submit">{DialogForLeavePolicy.type === 'edit' ? "Update" : t("create")}</Button>
               </DialogFooter>
             </form>
           </Form>
