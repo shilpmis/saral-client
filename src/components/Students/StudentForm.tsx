@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
@@ -12,24 +14,33 @@ import { type StudentFormData, studentSchema } from "@/utils/student.validation"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import type { AcademicClasses, Division } from "@/types/academic"
-import { useDispatch } from "react-redux"
-import { selectAuthState } from '@/redux/slices/authSlice';
+import { selectAuthState } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { useAddSingleStudentMutation, useLazyFetchStudentForClassQuery, useUpdateStudentMutation } from "@/services/StundetServices"
-import { z } from "zod"
-import { Student, StudentEntry, UpdateStudent } from "@/types/student"
+import {
+  useAddSingleStudentMutation,
+  useLazyFetchStudentForClassQuery,
+  useUpdateStudentMutation,
+} from "@/services/StundetServices"
+import type { z } from "zod"
+import type { Student, StudentEntry, UpdateStudent } from "@/types/student"
 import { Loader2 } from "lucide-react"
 
 interface StudentFormProps {
   onClose: () => void
   form_type: "create" | "update" | "view"
   initial_data?: Student | null
+  setListedStudentForSelectedClass?: (data: any) => void
+  setPaginationDataForSelectedClass?: (data: any) => void
 }
 
-
-const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_type }) => {
-
+const StudentForm: React.FC<StudentFormProps> = ({
+  onClose,
+  initial_data,
+  form_type,
+  setListedStudentForSelectedClass,
+  setPaginationDataForSelectedClass,
+}) => {
   const formatData = (value: any): string => {
     return new Date(value).toISOString().split("T")[0]
   }
@@ -94,14 +105,17 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
     { isLoading: isLoadingForAcademicClasses, isError: isErrorWhileFetchingClass, error: errorWhiwlFetchingClass },
   ] = useLazyGetAcademicClassesQuery()
 
-  const [updateStudent, { isLoading: isStundetGetingUpdate, isError: errorWhileUpdateStudent }] = useUpdateStudentMutation();
-  const [createStudent, { isLoading: isStundetGetingCreate, isError: errorWhileCreateStudent }] = useAddSingleStudentMutation();
+  const [updateStudent, { isLoading: isStundetGetingUpdate, isError: errorWhileUpdateStudent }] =
+    useUpdateStudentMutation()
+  const [createStudent, { isLoading: isStundetGetingCreate, isError: errorWhileCreateStudent }] =
+    useAddSingleStudentMutation()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [selectedAdmissionClass, setselectedAdmissionClass] = useState<string>("")
   const [selectedAdmissionDivision, setselectedAdmissionDivision] = useState<Division | null>(null)
   const [activeTab, setActiveTab] = useState("personal")
+  const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
 
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
@@ -115,9 +129,9 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
     }
   }, [AcademicClasses, selectedClass])
 
-  let available_classes = useMemo<Division[] | null>(() => {
+  const available_classes = useMemo<Division[] | null>(() => {
     if (AcademicClasses) {
-      let cls: Division[] = []
+      const cls: Division[] = []
       for (let i = 0; i < AcademicClasses!.length; i++) {
         AcademicClasses[i].divisions.map((div) => {
           cls.push(div)
@@ -125,7 +139,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       }
       return cls
     } else {
-      return null;
+      return null
     }
   }, [AcademicClasses])
 
@@ -143,8 +157,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
   const handleClassChange = useCallback(
     (value: string, type: "admission_Class" | "class") => {
-      if (type === 'admission_Class') {
-        setselectedAdmissionClass(value);
+      if (type === "admission_Class") {
+        setselectedAdmissionClass(value)
         setselectedAdmissionDivision(null)
         form.setValue("admission_division", "") // Reset division when class changes
       } else {
@@ -158,11 +172,13 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
 
   const handleDivisionChange = useCallback(
     (division_id: string, type: "admission_Class" | "class") => {
-      if (type === 'admission_Class') {
+      if (type === "admission_Class") {
         const selectedDiv = availableDivisions?.divisions.find((div) => div.id.toString() === division_id)
         setSelectedDivision(selectedDiv || null)
       } else {
-        const selectedDiv = availableDivisionsForAdmissionClass?.divisions.find((div) => div.id.toString() === division_id)
+        const selectedDiv = availableDivisionsForAdmissionClass?.divisions.find(
+          (div) => div.id.toString() === division_id,
+        )
         setselectedAdmissionDivision(selectedDiv || null)
       }
     },
@@ -170,14 +186,15 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
   )
 
   const handleSubmit: SubmitHandler<StudentFormData> = async (values: z.infer<typeof studentSchema>) => {
-
-
     if (form_type === "create") {
+      const CurrentClass = available_classes?.filter(
+        (cls) => cls.class == values?.class && cls.division == values.division,
+      )[0]
+      const AdmissionClass = available_classes?.filter(
+        (cls) => cls.class == values?.admission_class && cls.division == values.admission_division,
+      )[0]
 
-      let CurrentClass = available_classes?.filter((cls) => cls.class == values?.class && cls.division == values.division)[0];
-      let AdmissionClass = available_classes?.filter((cls) => cls.class == values?.admission_class && cls.division == values.admission_division)[0];
-
-      let payload: StudentEntry = {
+      const payload: StudentEntry = {
         students_data: {
           class_id: CurrentClass!.id,
           first_name: values.first_name,
@@ -196,7 +213,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
           mother_name_in_guj: values.mother_name_in_guj,
           roll_number: values.roll_number,
           aadhar_no: values.aadhar_no,
-          is_active: true
+          is_active: true,
         },
         student_meta_data: {
           aadhar_dise_no: values.aadhar_dise_no,
@@ -220,32 +237,31 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
           bank_name: values.bank_name,
           account_no: values.account_no,
           IFSC_code: values.IFSC_code,
-        }
+        },
       }
 
-      let new_student: any = await createStudent({payload: payload});
+      const new_student: any = await createStudent({ payload: payload })
 
       if (new_student.data) {
         toast({
-          variant: 'default',
-          title: 'Success',
-          description: 'Student Created Successfully'
+          variant: "default",
+          title: "Success",
+          description: "Student Created Successfully",
         })
       }
 
       if (new_student.error) {
         new_student.error.data.errors.map((error: any) => {
           toast({
-            variant: 'destructive',
-            title: error
+            variant: "destructive",
+            title: error,
           })
         })
       }
     } else if (form_type === "update") {
-          console.log("Initial Data", initial_data)
-      let payload: UpdateStudent = {
+      const payload: UpdateStudent = {
         student_meta_data: {},
-        students_data: {}
+        students_data: {},
       }
 
       // Compare form values with initial data for student_meta_data fields
@@ -273,7 +289,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       if (values.category !== initial_data?.student_meta?.category) {
         payload.student_meta_data.category = values.category
       }
-      if (formatData(values.admission_date) !== formatData((initial_data!.student_meta!.admission_date))) {
+      if (formatData(values.admission_date) !== formatData(initial_data!.student_meta!.admission_date)) {
         payload.student_meta_data.admission_date = formatData(values.admission_date)
       }
       if (values.admission_division !== initial_data?.student_meta?.admission_class_id?.toString()) {
@@ -300,8 +316,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
       if (values.state !== initial_data?.student_meta?.state) {
         payload.student_meta_data.state = values.state
       }
-      if ((values.postal_code) === initial_data?.student_meta?.postal_code) {
-        payload.student_meta_data.postal_code = (values.postal_code)
+      if (values.postal_code === initial_data?.student_meta?.postal_code) {
+        payload.student_meta_data.postal_code = values.postal_code
       }
       if (values.bank_name !== initial_data?.student_meta?.bank_name) {
         payload.student_meta_data.bank_name = values.bank_name
@@ -363,13 +379,30 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         payload.students_data.aadhar_no = values.aadhar_no
       }
 
-      let updated_student: any = await updateStudent({ student_id: initial_data!.id, payload: payload });
+      const updated_student: any = await updateStudent({ student_id: initial_data!.id, payload: payload })
 
       if (updated_student.data) {
         toast({
-          variant: 'default',
-          title: "Student has been updated !"
+          variant: "default",
+          title: "Student has been updated !",
         })
+
+        // Fetch the updated student list for the current class
+        const response = await getStudentForClass({
+          class_id: initial_data!.class_id,
+          page: 1,
+          student_meta: true,
+        })
+
+        // Update the parent component's state with the new data
+        if (response.data && setListedStudentForSelectedClass) {
+          setListedStudentForSelectedClass(response.data.data)
+        }
+
+        if (response.data && setPaginationDataForSelectedClass) {
+          setPaginationDataForSelectedClass(response.data.meta)
+        }
+
         onClose()
       }
 
@@ -377,22 +410,20 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         console.log("Check this", updated_student.error)
         updated_student.error.data.errors.map((error: any) => {
           toast({
-            variant: 'destructive',
-            title: error
+            variant: "destructive",
+            title: error,
           })
         })
       }
     } else {
       toast({
-        variant: 'destructive',
-        title: "Internal Error !"
+        variant: "destructive",
+        title: "Internal Error !",
       })
     }
-
   }
 
   const handleNextTab = useCallback(async () => {
-
     if (activeTab === "personal") setActiveTab("family")
     else if (activeTab === "family") setActiveTab("academic")
     else if (activeTab === "academic") setActiveTab("other")
@@ -408,24 +439,23 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
     else if (activeTab === "bank") setActiveTab("address")
   }, [activeTab])
 
-
   useEffect(() => {
     if (form_type === "update") {
-
-      let CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
       if (CurrentClass) handleClassChange(CurrentClass.class, "class")
       if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
 
-      let CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      const CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
 
-      let AdmissionClass = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0]
+      const AdmissionClass = available_classes?.filter(
+        (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
+      )[0]
       if (AdmissionClass) handleClassChange(AdmissionClass.class, "admission_Class")
       if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
-      let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0]
-
-      // // // if (AdmissionClass) handleClassChange(AdmissionClass.toString(), "admission_Class")
-      // let AdmissionDivision = available_classes?.filter((cls) => cls.id === initial_data?.student_meta?.admission_class_id)[0].class
+      const AdmissionDivision = available_classes?.filter(
+        (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
+      )[0]
 
       form.reset({
         first_name: initial_data?.first_name,
@@ -457,25 +487,26 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         district: initial_data?.student_meta?.district,
         city: initial_data?.student_meta?.city,
         state: initial_data?.student_meta?.state,
-        postal_code: initial_data?.student_meta?.postal_code ? initial_data.student_meta.postal_code.toString() : undefined,
+        postal_code: initial_data?.student_meta?.postal_code
+          ? initial_data.student_meta.postal_code.toString()
+          : undefined,
         bank_name: initial_data?.student_meta?.bank_name,
         account_no: Number(initial_data?.student_meta?.account_no),
         admission_date: formatData(initial_data!.student_meta!.admission_date),
         IFSC_code: initial_data?.student_meta?.IFSC_code,
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-        // admission_class: initial_data?.student_meta?.admission_class_id?.toString(),
         admission_class: AdmissionDivision?.class,
         admission_division: AdmissionDivision?.division,
         class: CurrentDivision?.class,
-        division: CurrentDivision?.division
+        division: CurrentDivision?.division,
       })
     }
   }, [AcademicClasses])
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user!.school_id);
+      getAcademicClasses(authState.user!.school_id)
     }
   }, [setSelectedClass, setSelectedDivision])
 
@@ -595,10 +626,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -663,11 +691,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>Aadhar Number</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -680,11 +704,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>Aadhar DISE Number</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -770,11 +790,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>Primary Mobile</FormLabel>
                         <FormControl>
-                          <Input
-                            type="tel"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -787,11 +803,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>Secondary Mobile</FormLabel>
                         <FormControl>
-                          <Input
-                            type="tel"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -800,11 +812,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousTab}
-                >
+                <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -828,11 +836,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>GR Number</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -845,11 +849,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                       <FormItem>
                         <FormLabel>Roll Number</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(+e.target.value)}
-                          />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -881,12 +881,12 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            handleClassChange(value, 'admission_Class');
+                            field.onChange(value)
+                            handleClassChange(value, "admission_Class")
                           }}
                         >
                           <FormControl>
-                            <SelectTrigger >
+                            <SelectTrigger>
                               <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                           </FormControl>
@@ -897,13 +897,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                             {AcademicClasses.map(
                               (cls, index) =>
                                 cls.divisions.length > 0 && (
-                                  <SelectItem
-                                    key={index}
-                                    value={cls.class.toString()}
-                                  >
+                                  <SelectItem key={index} value={cls.class.toString()}>
                                     Class {cls.class}
                                   </SelectItem>
-                                )
+                                ),
                             )}
                           </SelectContent>
                         </Select>
@@ -920,13 +917,13 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            handleDivisionChange(value, 'admission_Class');
+                            field.onChange(value)
+                            handleDivisionChange(value, "admission_Class")
                           }}
                           disabled={!selectedAdmissionClass}
                         >
                           <FormControl>
-                            <SelectTrigger >
+                            <SelectTrigger>
                               <SelectValue placeholder="Select Division" />
                             </SelectTrigger>
                           </FormControl>
@@ -935,19 +932,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                               Divisions
                             </SelectItem>
                             {availableDivisionsForAdmissionClass &&
-                              availableDivisionsForAdmissionClass.divisions.map(
-                                (division, index) => (
-                                  <SelectItem
-                                    key={index}
-                                    value={division.division}
-                                  >
-                                    {`${division.division} ${division.aliases
-                                      ? "- " + division.aliases
-                                      : ""
-                                      }`}
-                                  </SelectItem>
-                                )
-                              )}
+                              availableDivisionsForAdmissionClass.divisions.map((division, index) => (
+                                <SelectItem key={index} value={division.division}>
+                                  {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -965,12 +954,12 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            handleClassChange(value, 'class');
+                            field.onChange(value)
+                            handleClassChange(value, "class")
                           }}
                         >
                           <FormControl>
-                            <SelectTrigger >
+                            <SelectTrigger>
                               <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                           </FormControl>
@@ -981,13 +970,10 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                             {AcademicClasses.map(
                               (cls, index) =>
                                 cls.divisions.length > 0 && (
-                                  <SelectItem
-                                    key={index}
-                                    value={cls.class.toString()}
-                                  >
+                                  <SelectItem key={index} value={cls.class.toString()}>
                                     Class {cls.class}
                                   </SelectItem>
-                                )
+                                ),
                             )}
                           </SelectContent>
                         </Select>
@@ -1004,13 +990,13 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            handleDivisionChange(value, 'class');
+                            field.onChange(value)
+                            handleDivisionChange(value, "class")
                           }}
                           disabled={!selectedClass}
                         >
                           <FormControl>
-                            <SelectTrigger >
+                            <SelectTrigger>
                               <SelectValue placeholder="Select Division" />
                             </SelectTrigger>
                           </FormControl>
@@ -1019,19 +1005,11 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                               Divisions
                             </SelectItem>
                             {availableDivisions &&
-                              availableDivisions.divisions.map(
-                                (division, index) => (
-                                  <SelectItem
-                                    key={index}
-                                    value={division.division}
-                                  >
-                                    {`${division.division} ${division.aliases
-                                      ? "- " + division.aliases
-                                      : ""
-                                      }`}
-                                  </SelectItem>
-                                )
-                              )}
+                              availableDivisions.divisions.map((division, index) => (
+                                <SelectItem key={index} value={division.division}>
+                                  {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -1069,11 +1047,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousTab}
-                >
+                <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1151,10 +1125,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -1173,11 +1144,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousTab}
-                >
+                <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1264,11 +1231,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousTab}
-                >
+                <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1304,11 +1267,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                     <FormItem>
                       <FormLabel>Account Number</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(+e.target.value)}
-                        />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1329,18 +1288,12 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousTab}
-                >
+                <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   Previous
                 </Button>
                 <Button type="submit">
                   {!isStundetGetingUpdate && (form_type === "create" ? "Submit" : "Update")}
-                  {isStundetGetingUpdate && (
-                    <Loader2 className="animate-spin" />
-                  )}
+                  {isStundetGetingUpdate && <Loader2 className="animate-spin" />}
                 </Button>
               </CardFooter>
             </Card>
@@ -1348,7 +1301,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ onClose, initial_data, form_t
         </Tabs>
       </form>
     </Form>
-  );
+  )
 }
 
 export default StudentForm
