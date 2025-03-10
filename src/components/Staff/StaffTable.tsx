@@ -100,7 +100,7 @@ export default function StaffTable({
                 <TableCell>{staff.role_meta.role}</TableCell>
                 <TableCell>{staff.employment_status}</TableCell>
                 <TableCell>
-                  <DropdownMenu>
+                  {/* <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
@@ -129,7 +129,10 @@ export default function StaffTable({
                       </DropdownMenuItem>
                       <DropdownMenuItem>Delete staff</DropdownMenuItem>
                     </DropdownMenuContent>
-                  </DropdownMenu>
+                  </DropdownMenu> */}
+                  <Button variant="outline" onClick={() => onEdit(staff.id)}>
+                    Edit
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

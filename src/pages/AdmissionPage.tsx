@@ -35,62 +35,6 @@ export const AdmissionModule: React.FC = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Admission Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AdmissionDashboard data={dashboardData} trends={admissionTrends} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center p-4 bg-blue-100 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600 mr-2" />
-                <div>
-                  <p className="text-sm text-blue-600">Total Inquiries</p>
-                  <p className="text-2xl font-bold text-blue-800">{dashboardData.totalInquiries}</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-yellow-100 rounded-lg">
-                <FileText className="h-6 w-6 text-yellow-600 mr-2" />
-                <div>
-                  <p className="text-sm text-yellow-600">Pending Applications</p>
-                  <p className="text-2xl font-bold text-yellow-800">{dashboardData.pendingApplications}</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-green-100 rounded-lg">
-                <UserCheck className="h-6 w-6 text-green-600 mr-2" />
-                <div>
-                  <p className="text-sm text-green-600">Accepted Admissions</p>
-                  <p className="text-2xl font-bold text-green-800">{dashboardData.acceptedAdmissions}</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-red-100 rounded-lg">
-                <UserX className="h-6 w-6 text-red-600 mr-2" />
-                <div>
-                  <p className="text-sm text-red-600">Rejected Applications</p>
-                  <p className="text-2xl font-bold text-red-800">{dashboardData.rejectedApplications}</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-purple-100 rounded-lg col-span-2">
-                <Calendar className="h-6 w-6 text-purple-600 mr-2" />
-                <div>
-                  <p className="text-sm text-purple-600">Upcoming Interviews</p>
-                  <p className="text-2xl font-bold text-purple-800">{dashboardData.upcomingInterviews}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Recent Inquiries</CardTitle>

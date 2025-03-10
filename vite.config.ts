@@ -6,19 +6,24 @@ import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import path from 'path';
 
-export default defineConfig({
-  plugins: [reactRefresh()],
-  css: {
-    postcss: {
-      plugins: [
-        tailwindcss(),
-        autoprefixer(),
-      ],
+export default defineConfig(({ mode }) => {
+  return {
+    plugins: [reactRefresh()],
+    css: {
+      postcss: {
+        plugins: [
+          tailwindcss(),
+          autoprefixer(),
+        ],
+      },
     },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
-  },
+    define: {
+      __Mode__: JSON.stringify(mode),
+    },
+  }
 })

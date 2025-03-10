@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -23,6 +21,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { login, useVerifyQuery } from '@/services/AuthService'
 import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from '@/redux/slices/authSlice'
 import { toast } from '@/hooks/use-toast'
+import { useState } from "react"
+import { School, BookOpen, Users } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const formSchema = z.object({
   email: z.string().email({
@@ -31,11 +32,12 @@ const formSchema = z.object({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters long.",
   }),
+  rememberMe: z.boolean().default(false),
 })
 
+export default function LoginPage() {
 
-export default function Login() {
-
+  const [isLoading, setIsLoading] = useState(false)
   const { pathname } = useLocation();
 
   const dispatch = useAppDispatch()
@@ -57,26 +59,26 @@ export default function Login() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       let user = await dispatch(login(values)).unwrap(); // ✅ Ensure we get resolved/rejected values properly
-      
+
       dispatch(setCredentialsForVerificationStatus({
         isVerificationInProgress: false,
         isVerificationFails: false,
         verificationError: null,
         isVerificationSuccess: true
       }));
-  
+
       toast({
         title: "Login successful!",
         description: "Welcome back!",
       });
-  
+
       setTimeout(() => {
         window.location.reload(); // ✅ Delay reload to ensure toast appears
       }, 500);
-      
+
     } catch (error) {
       console.error("Login failed:", error);
-  
+
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -84,7 +86,7 @@ export default function Login() {
       });
     }
   }
-  
+
 
   useEffect(() => {
     const isRootOrLogin = pathname === '/' || pathname === '/login';
@@ -93,20 +95,58 @@ export default function Login() {
     }
   }, [isAuthenticated]);
 
+
   return (
-    <>
-      {verificationStatus.isVerificationInProgress && <h3>Loading for Login....</h3>}
-      {!verificationStatus.isAuthenticated && <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-          <div className="hidden md:block bg-gray-200">
-            <img src="/melzo_logo.png?height=600&width=600" alt="School" className="object-cover w-full h-full" />
-          </div>
-          <div>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Login</CardTitle>
-              <CardDescription>Enter your credentials to access your account</CardDescription>
-            </CardHeader>
-            <CardContent>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-5xl">
+        <Card className="w-full overflow-hidden border-0 shadow-xl rounded-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* Left side - Branding and illustration */}
+            <div className="bg-gradient-to-br from-orange-400 to-orange-500 p-8 flex flex-col justify-between relative overflow-hidden">
+              <div className="relative z-10">
+                <img
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3LjVAjFk69d6GeBLLb3gcItn9mK7iE.png"
+                  alt="SARAL Logo"
+                  className="h-16 mb-12"
+                />
+
+                <h2 className="text-white text-3xl font-bold mb-4">Welcome to SARAL</h2>
+                <p className="text-orange-50 text-lg mb-8">Your complete school management solution</p>
+
+                <div className="space-y-6 mt-8">
+                  <div className="flex items-center space-x-3 text-white">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <School className="h-5 w-5" />
+                    </div>
+                    <span>Streamlined school administration</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-white">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <span>Comprehensive academic tracking</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-white">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <span>Complete student management</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-orange-300 rounded-full opacity-20 -mr-40 -mt-40"></div>
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-300 rounded-full opacity-20 -ml-40 -mb-40"></div>
+            </div>
+
+            {/* Right side - Login form */}
+            <div className="p-8 md:p-12 flex flex-col justify-center">
+              <div className="mb-10">
+                <h1 className="text-2xl font-bold text-gray-800">Sign in to your account</h1>
+                <p className="text-gray-500 mt-2">Enter your credentials to access your dashboard</p>
+              </div>
+
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -114,45 +154,95 @@ export default function Login() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="text-gray-700">Email Address</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter your email" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="your.email@school.saral"
+                            className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 transition"
+                            {...field}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <div className="flex justify-between items-center">
+                          <FormLabel className="text-gray-700">Password</FormLabel>
+                          <a href="#" className="text-sm text-orange-600 hover:text-orange-800 hover:underline">
+                            Forgot password?
+                          </a>
+                        </div>
                         <FormControl>
-                          <Input type="password" placeholder="Enter your password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 transition"
+                            {...field}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={authStatus === "loading"}>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    {authStatus === "loading" ? <Loader2 className="animate-spin" /> : "Log In"}
+
+                  <FormField
+                    control={form.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-gray-600">Remember me for 30 days</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-6 rounded-lg transition-colors"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In
+                      </>
+                    )}
                   </Button>
-                  {authError && <p className="text-red-500 text-sm">{authError}</p>}
                 </form>
               </Form>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <a href="#" className="text-sm text-blue-500 hover:underline">
-                Forgot password?
-              </a>
-            </CardFooter>
+
+              <div className="mt-8 text-center">
+                <p className="text-gray-500 text-sm">
+                  Don't have an account?{" "}
+                  <a href="#" className="text-orange-600 hover:underline font-medium">
+                    Contact administrator
+                  </a>
+                </p>
+              </div>
+            </div>
           </div>
         </Card>
-      </div>}
-    </>
+
+        <div className="text-center mt-6 text-gray-500 text-sm">
+          © {new Date().getFullYear()} SARAL School Management System. All rights reserved.
+        </div>
+      </div>
+    </div>
   )
 }
-
-

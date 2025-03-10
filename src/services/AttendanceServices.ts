@@ -1,7 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import baseUrl from "@/utils/base-urls"
 import { AttendanceDetails } from "@/types/attendance"
-import { markAttendance } from "@/redux/slices/attendanceSlice"
 
 export const AttendanceApi = createApi({
     reducerPath: "attendanceApi",

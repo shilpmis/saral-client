@@ -178,6 +178,7 @@ export const Staff: React.FC = () => {
   }, [currentDisplayDataForOtherStaff]);
 
   const handleAddStaffSubmit = async (data: StaffFormData) => {
+    console.log("data", data)
     try {
       const payload  = {
         school_id: authState.user!.school_id,
@@ -445,7 +446,6 @@ export const Staff: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-// persitence dialog
       {/* <Dialog>
         <DialogContent>
           <DialogHeader>

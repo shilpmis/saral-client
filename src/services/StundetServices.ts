@@ -41,8 +41,8 @@ export const StudentApi = createApi({
         body: students,
       }),
     }),
-    addSingleStudent: builder.mutation<Student, StudentEntry>({
-      query: (payload) => ({
+    addSingleStudent: builder.mutation<any, {payload : StudentEntry}>({
+      query: ({payload}) => ({
         url: `student`,
         method: "POST",
         body: payload,
