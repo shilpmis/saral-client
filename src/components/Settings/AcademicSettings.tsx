@@ -35,6 +35,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 const formSchemaForDivision = z.object({
@@ -56,6 +57,7 @@ const formSchemaForDivision = z.object({
     }).optional(),
   formType: z.enum(["create", "edit"])
 })
+
 
 const defaultStandards = [
   { id: 1, class: 1 },
@@ -91,6 +93,7 @@ export default function AcademicSettings() {
   const [isConfirmSaveDialogOpen, setIsConfirmSaveDialogOpen] = useState(false)
   const [isEditClassDialogOpen, setIsEditClassDialogOpen] = useState(false)
   const [isDivisionForDialogOpen, setIsDivisionForDialogOpen] = useState(false)
+  const {t} = useTranslation()
 
 
   const formForDivsion = useForm<z.infer<typeof formSchemaForDivision>>({
@@ -385,16 +388,16 @@ export default function AcademicSettings() {
         </div>
       }
       {!isLoading && <div className="space-y-6 overflow-y-auto p-4">
-        <SaralCard title="Academic Year Management" description="Current academic year information">
+        <SaralCard title={t("academic_year_management")} description={t("current_academic_year_information")}>
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold">2024-2025</h3>
             <Badge variant="secondary" className="text-lg">
-              Current Session
+            {t("current_session")}
             </Badge>
           </div>
         </SaralCard>
 
-        <SaralCard title="Class Management" description="Manage classes for the current academic year">
+        <SaralCard title={t("class_management")} description={t("manage_classes_for_the_current_academic_year")}>
           <div className="grid gap-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {defaultStandards.map((cls) => (
@@ -425,20 +428,20 @@ export default function AcademicSettings() {
             <div className="flex justify-end">
               <Button onClick={handleSaveButtonForSelectedClasses} disabled={!selectedClasses}>
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                {t("save")}
               </Button>
             </div>
           </div>
         </SaralCard>
 
         {academicClasses.length > 0 && (
-          <SaralCard title="Active Classes & Divisions" description="Manage divisions and aliases for selected classes">
+          <SaralCard title={t("active_classes_&_divisions")} description={t("manage_divisions_and_aliases_for_selected_classes")}>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Divisions</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("class")}</TableHead>
+                  <TableHead>{t("division")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -475,7 +478,7 @@ export default function AcademicSettings() {
                       <TableCell className="text-right">
                         <Button size="sm" variant="outline" onClick={() => handleAddDivision(std.class)}>
                           <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Division
+                          {t("add_division")} 
                         </Button>
                       </TableCell>
                     </TableRow>)}
@@ -489,13 +492,13 @@ export default function AcademicSettings() {
         <Dialog open={isEditClassDialogOpen} onOpenChange={setIsEditClassDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Class</DialogTitle>
-              <DialogDescription>Modify the class name or remove it.</DialogDescription>
+              <DialogTitle>{t("edit_class")}</DialogTitle>
+              <DialogDescription>{t("modify_the_class_name_or_remove_it")}.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="className" className="text-right">
-                  Class Name
+                {t("class_name")}
                 </Label>
                 <Input
                   id="className"
@@ -507,9 +510,9 @@ export default function AcademicSettings() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditClassDialogOpen(false)}>
-                Cancel
+                {t("cancel")}
               </Button>
-              <Button onClick={handleSaveEditClass}>Save Changes</Button>
+              <Button onClick={handleSaveEditClass}>{t("save_changes")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -529,7 +532,7 @@ export default function AcademicSettings() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="divisionAlias" className="text-right">
-                  Division Alias
+                  {t("division_alias")}
                 </Label>
                 <Input
                   id="divisionAlias"
@@ -555,14 +558,14 @@ export default function AcademicSettings() {
         <Dialog open={isConfirmSaveDialogOpen} onOpenChange={setIsConfirmSaveDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Changes</DialogTitle>
-              <DialogDescription>Are you sure you want to save these changes to your class selection?</DialogDescription>
+              <DialogTitle>{t("confirm_changes")}</DialogTitle>
+              <DialogDescription>{t("are_you_sure_you_want_to_save_these_changes_to_your_class_selection?")}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsConfirmSaveDialogOpen(false)}>
-                Cancel
+                {t("cancel")}
               </Button>
-              <Button onClick={confirmSaveSelectionOfClasses}>Confirm</Button>
+              <Button onClick={confirmSaveSelectionOfClasses}>{t("confirm")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -571,7 +574,7 @@ export default function AcademicSettings() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division</DialogTitle>
-              <DialogDescription>Confirm or modify the division alias.</DialogDescription>
+              <DialogDescription>{t("confirm_or_modify_the_division_alias.")}</DialogDescription>
             </DialogHeader>
             {<div className="grid gap-4 py-4">
 
@@ -582,7 +585,7 @@ export default function AcademicSettings() {
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Class</FormLabel>
+                        <FormLabel>{t("class")}</FormLabel>
                         <FormControl>
                           <Input type="text" {...field} disabled />
                         </FormControl>
@@ -595,7 +598,7 @@ export default function AcademicSettings() {
                     name="division"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Division</FormLabel>
+                        <FormLabel>{t("division")}</FormLabel>
                         <FormControl>
                           <Input type="text" {...field} disabled />
                         </FormControl>
@@ -608,7 +611,7 @@ export default function AcademicSettings() {
                     name="aliases"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Aliases</FormLabel>
+                        <FormLabel>{t("aliases")}</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder="Enter aliases name for class" {...field} />
                         </FormControl>
@@ -618,7 +621,7 @@ export default function AcademicSettings() {
                   />
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDivisionForDialogOpen(false)}>
-                      Cancel
+                    {t("cancel")}
                     </Button>
                     <Button onClick={confirmDivisionChanges}>
                       {formForDivsion.getValues('formType') === 'create' ? "Add" : "Update"} Division

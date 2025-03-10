@@ -27,6 +27,7 @@ import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 // Schema for leave type
 const leaveTypeSchema = z.object({
@@ -121,6 +122,7 @@ export function LeaveManagementSettings() {
     leave_policy: LeavePolicy[], page: PageMeta
   } | null>(null)
 
+  const {t} = useTranslation()
 
   /***
  * 
@@ -367,34 +369,34 @@ export function LeaveManagementSettings() {
 
   }, [activeTab])
 
-
+    
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Leave Management Settings</h1>
+      <h1 className="text-3xl font-bold mb-6">{t("leave_management_settings")}</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="leave-types">Leave Types</TabsTrigger>
-          <TabsTrigger value="leave-policies">Leave Policies</TabsTrigger>
+          <TabsTrigger value="leave-types">{t("leave_type")}</TabsTrigger>
+          <TabsTrigger value="leave-policies">{t("leave_policies")}</TabsTrigger>
         </TabsList>
         <TabsContent value="leave-types">
           <Card>
             <CardHeader>
-              <CardTitle>Leave Types</CardTitle>
-              <CardDescription>Manage different types of leaves available in your organization.</CardDescription>
+             <CardTitle>{t("leave_type")}</CardTitle>
+              <CardDescription>{t("manage_different_types_of_leaves_available_in_your_organization")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <Button onClick={() => openLeaveTypeDialog('add', null)}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Leave Type
+                  <Plus className="mr-2 h-4 w-4" /> {t("add_leave_type")}
                 </Button>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>{t("name")}</TableHead>
                     {/* <TableHead>Description</TableHead> */}
-                    <TableHead>Paid</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("paid")}</TableHead>
+                    <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -423,25 +425,25 @@ export function LeaveManagementSettings() {
         <TabsContent value="leave-policies">
           <Card>
             <CardHeader>
-              <CardTitle>Leave Policies</CardTitle>
-              <CardDescription>Set leave policies for different staff roles.</CardDescription>
+              <CardTitle>{t("leave_policies")}</CardTitle>
+              <CardDescription>{t("set_leave_policies_for_different_staff_roles")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <Button onClick={() => openLeavePolicyDialog("add", null)}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Leave Policy
+                  <Plus className="mr-2 h-4 w-4" />{t("add_leave_policy")}
                 </Button>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Staff Role</TableHead>
-                    <TableHead>Leave Type</TableHead>
-                    <TableHead>Annual Allowance</TableHead>
-                    <TableHead>Max Consecutive Days</TableHead>
+                    <TableHead>{t("staff_role")}</TableHead>
+                    <TableHead>{t("leave_type")}</TableHead>
+                    <TableHead>{t("annual_allowance")}</TableHead>
+                    <TableHead>{t("max_consecutive_days")}</TableHead>
                     {/* <TableHead>Notice Period (Days)</TableHead> */}
-                    <TableHead>Carryforward</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("carry_forward")}</TableHead>
+                    <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -493,7 +495,7 @@ export function LeaveManagementSettings() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t("name")}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -506,7 +508,7 @@ export function LeaveManagementSettings() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>{t("description")}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -520,8 +522,8 @@ export function LeaveManagementSettings() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Paid Leave</FormLabel>
-                      <FormDescription>Is this a paid leave type?</FormDescription>
+                      <FormLabel className="text-base">{t("paid_leave")}</FormLabel>
+                      <FormDescription>{t("is_this_a_paid_leave_type?")}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -535,8 +537,8 @@ export function LeaveManagementSettings() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Affect Payroll</FormLabel>
-                      <FormDescription>Is this a paid leave type?</FormDescription>
+                      <FormLabel className="text-base">{t("affect_role")}</FormLabel>
+                      <FormDescription>{t("is_this_a_paid_leave_type?")}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -577,7 +579,7 @@ export function LeaveManagementSettings() {
                 name="staff_role_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Staff Role</FormLabel>
+                    <FormLabel>{t("staff_role")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}
                       disabled={DialogForLeavePolicy.type === 'edit'}>
                       <FormControl>
@@ -602,12 +604,12 @@ export function LeaveManagementSettings() {
                 name="leave_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Leave Type</FormLabel>
+                    <FormLabel>{t("leave_type")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}
                       disabled={DialogForLeavePolicy.type === 'edit'}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select leave type" />
+                          <SelectValue placeholder="select_leave_type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -627,7 +629,7 @@ export function LeaveManagementSettings() {
                 name="annual_quota"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Annual Allowance</FormLabel>
+                    <FormLabel>{t("annual_allowance")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -644,7 +646,7 @@ export function LeaveManagementSettings() {
                 name="max_consecutive_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Consecutive Days</FormLabel>
+                    <FormLabel>{t("max_consecutive_days")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -679,8 +681,8 @@ export function LeaveManagementSettings() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Allow Carryforward</FormLabel>
-                      <FormDescription>Can unused leaves be carried forward to the next year?</FormDescription>
+                      <FormLabel className="text-base">{t("allow_carry_forward")}</FormLabel>
+                      <FormDescription>{t("can_unused_leaves_be_carried_forward_to_the_next_year?")}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -693,7 +695,7 @@ export function LeaveManagementSettings() {
                 name="max_carry_forward_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Carryforward Days</FormLabel>
+                    <FormLabel>{t("max_carry_forward")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

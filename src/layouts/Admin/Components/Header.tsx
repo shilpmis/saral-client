@@ -4,7 +4,7 @@ import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { logout } from "@/services/AuthService"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Search } from "@/components/Dashboard/Search"
+import {Search} from "@/components/Dashboard/Search"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/dialog"
 import { AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "@/redux/store"
+import { setLanguage } from "@/redux/slices/languageSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
+import LanguageSwitcher from "@/components/traslater/languageSwitcher"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 const shortFormForRole: any = {
@@ -36,9 +41,11 @@ const shortFormForRole: any = {
    6 : "TE",
 } 
 
+
 export default function Header() {
   const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
+
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -46,47 +53,50 @@ export default function Header() {
     await dispatch(logout())
   }
 
+  const { t } = useTranslation();
+
   return (
     <div className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
       <SidebarTrigger />
       <div className="flex gap-4">
-        <Search></Search>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatars/01.png" alt="@johndoe" />
-                <AvatarFallback>{users?.role_id ? shortFormForRole[users.role_id] : ""}</AvatarFallback>
-              </Avatar>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{users?.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">{users?.saral_email}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                Profile
-                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Settings
-                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setIsLogoutDialogOpen(true)}
-              className="bg-red-600 text-white hover:bg-red-600 cursor-pointer rounded-md"
-            >
-              Logout
+      <Search></Search>
+      <LanguageSwitcher></LanguageSwitcher>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/avatars/01.png" alt="@johndoe" />
+              <AvatarFallback>{users?.role_id ? shortFormForRole[users.role_id] : ""}</AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{users?.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">{users?.saral_email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              {t("Profile")}
+              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenuItem>
+              Settings
+              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setIsLogoutDialogOpen(true)}
+            className="bg-red-600 text-white hover:bg-red-600 cursor-pointer rounded-md"
+          >
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       </div>
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl shadow-lg">

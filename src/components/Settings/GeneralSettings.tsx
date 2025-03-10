@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { toast } from '@/hooks/use-toast'
+import { useTranslation } from '@/redux/hooks/useTranslation'
 // import { useToast } from "@/components/hooks/use-toast"
 
 
@@ -106,6 +107,8 @@ export default function GeneralSettings() {
     },
   })
 
+  const {t} = useTranslation()
+
   async function onSubmitBasicSchoolData(values: z.infer<typeof basicSchoolDataSchema>) {
     setLoading(prev => ({ ...prev, basicSchoolData: true }))
 
@@ -194,9 +197,9 @@ export default function GeneralSettings() {
     <>
       {isSuccess && (<div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">General Settings</h1>
+          <h1 className="text-2xl font-semibold">{t("general_seetings")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your school's basic information, contact details, and subscription
+          {t("manage_your_school's_basic_information,_contact_details,_and_subscription")}
           </p>
         </div>
 
@@ -204,10 +207,10 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {/* <Building2 className="h-5 w-5" /> */}
-              Basic School Data
+              {t("basic_school_data")}
             </CardTitle>
             <CardDescription>
-              Update your school's fundamental information
+            {t("update_your_school's_fundamental_information")}
             </CardDescription>
           </CardHeader>
           <Form {...basicSchoolDataForm}>
@@ -218,7 +221,7 @@ export default function GeneralSettings() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>School Name</FormLabel>
+                      <FormLabel>{t("school_name")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter school name" {...field} />
                       </FormControl>
@@ -232,7 +235,7 @@ export default function GeneralSettings() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Short-Key/username</FormLabel>
+                      <FormLabel>{t("short_key/username")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter short-key/username for school" {...field} disabled />
                       </FormControl>
@@ -246,7 +249,7 @@ export default function GeneralSettings() {
                   name="established_year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Established Year</FormLabel>
+                      <FormLabel>{t("established_year")}</FormLabel>
                       <FormControl>
                         <Input placeholder="YYYY" {...field} />
                       </FormControl>
@@ -260,7 +263,7 @@ export default function GeneralSettings() {
                   name="school_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>School Type</FormLabel>
+                      <FormLabel>{t("school_type")}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -268,10 +271,10 @@ export default function GeneralSettings() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value=" " disabled>Select Type</SelectItem>
-                          <SelectItem value="Public">Public</SelectItem>
-                          <SelectItem value="Private">Private</SelectItem>
-                          <SelectItem value="Charter">Charter</SelectItem>
+                          <SelectItem value=" " disabled>{t("select_type")}</SelectItem>
+                          <SelectItem value="Public">{t("public")}</SelectItem>
+                          <SelectItem value="Private">{t("private")}</SelectItem>
+                          <SelectItem value="Charter">{t("charter")}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -292,10 +295,10 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {/* <Mail className="h-5 w-5" /> */}
-              Contact Information
+              {t("contact_information")}
             </CardTitle>
             <CardDescription>
-              Update your school's contact details
+            {t("update_your_school's_contact_details")}
             </CardDescription>
           </CardHeader>
           <Form {...contactInformationForm}>
@@ -306,7 +309,7 @@ export default function GeneralSettings() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>{t("email_address")}</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="school@example.com" {...field} disabled />
                       </FormControl>
@@ -319,7 +322,7 @@ export default function GeneralSettings() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>{t("phone_number")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter contact number for school" type='number' {...field} />
                       </FormControl>
@@ -332,7 +335,7 @@ export default function GeneralSettings() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>{t("address")}</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Enter school address"
@@ -358,10 +361,10 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {/* <Crown className="h-5 w-5" /> */}
-              Subscription Details
+              {t("subcription_details")}
             </CardTitle>
             <CardDescription>
-              Manage your school's subscription plan
+            {t("manage_your_school's_subscription_plan")}
             </CardDescription>
           </CardHeader>
           <Form {...subscriptionForm}>
@@ -372,7 +375,7 @@ export default function GeneralSettings() {
                   name="plan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subscription Plan</FormLabel>
+                      <FormLabel>{t("subcription_plan")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -380,13 +383,13 @@ export default function GeneralSettings() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
+                          <SelectItem value="free">{t("free")}</SelectItem>
+                          <SelectItem value="basic">{t("basic")}</SelectItem>
+                          <SelectItem value="premium">{t("premium")}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Choose the plan that best fits your school's needs
+                      {t("choose_the_plan_that_best_fits_your_school's_needs")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -14,6 +14,7 @@ import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from 
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
 import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 
@@ -170,7 +171,7 @@ const AdminLeaveManagement: React.FC = () => {
     }
   }, [selectedDate])
 
-
+  const {t} = useTranslation()
   return (
     <div className="space-y-6">
       <Card>
