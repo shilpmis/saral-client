@@ -13,6 +13,7 @@ interface Organization {
     head_contact_number: number,
     heade_name: string,
     address: string,
+    subscription_type: string,
 }
 
 interface School {

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { toast } from '@/hooks/use-toast'
+import { sub } from 'date-fns'
 // import { useToast } from "@/components/hooks/use-toast"
 
 
@@ -37,7 +38,8 @@ const basicSchoolDataSchema = z.object({
     head_name: z.string(),
     pincode: z.number(),
     username: z.string(),
-    address: z.any()
+    address: z.any(),
+    subscription_type: z.string()
   }),
   name: z.string().min(2, {
     message: "School name must be at least 2 characters.",
@@ -87,7 +89,7 @@ export default function GeneralSettings() {
   */
 
   const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.school_id);
-  console.log(data?.branch_code);
+  console.log(data?.organization);
   
   const basicSchoolDataForm = useForm<z.infer<typeof basicSchoolDataSchema>>({
     resolver: zodResolver(basicSchoolDataSchema),
@@ -100,7 +102,8 @@ export default function GeneralSettings() {
         head_name: "",
         pincode: 0,
         username: "",
-        address: ""
+        address: "",
+        subscription_type: ""
       },
       name: "",
       branch_code: "",
@@ -198,7 +201,7 @@ export default function GeneralSettings() {
       established_year: data?.established_year,
       school_type: data?.school_type === "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter",
     })
-   console.log(basicSchoolDataForm.getValues('organization.organization_logo'));
+   console.log(basicSchoolDataForm.getValues('organization.subscription_type'));
    
     
   }, [data])
@@ -222,15 +225,23 @@ export default function GeneralSettings() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {/* <Building2 className="h-5 w-5" /> */}
-              Basic Organization Data
-            </CardTitle>
+        <CardHeader>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/0/08/Seal_of_Gujarat.svg" // Replace with your image path
+            alt="Organization Icon"
+            className="h-20 w-20 rounded-full" // Adjust size and style as needed
+          />
+          <div className="flex flex-col">
+            <CardTitle>Organization Details </CardTitle>
             <CardDescription>
-              Update your Organization fundamental information
+             your Organization fundamental information
             </CardDescription>
-          </CardHeader>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
           <Form {...basicSchoolDataForm}>
             <form onSubmit={basicSchoolDataForm.handleSubmit(onSubmitBasicSchoolData)}>
               <CardContent className="space-y-4">
@@ -241,35 +252,7 @@ export default function GeneralSettings() {
                     <FormItem>
                       <FormLabel>Organization Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter Org name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.organization_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization Id</FormLabel>
-                      <FormControl>
-                        <Input placeholder="" {...field}/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                  <FormField
-                  control={basicSchoolDataForm.control}
-                  name="organization.organization_logo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization logo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="" {...field}/>
+                        <Input {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -283,7 +266,7 @@ export default function GeneralSettings() {
                     <FormItem>
                       <FormLabel>Head Contact Number</FormLabel>
                       <FormControl>
-                        <Input placeholder=" " {...field}/>
+                        <Input placeholder=" " {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -297,7 +280,7 @@ export default function GeneralSettings() {
                     <FormItem>
                       <FormLabel>Head Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="" {...field}/>
+                        <Input placeholder="" {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -311,7 +294,7 @@ export default function GeneralSettings() {
                     <FormItem>
                       <FormLabel>Pincode</FormLabel>
                       <FormControl>
-                        <Input placeholder="pincode" {...field} />
+                        <Input placeholder="pincode" {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -323,9 +306,23 @@ export default function GeneralSettings() {
                   name="organization.address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>address</FormLabel>
+                      <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="address" {...field} />
+                        <Input placeholder="address" {...field} disabled/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={basicSchoolDataForm.control}
+                  name="organization.subscription_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subscription Type</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -497,53 +494,6 @@ export default function GeneralSettings() {
           </Form>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {/* <Crown className="h-5 w-5" /> */}
-              Subscription Details
-            </CardTitle>
-            <CardDescription>
-              Manage your school's subscription plan
-            </CardDescription>
-          </CardHeader>
-          <Form {...subscriptionForm}>
-            <form onSubmit={subscriptionForm.handleSubmit(onSubmitSubscription)}>
-              <CardContent>
-                <FormField
-                  control={subscriptionForm.control}
-                  name="plan"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subscription Plan</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a plan" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose the plan that best fits your school's needs
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={loading.subscription}>
-                  {loading.subscription ? "Updating..." : "Update Subscription"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
-        </Card>
       </div>)}
       {
         isLoading && (
