@@ -1,5 +1,6 @@
 "use client"
 
+
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -370,11 +371,11 @@ export const Students: React.FC = () => {
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="mr-8">
                 <DropdownMenuItem>Export Data</DropdownMenuItem>
                 <DropdownMenuItem>Print List</DropdownMenuItem>
                 <DropdownMenuItem>
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  <FileDown className="mr-2 h-4 w-4" />Download Excel
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
