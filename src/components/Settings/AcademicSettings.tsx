@@ -79,6 +79,7 @@ const defaultStandards = [
 export default function AcademicSettings() {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
+  const currentAcademicSession = useAppSelector((state) => state.auth.currentActiveAcademicSession);
   const [activeTab, setActiveTab] = useState("sessions")
 
   // Fetch academic classes
@@ -209,6 +210,7 @@ export default function AcademicSettings() {
           class: clas.class,
           division: "A",
           aliases: null,
+          academic_session_id: currentAcademicSession?.id,
         }
       })
 
@@ -226,6 +228,7 @@ export default function AcademicSettings() {
                 class: clas.class.toString(),
                 division: clas.division,
                 aliases: clas.aliases,
+                academic_session_id: currentAcademicSession?.id,
               },
             ],
           }))
@@ -381,7 +384,6 @@ export default function AcademicSettings() {
   useEffect(() => {
     if (sessionsData && sessionsData.sessions && sessionsData.sessions.length > 0) {
       const session = sessionsData.sessions.find((session: any) => session.is_active)
-      console.log("active_session", session)
       if (session.is_active) {
         setActiveSession(session)
         // If we have an active session and we're on the sessions tab, auto-switch to classes tab
