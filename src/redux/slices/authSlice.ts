@@ -8,6 +8,8 @@ import {
   UserRole,
   UserStatus
 } from "@/types/user";
+import { AcademicSession } from "@/types/user";
+import { AcademicClasses } from "@/types/academic";
 
 // Mapping from role_id (from your DB) to UserRole
 const roleMapping: Record<number, UserRole> = {
@@ -22,6 +24,7 @@ const roleMapping: Record<number, UserRole> = {
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
+  currentActiveAcademicSession: AcademicSession | null;
   token: string | null;
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
@@ -36,6 +39,7 @@ interface AuthState {
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
+  currentActiveAcademicSession: null,
   token: null,
   status: "idle",
   error: null,
@@ -62,6 +66,10 @@ const authSlice = createSlice({
         // Now TypeScript knows that derivedRole is a UserRole.
         permissions: RolePermissions[derivedRole],
       };
+      state.currentActiveAcademicSession = apiUser.school?.academicSessions.find(
+        (session : AcademicSession) => session.is_active  
+      ) || null;
+      state.token = action.payload.token;
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.status = "succeeded";
@@ -95,9 +103,12 @@ const authSlice = createSlice({
           teacher_id: apiUser.teacher_id,
           school_id: apiUser.school_id,
           permissions: RolePermissions[derivedRole],
-          teacher : apiUser.teacher
-          // username: apiUser.username
+          teacher : apiUser.teacher,
+          school : apiUser.school,
         };
+        state.currentActiveAcademicSession = apiUser.school?.academicSessions.find(
+          (session) => session.is_active  
+        ) || null;
         state.token = action.payload.token;
       })
       .addCase(login.rejected, (state) => {
@@ -127,6 +138,7 @@ const authSlice = createSlice({
 
 export const selectCurrentUser = (state: RootState) => state.auth.user;
 export const selectCurrentTeacher = (state: RootState) => state.auth.user?.teacher;
+export const selectCurrentAccademicSession = (state: RootState) => state.auth.user?.school?.academicSessions;
 export const selectVerificationStatus = (state: RootState) => state.auth;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthStatus = (state: RootState) => state.auth.status;

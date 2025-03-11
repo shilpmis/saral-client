@@ -1,4 +1,5 @@
 import { TeachingStaff } from "./staff";
+import { School } from "./user";
 
 export interface LoginCredentials {
   email: string
@@ -18,18 +19,7 @@ export interface LoginResponse {
     teacher_id: number | null;
     permissions: string[];
     teacher: TeachingStaff;
-    school: {
-      id: number,
-      name: string,
-      email: string,
-      username: string,
-      contact_number: number,
-      subscription_type: string,
-      status: string,
-      established_year: string,
-      school_type: string,
-      address: string
-    }
+    school: School
   },
   token: string
 }
