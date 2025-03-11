@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -14,18 +14,44 @@ import { selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } from "@/services/AttendanceServices"
 import type { AttendanceDetails } from "@/types/attendance"
 import { Loader2, Search } from "lucide-react"
-
-const AdminAttendanceView: React.FC = () => {
+import { useGetAcademicClassesQuery } from "@/services/AcademicService"
+import { format } from "date-fns"
+ 
+  const AdminAttendanceView: React.FC = () => {
+    const dummyData = [
+      { id: 1, date: new Date("2025-03-07"), class: "1", division: "A", student: "John Doe", score: 85 },
+      { id: 2, date: new Date("2025-03-07"), class: "2", division: "A", student: "Jane Smith", score: 92 },
+      { id: 3, date: new Date("2025-03-08"), class: "3", division: "B", student: "Bob Johnson", score: 78 },
+      { id: 4, date: new Date("2025-03-08"), class: "4", division: "C", student: "Alice Brown", score: 95 },
+      { id: 5, date: new Date("2025-03-09"), class: "5", division: "D", student: "Charlie Wilson",score: 88},
+      { id: 6, date: new Date("2025-03-09"), class: "6", division: "E", student: "Diana Miller", score: 91 },
+      { id: 7, date: new Date("2025-03-10"), class: "7", division: "F", student: "Edward Davis", score: 82 },
+      { id: 8, date: new Date("2025-03-10"), class: "8", division: "G", student: "Fiona Clark", score: 89 },
+    ]  
   const user = useAppSelector(selectCurrentUser)
   const [fetchAttendanceForDate, { data: attendanceData, isLoading }] = useLazyFetchAttendanceForDateQuery()
   const [markAttendanceForDate, { isLoading: isMarkingAttendance }] = useMarkAttendanceMutation()
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [selectedClass, setSelectedClass] = useState<string>("")
-  const [selectedDivision, setSelectedDivision] = useState<string>("")
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  const [selectedClass, setSelectedClass] = useState<string | undefined>(undefined)
+  const [selectedDivision, setSelectedDivision] = useState<string | undefined>(undefined)
+  const [selectedFilter, setSelectedFilter] = useState<string | undefined>(undefined)
+  const [filteredData, setFilteredData] = useState(dummyData)
+
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "late" | "half_day">("all")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceDetails | null>(null)
+  const {data: AcademicClasses} = useGetAcademicClassesQuery(user!.school_id);
+
+  const availableDivisions = useMemo<any | null>(() => {
+    if (AcademicClasses && selectedClass) {
+      return AcademicClasses.filter(
+        (cls: any) => cls.class.toString() === selectedClass
+      )[0];
+    } else {
+      return null;
+    }
+  }, [AcademicClasses, selectedClass]);
 
   const filteredStudents =
     attendanceRecords?.attendance_data.filter((student) => {
@@ -100,6 +126,51 @@ const AdminAttendanceView: React.FC = () => {
     }
   }, [selectedDate, selectedClass, selectedDivision, fetchAttendanceForDate, isSunday, isFutureDate])
 
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date)
+  }
+
+  // Handle class selection
+  const handleClassSelect = (value: string) => {
+    setSelectedClass(value)
+  }
+
+  // Handle division selection
+  const handleDivisionSelect = (value: string) => {
+    setSelectedDivision(value)
+  }
+
+  const handleFilter = (value: string) => {
+   setSelectedFilter(value)
+  }
+
+  useEffect(() => {
+    let result = dummyData
+
+    if (selectedDate) {
+      const dateString = format(selectedDate, "yyyy-MM-dd")
+      result = result.filter((item) => format(item.date, "yyyy-MM-dd") === dateString)
+    }
+
+    if (selectedClass) {
+      result = result.filter((item) => item.class === selectedClass)
+    }
+
+    if (selectedDivision) {
+      result = result.filter((item) => item.division === selectedDivision)
+    }
+
+    if(selectedFilter){
+      // result = result.filter((item) => item.status === selectedFilter)
+    }
+
+    setFilteredData(result)
+  }, [selectedDate, selectedClass, selectedDivision,selectedFilter])
+
+  console.log("filter data is --->>>>",filteredData);
+  
+
   return (
     <Card className="container mx-auto p-6">
       <CardHeader>
@@ -111,34 +182,51 @@ const AdminAttendanceView: React.FC = () => {
             <label className="text-sm font-medium text-gray-700 mb-1">Date</label>
             <SaralDatePicker
               date={selectedDate}
-              onDateChange={(date: Date | undefined) => setSelectedDate(date)}
+              onDateChange={(date: Date | undefined) => handleDateSelect(date)}
             />
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-700 mb-1">Class</label>
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
+            <Select value={selectedClass} onValueChange={(value: any)=>handleClassSelect(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
               <SelectContent>
-                {/* Add class options dynamically */}
-                <SelectItem value="1">Class 1</SelectItem>
-                <SelectItem value="2">Class 2</SelectItem>
-                {/* ... */}
+              {AcademicClasses?.map((cls: any, index: any) =>
+                    cls.divisions.length > 0 ? (
+                      <SelectItem
+                          key={index}
+                          value={cls.class.toString()}
+                      >
+                    Class {cls.class}
+                      </SelectItem>
+                    ) : null
+                    )}
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-700 mb-1">Division</label>
-            <Select value={selectedDivision} onValueChange={setSelectedDivision}>
+            <Select value={selectedDivision} onValueChange={(value:string)=>handleDivisionSelect(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Division" />
               </SelectTrigger>
               <SelectContent>
-                {/* Add division options dynamically */}
-                <SelectItem value="A">Division A</SelectItem>
-                <SelectItem value="B">Division B</SelectItem>
-                {/* ... */}
+              {availableDivisions &&
+                            availableDivisions.divisions.map(
+                              (division:any, index:any) => (
+                                <SelectItem
+                                  key={index}
+                                  value={division.division}
+                                >
+                                  {`${division.division} ${
+                                    division.aliases
+                                      ? "-" + division.aliases
+                                      : ""
+                                  }`}
+                                </SelectItem>
+                              )
+                            )}
               </SelectContent>
             </Select>
           </div>
@@ -146,7 +234,7 @@ const AdminAttendanceView: React.FC = () => {
             <label className="text-sm font-medium text-gray-700 mb-1">Filter</label>
             <Select
               value={filter}
-              onValueChange={(value: "all" | "present" | "absent" | "late" | "half_day") => setFilter(value)}
+              onValueChange={(value: "all" | "present" | "absent" | "late" | "half_day") => handleFilter(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Filter attendance" />
