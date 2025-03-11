@@ -55,11 +55,13 @@ export default function StaffTable({
   type,
   staffList,
   onEdit,
+  onDelete,
   onPageChange
 }: {
   staffList: { staff: TeachingStaff[] | OtherStaff[], page_meta: PageMeta };
   onEdit: (staff_id: number) => void;
   onPageChange: (page: number) => void;
+  onDelete: (staff_id: number) => void;
   setDefaultRoute?: number;
   type: 'teaching' | 'non-teaching'
 }) {
@@ -83,6 +85,7 @@ export default function StaffTable({
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
   };
+
 
   return (
     <div className="w-full overflow-auto">
@@ -162,6 +165,9 @@ export default function StaffTable({
                   <Button variant="outline" onClick={() => onEdit(staff.id)}>
                     Edit
                   </Button>
+                  <Button className="ms-2" variant="outline" onClick={()=>onDelete(staff.id)}>
+                  <Trash2 className="text-red-500"/>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -173,6 +179,7 @@ export default function StaffTable({
           selectedStaff={selectedStaff}
           StafftDetailsPDF={StafftDetailsPDF}
         />
+
         </>
       ) : (
         <div className="text-center py-4 text-gray-500">No records found</div>
