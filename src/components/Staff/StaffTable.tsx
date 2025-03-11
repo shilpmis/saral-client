@@ -17,9 +17,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
 import { SaralPagination } from "../ui/common/SaralPagination";
 import { OtherStaff, TeachingStaff } from "@/types/staff";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
+import { DialogFooter, DialogHeader } from "../ui/dialog";
+import { motion } from "framer-motion";
 
 interface PageMeta {
   total: number,
@@ -46,16 +49,18 @@ export default function StaffTable({
   type,
   staffList,
   onEdit,
+  onDelete,
   onPageChange
 }: {
   staffList: { staff: TeachingStaff[] | OtherStaff[], page_meta: PageMeta };
   onEdit: (staff_id: number) => void;
   onPageChange: (page: number) => void;
+  onDelete: (staff_id: number) => void;
   setDefaultRoute?: number;
   type: 'teaching' | 'non-teaching'
 }) {
 
-
+  const [isdelete, setIsDelete] = useState(false)
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
 
@@ -63,9 +68,11 @@ export default function StaffTable({
     onPageChange(upadatedPage);
   };
 
+
   return (
     <div className="w-full overflow-auto">
       {staffList.staff && staffList.staff.length > 0 ? (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -133,11 +140,15 @@ export default function StaffTable({
                   <Button variant="outline" onClick={() => onEdit(staff.id)}>
                     Edit
                   </Button>
+                  <Button className="ms-2" variant="outline" onClick={()=>onDelete(staff.id)}>
+                  <Trash2 className="text-red-500"/>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        </>
       ) : (
         <div className="text-center py-4 text-gray-500">No records found</div>
       )}
