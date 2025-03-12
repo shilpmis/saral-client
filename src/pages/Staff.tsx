@@ -514,3 +514,73 @@ export const Staff: React.FC = () => {
   );
 }
 
+
+
+// import React, { useState } from "react";
+// import { Button } from "@/components/ui/button";
+// import * as XLSX from "xlsx";
+// import axios from "axios";
+
+// const ExcelUpload: React.FC = () => {
+//   const [file, setFile] = useState<File | null>(null);
+//   const [data, setData] = useState<any[]>([]);
+
+//   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+//     if (event.target.files && event.target.files.length > 0) {
+//       setFile(event.target.files[0]);
+//     }
+//   };
+
+//   const handleParse = () => {
+//     if (!file) {
+//       alert("Please upload an Excel file first.");
+//       return;
+//     }
+
+//     const reader = new FileReader();
+//     reader.readAsBinaryString(file);
+//     reader.onload = (e) => {
+//       const binaryStr = e.target?.result as string;
+//       const workbook = XLSX.read(binaryStr, { type: "binary" });
+//       const sheetName = workbook.SheetNames[0];
+//       const sheet = workbook.Sheets[sheetName];
+//       const jsonData = XLSX.utils.sheet_to_json(sheet);
+//       setData(jsonData);
+//       console.log("Parsed Data:", jsonData);
+//     };
+//   };
+
+//   const handleDownloadTemplate = async () => {
+//     try {
+//       const response = await axios.get("/api/generate-excel", { responseType: "blob" });
+//       const url = window.URL.createObjectURL(new Blob([response.data]));
+//       const link = document.createElement("a");
+//       link.href = url;
+//       link.setAttribute("download", "Staff_Template.xlsx");
+//       document.body.appendChild(link);
+//       link.click();
+//     } catch (error) {
+//       console.error("Error generating Excel template:", error);
+//     }
+//   };
+
+//   return (
+//     <div className="flex flex-col items-center p-4 border rounded-xl shadow-md">
+//       <Button className="mb-4" onClick={handleDownloadTemplate}>
+//         Download Demo Excel
+//       </Button>
+//       <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+//       <Button className="mt-4" onClick={handleParse}>
+//         Parse Excel
+//       </Button>
+//       {data.length > 0 && (
+//         <div className="mt-4 w-full">
+//           <h2 className="text-lg font-semibold">Preview:</h2>
+//           <pre className="bg-gray-100 p-2 rounded-md">{JSON.stringify(data, null, 2)}</pre>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default ExcelUpload;

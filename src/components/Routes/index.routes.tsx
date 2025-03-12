@@ -16,8 +16,7 @@ import Students from "@/pages/Students";
 import GeneralSettings from "../Settings/GeneralSettings";
 import AcademicSettings from "../Settings/AcademicSettings";
 import StaffSettings from "../Settings/StaffSettings";
-import PayrollSettings from "../Settings/PayrollSettings";
-import FeesSettings from "../Settings/FeesSettings";
+import PayrollSettings from "../Settings/PayrollSettings"; 
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
@@ -34,6 +33,10 @@ import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
 import { AdmissionModule } from "@/pages/AdmissionPage";
 import TimeTableManager from "../Settings/TimeTableManager";
+import FeeSettings from "../Settings/FeesSettings";
+import { StudentFeeDetails } from "../Fees/StudentFee/StudentFeeDetails";
+import {StudentFeesPanel} from "@/pages/StudentFeesPanel";
+import PayFeesPanel from "../Fees/PayFees/PayFeesPanel";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -111,6 +114,18 @@ export default function RootRoute() {
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
                   allowedPermissions={[Permission.MANAGE_FEES]}>
                   <Fees />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Fees */}
+            <Route
+              path="payments"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedPermissions={[Permission.MANAGE_FEES]}>
+                  <StudentFeesPanel />
                 </PrivateRoute>
               }
             />
@@ -238,7 +253,7 @@ export default function RootRoute() {
               } />
               <Route path="fees" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
-                  <FeesSettings />
+                  <FeeSettings />
                 </PrivateRoute>
               } />
               <Route path="leaves" element={
