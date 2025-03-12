@@ -5,6 +5,7 @@ import { logout } from "@/services/AuthService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Search } from "@/components/Dashboard/Search";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +34,11 @@ import {
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
+
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+
 
 const shortFormForRole: any = {
   1: "AD",
@@ -47,6 +50,7 @@ const shortFormForRole: any = {
 };
 
 export default function Header() {
+
   const dispatch = useAppDispatch();
   const users = useAppSelector((state) => state.auth.user);
 
@@ -56,8 +60,45 @@ export default function Header() {
     await dispatch(logout());
   };
 
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  const handleLogout = async () => {
+    setIsLogoutDialogOpen(false)
+    await dispatch(logout())
+  }
+  useEffect(() => {
+    const handleOnlineStatusChange = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    window.addEventListener("online", handleOnlineStatusChange);
+    window.addEventListener("offline", handleOnlineStatusChange);
+
+    return () => {
+      window.removeEventListener("online", handleOnlineStatusChange);
+      window.removeEventListener("offline", handleOnlineStatusChange);
+    };
+  }, []);
+
   return (
-    <main className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
+    <>
+    {!isOnline && (
+        <div
+          className="w-full h-auto shadow-lg rounded-md flex justify-center items-center p-2"
+          style={{
+            position: "fixed", 
+            top: 0,
+            height: "30px",
+            backgroundColor: "#f8d7da",
+            color: "#721c24",
+            zIndex: 9
+          }}
+        >
+          <span className="text-sm font-medium">No Internet Connection (·•᷄‎ࡇ•᷅ )</span>
+        </div>
+      )}
+    <div className="w-full h-auto shadow-lg rounded-md flex justify-between items-center p-2">
+
       <SidebarTrigger />
       <div className="flex gap-4">
         <Search></Search>
@@ -263,7 +304,35 @@ export default function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </main>
-  );
+
+      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <DialogContent className="max-w-md rounded-2xl shadow-lg">
+          <DialogHeader className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 10 }}
+              className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
+            >
+              <AlertTriangle className="text-red-600 w-7 h-7" />
+            </motion.div>
+            <DialogTitle className="text-2xl font-bold text-gray-800">Logout Confirmation</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Are you sure you want to logout? You will be redirected to the login page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex justify-center space-x-4">
+            <Button type="button" variant="outline" onClick={() => setIsLogoutDialogOpen(false)} className="px-6 py-2 rounded-lg">
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleLogout} className="px-6 py-2 rounded-lg bg-red-600 text-white">
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+    </>
+  )
 }
 

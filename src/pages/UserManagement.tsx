@@ -107,11 +107,24 @@ export const UserManagement: React.FC = () => {
   }
 
   function onSucssesfullChange(user: User | null) {
-    if (isDialogForManagmentUserOpen.type === 'create') {
+    if(user === null){
+     setIsDialogForManagmentUserOpen({
+          isOpen: false,
+          type: "create",
+          user: null
+        })
+        return ;
+    }
+    else if (isDialogForManagmentUserOpen.type === 'create') {
       let new_displayedManagementUser = currentDisplayedManagementUser;
       if (new_displayedManagementUser) {
         new_displayedManagementUser.users.unshift(user!);
-        setCurrentDisplayedManagementUser(new_displayedManagementUser);
+        setCurrentDisplayedManagementUser(new_displayedManagementUser); 
+        setIsDialogForManagmentUserOpen({
+          isOpen: false,
+          type: "create",
+          user: null
+        })
       }
     } else {
       let new_displayedManagementUser = currentDisplayedManagementUser;
@@ -126,7 +139,7 @@ export const UserManagement: React.FC = () => {
       }
       setIsDialogForManagmentUserOpen({
         isOpen: false,
-        type: "create",
+        type: "edit",
         user: null
       })
     }

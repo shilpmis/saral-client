@@ -1,5 +1,6 @@
 "use client"
 
+
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -92,18 +93,30 @@ export const Students: React.FC = () => {
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
-      const student = await getSingleStudent({
-        student_id: student_id,
-        school_id: authState.user!.school_id,
-        student_meta: true,
-      })
-      setOpenDialogForStudent({
-        isOpen: true,
-        selectedStudent: studentDataForEditStudent,
-        type: "edit",
-      })
+      try {
+        const response = await getSingleStudent({
+          student_id: student_id,
+          school_id: authState.user!.school_id,
+          student_meta: true,
+        })
+
+        if (response.data) {
+          setOpenDialogForStudent({
+            isOpen: true,
+            selectedStudent: response.data,
+            type: "edit",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching student data:", error)
+        toast({
+          variant: "destructive",
+          title: "Failed to load student data",
+          description: "Please try again later",
+        })
+      }
     },
-    [getSingleStudent, authState.user],
+    [getSingleStudent, authState.user, toast],
   )
 
   const handleChooseFile = useCallback(() => {
@@ -119,8 +132,8 @@ export const Students: React.FC = () => {
     }
   }, [])
 
-  const handleDownloadDemo = useCallback(async() => {
-    await downloadCSVTemplate()
+  const handleDownloadDemo = useCallback(() => {
+    downloadCSVTemplate()
   }, [])
 
   useEffect(() => {
@@ -358,11 +371,11 @@ export const Students: React.FC = () => {
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="mr-8">
                 <DropdownMenuItem>Export Data</DropdownMenuItem>
                 <DropdownMenuItem>Print List</DropdownMenuItem>
                 <DropdownMenuItem>
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  <FileDown className="mr-2 h-4 w-4" />Download Excel
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -478,9 +491,20 @@ export const Students: React.FC = () => {
                       type: "edit",
                       selectedStudent: null,
                     })
+
+                    // Refresh the student list if a division is selected
+                    if (selectedDivision) {
+                      getStudentForClass({
+                        class_id: selectedDivision.id,
+                        page: currentPage,
+                        student_meta: true,
+                      })
+                    }
                   }}
                   form_type="update"
                   initial_data={studentDataForEditStudent}
+                  setListedStudentForSelectedClass={setListedStudentForSelectedClass}
+                  setPaginationDataForSelectedClass={setPaginationDataForSelectedClass}
                 />
               )}
               {openDialogForStudent.type === "edit" && isStudentForEditLoading && (
