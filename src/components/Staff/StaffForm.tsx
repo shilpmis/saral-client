@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { StaffFormData, staffSchema } from "@/utils/staff.validation"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StaffFormProps {
   initialData?: Partial<StaffFormData>
@@ -34,12 +35,12 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
   useEffect(() => {
     // Replace this with actual API call
     setTeachingRoles([
-      { id: 1, name: "Teacher" },
-      { id: 2, name: "Principal" },
+      { id: 1, name: t("teacher") },
+      { id: 2, name: t("principal")},
     ])
     setNonTeachingRoles([
-      { id: 3, name: "Librarian" },
-      { id: 4, name: "Administrative Staff" },
+      { id: 3, name: t("librarian") },
+      { id: 4, name: t("administrative_staff") },
     ])
   }, [])
 
@@ -65,25 +66,26 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
     else if (activeTab === "employment") setActiveTab("bank")
   }, [activeTab])
 
+  const {t} = useTranslation()
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-          {(formType === "view" || formType === "create") && <TabsTrigger value="role">Role</TabsTrigger>}
-          <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="other">Other</TabsTrigger>
-            <TabsTrigger value="address">Address</TabsTrigger>
-            <TabsTrigger value="bank">Bank</TabsTrigger>
-            <TabsTrigger value="employment">Employment</TabsTrigger>
+          {(formType === "view" || formType === "create") && <TabsTrigger value="role">{t("role")}</TabsTrigger>}
+          <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
+            <TabsTrigger value="contact">{t("contact")}</TabsTrigger>
+            <TabsTrigger value="other">{t("other")}</TabsTrigger>
+            <TabsTrigger value="address">{t("address")}</TabsTrigger>
+            <TabsTrigger value="bank">{t("bank")}</TabsTrigger>
+            <TabsTrigger value="employment">{t("employee")}</TabsTrigger>
           </TabsList>
 
           {formType != 'update' && (
             <TabsContent value="role">
             <Card>
               <CardHeader>
-                <CardTitle>Role Selection</CardTitle>
+                <CardTitle>{t("role_selection")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -91,7 +93,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="is_teaching_role"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>Staff Type</FormLabel>
+                      <FormLabel>{t("staff_type")}</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={(value) => field.onChange(value === "teaching")}
@@ -102,13 +104,13 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                             <FormControl>
                               <RadioGroupItem value="teaching" />
                             </FormControl>
-                            <FormLabel className="font-normal">Teaching Staff</FormLabel>
+                            <FormLabel className="font-normal">{t("teaching_staff")}</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
                               <RadioGroupItem value="non-teaching" />
                             </FormControl>
-                            <FormLabel className="font-normal">Non-Teaching Staff</FormLabel>
+                            <FormLabel className="font-normal">{t("non_teaching_staff")}</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
@@ -121,7 +123,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="staff_role_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Staff Role</FormLabel>
+                      <FormLabel>{t("staff_role")}</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number.parseInt(value))}
                         defaultValue={field.value?.toString()}
@@ -152,7 +154,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -162,7 +164,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="personal">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Details</CardTitle>
+                <CardTitle>{t("personal_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -171,7 +173,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t("first_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -184,7 +186,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="middle_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Middle Name</FormLabel>
+                        <FormLabel>{t("middle_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -197,7 +199,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t("last_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -212,7 +214,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="first_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("first_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -225,7 +227,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="middle_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Middle Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("middle_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -238,7 +240,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="last_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("last_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -253,7 +255,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gender</FormLabel>
+                        <FormLabel>{t("gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -261,8 +263,8 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Male">{t("male")}</SelectItem>
+                            <SelectItem value="Female">{t("female")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -274,7 +276,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="birth_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
+                        <FormLabel>{t("date_of_birth")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -287,7 +289,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="aadhar_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Aadhar Number</FormLabel>
+                        <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
                           <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
@@ -299,10 +301,10 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -311,7 +313,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="contact">
             <Card>
               <CardHeader>
-                <CardTitle>Contact Details</CardTitle>
+                <CardTitle>{t("contact_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -320,7 +322,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="mobile_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
+                        <FormLabel>{t("mobile_no")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -333,7 +335,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{t("email")}</FormLabel>
                         <FormControl>
                           <Input type="email" {...field} />
                         </FormControl>
@@ -349,7 +351,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       name="qualification"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Qualification</FormLabel>
+                          <FormLabel>{t("qualification")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -362,7 +364,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       name="subject_specialization"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Subject Specialization</FormLabel>
+                          <FormLabel>{t("subject_specialization")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -375,10 +377,10 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -387,7 +389,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="other">
             <Card>
               <CardHeader>
-                <CardTitle>Other Details</CardTitle>
+                <CardTitle>{t("other_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -396,7 +398,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="religiion"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Religion</FormLabel>
+                        <FormLabel>{t("religion")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -409,7 +411,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="religiion_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Religion (Gujarati)</FormLabel>
+                        <FormLabel>{t("religion")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -424,7 +426,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="caste"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Caste</FormLabel>
+                        <FormLabel>{t("caste")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -437,7 +439,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="caste_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Caste (Gujarati)</FormLabel>
+                        <FormLabel>{t("caste")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -451,7 +453,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t("category")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -472,10 +474,10 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -484,7 +486,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="address">
             <Card>
               <CardHeader>
-                <CardTitle>Address Details</CardTitle>
+                <CardTitle>{t("address_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -492,7 +494,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>{t("address")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -506,7 +508,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="district"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>District</FormLabel>
+                        <FormLabel>{t("district")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -519,7 +521,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("city")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -534,7 +536,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State</FormLabel>
+                        <FormLabel>{t("state")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -547,7 +549,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="postal_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Postal Code</FormLabel>
+                        <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
                           <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
@@ -559,10 +561,10 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -571,7 +573,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="bank">
             <Card>
               <CardHeader>
-                <CardTitle>Bank Details</CardTitle>
+                <CardTitle>{t("bank_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -579,7 +581,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="bank_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bank Name</FormLabel>
+                      <FormLabel>{t("bank_name")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -592,7 +594,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="account_no"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Number</FormLabel>
+                      <FormLabel>{t("account_number")}</FormLabel>
                       <FormControl>
                         <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                       </FormControl>
@@ -605,7 +607,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="IFSC_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>IFSC Code</FormLabel>
+                      <FormLabel>{t("ifsc_code")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -616,10 +618,10 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -628,7 +630,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
           <TabsContent value="employment">
             <Card>
               <CardHeader>
-                <CardTitle>Employment Details</CardTitle>
+                <CardTitle>{t("employee_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {form.watch("is_teaching_role") && (
@@ -637,7 +639,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     name="class_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Assigned Class</FormLabel>
+                        <FormLabel>{t("assigned_class")}</FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(Number.parseInt(value))}
                           defaultValue={field.value?.toString()}
@@ -664,7 +666,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="joining_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Joining Date</FormLabel>
+                      <FormLabel>{t("joining_date")}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -677,7 +679,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                   name="employment_status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Employment Status</FormLabel>
+                      <FormLabel>{t("employee_status")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -685,11 +687,11 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Permanent">Permanent</SelectItem>
-                          <SelectItem value="Trial_period">Trial Period</SelectItem>
-                          <SelectItem value="Resigned">Resigned</SelectItem>
-                          <SelectItem value="Contact_base">Contract Base</SelectItem>
-                          <SelectItem value="Notice_Period">Notice Period</SelectItem>
+                          <SelectItem value="Permanent">{t("permanent")}</SelectItem>
+                          <SelectItem value="Trial_period">{t("trial_period")}</SelectItem>
+                          <SelectItem value="Resigned">{t("resigned")}</SelectItem>
+                          <SelectItem value="Contact_base">{t("contract_base")}</SelectItem>
+                          <SelectItem value="Notice_Period">{t("notice_period")}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -699,9 +701,9 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
-                <Button type="submit">Submit</Button>
+                <Button type="submit">{t("submit")}</Button>
               </CardFooter>
             </Card>
           </TabsContent>

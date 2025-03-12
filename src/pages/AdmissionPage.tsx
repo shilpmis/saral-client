@@ -6,10 +6,11 @@ import { PlusCircle, FileText, UserCheck, UserX, Calendar } from "lucide-react"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
 import { InquiryList } from "@/components/Admission/InquiryList"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const AdmissionModule: React.FC = () => {
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
-
+  const {t} = useTranslation()
   const dashboardData = {
     totalInquiries: 150,
     pendingApplications: 45,
@@ -29,15 +30,15 @@ export const AdmissionModule: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Admission Module</h1>
+        <h1 className="text-3xl font-bold text-gray-800">{t("admission_module")}</h1>
         <Button onClick={() => setIsQuickInquiryOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> New Inquiry
+          <PlusCircle className="mr-2 h-4 w-4" /> {t("new_inquiry")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Inquiries</CardTitle>
+          <CardTitle>{t("recent_inquiries")}</CardTitle>
         </CardHeader>
         <CardContent>
           <InquiryList />

@@ -27,6 +27,7 @@ import { toast } from "@/hooks/use-toast"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { Division } from "@/types/academic"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const userSchema = z.object({
   teacher_id: z.string().min(1, "Teacher is required"),
@@ -53,6 +54,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [availableAcademicClasses, setAvailableAcademicClasses] = useState<Division[] | null>(null)
+  const {t} = useTranslation()
 
   const form = useForm<FormData>({
     resolver: zodResolver(userSchema),
@@ -181,19 +183,19 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Teacher Access Management</h1>
+        <h1 className="text-2xl font-bold">{t("teacher_access_management")}</h1>
         <Button onClick={handleOnboard}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Onboard Teacher
+          <PlusCircle className="mr-2 h-4 w-4" />{t("onboard_teachers")} 
         </Button>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Assigned Class</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{t("name")}</TableHead>
+            <TableHead>{t("assigned_class")}</TableHead>
+            <TableHead>{t("status")}</TableHead>
+            <TableHead>{t("actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -232,9 +234,9 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedUser ? "Edit Teacher Access" : "Onboard New Teacher"}</DialogTitle>
+            <DialogTitle>{selectedUser ? t("edit_teacher_access") : t("onboard_new_teacher")}</DialogTitle>
             <DialogDescription>
-              {selectedUser ? "Edit the details for this teacher." : "Provide the details to onboard a new teacher."}
+              {selectedUser ? t("edit_the_details_for_this_teacher.") : t("provide_the_details_to_onboard_a_new_teacher.")}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -244,7 +246,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                 name="teacher_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t("name")}</FormLabel>
                     <FormControl>
                       <Input value={selectedUser.teacher?.first_name + " " + selectedUser.teacher?.last_name} disabled />
                     </FormControl>
@@ -257,7 +259,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                 name="teacher_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teacher</FormLabel>
+                    <FormLabel>{t("teacher")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -281,7 +283,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                 name="class_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assigned Class</FormLabel>
+                    <FormLabel>{t("assigned_class")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -305,7 +307,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Active Status</FormLabel>
+                        <FormLabel className="text-base">{t("active_status")}</FormLabel>
                       </div>
                       <FormControl>
                         <Switch checked={checkIsActive(field.value)} onCheckedChange={field.onChange} />
@@ -316,9 +318,9 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
               )}
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
-                <Button type="submit">{selectedUser ? "Update User" : "Create User"}</Button>
+                <Button type="submit">{selectedUser ? t("update_user") : t("create_user")}</Button>
               </div>
             </form>
           </Form>

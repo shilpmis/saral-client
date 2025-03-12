@@ -27,6 +27,7 @@ import {
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
 import { PageMeta } from "@/types/global"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 const FilterOptions: React.FC<{
@@ -87,7 +88,7 @@ export const Staff: React.FC = () => {
 
   const [bulkUploadTeachers] = useBulkUploadTeachersMutation();
   const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false) 
-
+  const {t} = useTranslation()
 
   const handleUpload = async (schoolId : number) => {
     if (!fileName) return alert("Please select a file.");
@@ -289,7 +290,7 @@ export const Staff: React.FC = () => {
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">
-          Staff Management
+          {t("staff_management")}
         </h2>
         <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <Button
@@ -302,12 +303,12 @@ export const Staff: React.FC = () => {
             }
             size="sm"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Staff
+            <Plus className="mr-2 h-4 w-4" /> {t("add_staff")}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <MoreHorizontal className="mr-2 h-4 w-4" /> Actions
+                <MoreHorizontal className="mr-2 h-4 w-4" /> {t("actions")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -315,25 +316,25 @@ export const Staff: React.FC = () => {
                 <DialogTrigger asChild>
                  <button className="flex items-center space-x-2 gap-3"> 
                   <Upload className="h-4 w-4 ms-2" />
-                    <span>Upload Excel</span>
+                    <span>{t("upload_excel")}</span>
                  </button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogTitle>Upload Excel File</DialogTitle>
+                  <DialogTitle>{t("upload_excel_file")}</DialogTitle>
                   <div className="flex justify-between mt-4">
                     <Button
                       variant="outline"
                       onClick={handleDownloadDemo}
                       className="w-1/2 mr-2"
                     >
-                      Download Demo Excel Sheet
+                      {t("download_demo_excel_sheet")}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={handleChooseFile}
                       className="w-1/2 mr-2"
                     >
-                      Choose Excel File
+                      {t("choose_excel_file")}
                     </Button>
                   </div>
                   <Input
@@ -350,15 +351,15 @@ export const Staff: React.FC = () => {
                     </p>
                   )}
                   <div className="flex justify-end">
-                    <Button className="w-1/2">Upload</Button>
+                    <Button className="w-1/2">{t("upload")}</Button>
                   </div>
                 </DialogContent>
               </Dialog>
               <DropdownMenuItem>
-                <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
               </DropdownMenuItem>
-              <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem>Print List</DropdownMenuItem>
+              <DropdownMenuItem>{t("export_data")}</DropdownMenuItem>
+              <DropdownMenuItem>{t("print_list")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -379,8 +380,8 @@ export const Staff: React.FC = () => {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="teaching">Teaching Staff</TabsTrigger>
-          <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
+          <TabsTrigger value="teaching">{t("teaching_staff")}</TabsTrigger>
+          <TabsTrigger value="non-teaching">{t("non_teaching_staff")}</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
           {isTeachingOtherLoading && (
@@ -425,8 +426,8 @@ export const Staff: React.FC = () => {
           <DialogHeader>
             <DialogTitle>
               {openDialogForTeacher.type === "add"
-                ? "Add New Staff"
-                : "Edit Staff"}
+                ? t("add_new_staff")
+                : t("edit_staff")}
             </DialogTitle>
           </DialogHeader>
           {openDialogForTeacher.type === "add" ? (

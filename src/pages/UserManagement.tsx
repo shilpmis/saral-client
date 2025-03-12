@@ -18,6 +18,7 @@ import { useLazyFetchManagementUsersQuery, useLazyFetchUserAsTeacherQuery } from
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { PageMeta } from "@/types/global"
 import { UserForm } from "@/components/Users/UserForm"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 // Predefined management roles
 const managementRoles = [
@@ -51,6 +52,7 @@ export const UserManagement: React.FC = () => {
   const [currentDisplayedOnBoardTeachera, setCurrentDisplayedOnBoardTeachera]
     = useState<{ users: User[], page_meta: PageMeta } | null>(null)
 
+  const {t} = useTranslation()
 
   const handleEditUser = (user: User) => {
     setIsDialogForManagmentUserOpen({
@@ -160,21 +162,21 @@ export const UserManagement: React.FC = () => {
     <Card className="w-full">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">User Management</h2>
+          <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">{t("user_management")}</h2>
 
         </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="management">Management Users</TabsTrigger>
-            <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="management">{t("management_users")}</TabsTrigger>
+            <TabsTrigger value="staff">{t("staff")}</TabsTrigger>
           </TabsList>
           <TabsContent value="management">
             {currentDisplayedManagementUser && <>
               <div className="flex justify-between flex-row-reverse items-center m-4">
                 <Button onClick={handleAddUser}>
-                  <Plus className="mr-2 h-4 w-4" /> Add User
+                  <Plus className="mr-2 h-4 w-4" /> {t("add_user")}
                 </Button>
               </div>
               <div className="overflow-x-auto">
@@ -205,11 +207,11 @@ export const UserManagement: React.FC = () => {
       <Dialog open={isDialogForManagmentUserOpen.isOpen} onOpenChange={handleCloseDialogBox}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>{isDialogForManagmentUserOpen.type === 'edit' ? "Edit User" : "Add New User"}</DialogTitle>
+            <DialogTitle>{isDialogForManagmentUserOpen.type === 'edit' ? "Edit User" : t("add_new_user")}</DialogTitle>
             <DialogDescription>
               {isDialogForManagmentUserOpen.type === 'edit'
                 ? "Make changes to the user details below."
-                : "Fill in the details to create a new user."}
+                : t("fill_in_the_details_to_create_a_new_user.")}
             </DialogDescription>
           </DialogHeader>
           <UserForm

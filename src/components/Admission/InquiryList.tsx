@@ -6,10 +6,12 @@ import { useEffect, useState } from "react"
 import { PageMeta } from "@/types/global"
 import { InquiriesForStudent } from "@/types/student"
 import { useLazyGetInquiryQuery } from "@/services/InquiryServices"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const InquiryList: React.FC = () => {
 
   const [getInquiry, { isLoading: isInquiriesLoading }] = useLazyGetInquiryQuery()
+  const {t} = useTranslation()
 
   const [InquiryData, setInquiryData] = useState<{ data: InquiriesForStudent[], page: PageMeta } | null>(null);
 
@@ -34,13 +36,13 @@ export const InquiryList: React.FC = () => {
       {InquiryData && InquiryData.data.length > 0 && (<Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Student Name</TableHead>
-            <TableHead>Parent Name</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Grade</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{t("student_name")}</TableHead>
+            <TableHead>{t("parent_name")}</TableHead>
+            <TableHead>{t("contact")}</TableHead>
+            <TableHead>{t("email")}</TableHead>
+            <TableHead>{t("grade")}</TableHead>
+            <TableHead>{t("status")}</TableHead>
+            <TableHead>{t("actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,7 +58,7 @@ export const InquiryList: React.FC = () => {
               </TableCell>
               <TableCell>
                 <Button variant="outline" size="sm">
-                  View
+                  {t("view")}
                 </Button>
               </TableCell>
             </TableRow>

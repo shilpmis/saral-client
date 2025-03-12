@@ -20,6 +20,7 @@ import {
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { SaralPagination } from "../ui/common/SaralPagination";
 import { OtherStaff, TeachingStaff } from "@/types/staff";
+import { useTranslation } from "@/redux/hooks/useTranslation";
 
 interface PageMeta {
   total: number,
@@ -58,7 +59,8 @@ export default function StaffTable({
 
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
-
+  
+  const {t} = useTranslation();
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
   };
@@ -69,13 +71,13 @@ export default function StaffTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Mobile</TableHead>
-              <TableHead>Designation</TableHead>
-              <TableHead>Current Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t("user_id")}</TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead>{t("email")}</TableHead>
+              <TableHead>{t("mobile_no")}</TableHead>
+              <TableHead>{t("designation")}</TableHead>
+              <TableHead>{t("current_status")}</TableHead>
+              <TableHead>{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,14 +89,14 @@ export default function StaffTable({
                   {isValidEmail(staff.email) ? (
                     staff.email
                   ) : (
-                    <span className="text-red-500">Invalid Email</span>
+                    <span className="text-red-500">{t("invalid_email")}</span>
                   )}
                 </TableCell>
                 <TableCell>
                   {isValidMobile(staff.mobile_number) ? (
                     staff.mobile_number
                   ) : (
-                    <span className="text-red-500">Invalid Mobile</span>
+                    <span className="text-red-500">{t("invalid_mobile")}</span>
                   )}
                 </TableCell>
                 <TableCell>{staff.role_meta.role}</TableCell>
@@ -131,7 +133,7 @@ export default function StaffTable({
                     </DropdownMenuContent>
                   </DropdownMenu> */}
                   <Button variant="outline" onClick={() => onEdit(staff.id)}>
-                    Edit
+                    {t("edit")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -139,7 +141,7 @@ export default function StaffTable({
           </TableBody>
         </Table>
       ) : (
-        <div className="text-center py-4 text-gray-500">No records found</div>
+        <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
       )}
       <SaralPagination
         currentPage={staffList.page_meta.current_page}

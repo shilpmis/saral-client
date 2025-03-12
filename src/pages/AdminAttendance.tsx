@@ -14,6 +14,7 @@ import { selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } from "@/services/AttendanceServices"
 import type { AttendanceDetails } from "@/types/attendance"
 import { Loader2, Search } from "lucide-react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const AdminAttendanceView: React.FC = () => {
   const user = useAppSelector(selectCurrentUser)
@@ -26,6 +27,7 @@ const AdminAttendanceView: React.FC = () => {
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "late" | "half_day">("all")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceDetails | null>(null)
+  const {t} = useTranslation()
 
   const filteredStudents =
     attendanceRecords?.attendance_data.filter((student) => {
@@ -103,19 +105,19 @@ const AdminAttendanceView: React.FC = () => {
   return (
     <Card className="container mx-auto p-6">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold">Admin Attendance Dashboard</CardTitle>
+        <CardTitle className="text-3xl font-bold">{t("admin_attendance_dashboard")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("date")}</label>
             <SaralDatePicker
               date={selectedDate}
               onDateChange={(date: Date | undefined) => setSelectedDate(date)}
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Class</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("class")}</label>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Class" />
@@ -129,21 +131,21 @@ const AdminAttendanceView: React.FC = () => {
             </Select>
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Division</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("division")}</label>
             <Select value={selectedDivision} onValueChange={setSelectedDivision}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Division" />
               </SelectTrigger>
               <SelectContent>
                 {/* Add division options dynamically */}
-                <SelectItem value="A">Division A</SelectItem>
-                <SelectItem value="B">Division B</SelectItem>
+                <SelectItem value="A">{t("division")} A</SelectItem>
+                <SelectItem value="B">{t("division")} B</SelectItem>
                 {/* ... */}
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Filter</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("filter")}</label>
             <Select
               value={filter}
               onValueChange={(value: "all" | "present" | "absent" | "late" | "half_day") => setFilter(value)}
@@ -152,11 +154,11 @@ const AdminAttendanceView: React.FC = () => {
                 <SelectValue placeholder="Filter attendance" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="present">Present</SelectItem>
-                <SelectItem value="absent">Absent</SelectItem>
-                <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="half_day">Half Day</SelectItem>
+                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="present">{t("present")}</SelectItem>
+                <SelectItem value="absent">{t("absent")}</SelectItem>
+                <SelectItem value="late">{t("late")}</SelectItem>
+                <SelectItem value="half_day">{t("half_day")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -191,8 +193,8 @@ const AdminAttendanceView: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Incomplete Selection</p>
-                <p className="text-sm">Please select a date, class, and division to view or record attendance.</p>
+                <p className="font-bold">{t("incomplete_selection")}</p>
+                <p className="text-sm">{t("please_select_a_date,_class,_and_division_to_view_or_record_attendance.")}</p>
               </div>
             </div>
           </div>
@@ -209,8 +211,8 @@ const AdminAttendanceView: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Sunday Notice</p>
-                <p className="text-sm">It's Sunday. No attendance is required.</p>
+                <p className="font-bold">{t("sunday_notice")}</p>
+                <p className="text-sm">{t("it's_sunday._no_attendance_is_required.")}</p>
               </div>
             </div>
           </div>

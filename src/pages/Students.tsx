@@ -24,6 +24,7 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { downloadCSVTemplate } from "@/utils/csv-helper"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const Students: React.FC = () => {
   // const dispatch = useAppDispatch()
@@ -246,18 +247,20 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass, getStudentForClass])
 
+  const {t} = useTranslation()
+
   return (
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">Students</h2>
+          <h2 className="text-3xl font-bold">{t("students")}</h2>
           <div className="flex space-x-2">
             <Button
               onClick={() =>
                 setOpenDialogForStudent({ ...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })
               }
             >
-              <Plus className="mr-2 h-4 w-4" /> Add New Student
+              <Plus className="mr-2 h-4 w-4" />{t("add_new_student")}
             </Button>
             <Dialog
               open={dialogOpenForBulkUpload}
@@ -272,16 +275,16 @@ export const Students: React.FC = () => {
             >
               <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
-                  <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                  <Upload className="mr-2 h-4 w-4" />{t("upload_excel")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogTitle>Upload Excel File</DialogTitle>
+                <DialogTitle>{t("upload_excel_file")}</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="upload-class" className="text-sm font-medium">
-                        Class
+                        {t("class")}
                       </label>
                       <Select value={selectedClass} onValueChange={handleClassChange}>
                         <SelectTrigger className="w-full">
@@ -289,7 +292,7 @@ export const Students: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value=" " disabled>
-                            Classes
+                            {t("classes")}
                           </SelectItem>
                           {AcademicClasses?.map((cls, index) =>
                             cls.divisions.length > 0 ? (
@@ -303,7 +306,7 @@ export const Students: React.FC = () => {
                     </div>
                     <div>
                       <label htmlFor="upload-division" className="text-sm font-medium">
-                        Division
+                        {t("division")}
                       </label>
                       <Select
                         value={selectedDivision ? selectedDivision.id.toString() : " "}
@@ -314,7 +317,7 @@ export const Students: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value=" " disabled>
-                            Divisions
+                            {t("divisions")}
                           </SelectItem>
                           {availableDivisions &&
                             availableDivisions.divisions.map((division, index) => (
@@ -329,10 +332,10 @@ export const Students: React.FC = () => {
 
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
-                      Download Demo CSV Template
+                    {t("download_demo_CSV_template")}                 
                     </Button>
                     <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
-                      Choose CSV File
+                      {t("choose_CSV_file")}
                     </Button>
                   </div>
                   <Input
@@ -357,7 +360,7 @@ export const Students: React.FC = () => {
                           Uploading...
                         </>
                       ) : (
-                        "Upload"
+                        t("upload")
                       )}
                     </Button>
                   </div>
@@ -371,10 +374,10 @@ export const Students: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Export Data</DropdownMenuItem>
-                <DropdownMenuItem>Print List</DropdownMenuItem>
+                <DropdownMenuItem>{t("export_data")}</DropdownMenuItem>
+                <DropdownMenuItem>{t("print_list")}</DropdownMenuItem>
                 <DropdownMenuItem>
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -384,16 +387,16 @@ export const Students: React.FC = () => {
         {!AcademicClasses || AcademicClasses.length === 0 ? (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Search Students</CardTitle>
+              <CardTitle>{t("search_students")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-yellow-600">Please create Classes for your school.</p>
+              <p className="text-yellow-600">{t("please_create_classes_for_your_school.")}</p>
             </CardContent>
           </Card>
         ) : (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Search Students</CardTitle>
+              <CardTitle>{t("search_students")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="flex gap-2">

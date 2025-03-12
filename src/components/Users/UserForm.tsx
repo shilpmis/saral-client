@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import type { User } from "@/types/user"
 import { useAddUserMutation, useUpdateUserMutation } from "@/services/UserManagementService"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const userSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -34,6 +35,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
 
   const [createUser, { isError, isLoading }] = useAddUserMutation();
   const [updateUser, { }] = useUpdateUserMutation()
+  const {t} = useTranslation()
 
   const checkIsActive = (value: any): boolean => {
     return value == 1
@@ -103,7 +105,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{t("name")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -117,7 +119,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
             name="role_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Role</FormLabel>
+                <FormLabel>{t("role")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>

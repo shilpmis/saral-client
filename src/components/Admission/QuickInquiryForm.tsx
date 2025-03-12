@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z.object({
   student_name: z.string().min(2, { message: "Student name is required" }),
@@ -26,6 +27,7 @@ interface QuickInquiryFormProps {
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
 
   const [addInquiries, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
+  const { t } = useTranslation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,7 +75,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Inquiry Form</DialogTitle>
+          <DialogTitle>{t("quick_inquiry_form")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -82,7 +84,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="student_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student Name</FormLabel>
+                  <FormLabel>{t("student_name")}</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter student name" {...field} />
                   </FormControl>
@@ -95,7 +97,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="parent_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent Name</FormLabel>
+                  <FormLabel>{t("parent_name")}</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter parent name" {...field} />
                   </FormControl>
@@ -108,7 +110,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="contact_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contact Number</FormLabel>
+                  <FormLabel>{t("contact_number")}</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter contact number" {...field} />
                   </FormControl>
@@ -121,7 +123,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="Enter email" {...field} />
                   </FormControl>
@@ -134,7 +136,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="grade_applying"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Grade Applying For</FormLabel>
+                  <FormLabel>{t("grade_applying_for")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -154,7 +156,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               )}
             />
             <DialogFooter>
-              <Button type="submit">Submit Inquiry</Button>
+              <Button type="submit">{t("submit_inquiry")}</Button>
             </DialogFooter>
           </form>
         </Form>
