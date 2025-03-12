@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch";
 import { logout } from "@/services/AuthService";
@@ -56,16 +56,13 @@ export default function Header() {
 
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await dispatch(logout());
-  };
-
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const handleLogout = async () => {
     setIsLogoutDialogOpen(false)
     await dispatch(logout())
   }
+
   useEffect(() => {
     const handleOnlineStatusChange = () => {
       setIsOnline(navigator.onLine);
