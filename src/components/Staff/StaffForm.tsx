@@ -1,6 +1,8 @@
 import type React from "react"
+import { useRef } from "react"
 import { useState, useCallback, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,27 +10,84 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { StaffFormData, staffSchema } from "@/utils/staff.validation"
+import { StaffFormData, staffSchema } from "@/utils/staff.validation";
 
 interface StaffFormProps {
-  initialData?: Partial<StaffFormData>
+  initialData?: Partial<StaffFormData>   
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
 }
 
 const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
-  const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
+  
+ const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<{ id: number; name: string }[]>([])
   const [nonTeachingRoles, setNonTeachingRoles] = useState<{ id: number; name: string }[]>([])
 
   const form = useForm<StaffFormData>({
-    // resolver: zodResolver(staffSchema),
+    resolver: zodResolver(staffSchema),
     defaultValues: initialData || {
       is_teaching_role: true,
-      employment_status: "Permanent",
+      // employment_status: "Permanent",
     },
-  })
+  });
+
+const customStaffSchema = staffSchema.refine((data) => {
+    // Specify the path to the field that should show the error
+  });
+
+  
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const tabMapping: { [key: string]: string } = {
+    is_teaching_role: "role",
+    staff_role_id: "role",
+    first_name: "personal",
+    middle_name: "personal",
+    last_name: "personal",
+    first_name_in_guj: "personal",
+    middle_name_in_guj: "personal",
+    last_name_in_guj: "personal",
+    gender: "personal",
+    birth_date: "personal",
+    aadhar_no: "personal",
+    mobile_number: "contact",
+    email: "contact",
+    qualification: "contact",
+    subject_specialization: "contact",
+    religiion: "other",
+    religiion_in_guj: "other",
+    caste: "other",
+    caste_in_guj: "other",
+    category: "other",
+    address: "address",
+    district: "address",
+    city: "address",
+    state: "address",
+    postal_code: "address",
+    bank_name: "bank",
+    account_no: "bank",
+    IFSC_code: "bank",
+    class_id: "employment",
+    joining_date: "employment",
+    employment_status: "employment",
+  };
+
+  useEffect(() => {
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      console.log("firstErrorField" ,firstErrorField)
+      const tabToActivate = tabMapping[firstErrorField];
+      setActiveTab(tabToActivate);
+  
+      // Focus on the input field with the error
+      setTimeout(() => {
+        inputRefs.current[firstErrorField]?.focus();
+      }, 0);
+    }
+  }, [form.formState.errors]);
 
   // Simulated API call to fetch roles
   useEffect(() => {
@@ -42,6 +101,17 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
       { id: 4, name: "Administrative Staff" },
     ])
   }, [])
+
+  useEffect(()=>{
+    if(initialData){
+      if(formType === 'update' && initialData?.staff_role_id){
+          form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
+          form.setValue('staff_role_id', initialData?.staff_role_id)
+      }else{
+        alert('Something went wrong');
+      }
+    }
+  },[initialData])
 
   const handleSubmit: SubmitHandler<StaffFormData> = (data) => {
     onSubmit(data)
@@ -289,7 +359,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       <FormItem>
                         <FormLabel>Aadhar Number</FormLabel>
                         <FormControl>
-                          <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -315,19 +385,19 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="mobile_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                   <FormField
+                                      control={form.control}
+                                      name="mobile_number"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Mobile Number</FormLabel>
+                                          <FormControl>
+                                            <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
                   <FormField
                     control={form.control}
                     name="email"
@@ -549,7 +619,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       <FormItem>
                         <FormLabel>Postal Code</FormLabel>
                         <FormControl>
-                          <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <Input  type="number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -594,7 +664,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     <FormItem>
                       <FormLabel>Account Number</FormLabel>
                       <FormControl>
-                        <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                        <Input  type="number"{...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

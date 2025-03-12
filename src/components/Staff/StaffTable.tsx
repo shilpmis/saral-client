@@ -17,12 +17,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, MoreHorizontal, X } from "lucide-react";
 import { SaralPagination } from "../ui/common/SaralPagination";
-import { OtherStaff, TeachingStaff } from "@/types/staff";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
-import { DialogFooter, DialogHeader } from "../ui/dialog";
-import { motion } from "framer-motion";
+import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff";
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import dynamic from "next/dynamic"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Separator } from "@radix-ui/react-separator";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import StaffPdfDilog from "./StaffPdfDilog";
+
 
 interface PageMeta {
   total: number,
@@ -60,7 +66,19 @@ export default function StaffTable({
   type: 'teaching' | 'non-teaching'
 }) {
 
-  const [isdelete, setIsDelete] = useState(false)
+   const StafftDetailsPDF = dynamic(() => import("./StaffPdf"), {
+      ssr: false,
+      loading: () => <p>Loading PDF generator...</p>,
+    })
+  
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState<any>(null)
+  const handleStaffClick = (staff:any) => {
+    setSelectedStaff(staff)
+    setDialogOpen(true)
+    console.log("staff is here=>>",selectedStaff);
+    
+  }
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
 
@@ -89,7 +107,14 @@ export default function StaffTable({
             {staffList.staff && staffList.staff.map((staff) => (
               <TableRow key={staff.id}>
                 <TableCell>{staff.id}</TableCell>
-                <TableCell>{staff.first_name} {staff.middle_name} {staff.last_name}</TableCell>
+                <TableCell>
+                <button
+                  className="text-blue-600 hover:underline focus:outline-none"
+                  onClick={() => handleStaffClick(staff)}
+                >
+                  {staff.first_name} {staff.middle_name} {staff.last_name}
+                </button>
+                  </TableCell>
                 <TableCell>
                   {isValidEmail(staff.email) ? (
                     staff.email
@@ -148,6 +173,13 @@ export default function StaffTable({
             ))}
           </TableBody>
         </Table>
+        <StaffPdfDilog 
+          dialogOpen={dialogOpen}
+          setDialogOpen={setDialogOpen}
+          selectedStaff={selectedStaff}
+          StafftDetailsPDF={StafftDetailsPDF}
+        />
+
         </>
       ) : (
         <div className="text-center py-4 text-gray-500">No records found</div>

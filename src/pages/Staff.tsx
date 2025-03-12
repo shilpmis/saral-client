@@ -1,6 +1,3 @@
-"use client"
-
-
 import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -10,11 +7,9 @@ import { Plus, FileDown, Upload, MoreHorizontal, AlertTriangle, Trash } from "lu
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
-// import { StaffForm } from "@/components/Staff/StaffForm"
 import StaffTable from "@/components/Staff/StaffTable"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { DialogDescription } from "@radix-ui/react-dialog"
-import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
+import type { OtherStaff, TeachingStaff } from "@/types/staff"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAuthState } from "@/redux/slices/authSlice"
@@ -28,9 +23,16 @@ import {
   useUpdateOtherStaffMutation,
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
+
+import type { PageMeta } from "@/types/global"
+import ExcelDownloadModal from "@/components/Students/ExcelDownloadModalForStudents"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { downloadCSVTemplate } from "@/components/Staff/csv-template-generator"
+import ExcelDownloadModalForStaff from "@/components/Staff/ExcelDownloadModalForStaff"
 import { PageMeta } from "@/types/global"
 import { motion } from "framer-motion"
-
 
 const FilterOptions: React.FC<{
   onSearchChange: (value: string) => void
@@ -56,7 +58,7 @@ const FilterOptions: React.FC<{
 }
 
 export const Staff: React.FC = () => {
-  const dispatch = useAppDispatch()
+  
   const authState = useAppSelector(selectAuthState)
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
@@ -69,45 +71,87 @@ export const Staff: React.FC = () => {
   const [statusValue, setStatusValue] = useState<string>("")
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [staffTypeForUpload, setStaffTypeForUpload] = useState<"teaching" | "non-teaching" | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
-  const [currentDisplayDataForTeachers, setCurrentDisplayDataForTeachers]
-    = useState<{ satff: TeachingStaff[], page_meta: PageMeta } | null>(null)
+  const [currentDisplayDataForTeachers, setCurrentDisplayDataForTeachers] = useState<{
+    satff: TeachingStaff[]
+    page_meta: PageMeta
+  } | null>(null)
 
-  const [currentDisplayDataForOtherStaff, setCurrentDisplayDataForOtherStaff]
-    = useState<{ satff: OtherStaff[], page_meta: PageMeta } | null>(null)
+  const [currentDisplayDataForOtherStaff, setCurrentDisplayDataForOtherStaff] = useState<{
+    satff: OtherStaff[]
+    page_meta: PageMeta
+  } | null>(null)
 
   const [paginationMete, setPaginationMete] = useState<PageMeta | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [openDialogForTeacher, setOpenDialogForTeacher] =
-    useState<{ isOpen: boolean, type: 'add' | 'edit' | 'view', selectedTeacher: TeachingStaff | null }>({ isOpen: false, type: "add", selectedTeacher: null });
+  const [openDialogForTeacher, setOpenDialogForTeacher] = useState<{
+    isOpen: boolean
+    type: "add" | "edit" | "view"
+    selectedTeacher: TeachingStaff | null
+  }>({ isOpen: false, type: "add", selectedTeacher: null })
+
+  const [openDialogForOtherStaff, setOpenDialogForOtherStaff] = useState<{
+    isOpen: boolean
+    type: "add" | "edit" | "view"
+    selectedOtherStaff: OtherStaff | null
+  }>({ isOpen: false, type: "add", selectedOtherStaff: null })
+
+  const [teacherInitialData, setTeacherInitialData] = useState<TeachingStaff | null>(null)
   
-  const [openDialogForOtherStaff, setOpenDialogForOtherStaff] =
-    useState<{ isOpen: boolean, type: 'add' | 'edit' | 'view', selectedOtherStaff: OtherStaff | null }>({ isOpen: false, type: "add", selectedOtherStaff: null });
+  const [otherInitialData, setOtherInitialData] = useState<OtherStaff>()
 
-  const [teacherInitialData, setTeacherInitialData] = useState<TeachingStaff>();
-  const [otherInitialData, setOtherInitialData] = useState<OtherStaff>();
+  const [bulkUploadTeachers] = useBulkUploadTeachersMutation()
+  const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false)
 
-  const [bulkUploadTeachers] = useBulkUploadTeachersMutation();
-  const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false) 
+  const handleUpload = async (schoolId: number, staffType: "teaching" | "non-teaching") => {
+    if (!fileName) {
+      alert("Please select a file.")
+      return
+    }
 
-
-    const [isdelete, setIsDelete] = useState(false)
+  const [isdelete, setIsDelete] = useState(false)
 
   const handleUpload = async (schoolId : number) => {
     if (!fileName) return alert("Please select a file.");
+
     try {
-      await bulkUploadTeachers({ school_id: schoolId, fileName }).unwrap();
-      alert("File uploaded successfully!");
+      setIsUploading(true)
+      // Pass staff type to the API
+      await bulkUploadTeachers({
+        school_id: schoolId,
+        fileName,
+        staff_type: staffType,
+      }).unwrap()
+
+      alert("File uploaded successfully!")
+
+      // Refresh the appropriate tab
+      fetchDataForActiveTab(staffType, 1)
+
+      // Reset the form
+      setFileName(null)
+      setStaffTypeForUpload(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+
+      // Close the dialog
+      setOpenDialogForStaffBulkUpload(false)
     } catch (error) {
-      alert("Upload failed! Try again.");
+      console.error("Upload error:", error)
+      alert("Upload failed! Try again.")
+    } finally {
+      setIsUploading(false)
     }
-  };
-  
-  const handleStaffFormOpenChange = (open :boolean) => {
-   if(!open) {
-    setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null });
-   }
+  }
+
+  const handleStaffFormOpenChange = (open: boolean) => {
+    if (!open) {
+      setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null })
+    }
   }
   const handleOtherStaffFormOpenChange = (open :boolean) => {
     if(!open) {
@@ -116,28 +160,26 @@ export const Staff: React.FC = () => {
    }
 
   const handleStaffFormClose = () => {
-    console.log("Close form event");
-    setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
+    console.log("Close form event")
+    setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
   }
 
   const [updateTeacher] = useUpdateTeacherMutation()
   const [updateOtherStaff] = useUpdateOtherStaffMutation()
 
-  
   const handleSearchFilter = (value: string) => {
     // const searchValue = value.toLowerCase();
     // setSearchValue(value);
-
     // if (activeTab === 'teaching' && teachingStaff) {
     //   const filteredTeachers = teachingStaff.filter((staff) =>
-    //     Object.values(staff).some((field) => 
+    //     Object.values(staff).some((field) =>
     //       String(field).toLowerCase().includes(searchValue)
     //     )
     //   );
     //   setCurrentDisplayDataForTeachers(filteredTeachers);
     // } else if (activeTab === 'non-teaching' && otherStaff) {
     //   const filteredOthers = otherStaff.filter((staff) =>
-    //     Object.values(staff).some((field) => 
+    //     Object.values(staff).some((field) =>
     //       String(field).toLowerCase().includes(searchValue)
     //     )
     //   );
@@ -147,7 +189,6 @@ export const Staff: React.FC = () => {
 
   const handleStatusFilter = (value: string) => {
     // setStatusValue(value);
-
     // if (value === 'All') {
     //   if (activeTab === 'teaching') {
     //     setCurrentDisplayDataForTeachers(teachingStaff || null);
@@ -156,7 +197,6 @@ export const Staff: React.FC = () => {
     //   }
     //   return;
     // }
-
     // if (activeTab === 'teaching' && teachingStaff) {
     //   const filteredTeachers = teachingStaff.filter(
     //     (staff) => staff.status === value
@@ -170,66 +210,78 @@ export const Staff: React.FC = () => {
     // }
   }
 
+  const handleEditStaff = useCallback(
+    (staff_id: number) => {
+      const teacherInitialData = currentDisplayDataForTeachers?.satff.find((teacher) => teacher.id === staff_id)
+      if (teacherInitialData) {
+        setOpenDialogForTeacher({
+          ...openDialogForTeacher,
+          isOpen: true,
+          type: "edit",
+          selectedTeacher: teacherInitialData,
+        })
+        setTeacherInitialData(teacherInitialData)
+      }
+    },
+    [currentDisplayDataForTeachers],
+  )
 
-  const handleEditStaff = useCallback((staff_id: number) => {
-
-    const teacherInitialData = currentDisplayDataForTeachers?.satff.find((teacher) => teacher.id === staff_id);
-    if (teacherInitialData) {
-      setOpenDialogForTeacher({ ...openDialogForTeacher, isOpen: true, type: "edit", selectedTeacher: null });
-      setTeacherInitialData(teacherInitialData);
-    }
-  }, [currentDisplayDataForTeachers]); 
-
-  const handleEditOtherStaff = useCallback((staff_id: number) => {
-    const otherInitialData = currentDisplayDataForOtherStaff?.satff.find((other) => other.id === staff_id);
-    if (otherInitialData) {
-      setOpenDialogForOtherStaff({ ...openDialogForOtherStaff, isOpen: true, type: "edit", selectedOtherStaff: null });
-      setOtherInitialData(otherInitialData);
-    }
-  }, [currentDisplayDataForOtherStaff]);
+  const handleEditOtherStaff = useCallback(
+    (staff_id: number) => {
+      const otherInitialData = currentDisplayDataForOtherStaff?.satff.find((other) => other.id === staff_id)
+      if (otherInitialData) {
+        setOpenDialogForOtherStaff({
+          ...openDialogForOtherStaff,
+          isOpen: true,
+          type: "edit",
+          selectedOtherStaff: otherInitialData,
+        })
+        setOtherInitialData(otherInitialData)
+      }
+    },
+    [currentDisplayDataForOtherStaff],
+  )
 
   const handleAddStaffSubmit = async (data: StaffFormData) => {
-    console.log("data", data)
+    // console.log("data", data)
     try {
-      const payload  = {
+      const payload = {
         school_id: authState.user!.school_id,
         staffData: [data], // Wrapping data in an array
-      };
-  
-      if (data.is_teaching_role) {
-        await addTeachingStaff(payload).unwrap();
-      } else {
-        await addOtherStaff(payload).unwrap();
       }
-      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null });
-      fetchDataForActiveTab(activeTab as "teaching" , 1);
+
+      if (data.is_teaching_role) {
+        await addTeachingStaff(payload).unwrap()
+      } else {
+        await addOtherStaff(payload).unwrap()
+      }
+      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
+      fetchDataForActiveTab(activeTab as "teaching", 1)
     } catch (error) {
-      console.error("Error adding staff:", error);
+      console.error("Error adding staff:", error)
       // Handle error (e.g., show an error message to the user)
     }
-  };
+  }
 
-  const handleEditStaffSubmit = async (data : any) => {
+  const handleEditStaffSubmit = async (data: any) => {
     console.log("edit staff data id", data?.id)
 
     try {
       const payload = {
         school_id: authState.user!.school_id,
         teacher_id: data?.id,
-        data : {
+        data: {
           ...teacherInitialData,
-          ...data
-        }       
+          ...data,
+        },
       }
-      await updateTeacher(payload).unwrap();
+      await updateTeacher(payload).unwrap()
 
-      setOpenDialogForTeacher({ isOpen: false, type: "edit", selectedTeacher: null });
-      fetchDataForActiveTab(activeTab as "teaching" , 1);
+      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
+      fetchDataForActiveTab(activeTab as "teaching", 1)
     } catch (error) {
-      console.error("Error editing staff:", error);
-      
+      console.error("Error editing staff:", error)
     }
-
   }
   const handleEditOtherStaffSubmit = async (data : any) => {
     console.log("edit other staff data id", data?.id)
@@ -269,64 +321,95 @@ export const Staff: React.FC = () => {
     }
   }
 
-  const handleDownloadDemo = () => {
-    const demoExcelUrl = "/path/to/demo-excel-file.xlsx"
-    const link = document.createElement("a")
-    link.href = demoExcelUrl
-    link.download = "demo-excel-file.xlsx"
-    link.click()
+  const handleDownloadDemo = (staffType: "teaching" | "non-teaching") => {
+    // Use the CSV template generator
+    downloadCSVTemplate(staffType)
   }
 
-  async function fetchDataForActiveTab(type: 'teaching' | 'non-teaching', page: number = 1) {
+  // Function to fetch all teaching staff for Excel download
+  const fetchAllTeachingStaff = async (): Promise<TeachingStaff[]> => {
     try {
-      setIsLoading(true);
-      setError(null);
+      const response = await getTeachingStaff({
+        school_id: authState.user!.school_id,
+        // limit: 1000, // Get all staff for the Excel download
+      })
 
-      if (type === 'teaching') {
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return []
+    } catch (error) {
+      console.error("Error fetching teaching staff for Excel:", error)
+      return []
+    }
+  }
+
+  // Function to fetch all other staff for Excel download
+  const fetchAllOtherStaff = async (): Promise<OtherStaff[]> => {
+    try {
+      const response = await getOtherStaff({
+        school_id: authState.user!.school_id,
+        // limit: 1000, // Get all staff for the Excel download
+      })
+
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return []
+    } catch (error) {
+      console.error("Error fetching non-teaching staff for Excel:", error)
+      return []
+    }
+  }
+
+  async function fetchDataForActiveTab(type: "teaching" | "non-teaching", page = 1) {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      if (type === "teaching") {
         const response = await getTeachingStaff({
           school_id: authState.user!.school_id,
-          page: page
-        });
+          page: page,
+        })
         if (response.data) {
           setCurrentDisplayDataForTeachers({
             satff: response.data.data,
-            page_meta: response.data.meta
-          });
+            page_meta: response.data.meta,
+          })
         }
       } else {
         const response = await getOtherStaff({
           school_id: authState.user!.school_id,
-          page: page
-        });
+          page: page,
+        })
         if (response.data)
           setCurrentDisplayDataForOtherStaff({
             satff: response.data.data,
-            page_meta: response.data.meta
-          });
+            page_meta: response.data.meta,
+          })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
   function onPageChange(page: number) {
-    fetchDataForActiveTab(activeTab as 'teaching' | 'non-teaching', page);
+    fetchDataForActiveTab(activeTab as "teaching" | "non-teaching", page)
   }
 
   useEffect(() => {
     if (!currentDisplayDataForOtherStaff || !currentDisplayDataForTeachers) {
-      fetchDataForActiveTab(activeTab as 'teaching' | 'non-teaching', 1);
+      fetchDataForActiveTab(activeTab as "teaching" | "non-teaching", 1)
     }
-  }, [activeTab]);
+  }, [activeTab])
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">
-          Staff Management
-        </h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">Staff Management</h2>
         <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <Button
             onClick={() =>
@@ -354,47 +437,82 @@ export const Staff: React.FC = () => {
               </DropdownMenuItem>
               <Dialog>
                 <DialogTrigger asChild>
-                 <button className="flex items-center space-x-2 gap-3"> 
-                  <Upload className="h-4 w-4 ms-2" />
-                    <span>Upload Excel</span>
-                 </button>
+                  <button className="flex items-center space-x-2 gap-3 w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                    <Upload className="h-4 w-4 ms-2" />
+                    <span>Upload CSV</span>
+                  </button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogTitle>Upload Excel File</DialogTitle>
-                  <div className="flex justify-between mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={handleDownloadDemo}
-                      className="w-1/2 mr-2"
-                    >
-                      Download Demo Excel Sheet
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleChooseFile}
-                      className="w-1/2 mr-2"
-                    >
-                      Choose Excel File
-                    </Button>
-                  </div>
-                  <Input
-                    ref={fileInputRef}
-                    id="excel-file"
-                    type="file"
-                    accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  {fileName && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {fileName}
-                    </p>
-                  )}
-                  <div className="flex justify-end">
-                    <Button className="w-1/2">Upload</Button>
+                  <DialogHeader>
+                    <DialogTitle>Upload Staff CSV Data</DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-6">
+                    {/* Step 1: Select Staff Type */}
+                    <Card className="border shadow-sm">
+                      <CardHeader className="py-3">
+                        <CardTitle className="text-base">Select Staff Type</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <RadioGroup
+                          value={staffTypeForUpload || "teaching"}
+                          onValueChange={(value) => setStaffTypeForUpload(value as "teaching" | "non-teaching")}
+                          className="flex space-x-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="teaching" id="upload-teaching" />
+                            <Label htmlFor="upload-teaching">Teaching Staff</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="non-teaching" id="upload-non-teaching" />
+                            <Label htmlFor="upload-non-teaching">Non-Teaching Staff</Label>
+                          </div>
+                        </RadioGroup>
+                      </CardContent>
+                    </Card>
+
+                    {/* Step 2: Download Demo or Upload File */}
+                    {staffTypeForUpload && (
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <Button
+                            variant="outline"
+                            onClick={() => handleDownloadDemo(staffTypeForUpload)}
+                            className="w-1/2 mr-2"
+                          >
+                            Download Demo CSV
+                          </Button>
+                          <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
+                            Choose CSV File
+                          </Button>
+                        </div>
+                        <Input
+                          ref={fileInputRef}
+                          id="excel-file"
+                          type="file"
+                          accept=".csv"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                        {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+                        <div className="flex justify-end">
+                          <Button
+                            className="w-1/2"
+                            disabled={!fileName || isUploading}
+                            onClick={() => handleUpload(authState.user!.school_id, staffTypeForUpload)}
+                          >
+                            {isUploading ? "Uploading..." : "Upload"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
+              <ExcelDownloadModalForStaff fetchTeachingStaff={fetchAllTeachingStaff} fetchOtherStaff={fetchAllOtherStaff} />
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -409,19 +527,13 @@ export const Staff: React.FC = () => {
 
       {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value)}
-        className="w-full"
-      >
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="teaching">Teaching Staff</TabsTrigger>
           <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
-          {isTeachingOtherLoading && (
-            <div className="flex justify-center p-4">Loading...</div>
-          )}
+          {isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>}
           {currentDisplayDataForTeachers && (
             <StaffTable
               staffList={{
@@ -436,9 +548,7 @@ export const Staff: React.FC = () => {
           )}
         </TabsContent>
         <TabsContent value="non-teaching">
-          {isTeachingOtherLoading && (
-            <div className="flex justify-center p-4">Loading...</div>
-          )}
+          {isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>}
           {currentDisplayDataForOtherStaff && (
             <StaffTable
               staffList={{
@@ -461,18 +571,10 @@ export const Staff: React.FC = () => {
       >
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>
-              {openDialogForTeacher.type === "add"
-                ? "Add New Staff"
-                : "Edit Staff"}
-            </DialogTitle>
+            <DialogTitle>{openDialogForTeacher.type === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
           </DialogHeader>
           {openDialogForTeacher.type === "add" ? (
-            <StaffForm
-              onSubmit={handleAddStaffSubmit}
-              formType="create"
-              onClose={handleStaffFormClose}
-            />
+            <StaffForm onSubmit={handleAddStaffSubmit} formType="create" onClose={handleStaffFormClose} />
           ) : (
             <StaffForm
               onSubmit={handleEditStaffSubmit}
@@ -568,6 +670,7 @@ export const Staff: React.FC = () => {
         </DialogContent>
       </Dialog> */}
     </div>
-  );
+  )
 }
 
+export default Staff
