@@ -3,8 +3,8 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload, MoreHorizontal } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Plus, FileDown, Upload, MoreHorizontal, AlertTriangle, Trash } from "lucide-react"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
 import StaffTable from "@/components/Staff/StaffTable"
@@ -22,6 +22,7 @@ import {
   useBulkUploadTeachersMutation,
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
+
 import type { PageMeta } from "@/types/global"
 import ExcelDownloadModal from "@/components/Students/ExcelDownloadModalForStudents"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,6 +30,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { downloadCSVTemplate } from "@/components/Staff/csv-template-generator"
 import ExcelDownloadModalForStaff from "@/components/Staff/ExcelDownloadModalForStaff"
+import { PageMeta } from "@/types/global"
+import { motion } from "framer-motion"
 
 const FilterOptions: React.FC<{
   onSearchChange: (value: string) => void
@@ -107,6 +110,11 @@ export const Staff: React.FC = () => {
       alert("Please select a file.")
       return
     }
+
+  const [isdelete, setIsDelete] = useState(false)
+
+  const handleUpload = async (schoolId : number) => {
+    if (!fileName) return alert("Please select a file.");
 
     try {
       setIsUploading(true)
@@ -269,6 +277,11 @@ export const Staff: React.FC = () => {
     }
   }
 
+  const handleDelete = async () => {
+    setIsDelete(true)
+    //delete function call here
+  } 
+
   const handleChooseFile = () => {
     fileInputRef.current?.click()
   }
@@ -389,6 +402,11 @@ export const Staff: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>Print List</DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileDown className="mr-2 h-4 w-4" /> Download Excel
+              </DropdownMenuItem>
               <Dialog>
                 <DialogTrigger asChild>
                   <button className="flex items-center space-x-2 gap-3 w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
@@ -466,6 +484,7 @@ export const Staff: React.FC = () => {
               <ExcelDownloadModalForStaff fetchTeachingStaff={fetchAllTeachingStaff} fetchOtherStaff={fetchAllOtherStaff} />
               <DropdownMenuItem>Export Data</DropdownMenuItem>
               <DropdownMenuItem>Print List</DropdownMenuItem>
+
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -494,6 +513,7 @@ export const Staff: React.FC = () => {
                 page_meta: currentDisplayDataForTeachers?.page_meta,
               }}
               onEdit={handleEditStaff}
+              onDelete={handleDelete}
               type="teaching"
               onPageChange={onPageChange}
             />
@@ -508,6 +528,7 @@ export const Staff: React.FC = () => {
                 page_meta: currentDisplayDataForOtherStaff?.page_meta,
               }}
               onEdit={handleEditOtherStaff}
+              onDelete={handleDelete}
               type="teaching"
               onPageChange={onPageChange}
             />
@@ -536,6 +557,60 @@ export const Staff: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+         <Dialog open={isdelete} onOpenChange={(open)=> setIsDelete(open)}>
+              <DialogContent className="max-w-md rounded-2xl shadow-lg">
+                <DialogHeader className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
+                  >
+                    <Trash className="text-red-600 w-7 h-7" />
+                  </motion.div>
+                  <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+                  <DialogDescription className="text-gray-600">
+                    Are you sure you want to Delete Staff?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="mt-4 flex justify-center space-x-4">
+                  <Button type="button" variant="outline" onClick={() => setIsDelete(false)} className="px-6 py-2 rounded-lg">
+                    Cancel
+                  </Button>
+                  <Button type="button" variant="destructive" className="px-6 py-2 rounded-lg bg-red-600 text-white">
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+      {/* <Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Excel File</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Button variant="outline" onClick={handleDownloadDemo}>
+              Download Demo Excel Sheet
+            </Button>
+            <Button variant="outline" onClick={handleChooseFile}>
+              Choose Excel File
+            </Button>
+            <input
+              ref={fileInputRef}
+              id="excel-file"
+              type="file"
+              accept=".xlsx, .xls, .xml, .xlt, .xlsm, .xls, .xla, .xlw, .xlr"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            {fileName && (
+              <p className="text-sm text-muted-foreground">{fileName}</p>
+            )}
+            <Button>Upload</Button>
+          </div>
+        </DialogContent>
+      </Dialog> */}
     </div>
   )
 }
