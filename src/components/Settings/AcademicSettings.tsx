@@ -54,11 +54,23 @@ import {
 
 // Define the form schema for division
 const formSchemaForDivision = z.object({
-  class_id: z.number().nullable(),
-  class: z.number().nullable(),
-  division: z.string().nullable(),
-  aliases: z.string().nullable(),
-  formType: z.enum(["create", "edit"]).default("create"),
+  class_id: z.number({
+    message: "Please enter a valid Class Id for division.",
+  }).nullable(),
+  class: z.number({
+    message: "Please enter a valid Class for division.",
+  }),
+  division: z.string().min(1, {
+    message: "Please enter valid division",
+  }),
+  aliases: z
+    .string()
+    .min(3, 'Alias should be at least 3 characters')
+    .max(15, 'Alias should not be more than 15 characters')
+    .regex(/^[a-zA-Z0-9]+(?: [a-zA-Z0-9]+)*$/, {
+      message: 'Alias should contain only letters, numbers, and single spaces',
+    }).optional(),
+  formType: z.enum(["create", "edit"])
 })
 
 const defaultStandards = [
@@ -120,7 +132,7 @@ export default function AcademicSettings() {
       class: newDivision?.class,
       division: newDivision?.division,
       aliases: newDivision?.aliases,
-      formType: "create",
+      formType: "create" ,
     },
   })
 
@@ -161,12 +173,16 @@ export default function AcademicSettings() {
   }, [])
 
   const handleAddDivision = (classId: number) => {
-    const cls = academicClasses.find((c) => c.class === classId)
+    classId = Number.parseInt(classId.toString())
+    const cls = academicClasses.find((c) => c.class === classId);
+    console.log("classId", classId)
+    console.log("cls", cls)
     if (cls) {
       const lastDivision = cls.divisions[cls.divisions.length - 1]
       const nextLetter = String.fromCharCode(lastDivision.division.charCodeAt(0) + 1)
       setNewDivision({ division: nextLetter, aliases: `${nextLetter}`, class: cls.class })
       formForDivsion.reset({
+        class_id: null,
         class: cls.class,
         aliases: nextLetter,
         division: nextLetter,
@@ -210,7 +226,7 @@ export default function AcademicSettings() {
           class: clas.class,
           division: "A",
           aliases: null,
-          academic_session_id: currentAcademicSession?.id,
+          academic_session_id: currentAcademicSession?.id ?? 0,
         }
       })
 
@@ -228,7 +244,7 @@ export default function AcademicSettings() {
                 class: clas.class.toString(),
                 division: clas.division,
                 aliases: clas.aliases,
-                academic_session_id: currentAcademicSession?.id,
+                academic_session_id: currentAcademicSession?.id ?? 0,
               },
             ],
           }))
@@ -271,7 +287,8 @@ export default function AcademicSettings() {
 
   const confirmDivisionChanges = async () => {
     const payload = formForDivsion.getValues()
-
+    console.log("payload", payload)
+    console.log("paykokad", payload)
     if (payload.formType === "edit" && payload.class_id && payload.aliases) {
       try {
         // Edit division
@@ -281,7 +298,7 @@ export default function AcademicSettings() {
             aliases: payload.aliases,
           }),
         ).unwrap()
-
+        console.log("edited_division", edited_division)
         // Update the academicClasses state for the edited division
         setAcademicClasses((prevClasses) =>
           prevClasses.map((cls) => ({
@@ -311,8 +328,10 @@ export default function AcademicSettings() {
             class: payload.class ?? 0,
             division: payload.division || "",
             aliases: payload.aliases || null,
+            academic_session_id: currentAcademicSession?.id ?? 0,
           }),
         ).unwrap()
+        console.log("new_division", new_division)
         setAcademicClasses((prevClasses): any =>
           prevClasses.map((cls) =>
             cls.class === payload.class
@@ -374,11 +393,14 @@ export default function AcademicSettings() {
 
   // Update state when data is loaded
   useEffect(() => {
-    console.log("classesData", classesData)
     if (classesData && classesData.length > 0) {
       setAcademicClasses(classesData)
     }
   }, [classesData])
+
+  useEffect(()=>{
+    console.log("formForDivsion.formState.errors", formForDivsion.formState.errors)
+  }, [formForDivsion.formState.errors])
 
   // Update the useEffect for setting the active session
   useEffect(() => {
@@ -751,7 +773,7 @@ export default function AcademicSettings() {
                         Cancel
                       </Button>
                       <Button type="submit">
-                        {formForDivsion.getValues("formType") === "create" ? "Add" : "Update"} Division
+                        {formForDivsion.getValues("formType") === "create" ? "Add a new" : "Update"} Division
                       </Button>
                     </DialogFooter>
                   </form>

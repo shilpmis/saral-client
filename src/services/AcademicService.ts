@@ -98,6 +98,7 @@ export const createDivision = createAsyncThunk<Class, Omit<Class, 'id' | 'school
       const res = await ApiService.post('class/division', paylaod);
       return res.data
     } catch (error: any) {
+      console.log(error)
       return rejectWithValue(error.response?.data || "Failed to create class")
     }
   }
