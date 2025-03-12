@@ -8,28 +8,34 @@ import {
   Font,
   Image,
 } from "@react-pdf/renderer";
-
+import gujFonts from "./gujarat_noto_sans.ttf";
+ 
 
 // Register fonts (optional but recommended for better styling)
+// Font.register({
+//   family: "Roboto",
+//   fonts: [
+//     {
+//       src: "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxP.ttf",
+//       fontWeight: "normal",
+//     },
+//     {
+//       src: "https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc9.ttf",
+//       fontWeight: "bold",
+//     },
+//   ],
+// });
+
 Font.register({
-  family: "Roboto",
-  fonts: [
-    {
-      src: "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxP.ttf",
-      fontWeight: "normal",
-    },
-    {
-      src: "https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc9.ttf",
-      fontWeight: "bold",
-    },
-  ],
+  family: "NotoSansGujarati",
+  src: gujFonts,
 });
 
 // Create styles
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontFamily: "Roboto",
+    fontFamily: "NotoSansGujarati",
   },
   header: {
     marginBottom: 20,
@@ -124,7 +130,7 @@ const StudentDetailsPDF = ({ student }: Props) => {
 
         {/* Student Profile Header */}
         <View style={styles.profileSection}>
-          <Image src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrmvSoqEMvs4E-TIgyfMdztZYEdKav-zok1A&s"} style={{ width: 130, height: 100 }}/>
+          <Image src={student.gender.toLowerCase() === 'female' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRt03ZDzrVA93OrtiL5b818YcwLzNHlN1vug&s" : "https://www.shutterstock.com/image-vector/man-icon-vector-logo-template-260nw-1579487446.jpg"} style={{ width: 130, height: 100 }}/>
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.studentName}>{student.first_name} {student.middle_name} {student.last_name}</Text>
             <Text style={styles.studentId}>GR No: {student.gr_no} | Roll No: {student.roll_number}</Text>
@@ -136,7 +142,7 @@ const StudentDetailsPDF = ({ student }: Props) => {
           <Text style={styles.sectionTitle}>Personal Details</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Name in Gujarati:</Text>
-            <Text style={styles.value}>{student.first_name_in_guj}</Text>
+            <Text style={styles.value}>{student.first_name_in_guj+" "+ student.middle_name_in_guj +" "+ student.last_name_in_guj}</Text>
             <Text style={styles.label}>Gender:</Text>
             <Text style={styles.value}>{student.gender}</Text>
           </View>
@@ -163,13 +169,13 @@ const StudentDetailsPDF = ({ student }: Props) => {
                 <Text style={styles.label}>Father Name:</Text>
                 <Text style={styles.value}>{student.father_name}</Text>
                 <Text style={styles.label}>Name in Gujarati:</Text>
-                <Text style={styles.value}>{student.father_name}</Text>
+                <Text style={styles.value}>{student.father_name_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Mother Name:</Text>
                 <Text style={styles.value}>{student.mother_name}</Text>
                 <Text style={styles.label}>Name in Gujarati:</Text>
-                <Text style={styles.value}>{student.mother_name}</Text>
+                <Text style={styles.value}>{student.mother_name_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Primary Mobile:</Text>
@@ -200,7 +206,7 @@ const StudentDetailsPDF = ({ student }: Props) => {
                 <Text style={styles.label}>Previous School:</Text>
                 <Text style={styles.value}>{student.student_meta?.privious_school}</Text>
                 <Text style={styles.label}>In Gujarati:</Text>
-                <Text style={styles.value}>{student.student_meta?.privious_school}</Text>
+                <Text style={styles.value}>{student.student_meta?.privious_school_in_guj}</Text>
               </View>
             </View>
           </View>
@@ -215,17 +221,19 @@ const StudentDetailsPDF = ({ student }: Props) => {
                 <Text style={styles.label}>Religion:</Text>
                 <Text style={styles.value}>{student.student_meta?.religiion}</Text>
                 <Text style={styles.label}>In Gujarati:</Text>
-                <Text style={styles.value}>{student.student_meta?.religiion}</Text>
+                <Text style={styles.value}>{student.student_meta?.religiion_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Caste:</Text>
                 <Text style={styles.value}>{student.student_meta?.caste}</Text>
                 <Text style={styles.label}>In Gujarati:</Text>
-                <Text style={styles.value}>{student.student_meta?.caste}</Text>
+                <Text style={styles.value}>{student.student_meta?.caste_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Category:</Text>
                 <Text style={styles.value}>{student.student_meta?.category}</Text>
+                <Text style={styles.label}></Text>
+                <Text style={styles.value}></Text>
               </View>
             </View>
           </View>
@@ -249,6 +257,8 @@ const StudentDetailsPDF = ({ student }: Props) => {
               <View style={styles.row}>
                 <Text style={styles.label}>Postal Code:</Text>
                 <Text style={styles.value}>{student.student_meta?.postal_code}</Text>
+                <Text style={styles.label}></Text>
+                <Text style={styles.value}></Text>
               </View>
             </View>
           </View>
