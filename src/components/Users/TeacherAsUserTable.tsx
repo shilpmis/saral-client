@@ -263,7 +263,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a teacher" />
+                          <SelectValue placeholder={t("select_a_teacher")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -287,7 +287,7 @@ const TeacherAsUserTable: React.FC<PropsForTeacherAsUserTable> = ({ initialData,
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a class" />
+                          <SelectValue placeholder={t("select_a_class")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

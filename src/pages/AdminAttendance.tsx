@@ -120,7 +120,7 @@ const AdminAttendanceView: React.FC = () => {
             <label className="text-sm font-medium text-gray-700 mb-1">{t("class")}</label>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger>
-                <SelectValue placeholder="Select Class" />
+                <SelectValue placeholder={t("select_class")} />
               </SelectTrigger>
               <SelectContent>
                 {/* Add class options dynamically */}
@@ -134,7 +134,7 @@ const AdminAttendanceView: React.FC = () => {
             <label className="text-sm font-medium text-gray-700 mb-1">{t("division")}</label>
             <Select value={selectedDivision} onValueChange={setSelectedDivision}>
               <SelectTrigger>
-                <SelectValue placeholder="Select Division" />
+                <SelectValue placeholder={t("select_division")} />
               </SelectTrigger>
               <SelectContent>
                 {/* Add division options dynamically */}
@@ -169,7 +169,7 @@ const AdminAttendanceView: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search by name or roll number"
+              placeholder={t("search_by_name_or_roll_number")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 w-full"
@@ -232,8 +232,8 @@ const AdminAttendanceView: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Future Date</p>
-                <p className="text-sm">You cannot mark attendance for future dates.</p>
+                <p className="font-bold">{t("future_date")}</p>
+                <p className="text-sm">{t("you_cannot_mark_attendance_for_future_dates.")}</p>
               </div>
             </div>
           </div>

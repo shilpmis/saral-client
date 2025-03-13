@@ -2,6 +2,7 @@ import type React from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import type { LeaveRequest } from "@/types/leave"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface LeaveRequestListProps {
   leaveRequests: LeaveRequest[]
@@ -18,16 +19,16 @@ const LeaveRequestList: React.FC<LeaveRequestListProps> = ({ leaveRequests }) =>
         return "bg-yellow-500"
     }
   }
-
+  const { t } = useTranslation()
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Type</TableHead>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Reason</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>{t("type")}</TableHead>
+          <TableHead>{t("start_date")}</TableHead>
+          <TableHead>{t("end_date")}</TableHead>
+          <TableHead>{t("reason")}</TableHead>
+          <TableHead>{t("status")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

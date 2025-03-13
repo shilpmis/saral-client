@@ -123,7 +123,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
+                      <SelectValue placeholder={t("select_a_role")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -155,7 +155,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
             )}
           />
         )}
-        <Button type="submit">{isEditing ? "Update User" : "Create User"}</Button>
+        <Button type="submit">{isEditing ? t("update_user") : t("create_user")}</Button>
       </form>
     </Form>
   )

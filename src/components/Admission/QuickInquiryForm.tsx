@@ -86,7 +86,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 <FormItem>
                   <FormLabel>{t("student_name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter student name" {...field} />
+                    <Input placeholder={t("enter_student_name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -99,7 +99,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 <FormItem>
                   <FormLabel>{t("parent_name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter parent name" {...field} />
+                    <Input placeholder={t("enter_parent_name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,7 +112,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 <FormItem>
                   <FormLabel>{t("contact_number")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter contact number" {...field} />
+                    <Input placeholder={t("enter_contact_number")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,7 +125,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 <FormItem>
                   <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email" {...field} />
+                    <Input type="email" placeholder={t("enter_email")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,7 +140,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select grade" />
+                        <SelectValue placeholder={t("select_grade")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

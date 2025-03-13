@@ -207,10 +207,10 @@ export const UserManagement: React.FC = () => {
       <Dialog open={isDialogForManagmentUserOpen.isOpen} onOpenChange={handleCloseDialogBox}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>{isDialogForManagmentUserOpen.type === 'edit' ? "Edit User" : t("add_new_user")}</DialogTitle>
+            <DialogTitle>{isDialogForManagmentUserOpen.type === 'edit' ? t("edit_user") : t("add_new_user")}</DialogTitle>
             <DialogDescription>
               {isDialogForManagmentUserOpen.type === 'edit'
-                ? "Make changes to the user details below."
+                ? t("make_changes_to_the_user_details_below.")
                 : t("fill_in_the_details_to_create_a_new_user.")}
             </DialogDescription>
           </DialogHeader>

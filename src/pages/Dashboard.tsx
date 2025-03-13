@@ -108,7 +108,7 @@ export default function DashboardPage() {
                   <div className="flex items-center p-4 bg-green-100 rounded-lg">
                     <UserCheck className="h-6 w-6 text-green-600 mr-2" />
                     <div>
-                      <p className="text-sm text-green-600">{t("accepted_admissions")}</p>
+                      <p className="text-sm text-green-600">{t("accepted_application")}</p>
                       <p className="text-2xl font-bold text-green-800">{dashboardData.acceptedAdmissions}</p>
                     </div>
                   </div>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
                   <div className="flex items-center p-4 bg-purple-100 rounded-lg col-span-2">
                     <Calendar className="h-6 w-6 text-purple-600 mr-2" />
                     <div>
-                      <p className="text-sm text-purple-600">Upcoming Interviews</p>
+                      <p className="text-sm text-purple-600">{t("upcoming_interviews")}</p>
                       <p className="text-2xl font-bold text-purple-800">{dashboardData.upcomingInterviews}</p>
                     </div>
                   </div>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium"> Present/Absent Staff today</CardTitle>
+                <CardTitle className="text-sm font-medium"> {t("present/absent_staff_today")}</CardTitle>
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
