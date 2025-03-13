@@ -17,7 +17,7 @@ export const StaffApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getSchoolStaffRole: builder.query<{ staff: StaffRole[] }, number>({
+    getSchoolStaffRole: builder.query<StaffRole[] , number>({
       query: (schoolId) => ({
         url: `staff/${schoolId}`,
         method: "GET",
@@ -30,6 +30,12 @@ export const StaffApi = createApi({
     getTeachingStaff: builder.query<{ data: TeachingStaff[]; meta: PageMeta }, { school_id: number; page?: number }>({
       query: ({ school_id, page = 1 }) => ({
         url: `teachers/${school_id}?page=${page}`,
+        method: "GET",
+      }),
+    }),
+    getAllTeachingStaff: builder.query< TeachingStaff[], { school_id: number }>({
+      query: ({ school_id }) => ({
+        url: `teachers/all/${school_id}`,
         method: "GET",
       }),
     }),
@@ -62,6 +68,13 @@ export const StaffApi = createApi({
         body: data,
       }),
     }),
+    updateOtherStaff: builder.mutation<OtherStaff,{ school_id: number; otherStaff_id: number; data: StaffFormData}>({
+      query: ({ school_id, otherStaff_id, data }) => ({
+        url: `other-staff/${school_id}/${otherStaff_id}`,
+        method: "PUT",
+        body: data,
+      }),
+    }),
     
     bulkUploadTeachers: builder.mutation({
       query: ({ school_id, file }) => {
@@ -79,6 +92,7 @@ export const StaffApi = createApi({
 })
 
 export const {
+  
   useGetSchoolStaffRoleQuery,
   useLazyGetSchoolStaffRoleQuery,
   useLazyGetTeachingStaffQuery,
@@ -86,6 +100,7 @@ export const {
   useAddTeachingStaffMutation,
   useAddOtherStaffMutation,
   useUpdateTeacherMutation,
+  useUpdateOtherStaffMutation,
   useBulkUploadTeachersMutation,
 } = StaffApi
 

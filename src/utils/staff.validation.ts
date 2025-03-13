@@ -1,100 +1,294 @@
 import * as z from "zod"
 
-// export const personalDetailsSchema = z.object({
-//   category: z.enum(["teaching", "non-teaching"]),
-//   username: z.string().min(3, "Username must be at least 3 characters"),
-//   mobile: z.string().regex(/^\d{10}$/, "Mobile number must be 10 digits"),
-//   email: z.string().email("Invalid email address"),
-//   dob: z.string().refine((date) => {
-//     const today = new Date()
-//     const birthDate = new Date(date)
-//     let age = today.getFullYear() - birthDate.getFullYear()
-//     const m = today.getMonth() - birthDate.getMonth()
-//     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-//       age--
-//     }
-//     return age >= 18
-//   }, "Must be at least 18 years old"),
-//   age: z.string().refine((age) => Number.parseInt(age) >= 18, "Must be at least 18 years old"),
-//   title: z.enum(["mr", "miss"]),
-//   qualification: z.string().min(2, "Qualification is required"),
-//   aadhaar: z.string().regex(/^\d{12}$/, "Aadhaar number must be 12 digits"),
-//   bloodGroup: z.string().min(1, "Blood group is required"),
-//   tshirtSize: z.string().min(1, "T-shirt size is required"),
-//   profilePhoto: z.instanceof(File).optional().nullable(),
-// })
-
-// export const addressSchema = z.object({
-//   residentialAddress: z.string().min(5, "Address must be at least 5 characters"),
-//   city: z.string().min(2, "City is required"),
-//   state: z.string().min(2, "State is required"),
-//   district: z.string().min(2, "District is required"),
-//   postalCode: z.string().regex(/^\d{6}$/, "Postal code must be 6 digits"),
-// })
-
-// export const bankDetailsSchema = z.object({
-//   bankName: z.string().min(2, "Bank name is required"),
-//   ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
-//   accountNumber: z.string().min(9).max(18, "Account number must be between 9 and 18 digits"),
-// })
-
-// export const staffFormSchema = personalDetailsSchema.merge(addressSchema).merge(bankDetailsSchema)
-
-// export type StaffFormData = z.infer<typeof staffFormSchema>
-
-
 // Define the schema for staff data
-export const staffSchema = z.object({
-  // Role selection
-  is_teaching_role: z.boolean(),
-  staff_role_id: z.number().int().positive("Staff role is required"),
+export const staffSchema = z
+  .object({
+    // Role selection
+    is_teaching_role: z.boolean(),
+    staff_role_id: z
+      .number({
+        required_error: 'Staff role is required',
+        invalid_type_error: 'Staff role must be a number'
+      })
+      .int('Staff role ID must be an integer')
+      .positive('Staff role is required'),
 
-  // Personal details
-  first_name: z.string().min(2, "First name is required"),
-  middle_name: z.string().min(2, "Middle name is required"),
-  last_name: z.string().min(2, "Last name is required"),
-  first_name_in_guj: z.string().min(2, "First name in Gujarati is required"),
-  middle_name_in_guj: z.string().min(2, "Middle name in Gujarati is required"),
-  last_name_in_guj: z.string().min(2, "Last name in Gujarati is required"),
-  gender:z.union([z.literal("male"), z.literal("female")]),
-  birth_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format",
-  }),
-  aadhar_no: z.number().int().positive("Aadhar number is required"),
+    // Personal details
+    first_name: z
+      .string()
+      .min(2, 'First name is required')
+      .regex(
+        /^[A-Za-z\s]+$/,
+        'First name should contain only alphabets and spaces'
+      ),
 
-  // Contact details
-  mobile_number: z.number().int().positive("Mobile number is required"),
-  email: z.string().email("Invalid email address"),
+    // Make middle name optional
+    middle_name: z
+      .string()
+      .regex(
+        /^[A-Za-z\s]*$/,
+        'Middle name should contain only alphabets and spaces'
+      )
+      .optional(),
 
-  // Other details
-  religiion: z.string().min(2, "Religion is required"),
-  religiion_in_guj: z.string().min(2, "Religion in Gujarati is required"),
-  caste: z.string().min(2, "Caste is required"),
-  caste_in_guj: z.string().min(2, "Caste in Gujarati is required"),
-  category: z.enum(["ST", "SC", "OBC", "OPEN"]),
+    last_name: z
+      .string()
+      .min(2, 'Last name is required')
+      .regex(/^[A-Za-z\s]+$/, 'Last name is required'),
 
-  // Address details
-  address: z.string().min(5, "Address is required"),
-  district: z.string().min(2, "District is required"),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
-  postal_code: z.number().int().positive("Postal code is required"),
+    first_name_in_guj: z.string().min(2, 'First name in Gujarati is required'),
 
-  // Bank details
-  bank_name: z.string().min(2, "Bank name is required"),
-  account_no: z.number().int().positive("Account number is required"),
-  IFSC_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code"),
+    // Make middle name in Gujarati optional
+    middle_name_in_guj: z.string().optional(),
 
-  // Employment details
-  joining_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format",
-  }),
-  employment_status: z.enum(["Permanent", "Trial_period", "Resigned", "Contact_base", "Notice_Period"]),
+    last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required'),
 
-  // Teacher-specific fields
-  qualification: z.string().optional(),
-  subject_specialization: z.string().optional(),
-  class_id: z.number().int().optional(),
-})
+    gender: z.enum(['Male', 'Female'], {
+      errorMap: () => ({ message: 'Gender must be either Male or Female' })
+    }),
+
+    birth_date: z
+      .string()
+      .min(1, 'Birth date is required')
+      .refine(date => !isNaN(Date.parse(date)), {
+        message: 'Invalid date format'
+      })
+      .refine(
+        date => {
+          const parsedDate = new Date(date)
+          const today = new Date()
+          return parsedDate <= today
+        },
+        {
+          message: 'Birth date cannot be in the future'
+        }
+      )
+      .refine(
+        date => {
+          const parsedDate = new Date(date)
+          const today = new Date()
+
+          // Calculate age
+          let age = today.getFullYear() - parsedDate.getFullYear()
+          const monthDiff = today.getMonth() - parsedDate.getMonth()
+
+          if (
+            monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < parsedDate.getDate())
+          ) {
+            age--
+          }
+
+          return age >= 18 && age <= 70
+        },
+        {
+          message: 'Staff must be between 18 and 70 years old'
+        }
+      ),
+
+    // Aadhar validation
+    aadhar_no: z
+      .number()
+      .int('Aadhar number must be an integer')
+      .positive('Aadhar number must be positive')
+      .refine(
+        val => {
+          const strVal = val.toString()
+          return strVal.length === 12
+        },
+        {
+          message: 'Aadhar number must be exactly 12 digits'
+        }
+      ),
+
+    // Contact details - fixed to ensure exactly 10 digits
+    mobile_number: z
+      .number()
+      .int('Mobile number must be an integer')
+      .positive('Mobile number must be positive')
+      .refine(
+        val => {
+          const strVal = val.toString()
+          return strVal.length === 10 && /^[6-9]/.test(strVal)
+        },
+        {
+          message: 'Mobile number must be 10 digits and start with 6-9'
+        }
+      ),
+
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Invalid email address'),
+
+    // Teacher-specific fields - conditionally required based on is_teaching_role
+    qualification: z.string().optional(),
+    subject_specialization: z.string().optional(),
+    class_id: z.number().optional(),
+
+    // Other details
+    religiion: z
+      .string()
+      .min(2, 'Religion is required')
+      .regex(
+        /^[A-Za-z\s]+$/,
+        'Religion should contain only alphabets and spaces'
+      ),
+
+    religiion_in_guj: z.string().min(2, 'Religion in Gujarati is required'),
+
+    caste: z
+      .string()
+      .min(2, 'Caste is required')
+      .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces'),
+
+    caste_in_guj: z.string().min(2, 'Caste in Gujarati is required'),
+
+    category: z.enum(['ST', 'SC', 'OBC', 'OPEN'], {
+      errorMap: () => ({ message: 'Category must be ST, SC, OBC, or OPEN' })
+    }),
+
+    // Address details
+    address: z.string().min(5, 'Address is required'),
+
+    district: z
+      .string()
+      .min(2, 'District is required')
+      .regex(
+        /^[A-Za-z\s]+$/,
+        'District should contain only alphabets and spaces'
+      ),
+
+    city: z
+      .string()
+      .min(2, 'City is required')
+      .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces'),
+
+    state: z
+      .string()
+      .min(2, 'State is required')
+      .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces'),
+
+    // postal_code: z
+    //   .number()
+    //   .int('Postal code must be an integer')
+    //   .positive('Postal code must be positive')
+    //   .refine(
+    //   val => {
+    //     const strVal = val.toString()
+    //     return strVal.length === 6
+    //   },
+    //   {
+    //     message: 'Postal code must be exactly 6 digits'
+    //   }
+    //   ),
+
+    postal_code: z
+      .string()
+      .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits'),
+
+
+    // Bank details
+    bank_name: z
+      .string()
+      .min(2, 'Bank name is required')
+      .regex(
+        /^[A-Za-z\s]+$/,
+        'Bank name should contain only alphabets and spaces'
+      ),
+
+    // Fixed account number validation
+    account_no: z
+      .number()
+      .int('Account number must be an integer')
+      .positive('Account number must be positive')
+      .refine(
+        val => {
+          const strVal = val.toString()
+          return strVal.length >= 9 && strVal.length <= 18
+        },
+        {
+          message: 'Account number must be between 9 and 18 digits'
+        }
+      ),
+
+    IFSC_code: z
+      .string()
+      .regex(
+        /^[A-Z]{4}0[A-Z0-9]{6}$/,
+        'IFSC code must be in format ABCD0123456'
+      ),
+
+    employment_status: z.enum(
+      [
+        'Permanent',
+        'Trial_period',
+        'Resigned',
+        'Contact_base',
+        'Notice_Period'
+      ],
+      {
+        errorMap: () => ({ message: 'Select Employment Status' })
+      }
+    ),
+
+    // Employment details
+    joining_date: z
+      .string()
+      .min(1, 'Joining date is required')
+      .refine(date => !isNaN(Date.parse(date)), {
+        message: 'Invalid date format'
+      })
+      .refine(
+        date => {
+          const parsedDate = new Date(date)
+          const today = new Date()
+          return parsedDate <= today
+        },
+        {
+          message: 'Joining date cannot be in the future'
+        }
+      )
+  })
+  .superRefine((data, ctx) => {
+    // Conditional validation for teaching staff
+    if (data.is_teaching_role) {
+      // Validate qualification
+      if (!data.qualification || data.qualification.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Qualification is required for teaching staff',
+          path: ['qualification']
+        })
+      }
+
+      // Validate subject specialization
+      if (
+        !data.subject_specialization ||
+        data.subject_specialization.length < 2
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Subject specialization is required for teaching staff',
+          path: ['subject_specialization']
+        })
+      }
+
+      // Validate class_id
+      if (data.is_teaching_role) {
+        if (
+          !data.class_id ||
+          isNaN(Number(data.class_id)) ||
+          Number(data.class_id) <= 0
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Class assignment is required for teaching staff',
+            path: ['class_id']
+          })
+        }
+      }
+    }
+  })
 
 export type StaffFormData = z.infer<typeof staffSchema>

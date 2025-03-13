@@ -2,7 +2,7 @@ import baseUrl from "@/utils/base-urls"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 export const DashboardApi = createApi({
-    reducerPath: "dashboardApiApi",
+    reducerPath: "dashboardApi",
     baseQuery: fetchBaseQuery({
         baseUrl: `${baseUrl.serverUrl}api/v1/`, // Updated to match your API URL
         prepareHeaders: (headers, { getState }) => {

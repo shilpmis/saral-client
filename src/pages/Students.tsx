@@ -1,12 +1,10 @@
-"use client"
-
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, FileDown, Loader2 } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, Loader2, AlertCircle, CheckCircle2, FileText } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -24,9 +22,90 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { downloadCSVTemplate } from "@/utils/csv-helper"
+import ExcelDownloadModalForStudents from "@/components/Students/ExcelDownloadModalForStudents"
+import { z } from "zod"
+
+// Define Zod schema for student data validation
+const StudentSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  rollNumber: z.string().min(1, "Roll number is required"),
+  admissionNumber: z.string().min(1, "Admission number is required"),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  phone: z
+    .string()
+    .regex(/^\d{10}$/, "Phone number must be 10 digits")
+    .optional()
+    .or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+  gender: z
+    .enum(["Male", "Female", "Other"], {
+      errorMap: () => ({ message: "Gender must be Male, Female, or Other" }),
+    })
+    .optional()
+    .or(z.literal("")),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be in YYYY-MM-DD format")
+    .optional()
+    .or(z.literal("")),
+})
+
+// Custom CSV parser function
+const parseCSV = (file: File): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = (event) => {
+      try {
+        const csvData = event.target?.result as string
+        const lines = csvData.split("\n")
+
+        // Extract headers (first line)
+        const headers = lines[0].split(",").map(
+          (header) => header.trim().replace(/^"(.*)"$/, "$1"), // Remove quotes if present
+        )
+
+        // Parse data rows
+        const results = []
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue // Skip empty lines
+
+          const values = lines[i].split(",").map(
+            (value) => value.trim().replace(/^"(.*)"$/, "$1"), // Remove quotes if present
+          )
+
+          // Create object with headers as keys
+          const row : any = {}
+          headers.forEach((header, index) => {
+            row[header] = values[index] || ""
+          })
+
+          results.push(row)
+        }
+
+        resolve(results)
+      } catch (error : any) {
+        reject(new Error(`Failed to parse CSV: ${error.message}`))
+      }
+    }
+
+    reader.onerror = () => {
+      reject(new Error("Error reading file"))
+    }
+
+    reader.readAsText(file)
+  })
+}
+
+// Type for validation results
+type ValidationResult = {
+  row: number
+  hasErrors: boolean
+  errors: { field: string; message: string }[]
+  rawData: any
+}
 
 export const Students: React.FC = () => {
-  // const dispatch = useAppDispatch()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
 
@@ -43,7 +122,6 @@ export const Students: React.FC = () => {
   const [paginationDataForSelectedClass, setPaginationDataForSelectedClass] = useState<PageDetailsForStudents | null>(
     null,
   )
-  // const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
 
   const [openDialogForStudent, setOpenDialogForStudent] = useState<{
     isOpen: boolean
@@ -52,12 +130,18 @@ export const Students: React.FC = () => {
   }>({ isOpen: false, type: "add", selectedStudent: null })
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadResults, setUploadResults] = useState<ValidationResult[]>([])
   const [bulkUploadStudents] = useBulkUploadStudentsMutation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dialogOpenForBulkUpload, setDialogOpenForBulkUpload] = useState(false)
+  const [validationPassed, setValidationPassed] = useState(false)
+  const [parsedData, setParsedData] = useState<any[]>([])
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false)
+
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
     setSelectedDivision(null)
@@ -122,14 +206,93 @@ export const Students: React.FC = () => {
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setFileName(file.name)
-      setSelectedFile(file)
-      setUploadError(null)
-    }
+  // Function to validate CSV data with Zod
+  const validateCsvData = useCallback((data: any[]): ValidationResult[] => {
+    const results: ValidationResult[] = []
+
+    data.forEach((row, index) => {
+      try {
+        // Attempt to validate the row data against our schema
+        StudentSchema.parse(row)
+
+        // If validation passes, add a success result
+        results.push({
+          row: index + 2, // +2 because index is 0-based and we skip header row
+          hasErrors: false,
+          errors: [],
+          rawData: row,
+        })
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          // Format Zod validation errors
+          const formattedErrors = error.errors.map((err) => ({
+            field: err.path.join("."),
+            message: err.message,
+          }))
+
+          results.push({
+            row: index + 2,
+            hasErrors: true,
+            errors: formattedErrors,
+            rawData: row,
+          })
+        } else {
+          // Handle unexpected errors
+          results.push({
+            row: index + 2,
+            hasErrors: true,
+            errors: [{ field: "unknown", message: "Unknown validation error" }],
+            rawData: row,
+          })
+        }
+      }
+    })
+
+    return results
   }, [])
+
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (file) {
+        setFileName(file.name)
+        setSelectedFile(file)
+        setUploadError(null)
+        setUploadResults([])
+        setValidationPassed(false)
+        setParsedData([])
+
+        // Reset validation state
+        setIsValidating(true)
+
+        // Parse and validate the CSV file
+        parseCSV(file)
+          .then((parsedData) => {
+            setParsedData(parsedData)
+
+            // Validate the parsed data
+            const validationResults = validateCsvData(parsedData)
+            setUploadResults(validationResults)
+
+            // Check if all rows passed validation
+            const allValid = validationResults.every((result) => !result.hasErrors)
+            setValidationPassed(allValid)
+
+            if (!allValid) {
+              setUploadError("Please fix validation errors before uploading")
+            }
+
+            setIsValidating(false)
+          })
+          .catch((error) => {
+            console.error("CSV parsing error:", error)
+            setUploadError(`Failed to parse CSV file: ${error.message}`)
+            setIsValidating(false)
+          })
+      }
+    },
+    [validateCsvData],
+  )
 
   const handleDownloadDemo = useCallback(() => {
     downloadCSVTemplate()
@@ -143,7 +306,6 @@ export const Students: React.FC = () => {
 
   useEffect(() => {
     if (studentDataForSelectedClass) {
-      // setStudentForSelectedClass(studentDataForSelectedClass.data)
       setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
       setListedStudentForSelectedClass(studentDataForSelectedClass.data)
     }
@@ -160,25 +322,48 @@ export const Students: React.FC = () => {
       return
     }
 
+    if (!validationPassed) {
+      setUploadError("Please fix validation errors before uploading")
+      return
+    }
+
     try {
       setIsUploading(true)
       setUploadError(null)
 
-      const response = await bulkUploadStudents({
+      const response: any = await bulkUploadStudents({
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
         file: selectedFile,
-      }).unwrap()
-
-      // Close the dialog
-      setDialogOpenForBulkUpload(false)
-
-      // Show success toast
-      toast({
-        title: "Upload Successful",
-        description: `Successfully uploaded ${response.totalInserted} students`,
-        variant: "default",
       })
+
+      // Handle success response
+      if (response.data) {
+        console.log("response", response)
+
+        // If upload was successful
+        if (response.data.totalInserted) {
+          // Close the dialog
+          setDialogOpenForBulkUpload(false)
+
+          // Show success toast
+          toast({
+            title: "Upload Successful",
+            description: `Successfully uploaded ${response.data.totalInserted} students`,
+            variant: "default",
+          })
+
+          // Reset file selection
+          setFileName(null)
+          setSelectedFile(null)
+          setUploadResults([])
+          setValidationPassed(false)
+          setParsedData([])
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+          }
+        }
+      }
 
       // Refresh the student list
       if (selectedDivision) {
@@ -189,13 +374,6 @@ export const Students: React.FC = () => {
           setListedStudentForSelectedClass(studentDataForSelectedClass.data)
           setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
         }
-      }
-
-      // Reset file selection
-      setFileName(null)
-      setSelectedFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
       }
     } catch (error: any) {
       console.error("Upload error:", error)
@@ -224,6 +402,47 @@ export const Students: React.FC = () => {
     [setCurrentPage, selectedDivision, getStudentForClass],
   )
 
+  // Function to fetch students for a specific class (used by ExcelDownloadModal)
+  const fetchStudentsForClass = async (classId: number): Promise<Student[]> => {
+    try {
+      const response = await getStudentForClass({
+        class_id: classId,
+        student_meta: true,
+      })
+
+      if (response.data && response.data.data) {
+        return response.data.data
+      }
+      return []
+    } catch (error) {
+      console.error("Error fetching students for Excel:", error)
+      toast({
+        variant: "destructive",
+        title: "Failed to fetch students",
+        description: "Please try again later",
+      })
+      return []
+    }
+  }
+
+  // Get all unique fields from the parsed data
+  const getUniqueFields = useMemo(() => {
+    if (!uploadResults.length) return []
+
+    // Get all unique field names from all rows
+    const allFields = new Set<string>()
+    uploadResults.forEach((result) => {
+      if (result.rawData) {
+        Object.keys(result.rawData).forEach((field) => {
+          allFields.add(field)
+        })
+      }
+    })
+
+    // Convert to array and sort
+    return Array.from(allFields).sort()
+  }, [uploadResults])
+
   useEffect(() => {
     // Auto-select first class and division when AcademicClasses are loaded
     if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass) {
@@ -246,6 +465,21 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass, getStudentForClass])
 
+  // Sort validation results to show rows with errors first
+  const sortedValidationResults = useMemo(() => {
+    if (!uploadResults.length) return []
+
+    // Create a copy to avoid mutating the original array
+    return [...uploadResults].sort((a, b) => {
+      // Sort by error status first (errors first)
+      if (a.hasErrors && !b.hasErrors) return -1
+      if (!a.hasErrors && b.hasErrors) return 1
+
+      // Then sort by row number
+      return a.row - b.row
+    })
+  }, [uploadResults])
+
   return (
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
@@ -266,17 +500,18 @@ export const Students: React.FC = () => {
                   setFileName(null)
                   setSelectedFile(null)
                   setUploadError(null)
+                  // Don't reset validation results here so they can be viewed in the separate dialog
                   setDialogOpenForBulkUpload(false)
                 }
               }}
             >
               <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
-                  <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                  <Upload className="mr-2 h-4 w-4" /> Upload CSV
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogTitle>Upload Excel File</DialogTitle>
+              <DialogContent className="max-w-2xl">
+                <DialogTitle>Upload CSV File</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -343,13 +578,61 @@ export const Students: React.FC = () => {
                     className="hidden"
                     onChange={handleFileChange}
                   />
-                  {fileName && <p className="text-sm text-muted-foreground mt-2">{fileName}</p>}
+                  {fileName && (
+                    <div className="flex items-center">
+                      <p className="text-sm text-muted-foreground">{fileName}</p>
+                      {isValidating ? (
+                        <Loader2 className="ml-2 h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : validationPassed ? (
+                        <CheckCircle2 className="ml-2 h-4 w-4 text-green-500" />
+                      ) : uploadResults.length > 0 ? (
+                        <AlertCircle className="ml-2 h-4 w-4 text-red-500" />
+                      ) : null}
+                    </div>
+                  )}
+
                   {uploadError && <p className="text-sm text-red-500 mt-2">{uploadError}</p>}
+
+                  {/* Validation status summary */}
+                  {uploadResults.length > 0 && (
+                    <div
+                      className={`p-3 rounded-md ${validationPassed ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+                    >
+                      <div className="flex items-center">
+                        {validationPassed ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                        )}
+                        <p className={`text-sm font-medium ${validationPassed ? "text-green-700" : "text-red-700"}`}>
+                          {validationPassed
+                            ? `All ${uploadResults.length} rows passed validation. Ready to upload.`
+                            : `${uploadResults.filter((r) => r.hasErrors).length} of ${uploadResults.length} rows have validation errors.`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Button to view validation results in a separate dialog */}
+                  {uploadResults.length > 0 && (
+                    <Button variant="outline" className="w-full" onClick={() => setValidationDialogOpen(true)}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      View Validation Results
+                    </Button>
+                  )}
+
                   <div className="flex justify-end">
                     <Button
                       className="w-1/2"
                       onClick={handleFileUploadSubmit}
-                      disabled={isUploading || !selectedFile || !selectedClass || !selectedDivision}
+                      disabled={
+                        isUploading ||
+                        !selectedFile ||
+                        !selectedClass ||
+                        !selectedDivision ||
+                        !validationPassed ||
+                        isValidating
+                      }
                     >
                       {isUploading ? (
                         <>
@@ -364,6 +647,112 @@ export const Students: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Separate Dialog for Validation Results */}
+            <Dialog open={validationDialogOpen} onOpenChange={setValidationDialogOpen}>
+              <DialogContent className="max-w-5xl max-h-[80vh] overflow-auto">
+                <DialogHeader>
+                  <DialogTitle>CSV Validation Results</DialogTitle>
+                </DialogHeader>
+                <div className="px-6 py-2 bg-gray-50 border-t border-b text-xs">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <span className="bg-green-50 px-2 py-1 rounded border border-green-200 text-green-500 mr-1">
+                        ✓
+                      </span>
+                      <span>Valid data</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="bg-red-50 px-2 py-1 rounded border border-red-200 text-red-500 mr-1">i</span>
+                      <span>Invalid data with error message</span>
+                    </div>
+                  </div>
+                </div>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Validation Summary</CardTitle>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Showing all {uploadResults.length} rows: {uploadResults.filter((r) => !r.hasErrors).length} valid,{" "}
+                      <span className="font-bold text-red-500">
+                        {uploadResults.filter((r) => r.hasErrors).length} with errors
+                      </span>
+                      {uploadResults.filter((r) => r.hasErrors).length > 0 && " (shown first)"}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th
+                            scope="col"
+                            className="px-3 py-2 text-left text-xs font-medium text-black uppercase tracking-wider border-r"
+                          >
+                            Row
+                          </th>
+                          {getUniqueFields.map((field) => (
+                            <th
+                              key={field}
+                              scope="col"
+                              className="px-3 py-2 text-left text-xs font-medium text-black uppercase tracking-wider border-r"
+                            >
+                              {field}
+                            </th>
+                          ))}
+                          <th
+                            scope="col"
+                            className="px-3 py-2 text-center text-xs font-medium text-black uppercase tracking-wider w-16"
+                          >
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {sortedValidationResults.map((result, index) => (
+                          <tr key={index} className={result.hasErrors ? "bg-red-50" : ""}>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">{result.row}</td>
+                            {getUniqueFields.map((field) => {
+                              // Find if this field has an error
+                              const fieldError = result.hasErrors
+                                ? result.errors.find((err) => err.field === field)
+                                : null
+
+                              return (
+                                <td
+                                  key={field}
+                                  className={`px-3 py-2 text-sm border-r ${fieldError ? "bg-red-50" : "bg-green-50"}`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className={fieldError ? "text-red-500 text-xs" : "sr-only"}>
+                                      {fieldError ? fieldError.message : "Valid field"}
+                                    </span>
+                                    <span
+                                      className={`ml-2 ${fieldError ? "text-red-500 font-bold" : "text-green-500"}`}
+                                    >
+                                      {fieldError ? "i" : "✓"}
+                                    </span>
+                                  </div>
+                                </td>
+                              )
+                            })}
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              {result.hasErrors ? (
+                                <span className="text-red-500 font-bold text-lg">i</span>
+                              ) : (
+                                <span className="text-green-500 text-lg">✓</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </CardContent>
+                </Card>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={() => setValidationDialogOpen(false)}>Close</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -371,11 +760,9 @@ export const Students: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Export Data</DropdownMenuItem>
+                {/* <DropdownMenuItem>Export Data</DropdownMenuItem> */}
+                <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
                 <DropdownMenuItem>Print List</DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -466,8 +853,6 @@ export const Students: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{openDialogForStudent.type === "edit" ? "Edit Student" : "Add New Student"}</DialogTitle>
           </DialogHeader>
-          {/* {
-            openDialogForStudent.selectedStudent  && ( */}
           <>
             <div className="w-full lg:h-[600px] overflow-auto">
               {openDialogForStudent.type === "add" && (

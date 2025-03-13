@@ -104,7 +104,8 @@ const authSlice = createSlice({
           school_id: apiUser.school_id,
           permissions: RolePermissions[derivedRole],
           teacher : apiUser.teacher,
-          school : apiUser.school,
+          school : apiUser.school
+          // username: apiUser.username
         };
         state.currentActiveAcademicSession = apiUser.school?.academicSessions.find(
           (session) => session.is_active  

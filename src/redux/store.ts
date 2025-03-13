@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "./slices/authSlice"
+import feesReducer from "./slices/feesSlice"
 import schoolReducer from './slices/schoolSlice'
 import academicReducer from "./slices/academicSlice";
 import staffReducer from "./slices/staffSlice";
@@ -14,6 +15,7 @@ import { StudentApi } from "@/services/StundetServices";
 import { UserManagementApi } from "@/services/UserManagementService";
 import { AttendanceApi } from "@/services/AttendanceServices";
 import { InquiryApi } from "@/services/InquiryServices";
+import { FeesApi } from "@/services/feesService";
 
 const store = configureStore({
   reducer: {
@@ -22,6 +24,7 @@ const store = configureStore({
     academic : academicReducer,
     staff : staffReducer,
     leave : leaveReducer,
+    fees : feesReducer,  
     userManagement: userManagementReducer,
     [Authapi.reducerPath]: Authapi.reducer,
     [SchoolApi.reducerPath] : SchoolApi.reducer, 
@@ -31,8 +34,8 @@ const store = configureStore({
     [UserManagementApi.reducerPath] : UserManagementApi.reducer,
     [LeaveApi.reducerPath] : LeaveApi.reducer,
     [AttendanceApi.reducerPath] : AttendanceApi.reducer, 
-    [InquiryApi.reducerPath] : InquiryApi.reducer  
-
+    [InquiryApi.reducerPath] : InquiryApi.reducer,
+    [FeesApi.reducerPath] : FeesApi.reducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
     Authapi.middleware ,
@@ -43,7 +46,8 @@ const store = configureStore({
     UserManagementApi.middleware,
     LeaveApi.middleware ,
     AttendanceApi.middleware,
-    InquiryApi.middleware    
+    InquiryApi.middleware,
+    FeesApi.middleware    
   ),
 })
 
