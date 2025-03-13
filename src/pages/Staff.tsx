@@ -20,11 +20,9 @@ import {
   useAddOtherStaffMutation,
   useUpdateTeacherMutation,
   useBulkUploadTeachersMutation,
-  useUpdateOtherStaffMutation,
+  useUpdateOtherStaffMutation
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
-
-import type { PageMeta } from "@/types/global"
 import ExcelDownloadModal from "@/components/Students/ExcelDownloadModalForStudents"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -33,6 +31,8 @@ import { downloadCSVTemplate } from "@/components/Staff/csv-template-generator"
 import ExcelDownloadModalForStaff from "@/components/Staff/ExcelDownloadModalForStaff"
 import { PageMeta } from "@/types/global"
 import { motion } from "framer-motion"
+import { DialogDescription } from "@radix-ui/react-dialog"
+import { toast } from "@/hooks/use-toast"
 
 const FilterOptions: React.FC<{
   onSearchChange: (value: string) => void
@@ -58,13 +58,16 @@ const FilterOptions: React.FC<{
 }
 
 export const Staff: React.FC = () => {
-  
+
   const authState = useAppSelector(selectAuthState)
+  const [updateOtherStaff] = useUpdateOtherStaffMutation()
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
   const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
   const [addTeachingStaff] = useAddTeachingStaffMutation()
   const [addOtherStaff] = useAddOtherStaffMutation()
+  const [updateTeacher] = useUpdateTeacherMutation()
+
 
   const [activeTab, setActiveTab] = useState<string>("teaching")
   const [searchValue, setSearchValue] = useState<string>("")
@@ -100,21 +103,20 @@ export const Staff: React.FC = () => {
   }>({ isOpen: false, type: "add", selectedOtherStaff: null })
 
   const [teacherInitialData, setTeacherInitialData] = useState<TeachingStaff | null>(null)
-  
   const [otherInitialData, setOtherInitialData] = useState<OtherStaff>()
+  const [isdelete, setIsDelete] = useState(false)
 
   const [bulkUploadTeachers] = useBulkUploadTeachersMutation()
   const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false)
 
+  // const handleUpload = async (schoolId: number, staffType: "teaching" | "non-teaching") => {
+  //   if (!fileName) {
+  //     alert("Please select a file.")
+  //     return
+  // }
+
+
   const handleUpload = async (schoolId: number, staffType: "teaching" | "non-teaching") => {
-    if (!fileName) {
-      alert("Please select a file.")
-      return
-    }
-
-  const [isdelete, setIsDelete] = useState(false)
-
-  const handleUpload = async (schoolId : number) => {
     if (!fileName) return alert("Please select a file.");
 
     try {
@@ -153,19 +155,18 @@ export const Staff: React.FC = () => {
       setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null })
     }
   }
-  const handleOtherStaffFormOpenChange = (open :boolean) => {
-    if(!open) {
-    setOpenDialogForOtherStaff({ isOpen: open, type: "add", selectedOtherStaff: null });
+
+  const handleOtherStaffFormOpenChange = (open: boolean) => {
+    if (!open) {
+      setOpenDialogForOtherStaff({ isOpen: open, type: "add", selectedOtherStaff: null });
     }
-   }
+  }
 
   const handleStaffFormClose = () => {
     console.log("Close form event")
     setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
   }
 
-  const [updateTeacher] = useUpdateTeacherMutation()
-  const [updateOtherStaff] = useUpdateOtherStaffMutation()
 
   const handleSearchFilter = (value: string) => {
     // const searchValue = value.toLowerCase();
@@ -263,17 +264,13 @@ export const Staff: React.FC = () => {
     }
   }
 
-  const handleEditStaffSubmit = async (data: any) => {
-    console.log("edit staff data id", data?.id)
+  const handleEditStaffSubmit = async (data: StaffFormData) => {
 
     try {
       const payload = {
         school_id: authState.user!.school_id,
-        teacher_id: data?.id,
-        data: {
-          ...teacherInitialData,
-          ...data,
-        },
+        teacher_id: openDialogForTeacher.selectedTeacher!.id,
+        data : data
       }
       await updateTeacher(payload).unwrap()
 
@@ -283,32 +280,11 @@ export const Staff: React.FC = () => {
       console.error("Error editing staff:", error)
     }
   }
-  const handleEditOtherStaffSubmit = async (data : any) => {
-    console.log("edit other staff data id", data?.id)
 
-    try {
-      const payload = {
-        school_id: authState.user!.school_id,
-        otherStaff_id: data?.id,
-        data : {
-          ...otherInitialData,
-          ...data
-        }       
-      }
-      await updateOtherStaff(payload).unwrap();
-
-      setOpenDialogForOtherStaff({ isOpen: false, type: "edit", selectedOtherStaff: null });
-      fetchDataForActiveTab(activeTab as "non-teaching" , 1);
-    } catch (error) {
-      console.error("Error editing staff:", error);    
-    }
-
-  }
-  
   const handleDelete = async () => {
     setIsDelete(true)
     //delete function call here
-  } 
+  }
 
   const handleChooseFile = () => {
     fileInputRef.current?.click()
@@ -360,6 +336,36 @@ export const Staff: React.FC = () => {
       console.error("Error fetching non-teaching staff for Excel:", error)
       return []
     }
+  }
+
+  const handleEditOtherStaffSubmit = async (data: StaffFormData) => {
+    try {
+      const res = await updateOtherStaff({
+        otherStaff_id: openDialogForOtherStaff.selectedOtherStaff!.id,
+        data: data,
+        school_id: authState.user!.school_id
+      });
+
+      if (res.data) {
+        toast({
+          title: "Success",
+          description: "Staff updated successfully",
+        })
+        setOpenDialogForOtherStaff({ isOpen: false, type: "edit", selectedOtherStaff: null });
+        fetchDataForActiveTab(activeTab as "non-teaching", 1);
+      } else {
+        console.log("Error", res.error);
+        toast({
+          title: "Success",
+          variant: "destructive",
+          description: "Staff updated successfully",
+        })
+      }
+
+    } catch (error) {
+      console.error("Error editing staff:", error);
+    }
+
   }
 
   async function fetchDataForActiveTab(type: "teaching" | "non-teaching", page = 1) {
@@ -573,9 +579,10 @@ export const Staff: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{openDialogForTeacher.type === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
           </DialogHeader>
-          {openDialogForTeacher.type === "add" ? (
+          {openDialogForTeacher.type === "add" && (
             <StaffForm onSubmit={handleAddStaffSubmit} formType="create" onClose={handleStaffFormClose} />
-          ) : (
+          )}
+          {openDialogForTeacher.type === "edit" && teacherInitialData && (
             <StaffForm
               onSubmit={handleEditStaffSubmit}
               initialData={teacherInitialData}
@@ -615,32 +622,33 @@ export const Staff: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-         <Dialog open={isdelete} onOpenChange={(open)=> setIsDelete(open)}>
-              <DialogContent className="max-w-md rounded-2xl shadow-lg">
-                <DialogHeader className="text-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                    className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
-                  >
-                    <Trash className="text-red-600 w-7 h-7" />
-                  </motion.div>
-                  <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
-                  <DialogDescription className="text-gray-600">
-                    Are you sure you want to Delete Staff?
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="mt-4 flex justify-center space-x-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDelete(false)} className="px-6 py-2 rounded-lg">
-                    Cancel
-                  </Button>
-                  <Button type="button" variant="destructive" className="px-6 py-2 rounded-lg bg-red-600 text-white">
-                    Delete
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+
+      <Dialog open={isdelete} onOpenChange={(open) => setIsDelete(open)}>
+        <DialogContent className="max-w-md rounded-2xl shadow-lg">
+          <DialogHeader className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 10 }}
+              className="mx-auto mb-4 w-14 h-14 flex items-center justify-center bg-red-100 rounded-full"
+            >
+              <Trash className="text-red-600 w-7 h-7" />
+            </motion.div>
+            <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Are you sure you want to Delete Staff?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex justify-center space-x-4">
+            <Button type="button" variant="outline" onClick={() => setIsDelete(false)} className="px-6 py-2 rounded-lg">
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" className="px-6 py-2 rounded-lg bg-red-600 text-white">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* <Dialog>
         <DialogContent>
@@ -673,4 +681,4 @@ export const Staff: React.FC = () => {
   )
 }
 
-export default Staff
+export default Staff;

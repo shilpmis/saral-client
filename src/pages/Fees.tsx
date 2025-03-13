@@ -1,30 +1,53 @@
 import type React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StudentFeeManagement } from "@/components/Fees/StudentFeeManagement"
-import { FeeStructureManagement } from "@/components/Fees/FeeStructureManagement"
+import { FeeDashboard } from "@/components/Fees/Dashboard/FeeDashboard"
+import { FeeTypeManagement } from "@/components/Fees/FeeType/FeeTypeManagement"
+import { FeePlanManagement } from "@/components/Fees/FeePlan/FeePlanManagement"
+import { ConcessionManagement } from "@/components/Fees/Concession/ConcessionManagement"
+import { StudentFeeManagement } from "@/components/Fees/StudentFee/StudentFeeManagement"
+import { ReportGeneration } from "@/components/Fees/Reports/ReportGeneration"
 
 export const Fees: React.FC = () => {
+  const [activeTab, setActiveTab] = useState("dashboard")
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary mb-4">Student Fee Management</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="feeStructures">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="feeStructures">Fee Structures</TabsTrigger>
-            <TabsTrigger value="studentFees">Student Fees</TabsTrigger>
-          </TabsList>
-          <TabsContent value="feeStructures">
-            <FeeStructureManagement />
-          </TabsContent>
-          <TabsContent value="studentFees">
-            <StudentFeeManagement />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="container mx-auto p-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="fee-types">Fee Types</TabsTrigger>
+          <TabsTrigger value="fee-plans">Fee Plans</TabsTrigger>
+          <TabsTrigger value="concessions">Concessions</TabsTrigger>
+          <TabsTrigger value="student-fees">Student Fees</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <FeeDashboard />
+        </TabsContent>
+
+        <TabsContent value="fee-types">
+          <FeeTypeManagement />
+        </TabsContent>
+
+        <TabsContent value="fee-plans">
+          <FeePlanManagement />
+        </TabsContent>
+
+        <TabsContent value="concessions">
+          <ConcessionManagement />
+        </TabsContent>
+
+        <TabsContent value="student-fees">
+          <StudentFeeManagement />
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <ReportGeneration />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 

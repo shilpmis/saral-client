@@ -1,4 +1,4 @@
-import * as z from 'zod'
+import * as z from "zod"
 
 // Define the schema for staff data
 export const staffSchema = z
@@ -169,13 +169,24 @@ export const staffSchema = z
       .min(2, 'State is required')
       .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces'),
 
+    // postal_code: z
+    //   .number()
+    //   .int('Postal code must be an integer')
+    //   .positive('Postal code must be positive')
+    //   .refine(
+    //   val => {
+    //     const strVal = val.toString()
+    //     return strVal.length === 6
+    //   },
+    //   {
+    //     message: 'Postal code must be exactly 6 digits'
+    //   }
+    //   ),
+
     postal_code: z
       .string()
       .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits'),
-    // Optional: ensures the value is an integer (not a float)
-    // Optional: ensures the number is positive
 
-    // ().regex(/^\d{6}$/, "Postal code must be exactly 6 digits"),
 
     // Bank details
     bank_name: z

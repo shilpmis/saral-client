@@ -95,7 +95,8 @@ const authSlice = createSlice({
           teacher_id: apiUser.teacher_id,
           school_id: apiUser.school_id,
           permissions: RolePermissions[derivedRole],
-          teacher : apiUser.teacher
+          teacher : apiUser.teacher,
+          school : apiUser.school
           // username: apiUser.username
         };
         state.token = action.payload.token;
