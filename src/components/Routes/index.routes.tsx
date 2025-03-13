@@ -35,7 +35,7 @@ import { AdmissionModule } from "@/pages/AdmissionPage";
 import TimeTableManager from "../Settings/TimeTableManager";
 import FeeSettings from "../Settings/FeesSettings";
 import { StudentFeeDetails } from "../Fees/StudentFee/StudentFeeDetails";
-import {StudentFeesPanel} from "@/pages/StudentFeesPanel";
+import StudentFeesPanel from "@/pages/StudentFeesPanel";
 import PayFeesPanel from "../Fees/PayFees/PayFeesPanel";
 
 export default function RootRoute() {
@@ -118,9 +118,20 @@ export default function RootRoute() {
               }
             />
 
-            {/* Fees */}
             <Route
               path="payments"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedPermissions={[Permission.MANAGE_FEES]}>
+                  <PayFeesPanel />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Fees */}
+            <Route
+              path="payments/:student_id"
               element={
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
@@ -129,6 +140,7 @@ export default function RootRoute() {
                 </PrivateRoute>
               }
             />
+
 
             {/* User Management */}
             <Route

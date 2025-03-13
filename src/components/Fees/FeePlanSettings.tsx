@@ -37,7 +37,10 @@ export const FeePlanSettings: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Create New Fee Plan</DialogTitle>
             </DialogHeader>
-            <AddFeePlanForm onSubmit={() => setIsAddDialogOpen(false)} />
+            <AddFeePlanForm 
+              onCancel={() => setIsAddDialogOpen(false)}
+              plan_id={mockFeePlans.length + 1}
+              type="create" />
           </DialogContent>
         </Dialog>
       </div>

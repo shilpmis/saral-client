@@ -1,4 +1,4 @@
-import type React from "react";
+
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,25 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, FileText, MoreHorizontal, X } from "lucide-react";
 import { SaralPagination } from "../ui/common/SaralPagination";
 import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff";
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import dynamic from "next/dynamic"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Separator } from "@radix-ui/react-separator";
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import StaffPdfDilog from "./StaffPdfDilog";
+import { Trash2 } from "lucide-react";
 
 
 interface PageMeta {

@@ -1,7 +1,8 @@
 import { setFeesPlan } from "@/redux/slices/feesSlice"
-import { DetailedFeesPlan, FeesPlan, FeesType, ReqObjectForCreateFeesPlan } from "@/types/fees"
+import { DetailedFeesPlan, FeePaymentRequest, FeesPlan, FeesType, ReqObjectForCreateFeesPlan, StudentFeeDetails } from "@/types/fees"
 import { PageMeta } from "@/types/global"
 import baseUrl from "@/utils/base-urls"
+import { FeePaymentFormData } from "@/utils/fees.validation"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { create } from "domain"
 
@@ -63,6 +64,43 @@ export const FeesApi = createApi({
                 body: data
             })
         }),
+
+        getStudentFeesDetailsForClass: builder.query<StudentFeeDetails, number>({
+            query: (class_id) => ({
+                url: `/fees/status/class/1`,
+                method: "GET",
+            })
+        }),
+
+        getStudentFeesDetails: builder.query<StudentFeeDetails, number>({
+            query: (student_id) => ({
+                url: `/fees/status/student/${student_id}`,
+                method: "GET",
+            })
+        }),
+
+        payFees: builder.mutation< any , {payload : FeePaymentRequest, student_id : number}>({
+            query: ({ payload , student_id}) => ({
+                url: `/fees/pay/2`,
+                method: "GET",
+                body: payload
+            })
+        }),
+
+        payMultipleInstallments: builder.mutation< any , {payload : FeePaymentRequest[], student_id : number}>({
+            query: ({ payload , student_id}) => ({
+                url: `/fees/pay/installments/${student_id}`,
+                method: "POST",
+                body: payload
+            })
+        }),
+        updatePaymentStatus: builder.mutation< any , {payload : {status : string , remarks : string}, transaction_id : number}>({
+            query: ({ transaction_id ,payload}) => ({
+                url: `/transaction/${transaction_id}`,
+                method: "PUT",
+                body: payload
+            })
+        }),
     }),
 })
 
@@ -72,5 +110,15 @@ export const {
     useUpdateFeesTypeMutation,
     useLazyGetFeesPlanQuery,
     useLazyFetchDetailFeePlanQuery, // to fetch single fee plan
-    useCreateFeesPlanMutation
+    useCreateFeesPlanMutation,
+
+    useLazyGetStudentFeesDetailsQuery,
+    useGetStudentFeesDetailsQuery,
+
+
+    useLazyGetStudentFeesDetailsForClassQuery,
+
+    usePayFeesMutation,
+    usePayMultipleInstallmentsMutation,
+    useUpdatePaymentStatusMutation
 } = FeesApi;
