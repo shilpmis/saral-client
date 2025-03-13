@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,8 +25,6 @@ import {
 import { Link } from "react-router-dom";
 import { Permission, UserRole } from "@/types/user";
 import { useAuth } from "@/redux/hooks/useAuth";
-import { useAppSelector } from "@/redux/hooks/useAppSelector";
-import { selectAuthState } from "@/redux/slices/authSlice";
 
 const SideBarItems = [
   { title: "Dashboard", url: "/d", icon: Home },
@@ -37,7 +34,8 @@ const SideBarItems = [
   { title: "Leave Management", url: "/d/leaves", icon: Bed, requiredPermission: Permission.MANAGE_LEAVES },
   { title: "Attendance Management", url: "/d/attendance", icon: ClipboardList, requiredPermission: Permission.MANAGE_ATTENDANCE },
   { title: "Attendance", url: "/d/mark-attendance", icon: ClipboardList, requiredPermission: Permission.MARK_ATTENDANCE },
-  { title: "Fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
+  { title: "Payments", url: "/d/payments", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
+  { title: "Manage Fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
   { title: "Admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_ADMISSION },
   // { title: "Time Table", url: "/d/timetable", icon: Clock , requiredPermission: Permission.MANAGE_SETTINGS},
   // { title: "Result", url: "/d/results", icon: FileText , requiredPermission: Permission.MANAGE_SETTINGS},

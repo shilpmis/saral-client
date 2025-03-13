@@ -6,6 +6,19 @@ export enum UserStatus {
   BANNED = "BANNED",
 }
 
+interface School {
+  id: number;
+  name: string;
+  email: string;
+  username: string;
+  contact_number: number;
+  address: string;
+  established_year: string;
+  school_type: string;
+  status: string;
+  subscription_type: string;
+}
+
 export interface User {
   id: number;
   school_id: number;
@@ -17,7 +30,8 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
-  teacher: TeachingStaff | null
+  teacher: TeachingStaff | null;
+  school:School
 }
 
 export enum UserRole {
@@ -116,4 +130,5 @@ export interface ApiResponse<T> {
 }
 
 export type UserApiResponse = ApiResponse<User>
+
 

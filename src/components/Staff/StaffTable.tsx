@@ -1,4 +1,4 @@
-import type React from "react";
+
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,18 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { SaralPagination } from "../ui/common/SaralPagination";
-import { OtherStaff, TeachingStaff } from "@/types/staff";
+import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff";
+import dynamic from "next/dynamic"
+import StaffPdfDilog from "./StaffPdfDilog";
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "@/redux/hooks/useTranslation";
+
 
 interface PageMeta {
   total: number,
@@ -47,16 +42,30 @@ export default function StaffTable({
   type,
   staffList,
   onEdit,
+  onDelete,
   onPageChange
 }: {
   staffList: { staff: TeachingStaff[] | OtherStaff[], page_meta: PageMeta };
   onEdit: (staff_id: number) => void;
   onPageChange: (page: number) => void;
+  onDelete: (staff_id: number) => void;
   setDefaultRoute?: number;
   type: 'teaching' | 'non-teaching'
 }) {
 
-
+   const StafftDetailsPDF = dynamic(() => import("./StaffPdf"), {
+      ssr: false,
+      loading: () => <p>Loading PDF generator...</p>,
+    })
+  
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState<any>(null)
+  const handleStaffClick = (staff:any) => {
+    setSelectedStaff(staff)
+    setDialogOpen(true)
+    console.log("staff is here=>>",selectedStaff);
+    
+  }
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
   
@@ -65,9 +74,11 @@ export default function StaffTable({
     onPageChange(upadatedPage);
   };
 
+
   return (
     <div className="w-full overflow-auto">
       {staffList.staff && staffList.staff.length > 0 ? (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -84,7 +95,14 @@ export default function StaffTable({
             {staffList.staff && staffList.staff.map((staff) => (
               <TableRow key={staff.id}>
                 <TableCell>{staff.id}</TableCell>
-                <TableCell>{staff.first_name} {staff.middle_name} {staff.last_name}</TableCell>
+                <TableCell>
+                <button
+                  className="text-blue-600 hover:underline focus:outline-none"
+                  onClick={() => handleStaffClick(staff)}
+                >
+                  {staff.first_name} {staff.middle_name} {staff.last_name}
+                </button>
+                  </TableCell>
                 <TableCell>
                   {isValidEmail(staff.email) ? (
                     staff.email
@@ -135,11 +153,22 @@ export default function StaffTable({
                   <Button variant="outline" onClick={() => onEdit(staff.id)}>
                     {t("edit")}
                   </Button>
+                  <Button className="ms-2" variant="outline" onClick={()=>onDelete(staff.id)}>
+                  <Trash2 className="text-red-500"/>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        <StaffPdfDilog 
+          dialogOpen={dialogOpen}
+          setDialogOpen={setDialogOpen}
+          selectedStaff={selectedStaff}
+          StafftDetailsPDF={StafftDetailsPDF}
+        />
+
+        </>
       ) : (
         <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
       )}

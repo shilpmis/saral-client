@@ -15,6 +15,7 @@ import {
   Bell,
   BookOpen,
   Aperture,
+  Clock,
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
@@ -74,6 +75,11 @@ const navigationSections: NavSection[] = [
         icon: CreditCard,
         href: "fees",
       },
+      {
+        title: "Time Table Management",
+        icon: Clock,
+        href: "timeTable",
+      }
     ],
   },
 ]
@@ -118,4 +124,5 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
     </div>
   )
 }
+
 

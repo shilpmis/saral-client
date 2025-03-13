@@ -33,7 +33,7 @@ export interface TeachingStaff {
    first_name_in_guj: string,
    middle_name_in_guj: string,
    last_name_in_guj: string,
-   gender: "male" | "female" | undefined; 
+   gender: "Male" | "Female"; 
    birth_date: string,
    mobile_number: number,
    email: string,
@@ -69,7 +69,7 @@ export interface OtherStaff {
    first_name_in_guj: string,
    middle_name_in_guj: string,
    last_name_in_guj: string,
-   gender: string,
+   gender: "Male" | "Female",
    birth_date: string,
    mobile_number: number,
    email: string,
@@ -80,7 +80,7 @@ export interface OtherStaff {
    religiion_in_guj: string,
    caste: string,
    caste_in_guj: string,
-   category: string,
+   category: CategoryType,
    address: string,
    district: string,
    city: string,

@@ -1,6 +1,8 @@
 import type React from "react"
+import { useRef } from "react"
 import { useState, useCallback, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,41 +10,99 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { StaffFormData, staffSchema } from "@/utils/staff.validation"
-import { useTranslation } from "@/redux/hooks/useTranslation"
+import { StaffFormData, staffSchema } from "@/utils/staff.validation";
+import { useGetSchoolStaffRoleQuery, useLazyGetOtherStaffQuery, useLazyGetSchoolStaffRoleQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
+import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
+import { useTranslation } from "@/redux/hooks/useTranslation";
 
 interface StaffFormProps {
-  initialData?: Partial<StaffFormData>
+  // initialData?: Partial<StaffFormData>   
+  initialData?: OtherStaff | TeachingStaff
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
 }
 
-const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
+const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
+
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const [getSchoolStaff, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
+
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
-  const [teachingRoles, setTeachingRoles] = useState<{ id: number; name: string }[]>([])
-  const [nonTeachingRoles, setNonTeachingRoles] = useState<{ id: number; name: string }[]>([])
+  const [teachingRoles, setTeachingRoles] = useState<StaffRole[] | null>(null)
+  const [nonTeachingRoles, setNonTeachingRoles] = useState<StaffRole[] | null>(null)
 
   const form = useForm<StaffFormData>({
-    // resolver: zodResolver(staffSchema),
-    defaultValues: initialData || {
+    resolver: zodResolver(staffSchema),
+    defaultValues: {
       is_teaching_role: true,
-      employment_status: "Permanent",
-    },
-  })
+      staff_role_id: undefined,
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      first_name_in_guj: "",
+      middle_name_in_guj: "",
+      last_name_in_guj: "",
+      gender: "Male",
+      birth_date: "",
+      aadhar_no: undefined,
+      mobile_number: undefined,
+      email: "",
+      qualification: "",
+      subject_specialization: "",
+      religiion: "",
+      religiion_in_guj: "",
+      caste: "",
+      caste_in_guj: "",
+      category: undefined,
+      address: "",
+      district: "",
+      city: "",
+      state: "",
+      postal_code: "",
+      bank_name: "",
+      account_no: undefined,
+      IFSC_code: undefined,
+      joining_date: "",
+    }
+  });
 
-  // Simulated API call to fetch roles
-  useEffect(() => {
-    // Replace this with actual API call
-    setTeachingRoles([
-      { id: 1, name: t("teacher") },
-      { id: 2, name: t("principal")},
-    ])
-    setNonTeachingRoles([
-      { id: 3, name: t("librarian") },
-      { id: 4, name: t("administrative_staff") },
-    ])
-  }, [])
+
+  const tabMapping: { [key: string]: string } = {
+    is_teaching_role: "role",
+    staff_role_id: "role",
+    first_name: "personal",
+    middle_name: "personal",
+    last_name: "personal",
+    first_name_in_guj: "personal",
+    middle_name_in_guj: "personal",
+    last_name_in_guj: "personal",
+    gender: "personal",
+    birth_date: "personal",
+    aadhar_no: "personal",
+    mobile_number: "contact",
+    email: "contact",
+    qualification: "contact",
+    subject_specialization: "contact",
+    religiion: "other",
+    religiion_in_guj: "other",
+    caste: "other",
+    caste_in_guj: "other",
+    category: "other",
+    address: "address",
+    district: "address",
+    city: "address",
+    state: "address",
+    postal_code: "address",
+    bank_name: "bank",
+    account_no: "bank",
+    IFSC_code: "bank",
+    class_id: "employment",
+    joining_date: "employment",
+    employment_status: "employment",
+  };
+
 
   const handleSubmit: SubmitHandler<StaffFormData> = (data) => {
     onSubmit(data)
@@ -58,7 +118,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
   }, [activeTab])
 
   const handlePreviousTab = useCallback(() => {
-    if (activeTab === "personal") setActiveTab(formType === "update" ? "personal" : "role")    
+    if (activeTab === "personal") setActiveTab(formType === "update" ? "personal" : "role")
     else if (activeTab === "contact") setActiveTab("personal")
     else if (activeTab === "other") setActiveTab("contact")
     else if (activeTab === "address") setActiveTab("other")
@@ -67,98 +127,150 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
   }, [activeTab])
 
   const {t} = useTranslation()
+  useEffect(() => {
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      console.log("firstErrorField", firstErrorField)
+      const tabToActivate = tabMapping[firstErrorField];
+      setActiveTab(tabToActivate);
+
+      // Focus on the input field with the error
+      setTimeout(() => {
+        inputRefs.current[firstErrorField]?.focus();
+      }, 0);
+    }
+  }, [form.formState.errors]);
+
+  useEffect(() => {
+    if (initialData) {
+      if (formType === 'update' && initialData?.staff_role_id) {
+        form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
+        form.setValue('staff_role_id', initialData?.staff_role_id)
+      } else {
+        alert('Something went wrong');
+      }
+    }
+  }, [initialData])
+
+  useEffect(() => {
+    if (!teachingRoles || !nonTeachingRoles) {
+      getSchoolStaff(1)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (schoolStaff) {
+      setTeachingRoles(schoolStaff.filter((role: StaffRole) => role?.is_teaching_role))
+      setNonTeachingRoles(schoolStaff?.filter((role: StaffRole) => !role?.is_teaching_role))
+      // if(formType === 'update' && initialData?.staff_role_id){
+      //   form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
+      //   form.setValue('staff_role_id', initialData?.staff_role_id)
+      // }
+
+    }
+  }, [schoolStaff])
+
+  useEffect(()=>{
+    if(formType === 'update' && initialData?.staff_role_id){
+      form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
+      form.setValue('staff_role_id', initialData?.staff_role_id)
+    }
+  },[formType])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-          {(formType === "view" || formType === "create") && <TabsTrigger value="role">{t("role")}</TabsTrigger>}
-          <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
-            <TabsTrigger value="contact">{t("contact")}</TabsTrigger>
-            <TabsTrigger value="other">{t("other")}</TabsTrigger>
-            <TabsTrigger value="address">{t("address")}</TabsTrigger>
-            <TabsTrigger value="bank">{t("bank")}</TabsTrigger>
-            <TabsTrigger value="employment">{t("employee")}</TabsTrigger>
+            {(formType === "view" || formType === "create") && <TabsTrigger value="role">Role</TabsTrigger>}
+            <TabsTrigger value="personal">Personal</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="other">Other</TabsTrigger>
+            <TabsTrigger value="address">Address</TabsTrigger>
+            <TabsTrigger value="bank">Bank</TabsTrigger>
+            <TabsTrigger value="employment">Employment</TabsTrigger>
           </TabsList>
 
           {formType != 'update' && (
             <TabsContent value="role">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("role_selection")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="is_teaching_role"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>{t("staff_type")}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={(value) => field.onChange(value === "teaching")}
-                          defaultValue={field.value ? "teaching" : "non-teaching"}
-                          className="flex flex-col space-y-1"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="teaching" />
-                            </FormControl>
-                            <FormLabel className="font-normal">{t("teaching_staff")}</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="non-teaching" />
-                            </FormControl>
-                            <FormLabel className="font-normal">{t("non_teaching_staff")}</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="staff_role_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("staff_role")}</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                        defaultValue={field.value?.toString()}
-                      >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Role Selection</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="is_teaching_role"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Staff Type</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select staff role" />
-                          </SelectTrigger>
+                          <RadioGroup
+                            onValueChange={(value) => field.onChange(value === "teaching")}
+                            defaultValue={field.value ? "teaching" : "non-teaching"}
+                            className="flex flex-col space-y-1"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="teaching" />
+                              </FormControl>
+                              <FormLabel className="font-normal">Teaching Staff</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="non-teaching" />
+                              </FormControl>
+                              <FormLabel className="font-normal">Non-Teaching Staff</FormLabel>
+                            </FormItem>
+                          </RadioGroup>
                         </FormControl>
-                        <SelectContent>
-                          {form.watch("is_teaching_role")
-                            ? teachingRoles.map((role) => (
-                                <SelectItem key={role.id} value={role.id.toString()}>
-                                  {role.name}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="staff_role_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Staff Role</FormLabel>
+                        {teachingRoles && nonTeachingRoles && (<Select
+                          onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                          defaultValue={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select staff role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {form.watch("is_teaching_role")
+                              ? teachingRoles && teachingRoles.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id.toString()}>
+                                  {staff.role}
                                 </SelectItem>
                               ))
-                            : nonTeachingRoles.map((role) => (
-                                <SelectItem key={role.id} value={role.id.toString()}>
-                                  {role.name}
+                              : nonTeachingRoles && nonTeachingRoles.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id.toString()}>
+                                  {staff.role}
                                 </SelectItem>
                               ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button type="button" onClick={handleNextTab}>
-                  {t("next")}
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
+                          </SelectContent>
+                        </Select>)}
+                        {(!teachingRoles || !nonTeachingRoles) && <div>Loading...</div>}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="button" onClick={handleNextTab}>
+                    Next
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
           )}
 
           <TabsContent value="personal">
@@ -291,7 +403,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       <FormItem>
                         <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
-                          <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -324,7 +436,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       <FormItem>
                         <FormLabel>{t("mobile_no")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -551,7 +663,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                       <FormItem>
                         <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
-                          <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <Input type="number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -596,7 +708,7 @@ const StaffForm : React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, 
                     <FormItem>
                       <FormLabel>{t("account_number")}</FormLabel>
                       <FormControl>
-                        <Input {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                        <Input type="number"{...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

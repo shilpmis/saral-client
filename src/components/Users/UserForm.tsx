@@ -87,6 +87,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
       if (new_user.data) onSucssesfullChange(new_user.data)
       if (new_user.error) {
         console.log("Error creating user", new_user.error)
+        onSucssesfullChange(null)
         if (new_user.error.data.message.code == 'ER_DUP_ENTRY') {
           toast({
             variant: "destructive",

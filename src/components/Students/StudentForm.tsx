@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useRef } from "react";
 import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,8 +52,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const isLoading = useAppSelector((state) => state.academic.loading)
   const {t} = useTranslation()
 
+
+  const customStudentSchema = studentSchema.refine((data) => {
+    if (data.admission_class && data.class) {
+      return parseInt(data.admission_class) <= parseInt(data.class);
+    }
+    return true;
+  }, {
+    message: "Admission class should not be greater than the current class",
+    path: ["admission_class"], // Specify the path to the field that should show the error
+  });
+
   const form = useForm<StudentFormData>({
-    resolver: zodResolver(studentSchema),
+    resolver: zodResolver(customStudentSchema),
     defaultValues: {
       first_name: "",
       middle_name: "",
@@ -96,11 +108,56 @@ const StudentForm: React.FC<StudentFormProps> = ({
       state: "",
       postal_code: undefined,
 
-      bank_name: "",
-      account_no: undefined,
-      IFSC_code: "",
-    },
-  })
+    bank_name: "",
+    account_no: undefined,
+    IFSC_code: "",
+  },
+});
+
+  const tabMapping: { [key: string]: string } = {
+    first_name: "personal",
+    middle_name: "personal",
+    last_name: "personal",
+    first_name_in_guj: "personal",
+    middle_name_in_guj: "personal",
+    last_name_in_guj: "personal",
+    gender: "personal",
+    birth_date: "personal",
+    birth_place: "personal",
+    birth_place_in_guj: "personal",
+    aadhar_no: "personal",
+    aadhar_dise_no: "personal",
+    father_name: "family",
+    father_name_in_guj: "family",
+    mother_name: "family",
+    mother_name_in_guj: "family",
+    primary_mobile: "family",
+    secondary_mobile: "family",
+    gr_no: "academic",
+    roll_number: "academic",
+    admission_date: "academic",
+    admission_class: "academic",
+    admission_division: "academic",
+    class: "academic",
+    division: "academic",
+    privious_school: "academic",
+    privious_school_in_guj: "academic",
+    religiion: "other",
+    religiion_in_guj: "other",
+    caste: "other",
+    caste_in_guj: "other",
+    category: "other",
+    address: "address",
+    district: "address",
+    city: "address",
+    state: "address",
+    postal_code: "address",
+    bank_name: "bank",
+    account_no: "bank",
+    IFSC_code: "bank",
+  };
+     
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const [
     getAcademicClasses,
@@ -187,15 +244,29 @@ const StudentForm: React.FC<StudentFormProps> = ({
     [availableDivisions, availableDivisionsForAdmissionClass, setSelectedDivision, setselectedAdmissionDivision],
   )
 
-  const handleSubmit: SubmitHandler<StudentFormData> = async (values: z.infer<typeof studentSchema>) => {
+  const handleSubmit: SubmitHandler<StudentFormData> = async (values: z.infer<typeof customStudentSchema>) => {
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      const tabToActivate = tabMapping[firstErrorField];
+      setActiveTab(tabToActivate);
+      return;
+    }
+  
+    const firstErrorField = Object.keys(errors)[0];
+    setTimeout(() => {
+      inputRefs.current[firstErrorField]?.focus();
+    }, 0);
+  
     if (form_type === "create") {
       const CurrentClass = available_classes?.filter(
         (cls) => cls.class == values?.class && cls.division == values.division,
-      )[0]
+      )[0];
       const AdmissionClass = available_classes?.filter(
         (cls) => cls.class == values?.admission_class && cls.division == values.admission_division,
-      )[0]
+      )[0];
 
+     
       const payload: StudentEntry = {
         students_data: {
           class_id: CurrentClass!.id,
@@ -249,7 +320,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
           variant: "default",
           title: "Success",
           description: "Student Created Successfully",
-        })
+        });
+        onClose();
       }
 
       if (new_student.error) {
@@ -331,6 +403,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
         payload.student_meta_data.IFSC_code = values.IFSC_code
       }
 
+      onClose();
+
       // Compare form values with initial data for students_data fields
       if (values.first_name !== initial_data?.first_name) {
         payload.students_data.first_name = values.first_name
@@ -362,6 +436,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       if (values.primary_mobile !== initial_data?.primary_mobile) {
         payload.students_data.primary_mobile = values.primary_mobile
       }
+      
       if (values.father_name !== initial_data?.father_name) {
         payload.students_data.father_name = values.father_name
       }
@@ -512,6 +587,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
     }
   }, [setSelectedClass, setSelectedDivision])
 
+  useEffect(() => {
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      const tabToActivate = tabMapping[firstErrorField];
+      setActiveTab(tabToActivate);
+  
+      // Focus on the input field with the error
+      setTimeout(() => {
+        inputRefs.current[firstErrorField]?.focus();
+      }, 0);
+    }
+  }, [form.formState.errors]);
+
   if (isLoading) {
     return <div>Loading...</div>
   }
@@ -519,6 +608,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
   if (!AcademicClasses || AcademicClasses.length === 0) {
     return <div>No classes available. Please add classes first.</div>
   }
+
+  
 
   return (
     <Form {...form}>
@@ -547,7 +638,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("first_name")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                        <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -560,7 +651,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("middle_name")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                        <Input {...field}  />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -573,7 +664,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("last_name")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                        <Input {...field}  />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -686,19 +777,18 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="aadhar_no"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("aadhar_no")}</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormField control={form.control}
+                                      name="aadhar_no"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Aadhar Number</FormLabel>
+                                          <FormControl>
+                                            <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
                   <FormField
                     control={form.control}
                     name="aadhar_dise_no"
@@ -792,7 +882,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("mobile_no")}</FormLabel>
                         <FormControl>
-                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -805,7 +895,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("other_mobile_no")}</FormLabel>
                         <FormControl>
-                          <Input type="tel" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -874,42 +964,43 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="admission_class"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("admission_class")}</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value)
-                            handleClassChange(value, "admission_Class")
-                          }}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Class" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value=" " disabled>
-                              Classes
-                            </SelectItem>
-                            {AcademicClasses.map(
-                              (cls, index) =>
-                                cls.divisions.length > 0 && (
-                                  <SelectItem key={index} value={cls.class.toString()}>
-                                    Class {cls.class}
-                                  </SelectItem>
-                                ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+  control={form.control}
+  name="admission_class"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Admission Class</FormLabel>
+      <Select
+        value={field.value}
+        onValueChange={(value) => {
+          field.onChange(value);
+          handleClassChange(value, "admission_Class");
+        }}
+      >
+        <FormControl>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Class" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+          <SelectItem value=" " disabled>
+            Classes
+          </SelectItem>
+                            
+          {AcademicClasses.map(
+            (cls, index) =>
+              cls.divisions.length > 0 && (
+                <SelectItem key={index} value={cls.class.toString()}>
+                  Class {cls.class}
+                </SelectItem>
+              ),
+          )}
+        </SelectContent>
+      </Select>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
                   <FormField
                     control={form.control}
                     name="admission_division"
@@ -1217,20 +1308,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="postal_code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("postal_code")}</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                 <FormField
+                                     control={form.control}
+                                     name="postal_code"
+                                     render={({ field }) => (
+                                       <FormItem>
+                                         <FormLabel>Postal Code</FormLabel>
+                                         <FormControl>
+                                           <Input  type="number" {...field} />
+                                         </FormControl>
+                                         <FormMessage />
+                                       </FormItem>
+                                     )}
+                                   />
+                                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
@@ -1289,15 +1380,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   )}
                 />
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  {t("previous")}
-                </Button>
-                <Button type="submit">
-                  {!isStundetGetingUpdate && (form_type === "create" ? "Submit" : "Update")}
-                  {isStundetGetingUpdate && <Loader2 className="animate-spin" />}
-                </Button>
-              </CardFooter>
+               <CardFooter className="flex justify-between">
+              <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                Previous
+              </Button>
+              <Button type="submit">
+                {!isStundetGetingUpdate && (form_type === "create" ? "Submit" : "Update")}
+                {isStundetGetingUpdate && <Loader2 className="animate-spin" />}
+              </Button>
+            </CardFooter>
+                  
             </Card>
           </TabsContent>
         </Tabs>

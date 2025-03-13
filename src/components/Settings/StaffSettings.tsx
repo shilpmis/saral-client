@@ -1,8 +1,8 @@
 /***
  * TODO : 
  * 
- * BUG :: Fix responsivenedd for this pagr
- * FIX :: Component workind properly need to add functionlity to dispaly live changes !
+ * BUG :: Fix responsivenes for this pagr
+ * FIX :: Component working properly need to add functionlity to dispaly live changes !
  * 
  * - Open toast after reciving api responce 
  * - Disable all action button while api is processing .
@@ -158,7 +158,8 @@ export default function StaffSettings() {
 
   const handleDeleteRole = async (id: number) => {
     try {
-      await dispatch(deleteStaffRole(id)).unwrap()
+      const res = await dispatch(deleteStaffRole(id)).unwrap()
+      console.log(res)
       toast({
         title: "Role Removed",
         description: "The role has been removed from the list.",
@@ -166,12 +167,11 @@ export default function StaffSettings() {
       setIsDialogForDeleteStaffOpen(false)
       getSchoolStaff(authState.user!.school_id);
       handleCloseDialog()
-    } catch (error) {
-      alert("Check error in console ! ")
+    } catch (error : any) {
       toast({
-        title: "Error",
-        description: "Failed to delete role. Please try again.",
         variant: "destructive",
+        title: error.message,
+        description: "Failed to delete role ."
       })
     }
   }
