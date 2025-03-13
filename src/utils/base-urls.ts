@@ -17,6 +17,6 @@ switch (__Mode__) {
     break;
 }
 const baseUrl = {
-  serverUrl: 'http://localhost:3333/'
+  serverUrl: serverBaseUrl
 };
 export default baseUrl;
