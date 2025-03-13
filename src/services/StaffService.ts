@@ -62,6 +62,13 @@ export const StaffApi = createApi({
         body: data,
       }),
     }),
+    updateOtherStaff: builder.mutation<OtherStaff,{ school_id: number; otherStaff_id: number; data: StaffFormData}>({
+      query: ({ school_id,otherStaff_id, data }) => ({
+        url: `other-staff/${school_id}/${otherStaff_id}`,
+        method: "PUT",
+        body: data,
+      }),
+    }),
     
     bulkUploadTeachers: builder.mutation({
       query: ({ school_id, file }) => {
@@ -86,6 +93,7 @@ export const {
   useAddTeachingStaffMutation,
   useAddOtherStaffMutation,
   useUpdateTeacherMutation,
+  useUpdateOtherStaffMutation,
   useBulkUploadTeachersMutation,
 } = StaffApi
 
