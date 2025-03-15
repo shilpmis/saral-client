@@ -35,11 +35,17 @@ export const AcademicApi = createApi({
           console.log("Error while fetching academic classes", error)
         }
       }
-    })
+    }),
+    getAllClassesWithOuutFeesPlan: builder.query<Division[], {school_id : number}>({
+      query: ({school_id}) => ({
+        url: `/classes/${school_id}?without_fees_plan=true`,
+        method: "GET",
+      }),
+    }),
   })
 })
 
-export const { useGetAcademicClassesQuery , useLazyGetAcademicClassesQuery } = AcademicApi;
+export const { useGetAcademicClassesQuery, useLazyGetAcademicClassesQuery , useLazyGetAllClassesWithOuutFeesPlanQuery } = AcademicApi;
 
 /**
  *  
@@ -71,7 +77,7 @@ export const createDivision = createAsyncThunk<Class, Omit<Class, 'id' | 'school
   }
 )
 
-export const editDivision = createAsyncThunk<Class[], {aliases : string | null , class_id : number}>(
+export const editDivision = createAsyncThunk<Class[], { aliases: string | null, class_id: number }>(
   "academic/createDivision",
   async (paylaod, { rejectWithValue }) => {
     try {
