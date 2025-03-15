@@ -15,12 +15,14 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { feeTypeSchema } from "@/utils/fees.validation"
 import { z } from "zod"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const FeeTypeManagement: React.FC = () => {
 
     const [getFeesType, { data: FeesType, isLoading: loagingFeesType }] = useLazyGetFeesTypeQuery();
     const [createFeesType, { isLoading: isCreateFeesTypeLoading }] = useCreateFeesTypeMutation();
     const [updateFeesType, { isLoading: isUpdateFeesTypeLoading }] = useUpdateFeesTypeMutation();
+    const {t} = useTranslation()
 
     const [searchTerm, setSearchTerm] = useState("")
     const [DialogForFeeType, setDialogForFeeType] = useState<{ isOpen: boolean, type: 'create' | 'edit', data: FeesType | null }>({
@@ -123,7 +125,7 @@ export const FeeTypeManagement: React.FC = () => {
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Fee Type Management</h1>
+                <h1 className="text-3xl font-bold">{t("fee_type_management")}</h1>
                 <Dialog
                     open={DialogForFeeType.isOpen}
                     onOpenChange={(open) => {
@@ -134,12 +136,12 @@ export const FeeTypeManagement: React.FC = () => {
                 >
                     <DialogTrigger asChild>
                         <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Add Fee Type
+                            <Plus className="mr-2 h-4 w-4" /> {t("add_fee_type")}
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
-                            <DialogTitle>{DialogForFeeType.type === 'edit' ? "Edit Fee Type" : "Add New Fee Type"}</DialogTitle>
+                            <DialogTitle>{DialogForFeeType.type === 'edit' ? t("edit_fee_type") : t("add_new_fee_type")}</DialogTitle>
                         </DialogHeader>
                         <AddFeeTypeForm
                             initialData={DialogForFeeType.data}
@@ -154,7 +156,7 @@ export const FeeTypeManagement: React.FC = () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Fee Types</CardTitle>
+                    <CardTitle>{t("fee_types")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center mb-4">
@@ -173,12 +175,12 @@ export const FeeTypeManagement: React.FC = () => {
                         {DataForFeesType.type.length > 0 && (<Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Discription</TableHead>
+                                    <TableHead>{t("name")}</TableHead>
+                                    <TableHead>{t("description")}</TableHead>
                                     {/* <TableHead>Priority</TableHead> */}
                                     {/* <TableHead>Concession Applicable</TableHead> */}
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Actions</TableHead>
+                                    <TableHead>{t("status")}</TableHead>
+                                    <TableHead>{t("actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -207,7 +209,7 @@ export const FeeTypeManagement: React.FC = () => {
                                 ))}
                             </TableBody>
                         </Table>)}
-                        {DataForFeesType.type.length === 0 && <div className="text-center py-4 text-gray-500">No records found</div>}
+                        {DataForFeesType.type.length === 0 && <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>}
                     </div>)}
                     <div className="mt-4">
                         {DataForFeesType && DataForFeesType.type.length > 0 && <SaralPagination

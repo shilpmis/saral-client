@@ -13,6 +13,7 @@ import { usePayFeesMutation, usePayMultipleInstallmentsMutation } from "@/servic
 import { toast } from "@/hooks/use-toast"
 import type { FeePaymentRequest, InstallmentBreakdown } from "@/types/fees"
 import { useEffect } from "react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface PayFeesDialogProps {
     isOpen: boolean
@@ -24,6 +25,7 @@ interface PayFeesDialogProps {
 
 const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installments, studentId, totalAmount }) => {
     const [payMultipleInstallments, { isLoading: isPayMentInProgress }] = usePayMultipleInstallmentsMutation()
+    const {t} = useTranslation()
 
     const form = useForm<FeePaymentFormData>({
         resolver: zodResolver(feePaymentSchema),
@@ -107,13 +109,13 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                 <DialogHeader>
                     <DialogTitle className="flex items-center text-xl">
                         <Receipt className="mr-2 h-5 w-5" />
-                        Process Fee Payment
+                        {t("process_fee_payment")}
                     </DialogTitle>
                 </DialogHeader>
 
                 <div className="bg-blue-50 p-4 rounded-md mb-4">
                     <p className="text-sm text-blue-700 font-medium">
-                        Payment Amount: <span className="font-bold">{formatCurrency(totalAmount)}</span>
+                        {t("payment_amount")}: <span className="font-bold">{formatCurrency(totalAmount)}</span>
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
                         For {installments.length} installment{installments.length !== 1 ? "s" : ""}
@@ -127,7 +129,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                             name="payment_mode"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Payment Mode</FormLabel>
+                                    <FormLabel>{t("payment_mode")}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
@@ -135,10 +137,10 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="Cash">Cash</SelectItem>
-                                            <SelectItem value="Online">Online</SelectItem>
-                                            <SelectItem value="Cheque">Cheque</SelectItem>
-                                            <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                            <SelectItem value="Cash">{t("cash")}</SelectItem>
+                                            <SelectItem value="Online">{t("online")}</SelectItem>
+                                            <SelectItem value="Cheque">{t("cheque")}</SelectItem>
+                                            <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -151,9 +153,9 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                             name="transaction_reference"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Transaction Reference (Optional)</FormLabel>
+                                    <FormLabel>{t("transaction_reference")} (Optional)</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Enter reference number" />
+                                        <Input {...field} placeholder={t("enter_reference_number")} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -165,7 +167,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                             name="payment_date"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Payment Date</FormLabel>
+                                    <FormLabel>{t("payment_date")}</FormLabel>
                                     <FormControl>
                                         <Input type="date" {...field} />
                                     </FormControl>
@@ -179,7 +181,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                             name="remarks"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Remarks (Optional)</FormLabel>
+                                    <FormLabel>{t("remarks")} (Optional)</FormLabel>
                                     <FormControl>
                                         <Input {...field} placeholder="Add any additional notes" />
                                     </FormControl>
@@ -191,12 +193,12 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
                         <Separator className="my-4" />
 
                         <div className="space-y-2">
-                            <p className="text-sm font-medium">Selected Installments:</p>
+                            <p className="text-sm font-medium">{t("selected_installments")}:</p>
                             <div className="max-h-32 overflow-y-auto border rounded-md p-2">
                                 <ul className="space-y-1">
                                     {installments.map((installment) => (
                                         <li key={installment.id} className="text-sm flex justify-between">
-                                            <span>Installment #{installment.installment_no}</span>
+                                            <span>{t("installment")} #{installment.installment_no}</span>
                                             <span className="font-medium">{formatCurrency(Number(installment.installment_amount))}</span>
                                         </li>
                                     ))}
@@ -206,16 +208,16 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({ isOpen, onClose, installm
 
                         <DialogFooter className="mt-6">
                             <Button type="button" variant="outline" onClick={() => onClose(false)} disabled={isPayMentInProgress}>
-                                Cancel
+                                {t("cancel")}
                             </Button>
                             <Button type="submit" disabled={isPayMentInProgress}>
                                 {isPayMentInProgress ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Processing...
+                                        {t("processing..")}
                                     </>
                                 ) : (
-                                    "Submit Payment"
+                                    t("submit_payment")
                                 )}
                             </Button>
                         </DialogFooter>

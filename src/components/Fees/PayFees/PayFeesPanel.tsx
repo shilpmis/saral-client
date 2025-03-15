@@ -18,6 +18,7 @@ import type { AcademicClasses, Division } from "@/types/academic"
 import type { StudentWithFeeStatus } from "@/types/fees"
 import { toast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const PayFeesPanel: React.FC = () => {
 //   const router = useRouter()
@@ -33,6 +34,7 @@ const PayFeesPanel: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "ascending" | "descending" } | null>(null)
   const [students, setStudents] = useState<StudentWithFeeStatus[]>([])
+  const {t} = useTranslation()
 
   // Get available divisions for selected class
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
@@ -192,14 +194,14 @@ const PayFeesPanel: React.FC = () => {
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-          Fee Management
+          {t("fee_management")}
         </h2>
         <div className="flex space-x-2 mt-4 sm:mt-0">
           <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Export Report
+            <Download className="mr-2 h-4 w-4" /> {t("export_report")}
           </Button>
           <Button variant="outline">
-            <FileText className="mr-2 h-4 w-4" /> Generate Receipts
+            <FileText className="mr-2 h-4 w-4" /> {t("generate_receipts")}
           </Button>
         </div>
       </div>
@@ -207,24 +209,24 @@ const PayFeesPanel: React.FC = () => {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Filter className="mr-2 h-5 w-5" /> Filter Students
+            <Filter className="mr-2 h-5 w-5" /> {t("filter_students")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div>
               <label htmlFor="class-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                Class
+                {t("class")}
               </label>
               <Select value={selectedClass} onValueChange={handleClassChange}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Class" />
+                  <SelectValue placeholder={t("select_class")} />
                 </SelectTrigger>
                 <SelectContent>
                   {academicClasses?.map((cls, index) =>
                     cls.divisions.length > 0 ? (
                       <SelectItem key={index} value={cls.class.toString()}>
-                        Class {cls.class}
+                        {t("class")} {cls.class}
                       </SelectItem>
                     ) : null,
                   )}
@@ -233,7 +235,7 @@ const PayFeesPanel: React.FC = () => {
             </div>
             <div>
               <label htmlFor="division-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                Division
+                {t("division")}
               </label>
               <Select
                 value={selectedDivision ? selectedDivision.id.toString() : ""}
@@ -241,7 +243,7 @@ const PayFeesPanel: React.FC = () => {
                 disabled={!selectedClass}
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Division" />
+                  <SelectValue placeholder={t("select_division")} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableDivisions?.divisions.map((division, index) => (
@@ -256,11 +258,11 @@ const PayFeesPanel: React.FC = () => {
           <div className="relative flex-grow max-w-md">
             <Search className="absolute left-3 top-9 transform -translate-y-1/2 text-gray-400" />
             <label htmlFor="search" className="text-sm font-medium text-gray-700 mb-1 block">
-              Search
+              {t("search")}
             </label>
             <Input
               id="search"
-              placeholder="Search by Name or GR Number"
+              placeholder={t("search_by_name_or_roll_number")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -277,13 +279,13 @@ const PayFeesPanel: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-[250px]">
                     <div className="flex items-center cursor-pointer" onClick={() => requestSort("first_name")}>
-                      Student Name
+                      {t("student_name")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center cursor-pointer" onClick={() => requestSort("gr_no")}>
-                      GR Number
+                      {t("gr_number")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
@@ -292,7 +294,7 @@ const PayFeesPanel: React.FC = () => {
                       className="flex items-center cursor-pointer"
                       onClick={() => requestSort("fees_status.total_amount")}
                     >
-                      Total Fees
+                      {t("total_fees")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
@@ -301,7 +303,7 @@ const PayFeesPanel: React.FC = () => {
                       className="flex items-center cursor-pointer"
                       onClick={() => requestSort("fees_status.paid_amount")}
                     >
-                      Paid Amount
+                      {t("paid_amount")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
@@ -310,17 +312,17 @@ const PayFeesPanel: React.FC = () => {
                       className="flex items-center cursor-pointer"
                       onClick={() => requestSort("fees_status.due_amount")}
                     >
-                      Due Amount
+                      {t("due_amount")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center cursor-pointer" onClick={() => requestSort("fees_status.status")}>
-                      Status
+                      {t("status")}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -354,7 +356,7 @@ const PayFeesPanel: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                      Failed to load fees data. Please try again.
+                    {t("failed_to_load_fees_data._please_try_again.")}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (
@@ -387,7 +389,7 @@ const PayFeesPanel: React.FC = () => {
                           onClick={() => handleViewDetails(student.id)}
                           className="bg-primary hover:bg-primary/90"
                         >
-                          View Details
+                          {t("view_details")}
                         </Button>
                       </TableCell>
                     </TableRow>

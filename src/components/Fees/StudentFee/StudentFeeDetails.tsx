@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentFee {
   id: string
@@ -50,27 +51,29 @@ const concessions = [
 ]
 
 export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, onClose }) => {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Student Information</CardTitle>
+            <CardTitle>{t("student_information")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Name:</div>
+                <div className="text-sm font-medium">{t("name")}:</div>
                 <div>{student.studentName}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Class:</div>
+                <div className="text-sm font-medium">{t("class")}:</div>
                 <div>
                   {student.class}-{student.division}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Roll Number:</div>
+                <div className="text-sm font-medium">{t("roll_number")}:</div>
                 <div>{student.rollNumber}</div>
               </div>
             </div>
@@ -79,24 +82,24 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
 
         <Card>
           <CardHeader>
-            <CardTitle>Fee Summary</CardTitle>
+            <CardTitle>{t("fee_summary")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Total Fees:</div>
+                <div className="text-sm font-medium">{t("total_fees")}:</div>
                 <div>₹{student.totalFees.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Paid Amount:</div>
+                <div className="text-sm font-medium">{t("paid_amount")}:</div>
                 <div>₹{student.paidAmount.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Pending Amount:</div>
+                <div className="text-sm font-medium">{t("pending_amount")}:</div>
                 <div className="font-bold text-red-600">₹{student.pendingAmount.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Status:</div>
+                <div className="text-sm font-medium">{t("status")}:</div>
                 <div>
                   <Badge
                     variant={
@@ -120,26 +123,26 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
 
       <Tabs defaultValue="breakdown">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="breakdown">Fee Breakdown</TabsTrigger>
-          <TabsTrigger value="history">Payment History</TabsTrigger>
-          <TabsTrigger value="concessions">Concessions</TabsTrigger>
+          <TabsTrigger value="breakdown">{t("fee_breakdown")}</TabsTrigger>
+          <TabsTrigger value="history">{t("payment_history")}</TabsTrigger>
+          <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="breakdown">
           <Card>
             <CardHeader>
-              <CardTitle>Fee Breakdown</CardTitle>
+              <CardTitle>{t("fee_breakdown")}</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fee Type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Paid</TableHead>
-                    <TableHead>Pending</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t("fee_types")}</TableHead>
+                    <TableHead>{t("amount")}</TableHead>
+                    <TableHead>{t("paid")}</TableHead>
+                    <TableHead>{t("pending")}</TableHead>
+                    <TableHead>{t("due_date")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -182,18 +185,18 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Payment History</CardTitle>
+              <CardTitle>{t("payment_history")}</CardTitle>
             </CardHeader>
             <CardContent>
               {paymentHistory.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Payment Mode</TableHead>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Remarks</TableHead>
+                      <TableHead>{t("date")}</TableHead>
+                      <TableHead>{t("amount")}</TableHead>
+                      <TableHead>{t("payment_mode")}</TableHead>
+                      <TableHead>{t("reference")}</TableHead>
+                      <TableHead>{t("remarks")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -209,7 +212,7 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-center py-4 text-gray-500">No payment history available</div>
+                <div className="text-center py-4 text-gray-500">{t("no_payment_history_available")}</div>
               )}
             </CardContent>
           </Card>
@@ -218,18 +221,18 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
         <TabsContent value="concessions">
           <Card>
             <CardHeader>
-              <CardTitle>Applied Concessions</CardTitle>
+              <CardTitle>{t("applied_concessions")}</CardTitle>
             </CardHeader>
             <CardContent>
               {concessions.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Concession Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Applied On</TableHead>
-                      <TableHead>Approved By</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>{t("concession_type")}</TableHead>
+                      <TableHead>{t("amount")}</TableHead>
+                      <TableHead>{t("applied_on")}</TableHead>
+                      <TableHead>{t("approved_by")}</TableHead>
+                      <TableHead>{t("date")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -245,7 +248,7 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-center py-4 text-gray-500">No concessions applied</div>
+                <div className="text-center py-4 text-gray-500">{t("no_concessions_applied")}</div>
               )}
             </CardContent>
           </Card>
@@ -253,7 +256,7 @@ export const StudentFeeDetails: React.FC<StudentFeeDetailsProps> = ({ student, o
       </Tabs>
 
       <div className="flex justify-end">
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{t("close")}</Button>
       </div>
     </div>
   )

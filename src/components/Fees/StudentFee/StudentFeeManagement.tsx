@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, CreditCard, FileText, Eye } from "lucide-react"
 import { PayFeeForm } from "./PayFeeForm"
 import { StudentFeeDetails } from "./StudentFeeDetails"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentFee {
   id: string
@@ -94,6 +95,7 @@ export const StudentFeeManagement: React.FC = () => {
   const [isPayFeeDialogOpen, setIsPayFeeDialogOpen] = useState(false)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<StudentFee | null>(null)
+  const {t} = useTranslation()
 
   const filteredStudents = mockStudentFees.filter(
     (student) =>
@@ -131,19 +133,19 @@ export const StudentFeeManagement: React.FC = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Student Fee Management</h1>
+        <h1 className="text-3xl font-bold">{t("student_fee_management")}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Student Fees</CardTitle>
+          <CardTitle>{t("student_fees")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search by name or roll number..."
+                placeholder={t("search_by_name_or_roll_number...")}
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -151,10 +153,10 @@ export const StudentFeeManagement: React.FC = () => {
             </div>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Class" />
+                <SelectValue placeholder={t("select_class")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Classes</SelectItem>
+                <SelectItem value="all">{t("all_classes")}</SelectItem>
                 <SelectItem value="Class 8">Class 8</SelectItem>
                 <SelectItem value="Class 9">Class 9</SelectItem>
                 <SelectItem value="Class 10">Class 10</SelectItem>
@@ -164,14 +166,14 @@ export const StudentFeeManagement: React.FC = () => {
             </Select>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Status" />
+                <SelectValue placeholder={t("select_status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Paid">Paid</SelectItem>
-                <SelectItem value="Partially Paid">Partially Paid</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Overdue">Overdue</SelectItem>
+                <SelectItem value="all">{t("all_statuses")}</SelectItem>
+                <SelectItem value="Paid">{t("paid")}</SelectItem>
+                <SelectItem value="Partially Paid">{t("partially_paid")}</SelectItem>
+                <SelectItem value="Pending">{t("pending")}</SelectItem>
+                <SelectItem value="Overdue">{t("overdue")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -180,15 +182,15 @@ export const StudentFeeManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Roll Number</TableHead>
-                  <TableHead>Total Fees</TableHead>
-                  <TableHead>Paid Amount</TableHead>
-                  <TableHead>Pending Amount</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("student_name")}</TableHead>
+                  <TableHead>{t("class")}</TableHead>
+                  <TableHead>{t("roll_number")}</TableHead>
+                  <TableHead>{t("total_fees")}</TableHead>
+                  <TableHead>{t("paid_amount")}</TableHead>
+                  <TableHead>{t("pending_amount")}</TableHead>
+                  <TableHead>{t("due_date")}</TableHead>
+                  <TableHead>{t("status")}</TableHead>
+                  <TableHead>{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -247,7 +249,7 @@ export const StudentFeeManagement: React.FC = () => {
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Student Fee Details</DialogTitle>
+            <DialogTitle>{t("student_fee_details")}</DialogTitle>
           </DialogHeader>
           {selectedStudent && (
             <StudentFeeDetails student={selectedStudent} onClose={() => setIsDetailsDialogOpen(false)} />

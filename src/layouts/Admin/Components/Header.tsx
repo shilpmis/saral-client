@@ -125,6 +125,7 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
           <Search />
+          <LanguageSwitcher />
 
           {/* Theme Toggle */}
           {/* <TooltipProvider>

@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, FileText } from "lucide-react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const recentTransactions = [
   {
@@ -55,19 +56,21 @@ const recentTransactions = [
 ]
 
 export const FeeCollectionTable: React.FC = () => {
+  const {t} = useTranslation()
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Transaction ID</TableHead>
-            <TableHead>Student Name</TableHead>
-            <TableHead>Class</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Payment Mode</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{t("transaction_ID")}</TableHead>
+            <TableHead>{t("student_name")}</TableHead>
+            <TableHead>{t("class")}</TableHead>
+            <TableHead>{t("amount")}</TableHead>
+            <TableHead>{t("date")}</TableHead>
+            <TableHead>{t("status")}</TableHead>
+            <TableHead>{t("payment_mode")}</TableHead>
+            <TableHead>{t("actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

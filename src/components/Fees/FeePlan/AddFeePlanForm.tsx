@@ -21,6 +21,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 // Define the fee types interface
@@ -223,6 +224,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
   const authState = useAppSelector(selectAuthState)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getFeesPlan, { data: FetchedFeePlans, isLoading }] = useLazyGetFeesPlanQuery();
+  const {t} = useTranslation()
   
 
   const [getFeePlanInDetail, { data: fetchedDetialFeePlan,
@@ -577,14 +579,14 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
       {((!isErrorInFetchFessPlanInDetail && fetchedDetialFeePlan) || type === 'create') && isFormFieldsForEditSet && (<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="basic">Basic Information</TabsTrigger>
-            <TabsTrigger value="feeTypes">Fee Types & Installments</TabsTrigger>
+            <TabsTrigger value="basic">{t("basic_information")}</TabsTrigger>
+            <TabsTrigger value="feeTypes">{t("fee_type_&_installments")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4 pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Fee Plan Details</CardTitle>
+                <CardTitle>{t("fee_plan_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -592,9 +594,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                   name="fees_plan.name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Plan Name</FormLabel>
+                      <FormLabel>{t("plan_name")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter fee plan name" {...field} />
+                        <Input placeholder={t("enter_fee_plan_name")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -606,9 +608,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                   name="fees_plan.description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t("description")}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Enter plan description" {...field} />
+                        <Textarea placeholder={t("enter_plan_description")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -620,14 +622,14 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                   name="fees_plan.class_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Class</FormLabel>
+                      <FormLabel>{t("class")}</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number.parseInt(value))}
                         value={field.value ? field.value.toString() : undefined}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a class" />
+                            <SelectValue placeholder={t("select_a_class")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -650,7 +652,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" onClick={() => setActiveTab("feeTypes")}>
-                    Next: Add Fee Types
+                    {t("next:_add_fee_type")}
                   </Button>
                 </div>
               </CardContent>
@@ -659,9 +661,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
           <TabsContent value="feeTypes" className="space-y-4 pt-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Fee Types</h3>
+              <h3 className="text-lg font-medium">{t("fee_types")}</h3>
               <Button type="button" onClick={handleAddFeeType} variant="outline">
-                <Plus className="h-4 w-4 mr-2" /> Add Fee Type
+                <Plus className="h-4 w-4 mr-2" /> {t("add_fee_type")}
               </Button>
             </div>
 
@@ -681,8 +683,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                     </svg>
                   </div>
                   <div>
-                    <p className="font-bold">No fee types added</p>
-                    <p className="text-sm">Click the "Add Fee Type" button to add fee types to this plan.</p>
+                    <p className="font-bold">{t("no_fee_types_added")}</p>
+                    <p className="text-sm">{t("click_the_add_fee_type_button_to_add_fee_types_to_this_plan")}</p>
                   </div>
                 </div>
               </div>
@@ -718,7 +720,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                       <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
                         <Card>
                           <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Fee Type Details</CardTitle>
+                            <CardTitle>{t("fee_type_details")}</CardTitle>
                             <Button
                               className="text-white"
                               type="button"
@@ -735,7 +737,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 }
                               }}
                             >
-                              <Trash2 className="h-4 w-4 mr-2" /> Remove
+                              <Trash2 className="h-4 w-4 mr-2" />{t("remove")} 
                             </Button>
                           </CardHeader>
                           <CardContent className="space-y-4">
@@ -744,14 +746,14 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                               name={`fees_types.${index}.fees_type_id`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Fee Type</FormLabel>
+                                  <FormLabel>{t("fee_types")}</FormLabel>
                                   <Select
                                     onValueChange={(value) => field.onChange(Number.parseInt(value))}
                                     value={field.value ? field.value.toString() : undefined}
                                   >
                                     <FormControl>
                                       <SelectTrigger>
-                                        <SelectValue placeholder="Select a fee type" />
+                                        <SelectValue placeholder={t("select_a_fee_type")} />
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -777,7 +779,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 name={`fees_types.${index}.installment_type`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Installment Type</FormLabel>
+                                    <FormLabel>{t("installment_type")} </FormLabel>
                                     <Select
                                       onValueChange={(value) => {
                                         field.onChange(value)
@@ -787,7 +789,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                     >
                                       <FormControl>
                                         <SelectTrigger>
-                                          <SelectValue placeholder="Select installment type" />
+                                          <SelectValue placeholder={t("select_installment_type")} />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
@@ -808,7 +810,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 name={`fees_types.${index}.total_installment`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Total Installments</FormLabel>
+                                    <FormLabel>{t("total_installments")}</FormLabel>
                                     <FormControl>
                                       <Input
                                         type="text"
@@ -853,7 +855,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 name={`fees_types.${index}.total_amount`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Total Amount</FormLabel>
+                                    <FormLabel>{t("total_amount")}</FormLabel>
                                     <FormControl>
                                       <Input
                                         {...field}
@@ -903,13 +905,13 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 onClick={() => distributeAmount(index)}
                                 disabled={!totalAmount || Number(totalAmount) <= 0 || installmentBreakdowns.length === 0}
                               >
-                                Distribute Amount Evenly
+                                {t("distribute_amount_evenly")}
                               </Button>
                             </div>
 
                             <div className="pt-4">
                               <div className="flex justify-between items-center mb-2">
-                                <h4 className="text-sm font-medium">Installment Breakdown</h4>
+                                <h4 className="text-sm font-medium">{t("installment_breakdown")}</h4>
                                 {Number(totalAmount) > 0 && (
                                   <div className="text-sm">
                                     <span
@@ -938,9 +940,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                   <Table>
                                     <TableHeader>
                                       <TableRow>
-                                        <TableHead>Installment #</TableHead>
-                                        <TableHead>Due Date</TableHead>
-                                        <TableHead>Amount</TableHead>
+                                        <TableHead>{t("installment")} #</TableHead>
+                                        <TableHead>{t("due_date")}</TableHead>
+                                        <TableHead>{t("amount")}</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1022,9 +1024,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                       </svg>
                                     </div>
                                     <div>
-                                      <p className="font-bold">No installments defined</p>
+                                      <p className="font-bold">{t("no_installments_defined")}</p>
                                       <p className="text-sm">
-                                        Set the installment type, count, and total amount to generate installments.
+                                        {t("set_the_installment_type,_count,_and_total_amount_to_generate_installments.")}
                                       </p>
                                     </div>
                                   </div>
@@ -1042,13 +1044,13 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
             <div className="flex justify-between pt-4">
               <Button type="button" variant="outline" onClick={() => setActiveTab("basic")}>
-                Back to Basic Information
+                {t("back_to_basic_information")}
               </Button>
               <div className="space-x-2">
                 <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
-                <Button type="submit">{plan_id ? "Update Fee Plan" : "Create Fee Plan"}</Button>
+                <Button type="submit">{plan_id ? "Update Fee Plan" : t("create_fee_plan")}</Button>
               </div>
             </div>
           </TabsContent>
