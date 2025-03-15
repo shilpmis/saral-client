@@ -1,5 +1,5 @@
 import { setFeesPlan } from "@/redux/slices/feesSlice"
-import { DetailedFeesPlan, FeePaymentRequest, FeesPlan, FeesType, ReqObjectForCreateFeesPlan, StudentFeeDetails } from "@/types/fees"
+import { Concession, ConcessionDetails, DetailedFeesPlan, FeePaymentRequest, FeesPlan, FeesType, ReqObjectForCreateFeesPlan, StudentFeeDetails, StudentWithFeeStatus } from "@/types/fees"
 import { PageMeta } from "@/types/global"
 import baseUrl from "@/utils/base-urls"
 import { FeePaymentFormData } from "@/utils/fees.validation"
@@ -20,6 +20,12 @@ export const FeesApi = createApi({
         getFeesType: builder.query<{ data: FeesType[], meta: PageMeta }, { page?: number }>({
             query: ({ page = 1 }) => ({
                 url: `/feestype?page=${page}`,
+                method: "GET"
+            })
+        }),
+        getAllFeesType: builder.query<FeesType[], void>({
+            query: () => ({
+                url: `/feestype?all=true`,
                 method: "GET"
             })
         }),
@@ -65,9 +71,9 @@ export const FeesApi = createApi({
             })
         }),
 
-        getStudentFeesDetailsForClass: builder.query<StudentFeeDetails, number>({
-            query: (class_id) => ({
-                url: `/fees/status/class/1`,
+        getStudentFeesDetailsForClass: builder.query<{data : StudentWithFeeStatus[] , meta : PageMeta}, {class_id : number , page ?: number}>({
+            query: ({class_id , page = 1}) => ({
+                url: `/fees/status/class/${class_id}?page=${page}`,
                 method: "GET",
             })
         }),
@@ -79,33 +85,74 @@ export const FeesApi = createApi({
             })
         }),
 
-        payFees: builder.mutation< any , {payload : FeePaymentRequest, student_id : number}>({
-            query: ({ payload , student_id}) => ({
+        payFees: builder.mutation<any, { payload: FeePaymentRequest, student_id: number }>({
+            query: ({ payload, student_id }) => ({
                 url: `/fees/pay/2`,
                 method: "GET",
                 body: payload
             })
         }),
 
-        payMultipleInstallments: builder.mutation< any , {payload : FeePaymentRequest[], student_id : number}>({
-            query: ({ payload , student_id}) => ({
+        payMultipleInstallments: builder.mutation<any, { payload: FeePaymentRequest[], student_id: number }>({
+            query: ({ payload, student_id }) => ({
                 url: `/fees/pay/installments/${student_id}`,
                 method: "POST",
                 body: payload
             })
         }),
-        updatePaymentStatus: builder.mutation< any , {payload : {status : string , remarks : string}, transaction_id : number}>({
-            query: ({ transaction_id ,payload}) => ({
+        updatePaymentStatus: builder.mutation<any, { payload: { status: string, remarks: string }, transaction_id: number }>({
+            query: ({ transaction_id, payload }) => ({
                 url: `/transaction/${transaction_id}`,
                 method: "PUT",
                 body: payload
             })
         }),
+
+        getConcessions: builder.query<{ data: Concession[], meta: PageMeta }, { page?: number }>({
+            query: ({ page = 1 }) => ({
+                url: `/concessions?page=${page}`,
+                method: "GET"
+            })
+        }),
+
+        getConcessionsInDetail: builder.query<ConcessionDetails, { concession_id: number }>({
+            query: ({ concession_id }) => ({
+                url: `/concession/${concession_id}`,
+                method: "GET"
+            })
+        }),
+
+        createConcessions: builder.mutation<Concession, { payload: Omit<Concession, 'id'> }>({
+            query: ({ payload }) => ({
+                url: `/concession`,
+                method: "POST",
+                body: payload
+            })
+        }),
+
+        updateConcessions: builder.mutation<Concession, { concession_id: number, payload: Pick<Concession, 'name' | 'description' | 'status' | 'category'> }>({
+            query: ({ payload, concession_id }) => ({
+                url: `/concession/${concession_id}`,
+                method: "PUT",
+                body: payload
+            })
+        }),
+
+        applyConcessionsToPlan: builder.mutation<Concession, { payload: Omit<Concession, 'id' | 'school_id' | 'academic_year_id' | 'status'> }>({
+            query: ({ payload }) => ({
+                url: `/concession`,
+                method: "POST",
+                body: payload
+            })
+        }),
+
+
     }),
 })
 
 export const {
     useLazyGetFeesTypeQuery,
+    useLazyGetAllFeesTypeQuery,
     useCreateFeesTypeMutation,
     useUpdateFeesTypeMutation,
     useLazyGetFeesPlanQuery,
@@ -120,5 +167,12 @@ export const {
 
     usePayFeesMutation,
     usePayMultipleInstallmentsMutation,
-    useUpdatePaymentStatusMutation
+    useUpdatePaymentStatusMutation,
+
+
+    useLazyGetConcessionsQuery,
+    useCreateConcessionsMutation,
+    useUpdateConcessionsMutation,
+    useLazyGetConcessionsInDetailQuery,
+    useApplyConcessionsToPlanMutation
 } = FeesApi;

@@ -18,11 +18,23 @@ export const feePaymentSchema = z.object({
     remarks: z.string().optional(),
   })
   
-  // Validation schema for concession form
-  export const concessionSchema = z.object({
-    amount: z.number().positive("Amount must be greater than 0"),
-    reason: z.string().min(1, "Reason is required"),
+//   // Validation schema for concession form
+//   export const concessionSchema = z.object({
+//     amount: z.number().positive("Amount must be greater than 0"),
+//     reason: z.string().min(1, "Reason is required"),
+//   })
+
+
+export const concessionSchema = z.object({
+    name: z.string().min(2, { message: "Concession name must be at least 2 characters" }),
+    description: z.string().min(5, { message: "Description must be at least 5 characters" }),
+    applicable_to: z.enum(["plan", "fees_types" , "students"], {
+      required_error: "Please select where this concession applies",
+    }),
+    category: z.enum(['Family', 'Sports' , 'Staff' , 'Education' , 'Financial' , 'Other']),
+    is_active: z.boolean().default(true),
   })
+  
   
   export type FeePaymentFormData = z.infer<typeof feePaymentSchema>
   export type ConcessionFormData = z.infer<typeof concessionSchema>
