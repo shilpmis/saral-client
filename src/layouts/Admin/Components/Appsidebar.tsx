@@ -27,14 +27,14 @@ import { Permission, UserRole } from "@/types/user";
 import { useAuth } from "@/redux/hooks/useAuth";
 
 const SideBarItems = [
-  { title: "Dashboard", url: "/d", icon: Home },
+  // { title: "Dashboard", url: "/d", icon: Home },
   { title: "Student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
   { title: "Staff", url: "/d/staff", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
   { title: "My Leaves", url: "/d/leave-applications", icon: Bed, requiredPermission: Permission.MARK_LEAVES },
   { title: "Leave Management", url: "/d/leaves", icon: Bed, requiredPermission: Permission.MANAGE_LEAVES },
   { title: "Attendance Management", url: "/d/attendance", icon: ClipboardList, requiredPermission: Permission.MANAGE_ATTENDANCE },
   { title: "Attendance", url: "/d/mark-attendance", icon: ClipboardList, requiredPermission: Permission.MARK_ATTENDANCE },
-  { title: "Payments", url: "/d/payments", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
+  { title: "Pay Fees", url: "/d/pay-fees", icon: IndianRupee, requiredPermission: Permission.PAY_FEES },
   { title: "Manage Fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
   { title: "Admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_ADMISSION },
   // { title: "Time Table", url: "/d/timetable", icon: Clock , requiredPermission: Permission.MANAGE_SETTINGS},

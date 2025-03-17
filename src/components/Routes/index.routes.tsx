@@ -16,7 +16,7 @@ import Students from "@/pages/Students";
 import GeneralSettings from "../Settings/GeneralSettings";
 import AcademicSettings from "../Settings/AcademicSettings";
 import StaffSettings from "../Settings/StaffSettings";
-import PayrollSettings from "../Settings/PayrollSettings"; 
+import PayrollSettings from "../Settings/PayrollSettings";
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
@@ -119,10 +119,10 @@ export default function RootRoute() {
             />
 
             <Route
-              path="payments"
+              path="pay-fees"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedRoles={[UserRole.CLERK]}
                   allowedPermissions={[Permission.MANAGE_FEES]}>
                   <PayFeesPanel />
                 </PrivateRoute>
@@ -131,7 +131,7 @@ export default function RootRoute() {
 
             {/* Fees */}
             <Route
-              path="payments/:student_id"
+              path="pay-fees/:student_id"
               element={
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
@@ -159,7 +159,7 @@ export default function RootRoute() {
               path="leave-applications"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.SCHOOL_TEACHER ,UserRole.CLERK ]}
+                  allowedRoles={[UserRole.SCHOOL_TEACHER, UserRole.CLERK]}
                 >
                   <LeaveDashboardForTeachers />
                 </PrivateRoute>
@@ -171,7 +171,7 @@ export default function RootRoute() {
               path="leaves"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.HEAD_TEACHER, UserRole.PRINCIPAL]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.HEAD_TEACHER, UserRole.PRINCIPAL , UserRole.CLERK]}
                 >
                   <AdminLeaveManagement />
                 </PrivateRoute>
@@ -275,7 +275,7 @@ export default function RootRoute() {
               } />
               <Route path="timeTable" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
-                 <TimeTableManager></TimeTableManager>
+                  <TimeTableManager></TimeTableManager>
                 </PrivateRoute>
               } />
             </Route>
