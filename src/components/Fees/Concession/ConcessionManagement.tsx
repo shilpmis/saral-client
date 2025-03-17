@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Trash2, Plus, Search } from "lucide-react"
 import { AddConcessionForm } from "./AddConcessionForm"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface Concession {
   id: string
@@ -74,6 +75,7 @@ export const ConcessionManagement: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [concessions, setConcessions] = useState(mockConcessions)
   const [editingConcession, setEditingConcession] = useState<Concession | null>(null)
+  const {t} = useTranslation()
 
   const filteredConcessions = concessions.filter(
     (concession) =>
@@ -103,7 +105,7 @@ export const ConcessionManagement: React.FC = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Concession Management</h1>
+        <h1 className="text-3xl font-bold">{t("concession_management")}</h1>
         <Dialog
           open={isAddDialogOpen}
           onOpenChange={(open) => {
@@ -113,12 +115,12 @@ export const ConcessionManagement: React.FC = () => {
         >
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Concession
+              <Plus className="mr-2 h-4 w-4" /> {t("add_concession")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingConcession ? "Edit Concession" : "Add New Concession"}</DialogTitle>
+              <DialogTitle>{editingConcession ? t("edit_concession") : t("add_new_concession")}</DialogTitle>
             </DialogHeader>
             <AddConcessionForm
               initialData={editingConcession}
@@ -134,14 +136,14 @@ export const ConcessionManagement: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Concessions</CardTitle>
+          <CardTitle>{t("concessions")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center mb-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search concessions..."
+                placeholder={t("search_concessions...")}
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -153,12 +155,12 @@ export const ConcessionManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Applicable Fee Types</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("name")}</TableHead>
+                  <TableHead>{t("category")}</TableHead>
+                  <TableHead>{t("discount")}</TableHead>
+                  <TableHead>{t("applicable_fee_types")}</TableHead>
+                  <TableHead>{t("status")}</TableHead>
+                  <TableHead>{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

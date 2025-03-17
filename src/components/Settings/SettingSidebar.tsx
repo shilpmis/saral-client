@@ -76,7 +76,7 @@ const navigationSections: NavSection[] = [
         href: "fees",
       },
       {
-        title: "Time Table Management",
+        title: "time_table_management",
         icon: Clock,
         href: "timeTable",
       }

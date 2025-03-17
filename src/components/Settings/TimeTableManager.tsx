@@ -48,10 +48,12 @@ import type { AcademicClasses } from "@/types/academic";
 import { selectCurrentUser } from "@/redux/slices/authSlice";
 import { useGetAcademicClassesQuery } from "@/services/AcademicService";
 import { SidebarTrigger } from "../ui/sidebar";
+import { useTranslation } from "@/redux/hooks/useTranslation";
 
 export default function TimeTableManager() {
   const [selecteddivision, setSelecteddivision] = useState("");
   const [selectedShift, setSelectedShift] = useState("morning");
+  const {t} = useTranslation();
   const [periods, setPeriods] = useState([
     {
       id: 1,
@@ -238,7 +240,7 @@ export default function TimeTableManager() {
           <div className="flex items-center gap-2">
             <Calendar className="w-6 h-6 text-orange-500" />
             <h1 className="text-xl font-bold text-orange-600">
-              School Time Table Manager
+              {t("school_time_table_manager")}
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -247,11 +249,11 @@ export default function TimeTableManager() {
               className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50"
             >
               <Download className="w-4 h-4" />
-              Export
+              {t("export")}
             </Button>
             <Button className="gap-2 bg-orange-500 hover:bg-orange-600">
               <Save className="w-4 h-4" />
-              Save Time Table
+              {t("save_time_table")}
             </Button>
           </div>
         </div>
@@ -265,19 +267,19 @@ export default function TimeTableManager() {
                 value="create"
                 className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
               >
-                Create Time Table
+                {t("create_time_table")}
               </TabsTrigger>
               <TabsTrigger
                 value="manage"
                 className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
               >
-                Manage Time Tables
+                {t("manage_time_tables")}
               </TabsTrigger>
               <TabsTrigger
                 value="holidays"
                 className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
               >
-                Holiday
+                {t("holiday")}
               </TabsTrigger>
             </TabsList>
 
@@ -286,13 +288,13 @@ export default function TimeTableManager() {
                 <CardContent className="p-6">
                   <div className="grid gap-6 md:grid-cols-4">
                     <div className="space-y-2">
-                      <Label htmlFor="class">Class</Label>
+                      <Label htmlFor="class">{t("class")}</Label>
                       <Select
                         value={selectedClass}
                         onValueChange={setSelectedClass}
                       >
                         <SelectTrigger id="class">
-                          <SelectValue placeholder="Select Class" />
+                          <SelectValue placeholder={t("select_class")} />
                         </SelectTrigger>
                         <SelectContent>
                           {AcademicClasses?.map((cls: any, index: any) =>
@@ -310,13 +312,13 @@ export default function TimeTableManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="division">Devision</Label>
+                      <Label htmlFor="division">{t("division")}</Label>
                       <Select
                         value={selecteddivision}
                         onValueChange={setSelecteddivision}
                       >
                         <SelectTrigger id="division">
-                          <SelectValue placeholder="Select division" />
+                          <SelectValue placeholder={t("select_division")} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableDivisions &&
@@ -339,18 +341,18 @@ export default function TimeTableManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="shift">Shift</Label>
+                      <Label htmlFor="shift">{t("shift")}</Label>
                       <Select
                         value={selectedShift}
                         onValueChange={handleShiftChange}
                       >
                         <SelectTrigger id="shift">
-                          <SelectValue placeholder="Select Shift" />
+                          <SelectValue placeholder={t("select_shift")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="morning">Morning Shift</SelectItem>
+                          <SelectItem value="morning">{t("morning_shift")}</SelectItem>
                           <SelectItem value="afternoon">
-                            Afternoon Shift
+                            {t("afternoon_shift")}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -363,14 +365,14 @@ export default function TimeTableManager() {
                         className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50"
                       >
                         <Plus className="w-4 h-4" />
-                        Add Period
+                        {t("add_period")}
                       </Button>
                       <Button
                         variant="outline"
                         className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
                         onClick={resetTimetable}
                       >
-                        Reset
+                        {t("reset")}
                       </Button>
                     </div>
                   </div>
@@ -383,14 +385,14 @@ export default function TimeTableManager() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h2 className="text-xl font-bold text-orange-700">
-                          {selectedClass} - division {selecteddivision} (
+                          {selectedClass} - {t("division")} {selecteddivision} (
                           {selectedShift === "morning"
-                            ? "Morning Shift"
-                            : "Afternoon Shift"}
+                            ? t("morning_shift")
+                            : t("afternoon_shift")}
                           )
                         </h2>
                         <p className="text-sm text-orange-600">
-                          School Hours: {getShiftTimes().start} -{" "}
+                          {t("school_hours")}: {getShiftTimes().start} -{" "}
                           {getShiftTimes().end}
                         </p>
                       </div>
@@ -398,7 +400,7 @@ export default function TimeTableManager() {
                         <div className="flex items-center space-x-2">
                           <SidebarTrigger ref={sidebarTriggerRef} />
                           <Switch id="saturday" />
-                          <Label htmlFor="saturday">Include Saturday</Label>
+                          <Label htmlFor="saturday">{t("include_saturday")}</Label>
                         </div>
                       </div>
                     </div>
@@ -408,22 +410,22 @@ export default function TimeTableManager() {
                         <TableHeader className="bg-orange-50">
                           <TableRow>
                             <TableHead className="w-[120px] font-bold">
-                              Period
+                              {t("period")}
                             </TableHead>
                             <TableHead className="w-[120px] font-bold">
-                              Time
+                              {t("time")}
                             </TableHead>
-                            <TableHead className="font-bold">Monday</TableHead>
-                            <TableHead className="font-bold">Tuesday</TableHead>
+                            <TableHead className="font-bold">{t("monday")}</TableHead>
+                            <TableHead className="font-bold">{t("tuesday")}</TableHead>
                             <TableHead className="font-bold">
-                              Wednesday
+                              {t("wednesday")}
                             </TableHead>
                             <TableHead className="font-bold">
-                              Thursday
+                              {t("thursday")}
                             </TableHead>
-                            <TableHead className="font-bold">Friday</TableHead>
+                            <TableHead className="font-bold">{t("friday")}</TableHead>
                             <TableHead className="font-bold">
-                              Saturday
+                              {t("saturday")}
                             </TableHead>
                             <TableHead className="w-[80px]"></TableHead>
                           </TableRow>
@@ -495,7 +497,7 @@ export default function TimeTableManager() {
                                       variant="outline"
                                       className="bg-orange-100 text-orange-800 border-orange-200"
                                     >
-                                      Break
+                                      {t("break")}
                                     </Badge>
                                   ) : (
                                     <Select
@@ -505,7 +507,7 @@ export default function TimeTableManager() {
                                       }
                                     >
                                       <SelectTrigger className="h-8">
-                                        <SelectValue placeholder="Select Subject" />
+                                        <SelectValue placeholder={t("select_subject")} />
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="none">
@@ -550,13 +552,13 @@ export default function TimeTableManager() {
                 <CardContent className="p-6">
                   <div className="grid gap-6 md:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor="filter-class">Filter by Class</Label>
+                      <Label htmlFor="filter-class">{t("filter_by_class")}</Label>
                       <Select>
                         <SelectTrigger id="filter-class">
                           <SelectValue placeholder="All Classes" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Classes</SelectItem>
+                          <SelectItem value="all">{t("all_classes")}</SelectItem>
                           {AcademicClasses?.map((cls: any, index: any) => (
                             <SelectItem
                               key={index}
@@ -570,24 +572,24 @@ export default function TimeTableManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="filter-shift">Filter by Shift</Label>
+                      <Label htmlFor="filter-shift">{t("filter_by_shift")}</Label>
                       <Select defaultValue="all">
                         <SelectTrigger id="filter-shift">
                           <SelectValue placeholder="All Shifts" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Shifts</SelectItem>
-                          <SelectItem value="morning">Morning Shift</SelectItem>
+                          <SelectItem value="all">{t("all_shifts")}</SelectItem>
+                          <SelectItem value="morning">{t("morning_shift")}</SelectItem>
                           <SelectItem value="afternoon">
-                            Afternoon Shift
+                            {t("afternoon_shift")}
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="search">Search</Label>
-                      <Input id="search" placeholder="Search time tables..." />
+                      <Label htmlFor="search">{t("search")}</Label>
+                      <Input id="search" placeholder={t("search_time_tables...")} />
                     </div>
                   </div>
 
@@ -601,16 +603,16 @@ export default function TimeTableManager() {
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h2 className="text-2xl font-bold text-orange-700">
-                        School Holidays
+                        {t("school_holidays")}
                       </h2>
                       <p className="text-sm text-orange-600">
-                        Manage and announce school holidays
+                      {t("manage_and_announce_school_holidays")}
                       </p>
                     </div>
                     <Dialog open={open} onOpenChange={setOpen}>
                       <DialogTrigger asChild>
                         <Button className="bg-orange-500 hover:bg-orange-600">
-                          Set Holiday
+                          {t("set_holiday")}
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-orange-200">
@@ -628,7 +630,7 @@ export default function TimeTableManager() {
                           <div>
                             <div className="px-6 py-5 border-b border-orange-100">
                               <h2 className="text-2xl font-semibold text-orange-700">
-                                Announce School Holiday
+                                {t("announce_school_holiday")}
                               </h2>
                             </div>
 
@@ -639,7 +641,7 @@ export default function TimeTableManager() {
                                     htmlFor="holiday-name"
                                     className="text-base font-medium text-orange-700"
                                   >
-                                    Holiday Name
+                                    {t("holiday_name")}
                                   </Label>
                                   <Input
                                     id="holiday-name"
@@ -652,7 +654,7 @@ export default function TimeTableManager() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                   <div className="space-y-2">
                                     <Label className="text-base font-medium text-orange-700">
-                                      Start Date
+                                      {t("start_date")}
                                     </Label>
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -667,7 +669,7 @@ export default function TimeTableManager() {
                                           {date ? (
                                             format(date, "PPP")
                                           ) : (
-                                            <span>Select date</span>
+                                            <span>{t("select_date")}</span>
                                           )}
                                         </Button>
                                       </PopoverTrigger>
@@ -679,7 +681,7 @@ export default function TimeTableManager() {
 
                                   <div className="space-y-2">
                                     <Label className="text-base font-medium text-orange-700">
-                                      End Date
+                                      {t("end_date")}
                                     </Label>
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -694,7 +696,7 @@ export default function TimeTableManager() {
                                           {endDate ? (
                                             format(endDate, "PPP")
                                           ) : (
-                                            <span>Select date</span>
+                                            <span>{t("select_date")}</span>
                                           )}
                                         </Button>
                                       </PopoverTrigger>
@@ -710,11 +712,11 @@ export default function TimeTableManager() {
                                     htmlFor="holiday-description"
                                     className="text-base font-medium text-orange-700"
                                   >
-                                    Holiday Description
+                                    {t("holiday_description")}
                                   </Label>
                                   <Textarea
                                     id="holiday-description"
-                                    placeholder="Provide details about the holiday..."
+                                    placeholder={t("provide_details_about_the_holiday...")}
                                     className="min-h-[120px] border-orange-200 focus:border-orange-400 focus-visible:ring-orange-400 rounded-md resize-none"
                                     required
                                   />
@@ -722,7 +724,7 @@ export default function TimeTableManager() {
 
                                 <div className="space-y-3">
                                   <Label className="text-base font-medium text-orange-700">
-                                    Send Notification To
+                                    {t("send_notification_to")}
                                   </Label>
                                   <RadioGroup
                                     defaultValue="all"
@@ -739,7 +741,7 @@ export default function TimeTableManager() {
                                         htmlFor="all"
                                         className="text-base"
                                       >
-                                        All Staff & Students
+                                        {t("all_staff_&_students")}
                                       </Label>
                                     </div>
                                     <div className="flex items-center space-x-3">
@@ -752,7 +754,7 @@ export default function TimeTableManager() {
                                         htmlFor="staff"
                                         className="text-base"
                                       >
-                                        Staff Only
+                                        {t("staff_only")}
                                       </Label>
                                     </div>
                                     <div className="flex items-center space-x-3">
@@ -765,7 +767,7 @@ export default function TimeTableManager() {
                                         htmlFor="students"
                                         className="text-base"
                                       >
-                                        Students Only
+                                        {t("students_only")}
                                       </Label>
                                     </div>
                                   </RadioGroup>
@@ -778,7 +780,7 @@ export default function TimeTableManager() {
                                 >
                                   {isSubmitting
                                     ? "Sending..."
-                                    : "Send Holiday Notice"}
+                                    : t("send_holiday_notice")}
                                 </Button>
                               </div>
                             </form>

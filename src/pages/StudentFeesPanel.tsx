@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { set } from "date-fns"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentFeesPanelProps {
     
@@ -37,6 +38,7 @@ interface StudentFeesPanelProps {
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
     const params = useParams<{ student_id: string }>()
+    const {t} = useTranslation()
 
     const navigate = useNavigate();
     const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
@@ -344,7 +346,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         return (
             <div className="p-6">
                 <Button variant="outline" onClick={handleBackToList} className="mb-6">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+                    <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
                 </Button>
 
                 <Card className="bg-red-50 border-red-200">
@@ -392,19 +394,20 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     const paidInstallments = getPaidInstallments()
     const paymentProgress = calculatePaymentProgress()
 
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <Button variant="outline" onClick={handleBackToList} className="flex items-center">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+                    <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
                 </Button>
 
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm">
-                        <Printer className="mr-2 h-4 w-4" /> Print Details
+                        <Printer className="mr-2 h-4 w-4" /> {t("print_details")}
                     </Button>
                     <Button variant="outline" size="sm">
-                        <Download className="mr-2 h-4 w-4" /> Download Report
+                        <Download className="mr-2 h-4 w-4" /> {t("download_report")}
                     </Button>
                 </div>
             </div>
@@ -416,25 +419,25 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         {student.first_name} {student.middle_name} {student.last_name}
                     </CardTitle>
                     <CardDescription>
-                        Student Fee Details for Academic Year {studentFeeDetails.fees_plan.fees_plan.academic_year_id}
+                        {t("student_fee_details_for_academic_year")} {studentFeeDetails.fees_plan.fees_plan.academic_year_id}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">GR Number</p>
+                            <p className="text-sm text-muted-foreground">{t("gr_number")}</p>
                             <p className="text-lg font-semibold">{student.gr_no}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Roll Number</p>
+                            <p className="text-sm text-muted-foreground">{t("roll_number")}</p>
                             <p className="text-lg font-semibold">{student.roll_number}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Fee Plan</p>
+                            <p className="text-sm text-muted-foreground">{t("fee_plan")}</p>
                             <p className="text-lg font-semibold">{studentFeeDetails.fees_plan.fees_plan.name}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Payment Status</p>
+                            <p className="text-sm text-muted-foreground">{t("payment_status")}</p>
                             <Badge variant={getStatusBadgeVariant(feesStatus.status)} className="text-sm">
                                 {feesStatus.status}
                             </Badge>
@@ -448,7 +451,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-blue-700 text-lg flex items-center">
                                     <CreditCard className="mr-2 h-5 w-5" />
-                                    Total Fees
+                                    {t("total_fees")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -460,7 +463,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-green-700 text-lg flex items-center">
                                     <Receipt className="mr-2 h-5 w-5" />
-                                    Paid Amount
+                                    {t("paid_amount")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -472,7 +475,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-red-700 text-lg flex items-center">
                                     <Tag className="mr-2 h-5 w-5" />
-                                    Due Amount
+                                    {t("due_amount")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -483,7 +486,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
                     <div className="mt-6">
                         <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium">Payment Progress</span>
+                            <span className="text-sm font-medium">{t("payment_progress")}</span>
                             <span className="text-sm font-medium">{paymentProgress}%</span>
                         </div>
                         <Progress value={paymentProgress} className="h-2" />
@@ -494,44 +497,44 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="due-fees" className="flex items-center">
-                        <Calendar className="mr-2 h-4 w-4" /> Due Fees
+                        <Calendar className="mr-2 h-4 w-4" /> {t("due_fees")}
                     </TabsTrigger>
                     <TabsTrigger value="paid-fees" className="flex items-center">
-                        <Receipt className="mr-2 h-4 w-4" /> Paid Fees
+                        <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
                     </TabsTrigger>
                     <TabsTrigger value="concessions" className="flex items-center">
-                        <Tag className="mr-2 h-4 w-4" /> Concessions
+                        <Tag className="mr-2 h-4 w-4" /> {t("concessions")}
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="due-fees">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Due Installments</CardTitle>
+                            <CardTitle>{t("due_installments")}</CardTitle>
                             <div className="flex gap-2">
                                 <Button
                                     onClick={handlePayFees}
                                     disabled={selectedInstallments.length === 0}
                                     className="bg-primary hover:bg-primary/90"
                                 >
-                                    Pay Selected ({selectedInstallments.length})
+                                    {t("pay_selected")} ({selectedInstallments.length})
                                 </Button>
                                 <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                                    Apply Concession
+                                    {t("apply_concession")}
                                 </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
                             {dueInstallments.length === 0 ? (
                                 <div className="p-6 text-center">
-                                    <p className="text-muted-foreground">No due installments found.</p>
+                                    <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
                                 </div>
                             ) : (
                                 <>
                                     {selectedInstallments.length > 0 && (
                                         <div className="p-4 bg-blue-50 border-b border-blue-100">
                                             <p className="text-sm text-blue-700">
-                                                Selected Amount:{" "}
+                                                {t("selected_amount")}:{" "}
                                                 <span className="font-bold">{formatCurrency(calculateTotalSelectedAmount())}</span>
                                             </p>
                                         </div>
@@ -539,12 +542,12 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="w-[50px]">Select</TableHead>
-                                                <TableHead>Fee Type</TableHead>
-                                                <TableHead>Installment</TableHead>
-                                                <TableHead>Due Date</TableHead>
-                                                <TableHead>Amount</TableHead>
-                                                <TableHead>Status</TableHead>
+                                                <TableHead className="w-[50px]">{t("select")}</TableHead>
+                                                <TableHead>{t("fee_types")}</TableHead>
+                                                <TableHead>{t("installment")}</TableHead>
+                                                <TableHead>{t("due_date")}</TableHead>
+                                                <TableHead>{t("amount")}</TableHead>
+                                                <TableHead>{t("status")}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -596,24 +599,24 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 <TabsContent value="paid-fees">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Payment History</CardTitle>
+                            <CardTitle>{t("payment_history")}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             {!studentFeeDetails.fees_plan.paid_fees || studentFeeDetails.fees_plan.paid_fees.length === 0 ? (
                                 <div className="p-6 text-center">
-                                    <p className="text-muted-foreground">No payment history found.</p>
+                                    <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                                 </div>
                             ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Payment ID</TableHead>
-                                            <TableHead>Installment</TableHead>
-                                            <TableHead>Payment Date</TableHead>
-                                            <TableHead>Amount</TableHead>
-                                            <TableHead>Payment Mode</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Actions</TableHead>
+                                            <TableHead>{t("payment_id")}</TableHead>
+                                            <TableHead>{t("installment")}</TableHead>
+                                            <TableHead>{t("payment_date")}</TableHead>
+                                            <TableHead>{t("amount")}</TableHead>
+                                            <TableHead>{t("payment_mode")}</TableHead>
+                                            <TableHead>{t("status")}</TableHead>
+                                            <TableHead>{t("actions")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -657,13 +660,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                                     <TableCell>
                                                         <div className="flex space-x-2">
                                                             <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
-                                                                <FileText className="mr-1 h-3 w-3" /> Receipt
+                                                                <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
                                                             </Button>
                                                             <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(payment)}>
-                                                                <Tag className="mr-1 h-3 w-3" /> Status
+                                                                <Tag className="mr-1 h-3 w-3" /> {t("status")}
                                                             </Button>
                                                             <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
-                                                                <User className="mr-1 h-3 w-3" /> View
+                                                                <User className="mr-1 h-3 w-3" /> {t("view")}
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -680,9 +683,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 <TabsContent value="concessions">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Applied Concessions</CardTitle>
+                            <CardTitle>{t("applied_concessions")}</CardTitle>
                             <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                                Apply New Concession
+                                {t("apply_new_concession")}
                             </Button>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -690,10 +693,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Amount</TableHead>
-                                            <TableHead>Reason</TableHead>
-                                            <TableHead>Status</TableHead>
+                                            <TableHead>{t("date")}</TableHead>
+                                            <TableHead>{t("amount")}</TableHead>
+                                            <TableHead>{t("reason")}</TableHead>
+                                            <TableHead>{t("status")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -702,14 +705,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                             <TableCell>{formatCurrency(feesStatus.discounted_amount)}</TableCell>
                                             <TableCell>-</TableCell>
                                             <TableCell>
-                                                <Badge variant="default">Applied</Badge>
+                                                <Badge variant="default">{t("applied")}</Badge>
                                             </TableCell>
                                         </TableRow>
                                     </TableBody>
                                 </Table>
                             ) : (
                                 <div className="p-6 text-center">
-                                    <p className="text-muted-foreground">No concessions have been applied yet.</p>
+                                    <p className="text-muted-foreground">{t("no_concessions_have_been_applied_yet.")}</p>
                                 </div>
                             )}
                         </CardContent>
@@ -740,47 +743,47 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Update Payment Status</DialogTitle>
-                        <DialogDescription>Change the status of payment #{selectedPayment?.id}</DialogDescription>
+                        <DialogTitle>{t("update_payment_status")}</DialogTitle>
+                        <DialogDescription>{t("change_the_status_of_payment")} #{selectedPayment?.id}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="status" className="text-right">
-                                Status
+                                {t("status")}
                             </Label>
                             <Select defaultValue={selectedPayment?.status}>
                                 <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select status" />
+                                    <SelectValue placeholder={t("select_status")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Paid">Paid</SelectItem>
-                                    <SelectItem value="Pending">Pending</SelectItem>
-                                    <SelectItem value="Overdue">Overdue</SelectItem>
-                                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                    <SelectItem value="Paid">{t("paid")}</SelectItem>
+                                    <SelectItem value="Pending">{t("pending")}</SelectItem>
+                                    <SelectItem value="Overdue">{t("overdue")}</SelectItem>
+                                    <SelectItem value="Cancelled">{t("cancelled")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="remarks" className="text-right">
-                                Remarks
+                                {t("remarks")}
                             </Label>
                             <Input
                                 id="remarks"
                                 defaultValue={selectedPayment?.remarks}
                                 className="col-span-3"
-                                placeholder="Add remarks about this status change"
+                                placeholder={t("add_remarks_about_this_status_change")}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)}>
-                            Cancel
+                            {t("cancel")}
                         </Button>
                         <Button
                             type="submit"
                             onClick={handleStatusSubmit}
                         >
-                            Update Status
+                            {t("update_status")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

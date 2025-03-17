@@ -71,7 +71,7 @@ export const InquiryList: React.FC = () => {
       {
         InquiryData && InquiryData.data.length === 0 && (
           <div>
-            No Inquiries for now !
+            {t("no_inquiries_for_now !")}
           </div>
         )
       }
