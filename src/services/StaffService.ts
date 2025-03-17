@@ -76,11 +76,10 @@ export const StaffApi = createApi({
       }),
     }),
     
-    bulkUploadTeachers: builder.mutation({
+    bulkUploadTeachers: builder.mutation<{ message: string; totalInserted: number }, { school_id: number , file: File }>({
       query: ({ school_id, file }) => {
         const formData = new FormData();
         formData.append("file", file);
-
         return {
           url: `teachers/bulk-upload/${school_id}`,
           method: "POST",
@@ -88,6 +87,19 @@ export const StaffApi = createApi({
         };
       },
     }),
+    
+    bulkUploadOtherStaff: builder.mutation<{ message: string; totalInserted: number }, { school_id: number , file: File }>({
+      query: ({ school_id, file }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: `other-staff/bulk-upload/${school_id}`,
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
+
   }),
 })
 
@@ -102,6 +114,7 @@ export const {
   useUpdateTeacherMutation,
   useUpdateOtherStaffMutation,
   useBulkUploadTeachersMutation,
+  useBulkUploadOtherStaffMutation  
 } = StaffApi
 
 export const createStaffRole = createAsyncThunk(

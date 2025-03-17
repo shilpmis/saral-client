@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { StaffFormData, staffSchema } from "@/utils/staff.validation";
-import { useGetSchoolStaffRoleQuery, useLazyGetOtherStaffQuery, useLazyGetSchoolStaffRoleQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
+import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
 
 interface StaffFormProps {
@@ -26,7 +26,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
 
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  const [getSchoolStaff, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
+  const [getStaffRoles, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
 
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<StaffRole[] | null>(null)
@@ -38,7 +38,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
       is_teaching_role: true,
       staff_role_id: undefined,
       first_name: "",
-      middle_name: "",
+      middle_name: null,
       last_name: "",
       first_name_in_guj: "",
       middle_name_in_guj: "",
@@ -141,19 +141,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
   }, [form.formState.errors]);
 
   useEffect(() => {
-    if (initialData) {
-      if (formType === 'update' && initialData?.staff_role_id) {
-        form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
-        form.setValue('staff_role_id', initialData?.staff_role_id)
-      } else {
-        alert('Something went wrong');
-      }
-    }
-  }, [initialData])
-
-  useEffect(() => {
     if (!teachingRoles || !nonTeachingRoles) {
-      getSchoolStaff(1)
+      getStaffRoles(1)
     }
   }, [])
 
@@ -169,12 +158,46 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
     }
   }, [schoolStaff])
 
-  useEffect(()=>{
-    if(formType === 'update' && initialData?.staff_role_id){
-      form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
-      form.setValue('staff_role_id', initialData?.staff_role_id)
+  useEffect(() => {
+    if (formType === 'update' && initialData?.staff_role_id) {
+      form.reset({
+        is_teaching_role: Boolean(initialData?.role_meta.is_teaching_role),
+        staff_role_id: initialData?.staff_role_id,
+        first_name: initialData?.first_name,
+        last_name: initialData?.last_name,
+        first_name_in_guj: initialData?.first_name_in_guj,
+        last_name_in_guj: initialData?.last_name_in_guj,
+        middle_name_in_guj: initialData?.middle_name_in_guj,
+        gender: initialData?.gender,
+        birth_date: initialData?.birth_date,
+        aadhar_no: initialData?.aadhar_no,
+        mobile_number: initialData?.mobile_number,
+        email: initialData?.email,
+        religiion: initialData?.religiion,
+        religiion_in_guj: initialData?.religiion_in_guj,
+        caste: initialData?.caste,
+        caste_in_guj: initialData?.caste_in_guj,
+        category: initialData?.category,
+        address: initialData?.address,
+        district: initialData?.district,
+        city: initialData?.city,
+        postal_code: initialData?.postal_code.toString(),
+        bank_name: initialData?.bank_name,
+        account_no: initialData?.account_no,
+        IFSC_code: initialData?.IFSC_code,
+        joining_date: initialData?.joining_date,
+        employment_status: initialData?.employment_status,
+        middle_name: initialData?.middle_name,
+        state: initialData?.state
+      })
+      if ('qualification' in initialData) {
+        form.setValue('qualification', initialData.qualification)
+      }
+      if ('subject_specialization' in initialData) {
+        form.setValue('subject_specialization', initialData?.subject_specialization)
+      }
     }
-  },[formType])
+  }, [formType])
 
   return (
     <Form {...form}>
@@ -285,7 +308,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -298,7 +321,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Middle Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
