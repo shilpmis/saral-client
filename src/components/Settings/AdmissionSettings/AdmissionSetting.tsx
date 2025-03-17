@@ -6,7 +6,7 @@ export default function AdmissionSetting() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col items-center justify-center space-y-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">School ERP Admission Module</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Admission Management</h1>
         <p className="text-muted-foreground max-w-[600px]">
           Manage admissions, seats, and quotas efficiently with our comprehensive admission management system.
         </p>

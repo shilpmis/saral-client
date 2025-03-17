@@ -31,7 +31,7 @@ import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
-import { AdmissionModule } from "@/pages/AdmissionPage";
+import AdminAdmissonView from "@/pages/AdmissionPage";
 import TimeTableManager from "../Settings/TimeTableManager";
 import FeeSettings from "../Settings/FeesSettings";
 import { StudentFeeDetails } from "../Fees/StudentFee/StudentFeeDetails";
@@ -223,7 +223,7 @@ export default function RootRoute() {
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}
                 >
-                  <AdmissionModule />
+                  <AdminAdmissonView />
                 </PrivateRoute>
               }
             />

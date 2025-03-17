@@ -14,8 +14,8 @@ import { LeaveApi } from "@/services/LeaveService";
 import { StudentApi } from "@/services/StundetServices";
 import { UserManagementApi } from "@/services/UserManagementService";
 import { AttendanceApi } from "@/services/AttendanceServices";
-import { InquiryApi } from "@/services/InquiryServices";
 import { FeesApi } from "@/services/feesService";
+import { InquiryApi } from "@/services/InquiryServices";
 
 const store = configureStore({
   reducer: {

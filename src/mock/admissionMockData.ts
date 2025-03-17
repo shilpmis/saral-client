@@ -156,4 +156,29 @@ export const mockClasses = [
     },
   ]
   
+  export interface InquiriesForStudent {
+    id: number
+    student_name: string
+    parent_name: string
+    contact_number: string
+    email: string
+    grade_applying: string
+    status: string
+    created_at: string
+    updated_at: string
+  }
+  
+  export interface DashboardData {
+    totalInquiries: number
+    pendingApplications: number
+    acceptedAdmissions: number
+    rejectedApplications: number
+    upcomingInterviews: number
+  }
+  
+  export interface AdmissionTrend {
+    grade: string
+    inquiries: number
+  }
+  
   
