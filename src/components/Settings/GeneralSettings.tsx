@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { toast } from '@/hooks/use-toast'
+import { sub } from 'date-fns'
 // import { useToast } from "@/components/hooks/use-toast"
 
 
@@ -29,18 +30,27 @@ interface TypeForUpdateSchoolData {
 }
 
 const basicSchoolDataSchema = z.object({
+  organization: z.object({
+    name: z.string(),
+    organization_id: z.number(),
+    organization_logo: z.string(),
+    head_contact_number: z.number(),
+    head_name: z.string(),
+    pincode: z.number(),
+    username: z.string(),
+    address: z.any(),
+    subscription_type: z.string()
+  }),
   name: z.string().min(2, {
     message: "School name must be at least 2 characters.",
   }),
-  username: z.string().min(3, {
-    message: "School short-key must be at least 3 characters.",
-  }).trim(),
+  branch_code: z.string(),
   established_year: z.string().regex(/^\d{4}$/, {
     message: "Please enter a valid year (YYYY).",
   }),
   school_type: z.string({
     required_error: "Please select a school type.",
-  }),
+  }), 
 })
 
 const contactInformationSchema = z.object({
@@ -79,12 +89,23 @@ export default function GeneralSettings() {
   */
 
   const { data, error, isLoading, isFetching, isSuccess, isError } = useGetSchoolQuery(user!.school_id);
-
+  
   const basicSchoolDataForm = useForm<z.infer<typeof basicSchoolDataSchema>>({
     resolver: zodResolver(basicSchoolDataSchema),
     defaultValues: {
+      organization: {
+        name: "",
+        organization_id: 0,
+        organization_logo: "",
+        head_contact_number: 0,
+        head_name: "",
+        pincode: 0,
+        username: "",
+        address: "",
+        subscription_type: ""
+      },
       name: "",
-      username: "",
+      branch_code: "",
       established_year: "",
       school_type: " ",
     },
@@ -173,11 +194,15 @@ export default function GeneralSettings() {
    */
   useEffect(() => {
     basicSchoolDataForm.reset({
+      organization: data?.organization,
       name: data?.name,
-      username: data?.username,
+      branch_code: data?.branch_code,
       established_year: data?.established_year,
-      school_type: data?.school_type == "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter"
+      school_type: data?.school_type === "Private" ? "Private" : data?.school_type == "Public" ? "Public" : "Charter",
     })
+   console.log(basicSchoolDataForm.getValues('organization.subscription_type'));
+   
+    
   }, [data])
 
   useEffect(() => {
@@ -188,8 +213,6 @@ export default function GeneralSettings() {
     })
   }, [data])
 
-  console.log("Check data " ,data)
-
   return (
     <>
       {isSuccess && (<div className="space-y-6">
@@ -199,6 +222,114 @@ export default function GeneralSettings() {
             Manage your school's basic information, contact details, and subscription
           </p>
         </div>
+
+        <Card>
+        <CardHeader>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+              <img
+            src={basicSchoolDataForm.getValues('organization.organization_logo')} // Replace with your image path
+            alt="Organization Icon"
+            className="h-20 w-20 rounded-full" // Adjust size and style as needed
+          />
+          <div className="flex flex-col">
+            <CardTitle>Organization Details </CardTitle>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+    <Form {...basicSchoolDataForm}>
+      <form onSubmit={basicSchoolDataForm.handleSubmit(onSubmitBasicSchoolData)}>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.head_contact_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Head Contact Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder=" " {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.head_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Head Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.pincode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pincode</FormLabel>
+                  <FormControl>
+                    <Input placeholder="pincode" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="address" {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={basicSchoolDataForm.control}
+              name="organization.subscription_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Type</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </CardContent>
+      </form>
+    </Form>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -229,12 +360,12 @@ export default function GeneralSettings() {
 
                 <FormField
                   control={basicSchoolDataForm.control}
-                  name="username"
+                  name="branch_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Short-Key/username</FormLabel>
+                      <FormLabel>Branch Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter short-key/username for school" {...field} disabled />
+                        <Input placeholder="Enter short-key/username for school" {...field} disabled/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -354,53 +485,6 @@ export default function GeneralSettings() {
           </Form>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {/* <Crown className="h-5 w-5" /> */}
-              Subscription Details
-            </CardTitle>
-            <CardDescription>
-              Manage your school's subscription plan
-            </CardDescription>
-          </CardHeader>
-          <Form {...subscriptionForm}>
-            <form onSubmit={subscriptionForm.handleSubmit(onSubmitSubscription)}>
-              <CardContent>
-                <FormField
-                  control={subscriptionForm.control}
-                  name="plan"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subscription Plan</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a plan" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose the plan that best fits your school's needs
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={loading.subscription}>
-                  {loading.subscription ? "Updating..." : "Update Subscription"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
-        </Card>
       </div>)}
       {
         isLoading && (

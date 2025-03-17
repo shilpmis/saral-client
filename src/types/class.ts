@@ -4,4 +4,6 @@ export interface Class {
     class : number ;
     division : string
     aliases : string | null;
+    academic_session_id : number;
+
 }

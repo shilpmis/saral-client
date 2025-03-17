@@ -14,7 +14,7 @@ import { Fees } from "@/pages/Fees";
 import Login from "@/pages/LogIn";
 import Students from "@/pages/Students";
 import GeneralSettings from "../Settings/GeneralSettings";
-import AcademicSettings from "../Settings/AcademicSettings";
+import AcademicSettings from "../Settings/AcademicSettings/AcademicSettings";
 import StaffSettings from "../Settings/StaffSettings";
 import PayrollSettings from "../Settings/PayrollSettings";
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
@@ -31,12 +31,15 @@ import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
-import { AdmissionModule } from "@/pages/AdmissionPage";
+import AdminAdmissonView from "@/pages/AdmissionPage";
 import TimeTableManager from "../Settings/TimeTableManager";
 import FeeSettings from "../Settings/FeesSettings";
 import { StudentFeeDetails } from "../Fees/StudentFee/StudentFeeDetails";
 import StudentFeesPanel from "@/pages/StudentFeesPanel";
 import PayFeesPanel from "../Fees/PayFees/PayFeesPanel";
+import AdmissionSetting from "../Settings/AdmissionSettings/AdmissionSetting";
+import QuotaManagement from "../Settings/AdmissionSettings/QuotaSetting";
+import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -220,7 +223,7 @@ export default function RootRoute() {
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}
                 >
-                  <AdmissionModule />
+                  <AdminAdmissonView />
                 </PrivateRoute>
               }
             />
@@ -276,6 +279,26 @@ export default function RootRoute() {
               <Route path="timeTable" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <TimeTableManager></TimeTableManager>
+                </PrivateRoute>
+              } />
+               <Route path="admission" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <AdmissionSetting/>
+                </PrivateRoute>
+              } />
+              <Route path="quotas" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <QuotaManagement/>
+                </PrivateRoute>
+              } />
+              <Route path="quotas" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <QuotaManagement/>
+                </PrivateRoute>
+              } />
+              <Route path="seats" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <SeatsManagement/>
                 </PrivateRoute>
               } />
             </Route>

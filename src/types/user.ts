@@ -6,19 +6,38 @@ export enum UserStatus {
   BANNED = "BANNED",
 }
 
-interface School {
-  id: number;
-  name: string;
-  email: string;
-  username: string;
-  contact_number: number;
-  address: string;
-  established_year: string;
-  school_type: string;
-  status: string;
-  subscription_type: string;
+export interface AcademicSession {
+  id: number,
+  uuid: string,
+  school_id: 1,
+  session_name: string,
+  start_date: string,
+  end_date: string,
+  start_month: string,
+  end_month: string,
+  start_year: string,
+  end_year: string,
+  is_active: boolean,
 }
 
+export interface School{
+  id: number,
+  name: string,
+  organization_id: number,
+  email: string,
+  branch_code: string,
+  contact_number: 9876543210,
+  status: string,
+  established_year: string,
+  school_type: string,
+  address: string,
+  district: string,
+  city: string,
+  state: string,
+  school_logo: string,
+  pincode: number,
+  academicSessions : AcademicSession[] 
+}
 export interface User {
   id: number;
   school_id: number;
@@ -30,8 +49,8 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
-  teacher: TeachingStaff | null;
-  school:School
+  teacher: TeachingStaff | null
+  school : School
 }
 
 export enum UserRole {
