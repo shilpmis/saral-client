@@ -8,10 +8,12 @@ import { AdmissionTrend, DashboardData } from "@/mock/admissionMockData"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
 import { InquiryList } from "@/components/Admission/InquiryList"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
-
+import { Link } from "react-router-dom"
+import AdmissionInquiryForm from "@/components/Admission/AdmissionInquiryForm"
 
 export default function AdminAdmissonView() {
-  const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
+  const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false);
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
 
   // Mock dashboard data
   const dashboardData: DashboardData = {
@@ -39,15 +41,35 @@ export default function AdminAdmissonView() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Admission Dashboard</h1>
-          <Button onClick={() => setIsQuickInquiryOpen(true)}>Add Quick Inquiry</Button>
+        <div className="flex justify-between items-center gap-4">
+          <h1 className="text-xl font-bold tracking-tight">Admission Dashboard</h1>
+          <div className="flex gap-4">
+            <Link to="/d/admissions/inquiry">
+              <Button size="lg">View All Admission Inquiries</Button>
+            </Link>
+            <Button onClick={() => setIsQuickInquiryOpen(true)}>Add Quick Inquiry</Button>
+            <Button onClick={() => setIsInquiryOpen(true)}>Add Admission Inquiry</Button>
+          </div>
         </div>
 
+        {/* Inquiry Modal */}
+        {isInquiryOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Add Admission Inquiry</h2>
+                <Button variant="ghost" onClick={() => setIsInquiryOpen(false)}>Close</Button>
+              </div>
+              <AdmissionInquiryForm />
+            </div>
+          </div>
+        )}
+
+        {/* Tabs Section */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="inquiries">Inquiries</TabsTrigger>
+            <TabsTrigger value="inquiries">Recent Inquiries</TabsTrigger>
             <TabsTrigger value="quotas">Quota Distribution</TabsTrigger>
           </TabsList>
 
@@ -87,4 +109,3 @@ export default function AdminAdmissonView() {
     </div>
   )
 }
-
