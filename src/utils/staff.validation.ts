@@ -29,19 +29,19 @@ export const staffSchema = z
         /^[A-Za-z\s]*$/,
         'Middle name should contain only alphabets and spaces'
       )
-      .optional(),
+      .optional().nullable(),
 
     last_name: z
       .string()
       .min(2, 'Last name is required')
       .regex(/^[A-Za-z\s]+$/, 'Last name is required'),
 
-    first_name_in_guj: z.string().min(2, 'First name in Gujarati is required'),
+    first_name_in_guj: z.string().min(2, 'First name in Gujarati is required').optional(),
 
     // Make middle name in Gujarati optional
     middle_name_in_guj: z.string().optional(),
 
-    last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required'),
+    last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required').optional(),
 
     gender: z.enum(['Male', 'Female'], {
       errorMap: () => ({ message: 'Gender must be either Male or Female' })
@@ -84,7 +84,7 @@ export const staffSchema = z
         {
           message: 'Staff must be between 18 and 70 years old'
         }
-      ),
+      ).optional(),
 
     // Aadhar validation
     aadhar_no: z
@@ -119,7 +119,7 @@ export const staffSchema = z
     email: z
       .string()
       .min(1, 'Email is required')
-      .email('Invalid email address'),
+      .email('Invalid email address').optional(),
 
     // Teacher-specific fields - conditionally required based on is_teaching_role
     qualification: z.string().optional(),
@@ -133,23 +133,23 @@ export const staffSchema = z
       .regex(
         /^[A-Za-z\s]+$/,
         'Religion should contain only alphabets and spaces'
-      ),
+      ).optional(),
 
-    religiion_in_guj: z.string().min(2, 'Religion in Gujarati is required'),
+    religiion_in_guj: z.string().min(2, 'Religion in Gujarati is required').optional(),
 
     caste: z
       .string()
       .min(2, 'Caste is required')
-      .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces'),
+      .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces').optional(),
 
-    caste_in_guj: z.string().min(2, 'Caste in Gujarati is required'),
+    caste_in_guj: z.string().min(2, 'Caste in Gujarati is required').optional(),
 
     category: z.enum(['ST', 'SC', 'OBC', 'OPEN'], {
       errorMap: () => ({ message: 'Category must be ST, SC, OBC, or OPEN' })
-    }),
+    }).optional(),
 
     // Address details
-    address: z.string().min(5, 'Address is required'),
+    address: z.string().min(5, 'Address is required').optional(),
 
     district: z
       .string()
@@ -157,17 +157,17 @@ export const staffSchema = z
       .regex(
         /^[A-Za-z\s]+$/,
         'District should contain only alphabets and spaces'
-      ),
+      ).optional(),
 
     city: z
       .string()
       .min(2, 'City is required')
-      .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces'),
+      .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces').optional(),
 
     state: z
       .string()
       .min(2, 'State is required')
-      .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces'),
+      .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces').optional(),
 
     // postal_code: z
     //   .number()
@@ -185,7 +185,7 @@ export const staffSchema = z
 
     postal_code: z
       .string()
-      .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits'),
+      .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits').optional(),
 
 
     // Bank details
@@ -195,7 +195,7 @@ export const staffSchema = z
       .regex(
         /^[A-Za-z\s]+$/,
         'Bank name should contain only alphabets and spaces'
-      ),
+      ).optional(),
 
     // Fixed account number validation
     account_no: z
@@ -210,14 +210,14 @@ export const staffSchema = z
         {
           message: 'Account number must be between 9 and 18 digits'
         }
-      ),
+      ).optional(),
 
     IFSC_code: z
       .string()
       .regex(
         /^[A-Z]{4}0[A-Z0-9]{6}$/,
         'IFSC code must be in format ABCD0123456'
-      ),
+      ).optional(),
 
     employment_status: z.enum(
       [

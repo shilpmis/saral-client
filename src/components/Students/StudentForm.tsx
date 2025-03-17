@@ -22,7 +22,7 @@ import {
   useAddSingleStudentMutation,
   useLazyFetchStudentForClassQuery,
   useUpdateStudentMutation,
-} from "@/services/StundetServices"
+} from "@/services/StudentServices"
 import type { z } from "zod"
 import type { Student, StudentEntry, UpdateStudent } from "@/types/student"
 import { Loader2 } from "lucide-react"
