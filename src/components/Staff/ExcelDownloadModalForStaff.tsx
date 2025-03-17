@@ -68,7 +68,7 @@ const fieldGroups = {
 }
 
 export default function ExcelDownloadModalForStaff
-({ fetchTeachingStaff, fetchOtherStaff }: ExcelDownloadModalProps) {
+  ({ fetchTeachingStaff, fetchOtherStaff }: ExcelDownloadModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [staffType, setStaffType] = useState<"teaching" | "non-teaching">("teaching")
   const [staffData, setStaffData] = useState<(TeachingStaff | OtherStaff)[]>([])
@@ -234,111 +234,101 @@ export default function ExcelDownloadModalForStaff
   const selectedFieldCount = Object.values(selectedFields).filter(Boolean).length
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <button className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
-          <FileDown className="mr-2 h-4 w-4" /> Download Excel
-        </button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Download Staff Data</DialogTitle>
-        </DialogHeader>
 
-        <Card className="border-0 shadow-none">
-          <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-base">Select Staff Type</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <RadioGroup
-              value={staffType}
-              onValueChange={(value) => setStaffType(value as "teaching" | "non-teaching")}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="teaching" id="teaching" />
-                <Label htmlFor="teaching">Teaching Staff</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="non-teaching" id="non-teaching" />
-                <Label htmlFor="non-teaching">Non-Teaching Staff</Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
+    <>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="px-0 pt-0">
+          <CardTitle className="text-base">Select Staff Type</CardTitle>
+        </CardHeader>
+        <CardContent className="px-0">
+          <RadioGroup
+            value={staffType}
+            onValueChange={(value) => setStaffType(value as "teaching" | "non-teaching")}
+            className="flex space-x-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="teaching" id="teaching" />
+              <Label htmlFor="teaching">Teaching Staff</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="non-teaching" id="non-teaching" />
+              <Label htmlFor="non-teaching">Non-Teaching Staff</Label>
+            </div>
+          </RadioGroup>
+        </CardContent>
+      </Card>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <Card className="border shadow-sm mt-4">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base">Select Fields ({selectedFieldCount} fields selected)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-6">
+                  {Object.entries(fieldGroups).map(([groupName, fields]) => (
+                    <div key={groupName} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`group-${groupName}`}
+                            checked={fields.every((field) => selectedFields[field.id])}
+                            onCheckedChange={(checked) => handleSelectAllFieldsInGroup(groupName, !!checked)}
+                          />
+                          <Label htmlFor={`group-${groupName}`} className="font-medium capitalize">
+                            {groupName}
+                          </Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-6">
+                        {fields.map((field) => (
+                          <div key={field.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`field-${field.id}`}
+                              checked={selectedFields[field.id] || false}
+                              onCheckedChange={(checked) => handleFieldSelect(field.id, !!checked)}
+                            />
+                            <Label htmlFor={`field-${field.id}`}>{field.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+
+                      {groupName !== Object.keys(fieldGroups)[Object.keys(fieldGroups).length - 1] && (
+                        <Separator className="my-2" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      <Button
+        onClick={downloadExcel}
+        disabled={isDownloading || staffData.length === 0 || selectedFieldCount === 0}
+        className="w-full mt-4"
+      >
+        {isDownloading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Downloading...
+          </>
         ) : (
           <>
-            <Card className="border shadow-sm mt-4">
-              <CardHeader className="py-3">
-                <CardTitle className="text-base">Select Fields ({selectedFieldCount} fields selected)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ScrollArea className="h-[300px] pr-4">
-                  <div className="space-y-6">
-                    {Object.entries(fieldGroups).map(([groupName, fields]) => (
-                      <div key={groupName} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`group-${groupName}`}
-                              checked={fields.every((field) => selectedFields[field.id])}
-                              onCheckedChange={(checked) => handleSelectAllFieldsInGroup(groupName, !!checked)}
-                            />
-                            <Label htmlFor={`group-${groupName}`} className="font-medium capitalize">
-                              {groupName}
-                            </Label>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-6">
-                          {fields.map((field) => (
-                            <div key={field.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`field-${field.id}`}
-                                checked={selectedFields[field.id] || false}
-                                onCheckedChange={(checked) => handleFieldSelect(field.id, !!checked)}
-                              />
-                              <Label htmlFor={`field-${field.id}`}>{field.label}</Label>
-                            </div>
-                          ))}
-                        </div>
-
-                        {groupName !== Object.keys(fieldGroups)[Object.keys(fieldGroups).length - 1] && (
-                          <Separator className="my-2" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+            <FileDown className="mr-2 h-4 w-4" />
+            Download Excel
           </>
         )}
-
-        <Button
-          onClick={downloadExcel}
-          disabled={isDownloading || staffData.length === 0 || selectedFieldCount === 0}
-          className="w-full mt-4"
-        >
-          {isDownloading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Downloading...
-            </>
-          ) : (
-            <>
-              <FileDown className="mr-2 h-4 w-4" />
-              Download Excel
-            </>
-          )}
-        </Button>
-      </DialogContent>
-    </Dialog>
+      </Button>
+    </>
   )
 }
 
