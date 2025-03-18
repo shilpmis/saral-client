@@ -16,17 +16,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { mockInquiries } from "@/mock/admissionMockData"
+import { ChevronLeft, SquareChevronLeft } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export default function InquiriesManagement() {
   const [inquiries, setInquiries] = useState(mockInquiries)
   const [filter, setFilter] = useState("all")
   const [selectedInquiry, setSelectedInquiry] = useState<null | typeof mockInquiries[0]>(null)
+  const navigate = useNavigate();
 
   const filteredInquiries = filter === "all" ? inquiries : inquiries.filter((inquiry) => inquiry.status === filter)
 
   const handleStatusChange = (id: string, status: string) => {
     setInquiries(inquiries.map((inquiry) => (inquiry.id === id ? { ...inquiry, status } : inquiry)))
   }
+
+  const handleGoBack = () => {
+    navigate(-1);
+  }  
 
   const getStatusBadge = (status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
     switch (status) {
@@ -63,6 +70,14 @@ export default function InquiriesManagement() {
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
+        <div
+            style={{ border: '1px  black', display: 'inline-flex', padding: '1px', cursor: 'pointer', marginTop: '10px' }}
+            onClick={handleGoBack} // Add onClick to handle navigation
+          >
+            <SquareChevronLeft className="text-xl mr-2" />
+            <span>Go Back</span>
+
+          </div>
           <h1 className="text-3xl font-bold tracking-tight">Admission Inquiries</h1>
           <div className="flex items-center space-x-2">
             <Label htmlFor="status-filter">Filter:</Label>
