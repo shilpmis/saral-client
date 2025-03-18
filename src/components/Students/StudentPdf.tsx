@@ -209,9 +209,9 @@ const StudentDetailsPDF = ({ student , currentUser }: Props) => {
               <Text style={styles.sectionTitle}>Other Details</Text>
               <View style={styles.row}>
                 <Text style={styles.label}>Religion:</Text>
-                <Text style={styles.value}>{student.student_meta?.religiion}</Text>
+                <Text style={styles.value}>{student.student_meta?.religion}</Text>
                 <Text style={styles.label}>In Gujarati:</Text>
-                <Text style={styles.value}>{student.student_meta?.religiion_in_guj}</Text>
+                <Text style={styles.value}>{student.student_meta?.religion_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Caste:</Text>

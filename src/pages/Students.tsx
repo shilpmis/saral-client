@@ -10,7 +10,7 @@ import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
 import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
@@ -25,13 +25,14 @@ import { downloadCSVTemplate } from "@/utils/CSVTemplateForStudents"
 import ExcelDownloadModalForStudents from "@/components/Students/ExcelDownloadModalForStudents"
 import { z } from "zod"
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AcademicSession } from "@/types/user"
 
 // Define Zod schema for student data validation
-const StudentSchema = z.object({
+const StudentSchemaForUploadData = z.object({
   first_name: z.string().min(1, "First Name is required"),
-  middle_name: z.string().min(1, "Name is required").optional(),
+  middle_name: z.string().min(1, "Name is required").nullable().or(z.literal("")),
   last_name: z.string().min(1, "Last Name is required"),
-  phone: z
+  phone_number: z
     .string()
     .regex(/^\d{10}$/, "Phone number must be 10 digits")
     .optional()
@@ -40,17 +41,6 @@ const StudentSchema = z.object({
     .enum(["Male", "Female", "Other"], {
       errorMap: () => ({ message: "Gender must be Male, Female, or Other" }),
     })
-    .optional()
-    .or(z.literal("")),
-  aadhar_no: z
-    .string()
-    .regex(/^\d{12}$/, "Aadhar number must be 12 digits")
-    .optional()
-    .or(z.literal("")),
-  father_name: z.string().min(1, "Father's Name is required"),
-  primary_mobile: z
-    .string()
-    .regex(/^\d{10}$/, "Primary mobile number must be 10 digits")
     .optional()
     .or(z.literal("")),
   gr_no: z.string().min(1, "GR Number is required"),
@@ -117,61 +107,12 @@ interface Props {
 }
 
 
-const BulkUploadErrorTable: React.FC<Props> = ({ serverValidationErrors, parsedData }) => {
-  const errorMap = serverValidationErrors.reduce((acc, error) => {
-    acc[error.row] = error.errors.reduce((fieldAcc, fieldError) => {
-      const fieldName = fieldError.field.split(".").pop(); // Extract field name from "students_data.<field>"
-      if (fieldName) {
-        fieldAcc[fieldName] = fieldError.message;
-      }
-      return fieldAcc;
-    }, {} as Record<string, string>);
-    return acc;
-  }, {} as Record<number, Record<string, string>>);
-
-  return (
-    <div className="overflow-x-auto mt-6">
-      <Table className="w-full text-left">
-        <TableHead>
-          <TableRow>
-            <TableHeader>Row</TableHeader>
-            {Object.keys(parsedData[0] || {}).map((header) => (
-              <TableHeader key={header}>{header}</TableHeader>
-            ))}
-            <TableHeader>Errors</TableHeader>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {parsedData.map((rowData, index) => (
-            <TableRow key={index} className={`${errorMap[index + 1] ? 'bg-red-50' : ''}`}>
-              <TableCell className="font-bold">{index + 1}</TableCell>
-              {Object.entries(rowData).map((value: any, index) => (
-                <TableCell key={index} className={errorMap[index + 1]?.[index] ? 'text-red-600' : ''}>
-                  {value}
-                </TableCell>
-              ))}
-              <TableCell>
-                {errorMap[index + 1] && (
-                  <ul className="list-disc list-inside text-red-600">
-                    {Object.entries(errorMap[index + 1]).map(([field, errorMsg], idx) => (
-                      <li key={idx}><strong>{field}:</strong> {errorMsg}</li>
-                    ))}
-                  </ul>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
-
 export const Students: React.FC = () => {
-  
+
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
@@ -180,6 +121,7 @@ export const Students: React.FC = () => {
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
+  const [SelectedSession, setSelectedSession] = useState<number | null>(null)
   const [searchValue, setSearchValue] = useState<string>("")
 
   const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null)
@@ -191,7 +133,8 @@ export const Students: React.FC = () => {
     isOpen: boolean
     type: "add" | "edit"
     selectedStudent: Student | null
-  }>({ isOpen: false, type: "add", selectedStudent: null })
+  }>({ isOpen: false, type: "add", selectedStudent: null });
+
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -214,14 +157,27 @@ export const Students: React.FC = () => {
   }, [])
 
   const handleDivisionChange = async (value: string) => {
-    if (AcademicClasses) {
+    if (AcademicClasses && SelectedSession) {
       const selectedDiv = AcademicClasses.filter(
         (cls) => cls.class == Number.parseInt(selectedClass),
       )[0].divisions.filter((div) => div.id == Number.parseInt(value))
       setSelectedDivision(selectedDiv[0])
-      getStudentForClass({ class_id: Number.parseInt(value) })
+      getStudentForClass({ class_id: Number.parseInt(value), academic_session: SelectedSession })
     }
   }
+
+  const handleAcademicSessionChange = useCallback(
+    async (value: number) => {
+      setSelectedSession(value);
+      if (selectedDivision) {
+        await getStudentForClass({
+          class_id: selectedDivision.id,
+          academic_session: Number(value),
+        });
+      }
+    },
+    [selectedDivision]
+  );
 
   const filteredStudents = useMemo(() => {
     if (listedStudentForSelectedClass) {
@@ -240,12 +196,12 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass])
 
+
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
       try {
         const response = await getSingleStudent({
           student_id: student_id,
-          school_id: authState.user!.school_id,
           student_meta: true,
         })
 
@@ -279,7 +235,7 @@ export const Students: React.FC = () => {
     data.forEach((row, index) => {
       try {
         // Attempt to validate the row data against our schema
-        StudentSchema.parse(row)
+        StudentSchemaForUploadData.parse(row)
 
         // If validation passes, add a success result
         results.push({
@@ -337,7 +293,7 @@ export const Students: React.FC = () => {
             setParsedData(parsedData)
 
             const headers = Object.keys(parsedData[0])
-            const requiredHeaders = StudentSchema.shape
+            const requiredHeaders = StudentSchemaForUploadData.shape
             const missingHeaders = Object.keys(requiredHeaders).filter(header => !headers.includes(header))
 
             if (missingHeaders.length > 0) {
@@ -377,6 +333,12 @@ export const Students: React.FC = () => {
 
 
   const handleFileUploadSubmit = async () => {
+    
+    if(!CurrentAcademicSessionForSchool){
+      setUploadError("Please select an academic session first")
+      return
+    }
+
     if (!selectedFile) {
       setUploadError("Please select a file to upload")
       return
@@ -397,6 +359,7 @@ export const Students: React.FC = () => {
       setUploadError(null)
 
       const response: any = await bulkUploadStudents({
+        academic_session: CurrentAcademicSessionForSchool!.id,
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
         file: selectedFile,
@@ -431,7 +394,7 @@ export const Students: React.FC = () => {
            * Refetch the student list for the selected class
            */
           if (selectedDivision) {
-            await getStudentForClass({ class_id: selectedDivision.id })
+            await getStudentForClass({ class_id: selectedDivision.id, academic_session: CurrentAcademicSessionForSchool!.id })
 
             // Make sure the UI updates with the new data
             if (studentDataForSelectedClass) {
@@ -441,8 +404,6 @@ export const Students: React.FC = () => {
           }
         }
       } else {
-        console.log("response", response.error.data.errors)
-        // Handle database validation errors
         let errors = response.error.data.errors;
         if (errors) {
           const dbValidationResults: ValidationResult[] = errors.map((error: any) => ({
@@ -478,8 +439,8 @@ export const Students: React.FC = () => {
   const handlePageChange = useCallback(
     async (page: number) => {
       setCurrentPage(page)
-      if (selectedDivision) {
-        await getStudentForClass({ class_id: selectedDivision.id, page: page }).then((response) => {
+      if (selectedDivision && SelectedSession) {
+        await getStudentForClass({ class_id: selectedDivision.id , page: page, academic_session: SelectedSession  }).then((response) => {
           setPaginationDataForSelectedClass(response.data.meta)
         })
       }
@@ -509,7 +470,7 @@ export const Students: React.FC = () => {
 
   useEffect(() => {
     // Auto-select first class and division when AcademicClasses are loaded
-    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass) {
+    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass && SelectedSession) {
       // Find first class with divisions
       const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
 
@@ -523,17 +484,24 @@ export const Students: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id })
+          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
         }
       }
     }
-  }, [AcademicClasses, selectedClass, getStudentForClass])
+  }, [AcademicClasses, selectedClass, getStudentForClass, SelectedSession])
+
+  useEffect(() => {
+    if (CurrentAcademicSessionForSchool) {
+      setSelectedSession(CurrentAcademicSessionForSchool.id);
+      // setSelectedSessionForDownloadExcel(CurrentAcademicSessionForSchool.id);
+    }
+  }, [CurrentAcademicSessionForSchool])
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {
       getAcademicClasses(authState.user.school_id)
     }
-  }, [AcademicClasses, authState.user, getAcademicClasses])
+  }, [AcademicClasses])
 
   useEffect(() => {
     if (studentDataForSelectedClass) {
@@ -558,6 +526,7 @@ export const Students: React.FC = () => {
   }, [uploadResults])
 
   return (
+
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -570,6 +539,9 @@ export const Students: React.FC = () => {
             >
               <Plus className="mr-2 h-4 w-4" /> Add New Student
             </Button>
+
+
+            {/* Upload CSV */}
             <Dialog
               open={dialogOpenForBulkUpload}
               onOpenChange={(open) => {
@@ -591,6 +563,31 @@ export const Students: React.FC = () => {
                 <DialogTitle>Upload CSV File</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="upload-academic-session" className="text-sm font-medium">
+                        Academic Year
+                      </label>
+                      <Select
+                        value={SelectedSession ? SelectedSession.toString() : " "}
+                        onValueChange={(value) => handleAcademicSessionChange(Number(value))}
+                        disabled
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Academic Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=" " disabled>
+                            Academic Years
+                          </SelectItem>
+                          {AcademicSessionsForSchool &&
+                            AcademicSessionsForSchool.map((as: AcademicSession, index) => (
+                              <SelectItem key={index} value={as.id.toString()}>
+                                {`${as.session_name}`}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <label htmlFor="upload-class" className="text-sm font-medium">
                         Class
@@ -638,7 +635,6 @@ export const Students: React.FC = () => {
                       </Select>
                     </div>
                   </div>
-
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
                       Download Demo CSV Template
@@ -861,7 +857,6 @@ export const Students: React.FC = () => {
                         </ul>
                       </div>
                     )} */}
-                    <BulkUploadErrorTable parsedData={parsedData} serverValidationErrors={serverValidationErrors} />
                   </CardContent>
 
                 </Card>
@@ -892,13 +887,13 @@ export const Students: React.FC = () => {
           </div>
         </div>
 
-        {!AcademicClasses || AcademicClasses.length === 0 ? (
+        {!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0 ? (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Search Students</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-yellow-600">Please create Classes for your school.</p>
+              <p className="text-yellow-600">Please create Academic Sessions for your school.</p>
             </CardContent>
           </Card>
         ) : (
@@ -908,7 +903,25 @@ export const Students: React.FC = () => {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="flex gap-2">
-                <Select value={selectedClass} onValueChange={handleClassChange}>
+                <Select
+                  value={SelectedSession ? SelectedSession.toString() : " "}
+                  onValueChange={(value) => handleAcademicSessionChange(Number(value))}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select Academic Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value=" " disabled>
+                      Academic Years
+                    </SelectItem>
+                    {AcademicSessionsForSchool &&
+                      AcademicSessionsForSchool.map((as: AcademicSession, index) => (
+                        <SelectItem key={index} value={as.id.toString()}>
+                          {`${as.session_name}`}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
@@ -916,7 +929,7 @@ export const Students: React.FC = () => {
                     <SelectItem value=" " disabled>
                       Classes
                     </SelectItem>
-                    {AcademicClasses.map((cls, index) =>
+                    {AcademicClasses && AcademicClasses.map((cls, index) =>
                       cls.divisions.length > 0 ? (
                         <SelectItem key={index} value={cls.class.toString()}>
                           Class {cls.class}
@@ -928,6 +941,7 @@ export const Students: React.FC = () => {
                 <Select
                   value={selectedDivision ? selectedDivision.id.toString() : " "}
                   onValueChange={handleDivisionChange}
+                  disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Division" />
@@ -953,7 +967,6 @@ export const Students: React.FC = () => {
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
             PageDetailsForStudents={paginationDataForSelectedClass}
-            // onSearchChange={setSearchValue}
             filteredStudents={filteredStudents}
             onPageChange={handlePageChange}
             onEdit={handleAddEditStudent}
@@ -1001,13 +1014,14 @@ export const Students: React.FC = () => {
                     })
 
                     // Refresh the student list if a division is selected
-                    if (selectedDivision) {
-                      getStudentForClass({
-                        class_id: selectedDivision.id,
-                        page: currentPage,
-                        student_meta: true,
-                      })
-                    }
+                    // if (selectedDivision) {
+                    //   getStudentForClass({
+                    //     class_id: selectedDivision.id,
+                    //     page: currentPage,
+                    //     student_meta: true,
+                    //     academic_session: SelectedSession,
+                    //   })
+                    // }
                   }}
                   form_type="update"
                   initial_data={studentDataForEditStudent}

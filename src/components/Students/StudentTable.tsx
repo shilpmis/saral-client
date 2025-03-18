@@ -355,11 +355,11 @@ export default function StudentTable({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.religiion}</p>
+                          <p className="font-medium">{selectedStudent.student_meta!.religion}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion(Guj):</p>
-                          <p className="font-medium">{selectedStudent.student_meta?.religiion_in_guj}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.religion_in_guj}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Caste:</p>

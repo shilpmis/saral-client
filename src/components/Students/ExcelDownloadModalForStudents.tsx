@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { AcademicClasses, Division } from "@/types/academic"
 import { useDownloadExcelTemplateMutation } from "@/services/StudentServices"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 interface ExcelDownloadModalProps {
   academicClasses: AcademicClasses[] | null
@@ -51,8 +53,8 @@ const fieldGroups = {
     { id: "privious_school_in_guj", label: "Previous School (Gujarati)", table: "student_meta" },
   ],
   other: [
-    { id: "religiion", label: "Religion", table: "student_meta" },
-    { id: "religiion_in_guj", label: "Religion (Gujarati)", table: "student_meta" },
+    { id: "religion", label: "Religion", table: "student_meta" },
+    { id: "religion_in_guj", label: "Religion (Gujarati)", table: "student_meta" },
     { id: "caste", label: "Caste", table: "student_meta" },
     { id: "caste_in_guj", label: "Caste (Gujarati)", table: "student_meta" },
     { id: "category", label: "Category", table: "student_meta" },
@@ -72,6 +74,8 @@ const fieldGroups = {
 }
 
 export default function ExcelDownloadModalForStudents({ academicClasses }: ExcelDownloadModalProps) {
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [isOpen, setIsOpen] = useState(false)
   const [selectedClass, setSelectedClass] = useState<string>("")
@@ -79,20 +83,19 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [selectedAcademicSession, setSelectedAcademicSession] = useState<string>(
+    CurrentAcademicSessionForSchool ? CurrentAcademicSessionForSchool.id.toString() : ""
+  )
 
-  const [getExcelForClass, { isLoading: isDownloadingExcle, isError }] = useDownloadExcelTemplateMutation();
+  const [getExcelForClass, { isLoading: isDownloadingExcle, isError }] = useDownloadExcelTemplateMutation()
 
-  // Initialize selected fields
   useEffect(() => {
     const initialSelectedFields: Record<string, boolean> = {}
-
-    // Set all fields as selected by default
     Object.entries(fieldGroups).forEach(([_, fields]) => {
       fields.forEach((field) => {
         initialSelectedFields[field.id] = true
       })
     })
-
     setSelectedFields(initialSelectedFields)
   }, [])
 
@@ -116,6 +119,10 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     }
   }
 
+  const handleAcademicSessionChange = (value: string) => {
+    setSelectedAcademicSession(value)
+  }
+
   const handleSelectAllFieldsInGroup = (groupName: string, checked: boolean) => {
     const newSelectedFields = { ...selectedFields }
     fieldGroups[groupName as keyof typeof fieldGroups].forEach((field) => {
@@ -130,7 +137,6 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
       [fieldId]: checked,
     }))
   }
-
 
   const downloadExcel = async () => {
     setIsDownloading(true)
@@ -153,32 +159,20 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
       return
     }
 
-
     try {
-      const payload = {
-        class_id: selectedDivision!.id,
-        payload: {
-          student_meta: fieldsToInclude.student_meta,
-          students: fieldsToInclude.students
-        }
-      }
-
       const response = await getExcelForClass({
-        class_id : selectedDivision!.id,
-        payload : {
+        class_id: selectedDivision!.id,
+        academic_session: Number(selectedAcademicSession),
+        payload: {
           student_meta: fieldsToInclude.student_meta,
           students: fieldsToInclude.students
         }
       }).unwrap()
 
-      if(response.error) {
+      if (response.error) {
         throw new Error('Failed to download Excel file')
       }
 
-      // console.log("Blob:", response)
-      // const blob = new Blob([response], {
-      //   type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      // })
       const fileName = `Students_${selectedClass}_${selectedDivision?.division || ""}_${new Date().toISOString().split("T")[0]}.xlsx`
 
       const url = URL.createObjectURL(response)
@@ -199,7 +193,6 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     }
   }
 
-
   useEffect(() => {
     if (!isOpen) {
       setSelectedClass("")
@@ -213,10 +206,25 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     <div>
       <Card className="border shadow-sm">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Select Class and Division</CardTitle>
+          <CardTitle className="text-base">Select Academic Year, Class, and Division</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="academic-session">Select Academic Year</Label>
+              <Select value={selectedAcademicSession} onValueChange={handleAcademicSessionChange}>
+                <SelectTrigger id="academic-session">
+                  <SelectValue placeholder="Select Academic Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AcademicSessionsForSchool?.map((as) => (
+                    <SelectItem key={as.id} value={as.id.toString()}>
+                      {as.session_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="class">Select Class</Label>
               <Select value={selectedClass} onValueChange={handleClassChange}>
@@ -234,7 +242,6 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="division">Select Division</Label>
               <Select
@@ -313,7 +320,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
 
       <Button
         onClick={downloadExcel}
-        disabled={isDownloading || selectedFieldCount === 0 || !selectedClass || !selectedDivision}
+        disabled={isDownloading || selectedFieldCount === 0 || !selectedClass || !selectedDivision || !selectedAcademicSession}
         className="w-full mt-4"
       >
         {isDownloading ? (
