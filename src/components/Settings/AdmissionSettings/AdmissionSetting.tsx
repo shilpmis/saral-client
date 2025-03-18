@@ -37,7 +37,7 @@ export default function AdmissionSetting() {
             </p>
           </CardContent>
           <CardFooter>
-            <Link to="/d/settings/seats" className="w-full">
+            <Link to="/d/settings/admission/seats" className="w-full">
               <Button className="w-full">
                 Manage Seats
               </Button>
@@ -54,7 +54,7 @@ export default function AdmissionSetting() {
             <p>Define custom quotas, set eligibility criteria, and allocate seats for each quota category.</p>
           </CardContent>
           <CardFooter>
-            <Link to="/d/settings/quotas" className="w-full">
+            <Link to="/d/settings/admission/quotas" className="w-full">
               <Button  className="w-full">
                 Configure Quotas
               </Button>

@@ -9,10 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { mockClasses, mockSeats } from "@/mock/admissionMockData"
+import { useNavigate } from "react-router-dom"
 
 export default function SeatsManagement() {
   const [seats, setSeats] = useState(mockSeats)
   const [selectedClass, setSelectedClass] = useState("all")
+  const navigate = useNavigate();
 
   const filteredSeats = selectedClass === "all" ? seats : seats.filter((seat) => seat.classId === selectedClass)
 
@@ -20,12 +22,16 @@ export default function SeatsManagement() {
     setSeats(seats.map((seat) => (seat.id === id ? { ...seat, [field]: value } : seat)))
   }
 
+  const handleAddClass = () => {
+    navigate("/d/settings/academic")
+  }
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Seat Management</h1>
-          <Button>Add New Class</Button>
+          <Button onClick={handleAddClass}>Add New Class</Button>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">

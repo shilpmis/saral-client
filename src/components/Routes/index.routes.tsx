@@ -299,12 +299,12 @@ export default function RootRoute() {
                  <AdmissionSetting/>
                 </PrivateRoute>
               } />
-              <Route path="quotas" element={
+              <Route path="admission/quotas" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                  <QuotaManagement/>
                 </PrivateRoute>
               } />
-              <Route path="seats" element={
+              <Route path="admission/seats" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                  <SeatsManagement/>
                 </PrivateRoute>
