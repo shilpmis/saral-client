@@ -16,29 +16,96 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { mockQuotas } from "@/mock/admissionMockData"
+
+import { Loader2 } from "lucide-react"
+import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
 
 export default function QuotaManagement() {
-  const [quotas, setQuotas] = useState(mockQuotas)
+  const { data: quotas, isLoading, isError, error } = useGetQuotasQuery()
+  const [addQuota] = useAddQuotaMutation()
+  const [updateQuota] = useUpdateQuotaMutation()
+  const [deleteQuota] = useDeleteQuotaMutation()
+
   const [newQuota, setNewQuota] = useState({
     name: "",
     description: "",
-    criteria: "",
+    eligibility_criteria: "",
   })
 
-  const handleAddQuota = () => {
-    const quota = {
-      id: `quota-${quotas.length + 1}`,
-      ...newQuota,
-      createdAt: new Date().toISOString(),
-    }
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
 
-    setQuotas([...quotas, quota])
-    setNewQuota({ name: "", description: "", criteria: "" })
+  const handleAddQuota = async () => {
+    try {
+      await addQuota(newQuota).unwrap()
+      resetForm()
+      setIsDialogOpen(false)
+    } catch (err) {
+      console.error("Failed to add quota:", err)
+    }
   }
 
-  const handleDeleteQuota = (id: string) => {
-    setQuotas(quotas.filter((quota) => quota.id !== id))
+  const handleUpdateQuota = async () => {
+    if (editingId === null) return
+
+    try {
+      await updateQuota({
+        id: editingId,
+        quota: newQuota,
+      }).unwrap()
+      resetForm()
+      setIsDialogOpen(false)
+      setIsEditing(false)
+      setEditingId(null)
+    } catch (err) {
+      console.error("Failed to update quota:", err)
+    }
+  }
+
+  const handleDeleteQuota = async (id: number) => {
+    try {
+      await deleteQuota(id).unwrap()
+    } catch (err) {
+      console.error("Failed to delete quota:", err)
+    }
+  }
+
+  const handleEditClick = (quota: any) => {
+    setNewQuota({
+      name: quota.name,
+      description: quota.description,
+      eligibility_criteria: quota.eligibilityCriteria,
+    })
+    setIsEditing(true)
+    setEditingId(quota.id)
+    setIsDialogOpen(true)
+  }
+
+  const resetForm = () => {
+    setNewQuota({
+      name: "",
+      description: "",
+      eligibility_criteria: "",
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p>Error loading quotas: {JSON.stringify(error)}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -46,15 +113,24 @@ export default function QuotaManagement() {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Quota Management</h1>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Add New Quota</Button>
+              <Button
+                onClick={() => {
+                  resetForm()
+                  setIsEditing(false)
+                  setEditingId(null)
+                }}
+              >
+                Add New Quota
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Quota</DialogTitle>
+                <DialogTitle>{isEditing ? "Edit Quota" : "Create New Quota"}</DialogTitle>
                 <DialogDescription>
-                  Add a new quota category for admission. Click save when you're done.
+                  {isEditing ? "Update quota details" : "Add a new quota category for admission"}. Click save when
+                  you're done.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -86,14 +162,16 @@ export default function QuotaManagement() {
                   </Label>
                   <Textarea
                     id="criteria"
-                    value={newQuota.criteria}
-                    onChange={(e) => setNewQuota({ ...newQuota, criteria: e.target.value })}
+                    value={newQuota.eligibility_criteria}
+                    onChange={(e) => setNewQuota({ ...newQuota, eligibility_criteria: e.target.value })}
                     className="col-span-3"
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddQuota}>Save Quota</Button>
+                <Button onClick={isEditing ? handleUpdateQuota : handleAddQuota}>
+                  {isEditing ? "Update Quota" : "Save Quota"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -111,29 +189,35 @@ export default function QuotaManagement() {
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Eligibility Criteria</TableHead>
-                  <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quotas.map((quota) => (
-                  <TableRow key={quota.id}>
-                    <TableCell className="font-medium">{quota.name}</TableCell>
-                    <TableCell>{quota.description}</TableCell>
-                    <TableCell>{quota.criteria}</TableCell>
-                    <TableCell>{new Date(quota.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteQuota(quota.id)}>
-                          Delete
-                        </Button>
-                      </div>
+                {quotas && quotas.length > 0 ? (
+                  quotas.map((quota) => (
+                    <TableRow key={quota.id}>
+                      <TableCell className="font-medium">{quota.name}</TableCell>
+                      <TableCell>{quota.description}</TableCell>
+                      <TableCell>{quota.eligibilityCriteria}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditClick(quota)}>
+                            Edit
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteQuota(quota.id)}>
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
+                      No quotas found. Add a new quota to get started.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
