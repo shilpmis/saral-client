@@ -13,6 +13,15 @@ export interface QuotaRequest {
   eligibility_criteria: string
 }
 
+export interface QuotaAllocation {
+  id: number
+  quotaName: string
+  totalAllocatedSeats: number
+  filledSeats: number
+  availableSeats: number
+  classes: number
+}
+
 export const QuotaApi = createApi({
   reducerPath: "quotaApi",
   baseQuery: fetchBaseQuery({
@@ -26,6 +35,10 @@ export const QuotaApi = createApi({
   endpoints: (builder) => ({
     getQuotas: builder.query<Quota[], void>({
       query: () => "quota/all",
+      providesTags: ["Quota"],
+    }),
+    getQuotaAllocations: builder.query<QuotaAllocation[], void>({
+      query: () => "quota-allocation/all",
       providesTags: ["Quota"],
     }),
     addQuota: builder.mutation<Quota, QuotaRequest>({
@@ -54,5 +67,12 @@ export const QuotaApi = createApi({
   }),
 })
 
-export const { useGetQuotasQuery, useAddQuotaMutation, useUpdateQuotaMutation, useDeleteQuotaMutation } = QuotaApi
+// Add the new hook to the exports
+export const {
+  useGetQuotasQuery,
+  useGetQuotaAllocationsQuery,
+  useAddQuotaMutation,
+  useUpdateQuotaMutation,
+  useDeleteQuotaMutation,
+} = QuotaApi
 

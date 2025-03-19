@@ -16,12 +16,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-
 import { Loader2 } from "lucide-react"
-import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
+import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotaAllocationsQuery, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
 
 export default function QuotaManagement() {
   const { data: quotas, isLoading, isError, error } = useGetQuotasQuery()
+  const {
+    data: allocations,
+    isLoading: isLoadingAllocations,
+    isError: isErrorAllocations,
+  } = useGetQuotaAllocationsQuery()
   const [addQuota] = useAddQuotaMutation()
   const [updateQuota] = useUpdateQuotaMutation()
   const [deleteQuota] = useDeleteQuotaMutation()
@@ -229,47 +233,46 @@ export default function QuotaManagement() {
             <CardDescription>Current allocation of seats across different quotas</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Quota Name</TableHead>
-                  <TableHead>Total Allocated Seats</TableHead>
-                  <TableHead>Filled Seats</TableHead>
-                  <TableHead>Available Seats</TableHead>
-                  <TableHead>Classes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">RTE Quota</TableCell>
-                  <TableCell>50</TableCell>
-                  <TableCell>22</TableCell>
-                  <TableCell>28</TableCell>
-                  <TableCell>5</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Staff Quota</TableCell>
-                  <TableCell>25</TableCell>
-                  <TableCell>12</TableCell>
-                  <TableCell>13</TableCell>
-                  <TableCell>5</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Sports Quota</TableCell>
-                  <TableCell>40</TableCell>
-                  <TableCell>28</TableCell>
-                  <TableCell>12</TableCell>
-                  <TableCell>5</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Management Quota</TableCell>
-                  <TableCell>30</TableCell>
-                  <TableCell>15</TableCell>
-                  <TableCell>15</TableCell>
-                  <TableCell>5</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            {isLoadingAllocations ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : isErrorAllocations ? (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <p>Error loading quota allocations</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quota Name</TableHead>
+                    <TableHead>Total Allocated Seats</TableHead>
+                    <TableHead>Filled Seats</TableHead>
+                    <TableHead>Available Seats</TableHead>
+                    <TableHead>Classes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allocations && allocations.length > 0 ? (
+                    allocations.map((allocation) => (
+                      <TableRow key={allocation.id}>
+                        <TableCell className="font-medium">{allocation.quotaName}</TableCell>
+                        <TableCell>{allocation.totalAllocatedSeats}</TableCell>
+                        <TableCell>{allocation.filledSeats}</TableCell>
+                        <TableCell>{allocation.availableSeats}</TableCell>
+                        <TableCell>{allocation.classes}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        No quota allocations found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
