@@ -25,6 +25,50 @@ export interface QuotaAllocation {
   class: Division
 }
 
+
+// New interfaces for seat management
+export interface ClassSeatAvailability {
+  id: number
+  academic_session_id: number
+  class_id: number
+  total_seats: number
+  quota_allocated_seats: number
+  general_available_seats: number
+  filled_seats: number
+  remaining_seats: number
+  quota_allocation: QuotaAllocationItem[]
+  class: ClassInfo
+}
+
+export interface QuotaAllocationItem {
+  id: number
+  quota_id: number
+  class_id: number
+  total_seats: number
+  filled_seats: number
+}
+
+export interface ClassInfo {
+  id: number
+  school_id: number
+  class: string
+  division: string
+  aliases: string | null
+  academic_session_id: number
+}
+
+export interface SeatAvailabilityRequest {
+  class_id: number
+  academic_session_id: number
+  total_seats: number
+}
+
+export interface QuotaSeatAllocationRequest {
+  quota_id: number
+  class_id: number
+  total_seats: number
+}
+
 export const QuotaApi = createApi({
   reducerPath: "quotaApi",
   baseQuery: fetchBaseQuery({
@@ -34,7 +78,7 @@ export const QuotaApi = createApi({
         return headers
       },
   }),
-  tagTypes: ["Quota"],
+  tagTypes: ["Quota", "Seats"],
   endpoints: (builder) => ({
     getQuotas: builder.query<Quota[], void>({
       query: () => "quota/all",
@@ -67,6 +111,29 @@ export const QuotaApi = createApi({
       }),
       invalidatesTags: ["Quota"],
     }),
+    
+    // New endpoints for seat management
+    getClassSeatAvailability: builder.query<ClassSeatAvailability[], void>({
+      query: () => "classes/seat-availability/all",
+      providesTags: ["Seats"],
+    }),
+    addSeatAvailability: builder.mutation<any, SeatAvailabilityRequest>({
+      query: (seatData) => ({
+        url: "classes/seat-availability",
+        method: "POST",
+        body: seatData,
+      }),
+      invalidatesTags: ["Seats"],
+    }),
+    addQuotaSeatAllocation: builder.mutation<any, QuotaSeatAllocationRequest>({
+      query: (allocationData) => ({
+        url: "classes/quota-allocation",
+        method: "POST",
+        body: allocationData,
+      }),
+      invalidatesTags: ["Seats", "Quota"],
+    }),
+    
   }),
 })
 
@@ -77,5 +144,8 @@ export const {
   useAddQuotaMutation,
   useUpdateQuotaMutation,
   useDeleteQuotaMutation,
+  useGetClassSeatAvailabilityQuery,
+  useAddSeatAvailabilityMutation,
+  useAddQuotaSeatAllocationMutation,
 } = QuotaApi
 

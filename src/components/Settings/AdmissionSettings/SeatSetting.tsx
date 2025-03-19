@@ -8,22 +8,114 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockClasses, mockSeats } from "@/mock/admissionMockData"
-import { useNavigate } from "react-router-dom"
+
+import { Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { useAddQuotaSeatAllocationMutation, useAddSeatAvailabilityMutation, useGetClassSeatAvailabilityQuery, useGetQuotasQuery } from "@/services/QuotaService"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SeatsManagement() {
-  const [seats, setSeats] = useState(mockSeats)
+  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
+  const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery()
+  const [addSeatAvailability] = useAddSeatAvailabilityMutation()
+  const [addQuotaSeatAllocation] = useAddQuotaSeatAllocationMutation()
+
   const [selectedClass, setSelectedClass] = useState("all")
-  const navigate = useNavigate();
+  const [selectedClassForQuota, setSelectedClassForQuota] = useState<string | null>(null)
+  const [newSeatData, setNewSeatData] = useState({
+    class_id: 0,
+    academic_session_id: 1, // Default academic session
+    total_seats: 40,
+  })
+  const [newQuotaAllocation, setNewQuotaAllocation] = useState({
+    quota_id: 0,
+    class_id: 0,
+    total_seats: 5,
+  })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { toast } = useToast()
 
-  const filteredSeats = selectedClass === "all" ? seats : seats.filter((seat) => seat.classId === selectedClass)
+  const filteredSeats =
+    selectedClass === "all" ? classSeats : classSeats?.filter((seat) => seat.class_id.toString() === selectedClass)
 
-  const handleSeatUpdate = (id: string, field: string, value: number) => {
-    setSeats(seats.map((seat) => (seat.id === id ? { ...seat, [field]: value } : seat)))
+  const handleSeatUpdate = async (id: number, totalSeats: number) => {
+    try {
+      await addSeatAvailability({
+        class_id: id,
+        academic_session_id: 1, // Default academic session
+        total_seats: totalSeats,
+      }).unwrap()
+
+      toast({
+        title: "Seats updated",
+        description: "The seat allocation has been updated successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update seat allocation.",
+        variant: "destructive",
+      })
+      console.error("Failed to update seats:", error)
+    }
   }
 
-  const handleAddClass = () => {
-    navigate("/d/settings/academic")
+  const handleAddQuotaAllocation = async () => {
+    if (!newQuotaAllocation.quota_id || !newQuotaAllocation.class_id) {
+      toast({
+        title: "Error",
+        description: "Please select both a quota and a class.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await addQuotaSeatAllocation(newQuotaAllocation).unwrap()
+      setIsDialogOpen(false)
+      toast({
+        title: "Quota allocation added",
+        description: "The quota allocation has been added successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add quota allocation.",
+        variant: "destructive",
+      })
+      console.error("Failed to add quota allocation:", error)
+    }
+  }
+
+  const getQuotaName = (quotaId: number) => {
+    const quota = quotas?.find((q) => q.id === quotaId)
+    return quota ? quota.name : `Quota ${quotaId}`
+  }
+
+  if (isLoadingSeats || isLoadingQuotas) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (isErrorSeats) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p>Error loading seat availability data</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -31,7 +123,72 @@ export default function SeatsManagement() {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Seat Management</h1>
-          <Button onClick={handleAddClass}>Add New Class</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Add Seat Availability</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Seat Availability</DialogTitle>
+                <DialogDescription>Set the total number of seats for a class.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="class-id" className="text-right">
+                    Class
+                  </Label>
+                  <Select
+                    onValueChange={(value) => setNewSeatData({ ...newSeatData, class_id: Number.parseInt(value) })}
+                  >
+                    <SelectTrigger id="class-id" className="col-span-3">
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classSeats?.map((seat) => (
+                        <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                          Class {seat.class.class} {seat.class.division}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="total-seats" className="text-right">
+                    Total Seats
+                  </Label>
+                  <Input
+                    id="total-seats"
+                    type="number"
+                    value={newSeatData.total_seats}
+                    onChange={(e) => setNewSeatData({ ...newSeatData, total_seats: Number.parseInt(e.target.value) })}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={async () => {
+                    try {
+                      await addSeatAvailability(newSeatData).unwrap()
+                      toast({
+                        title: "Seats added",
+                        description: "The seat availability has been added successfully.",
+                      })
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to add seat availability.",
+                        variant: "destructive",
+                      })
+                      console.error("Failed to add seats:", error)
+                    }
+                  }}
+                >
+                  Save
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
@@ -57,9 +214,9 @@ export default function SeatsManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Classes</SelectItem>
-                      {mockClasses.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name}
+                      {classSeats?.map((seat) => (
+                        <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                          Class {seat.class.class} {seat.class.division}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -79,30 +236,54 @@ export default function SeatsManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSeats.map((seat) => (
-                      <TableRow key={seat.id}>
-                        <TableCell className="font-medium">
-                          {mockClasses.find((c) => c.id === seat.classId)?.name}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={seat.totalSeats}
-                            onChange={(e) => handleSeatUpdate(seat.id, "totalSeats", Number.parseInt(e.target.value))}
-                            className="w-20 h-8"
-                          />
-                        </TableCell>
-                        <TableCell>{seat.quotaSeats}</TableCell>
-                        <TableCell>{seat.totalSeats - seat.quotaSeats}</TableCell>
-                        <TableCell>{seat.filled}</TableCell>
-                        <TableCell>{seat.totalSeats - seat.filled}</TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm">
-                            Edit
-                          </Button>
+                    {filteredSeats && filteredSeats.length > 0 ? (
+                      filteredSeats.map((seat) => (
+                        <TableRow key={seat.id}>
+                          <TableCell className="font-medium">
+                            Class {seat.class.class} {seat.class.division}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={seat.total_seats}
+                              onChange={(e) => {
+                                // This is just for UI feedback, the actual update happens on blur
+                                const newValue = Number.parseInt(e.target.value)
+                                if (!isNaN(newValue) && newValue > 0) {
+                                  // Update local UI
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const newValue = Number.parseInt(e.target.value)
+                                if (!isNaN(newValue) && newValue > 0) {
+                                  handleSeatUpdate(seat.class_id, newValue)
+                                }
+                              }}
+                              className="w-20 h-8"
+                            />
+                          </TableCell>
+                          <TableCell>{seat.quota_allocated_seats}</TableCell>
+                          <TableCell>{seat.general_available_seats}</TableCell>
+                          <TableCell>{seat.filled_seats}</TableCell>
+                          <TableCell>{seat.remaining_seats}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSeatUpdate(seat.class_id, seat.total_seats)}
+                            >
+                              Update
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-4">
+                          No seat data available. Add seat availability to get started.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -120,82 +301,141 @@ export default function SeatsManagement() {
                   <Label htmlFor="class-select" className="w-24">
                     Class:
                   </Label>
-                  <Select defaultValue={mockClasses[0].id}>
+                  <Select
+                    value={selectedClassForQuota || ""}
+                    onValueChange={(value) => setSelectedClassForQuota(value)}
+                  >
                     <SelectTrigger id="class-select" className="w-[180px]">
                       <SelectValue placeholder="Select class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockClasses.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name}
+                      {classSeats?.map((seat) => (
+                        <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                          Class {seat.class.class} {seat.class.division}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Quota Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Allocated Seats</TableHead>
-                      <TableHead>Filled</TableHead>
-                      <TableHead>Available</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">RTE Quota</TableCell>
-                      <TableCell>Right to Education</TableCell>
-                      <TableCell>
-                        <Input type="number" defaultValue={10} className="w-20 h-8" />
-                      </TableCell>
-                      <TableCell>4</TableCell>
-                      <TableCell>6</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          Update
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Staff Quota</TableCell>
-                      <TableCell>For staff children</TableCell>
-                      <TableCell>
-                        <Input type="number" defaultValue={5} className="w-20 h-8" />
-                      </TableCell>
-                      <TableCell>2</TableCell>
-                      <TableCell>3</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          Update
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Sports Quota</TableCell>
-                      <TableCell>For sports excellence</TableCell>
-                      <TableCell>
-                        <Input type="number" defaultValue={8} className="w-20 h-8" />
-                      </TableCell>
-                      <TableCell>5</TableCell>
-                      <TableCell>3</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          Update
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={5}></TableCell>
-                      <TableCell>
-                        <Button size="sm">Add Quota</Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                {selectedClassForQuota && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Quota Name</TableHead>
+                        <TableHead>Allocated Seats</TableHead>
+                        <TableHead>Filled</TableHead>
+                        <TableHead>Available</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {classSeats
+                        ?.find((seat) => seat.class_id.toString() === selectedClassForQuota)
+                        ?.quota_allocation.map((allocation) => (
+                          <TableRow key={allocation.id}>
+                            <TableCell className="font-medium">{getQuotaName(allocation.quota_id)}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={allocation.total_seats}
+                                onChange={(e) => {
+                                  // Local UI update only
+                                }}
+                                className="w-20 h-8"
+                              />
+                            </TableCell>
+                            <TableCell>{allocation.filled_seats}</TableCell>
+                            <TableCell>{allocation.total_seats - allocation.filled_seats}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  addQuotaSeatAllocation({
+                                    quota_id: allocation.quota_id,
+                                    class_id: allocation.class_id,
+                                    total_seats: allocation.total_seats,
+                                  })
+                                }}
+                              >
+                                Update
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      <TableRow>
+                        <TableCell colSpan={4}></TableCell>
+                        <TableCell>
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button size="sm">Add Quota</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Add Quota Allocation</DialogTitle>
+                                <DialogDescription>Allocate seats from a quota to this class.</DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="quota-id" className="text-right">
+                                    Quota
+                                  </Label>
+                                  <Select
+                                    onValueChange={(value) =>
+                                      setNewQuotaAllocation({
+                                        ...newQuotaAllocation,
+                                        quota_id: Number.parseInt(value),
+                                        class_id: Number.parseInt(selectedClassForQuota || "0"),
+                                      })
+                                    }
+                                  >
+                                    <SelectTrigger id="quota-id" className="col-span-3">
+                                      <SelectValue placeholder="Select quota" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {quotas?.map((quota) => (
+                                        <SelectItem key={quota.id} value={quota.id.toString()}>
+                                          {quota.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="quota-seats" className="text-right">
+                                    Seats
+                                  </Label>
+                                  <Input
+                                    id="quota-seats"
+                                    type="number"
+                                    value={newQuotaAllocation.total_seats}
+                                    onChange={(e) =>
+                                      setNewQuotaAllocation({
+                                        ...newQuotaAllocation,
+                                        total_seats: Number.parseInt(e.target.value),
+                                      })
+                                    }
+                                    className="col-span-3"
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button onClick={handleAddQuotaAllocation}>Save Allocation</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
+
+                {!selectedClassForQuota && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Please select a class to view and manage quota allocations.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
