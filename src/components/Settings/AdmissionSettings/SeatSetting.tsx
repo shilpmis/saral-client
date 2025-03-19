@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,18 +21,28 @@ import {
 } from "@/components/ui/dialog"
 import { useAddQuotaSeatAllocationMutation, useAddSeatAvailabilityMutation, useGetClassSeatAvailabilityQuery, useGetQuotasQuery } from "@/services/QuotaService"
 import { useToast } from "@/hooks/use-toast"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { useGetAcademicClassesQuery } from "@/services/AcademicService"
+import { AcademicClasses } from '@/types/academic';
 
 export default function SeatsManagement() {
   const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
   const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery()
   const [addSeatAvailability] = useAddSeatAvailabilityMutation()
-  const [addQuotaSeatAllocation] = useAddQuotaSeatAllocationMutation()
-
+  const [addQuotaSeatAllocation] = useAddQuotaSeatAllocationMutation()  
+  const user = useAppSelector(selectCurrentUser)
+  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const{
+      isLoading: isLoadingClasses,
+      data: classesData,
+      refetch: refetchClasses,
+    } = useGetAcademicClassesQuery(user!.school_id)
   const [selectedClass, setSelectedClass] = useState("all")
   const [selectedClassForQuota, setSelectedClassForQuota] = useState<string | null>(null)
   const [newSeatData, setNewSeatData] = useState({
     class_id: 0,
-    academic_session_id: 1, // Default academic session
+    academic_session_id: currentAcademicSession?.id || 1,
     total_seats: 40,
   })
   const [newQuotaAllocation, setNewQuotaAllocation] = useState({
@@ -42,6 +52,10 @@ export default function SeatsManagement() {
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    console.log("classSeats", classSeats)
+  }, [classSeats])
 
   const filteredSeats =
     selectedClass === "all" ? classSeats : classSeats?.filter((seat) => seat.class_id.toString() === selectedClass)
@@ -108,15 +122,15 @@ export default function SeatsManagement() {
     )
   }
 
-  if (isErrorSeats) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>Error loading seat availability data</p>
-        </div>
-      </div>
-    )
-  }
+    // if (isErrorSeats) {
+    //   return (
+    //     <div className="container mx-auto py-10">
+    //       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+    //         <p>Error loading seat availability data</p>
+    //       </div>
+    //     </div>
+    //   )
+    // }
 
   return (
     <div className="container mx-auto py-10">
@@ -144,10 +158,15 @@ export default function SeatsManagement() {
                       <SelectValue placeholder="Select class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {classSeats?.map((seat) => (
-                        <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
-                          Class {seat.class.class} {seat.class.division}
-                        </SelectItem>
+                      {classesData?.map((academicClass: AcademicClasses) => (
+                        academicClass.divisions.map(division => (
+                         <SelectItem 
+                            key={division.id} 
+                            value={`${division.id}|${currentAcademicSession?.id}`}
+                          >
+                          Class {division.class} {division.division}
+                         </SelectItem>
+                        ))
                       ))}
                     </SelectContent>
                   </Select>

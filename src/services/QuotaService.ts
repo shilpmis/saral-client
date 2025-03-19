@@ -127,7 +127,7 @@ export const QuotaApi = createApi({
     }),
     addQuotaSeatAllocation: builder.mutation<any, QuotaSeatAllocationRequest>({
       query: (allocationData) => ({
-        url: "classes/quota-allocation",
+        url: "quota-allocation",
         method: "POST",
         body: allocationData,
       }),
