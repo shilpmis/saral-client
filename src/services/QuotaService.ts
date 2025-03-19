@@ -1,10 +1,11 @@
+import { Division } from "@/types/academic"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 export interface Quota {
   id: number
   name: string
   description: string
-  eligibilityCriteria: string
+  eligibility_criteria: string
 }
 
 export interface QuotaRequest {
@@ -14,12 +15,14 @@ export interface QuotaRequest {
 }
 
 export interface QuotaAllocation {
+  total_seats: number
+  quota: any
   id: number
-  quotaName: string
-  totalAllocatedSeats: number
-  filledSeats: number
-  availableSeats: number
-  classes: number
+  quota_name: string
+  total_allocated_seats: number
+  filled_seats: number
+  available_seats: number
+  class: Division
 }
 
 export const QuotaApi = createApi({

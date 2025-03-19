@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,10 @@ export default function QuotaManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+
+  useEffect(() => {
+    console.log("allocations", allocations)
+  }, [allocations])
 
   const handleAddQuota = async () => {
     try {
@@ -111,6 +115,7 @@ export default function QuotaManagement() {
       </div>
     )
   }
+
 
   return (
     <div className="container mx-auto py-10">
@@ -202,7 +207,7 @@ export default function QuotaManagement() {
                     <TableRow key={quota.id}>
                       <TableCell className="font-medium">{quota.name}</TableCell>
                       <TableCell>{quota.description}</TableCell>
-                      <TableCell>{quota.eligibilityCriteria}</TableCell>
+                      <TableCell>{quota.eligibility_criteria}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" onClick={() => handleEditClick(quota)}>
@@ -256,11 +261,11 @@ export default function QuotaManagement() {
                   {allocations && allocations.length > 0 ? (
                     allocations.map((allocation) => (
                       <TableRow key={allocation.id}>
-                        <TableCell className="font-medium">{allocation.quotaName}</TableCell>
-                        <TableCell>{allocation.totalAllocatedSeats}</TableCell>
-                        <TableCell>{allocation.filledSeats}</TableCell>
-                        <TableCell>{allocation.availableSeats}</TableCell>
-                        <TableCell>{allocation.classes}</TableCell>
+                        <TableCell className="font-medium">{allocation?.quota.name}</TableCell>
+                        <TableCell>{allocation?.total_seats}</TableCell>
+                        <TableCell>{allocation?.filled_seats}</TableCell>
+                        <TableCell>{allocation?.total_seats - allocation?.filled_seats}</TableCell>
+                        <TableCell>{typeof allocation?.class === "object" ? allocation?.class?.class : "N/A"}</TableCell>
                       </TableRow>
                     ))
                   ) : (
