@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 const formSchema = z.object({
   student_name: z.string().min(2, { message: "Student name is required" }),
   parent_name: z.string().min(2, { message: "Parent name is required" }),
   contact_number: z.string().min(10, { message: "Valid contact number is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  grade_applying: z.string().min(1, { message: "Grade is required" }),
+  class_applying: z.string().min(1, { message: "Grade is required" }),
 })
 
 interface QuickInquiryFormProps {
@@ -27,6 +28,7 @@ interface QuickInquiryFormProps {
 
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
   const [addInquiries, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
+  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,21 +37,21 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       parent_name: "",
       contact_number: "",
       email: "",
-      grade_applying: "",
+      class_applying: "",
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Handle form submission
-    const res = await addInquiries({
-      payload: {
-        contact_number: Number(values.contact_number),
-        email: values.email,
-        grade_applying: Number(values.grade_applying),
-        parent_name: values.parent_name,
-        student_name: values.student_name,
-      },
-    })
+    const payload = {
+      academic_session_id: currentAcademicSession?.id || 1,
+      parent_contact: values.contact_number,
+      email: values.email,
+      class_applying: Number(values.class_applying),
+      parent_name: values.parent_name,
+      student_name: values.student_name,
+    }
+    const res = await addInquiries(payload)
 
     if (res.data) {
       form.reset()
@@ -133,7 +135,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <FormField
               control={form.control}
-              name="grade_applying"
+              name="class_applying"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Grade Applying For</FormLabel>
