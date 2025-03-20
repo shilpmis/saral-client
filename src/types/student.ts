@@ -10,50 +10,50 @@ export enum StudentStatus {
 
 
 export interface StudentMeta {
-  aadhar_dise_no: number;
-  birth_place: string;
-  birth_place_in_guj: string;
-  religiion: string;
-  religiion_in_guj: string;
-  caste: string;
-  caste_in_guj: string;
-  category: 'ST' | 'SC' | 'OBC' | 'OPEN';
+  aadhar_dise_no: number | null;
+  birth_place: string | null;
+  birth_place_in_guj: string | null;
+  religion: string | null;
+  religion_in_guj: string | null;
+  caste: string | null;
+  caste_in_guj: string | null;
+  category: 'ST' | 'SC' | 'OBC' | 'OPEN' | null;
   // category_in_guj: string;
-  admission_date: string;
-  admission_class_id: number;
-  secondary_mobile: number;
-  privious_school: string;
-  privious_school_in_guj: string;
-  address: string;
-  district: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  bank_name: string;
-  account_no: number;
-  IFSC_code: string;
+  admission_date: string| null;
+  admission_class_id: number| null;
+  secondary_mobile: number| null;
+  privious_school: string| null;
+  privious_school_in_guj: string| null;
+  address: string| null;
+  district: string| null;
+  city: string| null;
+  state: string| null;
+  postal_code: string| null;
+  bank_name: string| null;
+  account_no: number| null;
+  IFSC_code: string| null;
 }
 
 export interface Student {
   id: number,
   school_id: number;
   first_name: string;
-  middle_name: string;
+  middle_name: string | null;
   last_name: string;
-  first_name_in_guj: string;
-  middle_name_in_guj: string;
-  last_name_in_guj: string;
+  first_name_in_guj: string | null;
+  middle_name_in_guj: string| null;
+  last_name_in_guj: string| null;
   gender: 'Male' | 'Female';
   gr_no: number;
-  birth_date: string;
+  birth_date: string| null;
   primary_mobile: number;
-  father_name: string;
-  father_name_in_guj: string;
-  mother_name: string;
-  mother_name_in_guj: string;
+  father_name: string | null;
+  father_name_in_guj: string | null;
+  mother_name: string | null;
+  mother_name_in_guj: string | null;
   class_id: number;
-  roll_number: number;
-  aadhar_no: number;
+  roll_number: number | null;
+  aadhar_no: number | null;
   is_active: boolean;
   student_meta?: StudentMeta
 }
@@ -84,16 +84,28 @@ export interface AddStudentsRequest {
   class_id: number;
   students: StudentEntry[];
 }
-
 export interface InquiriesForStudent {
-  id: number,
-  student_name: string,
-  parent_name: string,
-  contact_number: number,
-  email: string,
-  grade_applying: number,
-  status: 'pendding' | 'rejected' | 'approved',
-  admin_notes: string,
-  created_by: number,
-  is_converted_to_student: number,
+  id: number
+  student_name: string
+  parent_name: string
+  contact_number: string
+  email: string
+  grade_applying: string
+  status: string
+  created_at: string
+  updated_at: string
 }
+
+export interface DashboardData {
+  totalInquiries: number
+  pendingApplications: number
+  acceptedAdmissions: number
+  rejectedApplications: number
+  upcomingInterviews: number
+}
+
+export interface AdmissionTrend {
+  grade: string
+  inquiries: number
+}
+

@@ -1,7 +1,7 @@
 import { User } from "@/types/user"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { PageMeta } from "@/types/global";
-import { TeachingStaff } from "@/types/staff";
+import { StaffType } from "@/types/staff";
 import baseUrl from "@/utils/base-urls";
 
 
@@ -41,9 +41,9 @@ export const UserManagementApi = createApi({
         method: "GET"
       })
     }),
-    fetchNonOnBoardedTeacher: builder.query<TeachingStaff[], { page: number, school_id: number }>({
+    fetchNonOnBoardedTeacher: builder.query<StaffType[], { page: number, school_id: number }>({
       query: ({ page, school_id }) => ({
-        url: `teachers/non-activeuser/${school_id}`,
+        url: `staff/non-activeuser/${school_id}`,
         method: "GET"
       })
     }),

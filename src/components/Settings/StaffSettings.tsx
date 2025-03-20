@@ -33,7 +33,7 @@ import { createStaffRole, deleteStaffRole, updateStaffRole, useLazyGetSchoolStaf
 // import { addRole, deleteRole, fetchRoles, updateRole } from "@/redux/slices/roleSlice"
 import { StaffRole } from "@/types/staff"
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -76,7 +76,7 @@ export default function StaffSettings() {
   const dispatch = useAppDispatch()
   const authState = useAppSelector(selectAuthState)
   const StaffRoleState = useAppSelector(selectSchoolStaffRoles)
-
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
   const [getSchoolStaff, { data, isLoading, isFetching, isSuccess, isError, error }] = useLazyGetSchoolStaffRoleQuery();
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDialogForDeleteStaffOpen, setIsDialogForDeleteStaffOpen] = useState<boolean>(false)
@@ -125,17 +125,20 @@ export default function StaffSettings() {
         })
       } else {
         let new_staff = await dispatch(createStaffRole({
-          role: formForStaffRole.getValues('role_name'),
-          is_teaching_role: formForStaffRole.getValues('role_type') === 'teaching',
-          school_id: authState.user!.school_id
+          payload: {
+            role: formForStaffRole.getValues('role_name'),
+            is_teaching_role: formForStaffRole.getValues('role_type') === 'teaching',
+            school_id: authState.user!.school_id,
+          },
+          academic_session: CurrentAcademicSessionForSchool!.id
         }))
-        if(new_staff.meta.requestStatus === 'rejected'){
+        if (new_staff.meta.requestStatus === 'rejected') {
           toast({
-            variant : "destructive",
+            variant: "destructive",
             title: "Error !",
             description: `${new_staff.payload.message} !`,
           })
-        }else{
+        } else {
           toast({
             title: "Role Created !",
             description: `${formForStaffRole.getValues('role_name')} has been created.`,
@@ -165,7 +168,7 @@ export default function StaffSettings() {
       setIsDialogForDeleteStaffOpen(false)
       getSchoolStaff(authState.user!.school_id);
       handleCloseDialog()
-    } catch (error : any) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: error.message,

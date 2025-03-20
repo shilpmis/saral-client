@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, Loader2, AlertCircle, CheckCircle2, FileText } from "lucide-react"
+import { Plus, Upload, MoreHorizontal, Loader2, AlertCircle, CheckCircle2, FileText, Table, FileDown } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
 import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
@@ -18,36 +18,32 @@ import {
   useLazyFetchSingleStundetQuery,
   useLazyFetchStudentForClassQuery,
   useBulkUploadStudentsMutation,
-} from "@/services/StundetServices"
+} from "@/services/StudentServices"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
-import { downloadCSVTemplate } from "@/utils/csv-helper"
+import { downloadCSVTemplate } from "@/utils/CSVTemplateForStudents"
 import ExcelDownloadModalForStudents from "@/components/Students/ExcelDownloadModalForStudents"
 import { z } from "zod"
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AcademicSession } from "@/types/user"
 
 // Define Zod schema for student data validation
-const StudentSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  rollNumber: z.string().min(1, "Roll number is required"),
-  admissionNumber: z.string().min(1, "Admission number is required"),
-  email: z.string().email("Invalid email format").optional().or(z.literal("")),
-  phone: z
+const StudentSchemaForUploadData = z.object({
+  first_name: z.string().min(1, "First Name is required"),
+  middle_name: z.string().min(1, "Name is required").nullable().or(z.literal("")),
+  last_name: z.string().min(1, "Last Name is required"),
+  phone_number: z
     .string()
     .regex(/^\d{10}$/, "Phone number must be 10 digits")
     .optional()
     .or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
   gender: z
     .enum(["Male", "Female", "Other"], {
       errorMap: () => ({ message: "Gender must be Male, Female, or Other" }),
     })
     .optional()
     .or(z.literal("")),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be in YYYY-MM-DD format")
-    .optional()
-    .or(z.literal("")),
+  gr_no: z.string().min(1, "GR Number is required"),
 })
 
 // Custom CSV parser function
@@ -75,7 +71,7 @@ const parseCSV = (file: File): Promise<any[]> => {
           )
 
           // Create object with headers as keys
-          const row : any = {}
+          const row: any = {}
           headers.forEach((header, index) => {
             row[header] = values[index] || ""
           })
@@ -84,7 +80,7 @@ const parseCSV = (file: File): Promise<any[]> => {
         }
 
         resolve(results)
-      } catch (error : any) {
+      } catch (error: any) {
         reject(new Error(`Failed to parse CSV: ${error.message}`))
       }
     }
@@ -105,9 +101,18 @@ type ValidationResult = {
   rawData: any
 }
 
+interface Props {
+  serverValidationErrors: ValidationResult[];
+  parsedData: any[];
+}
+
+
 export const Students: React.FC = () => {
+
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
@@ -116,6 +121,7 @@ export const Students: React.FC = () => {
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
+  const [SelectedSession, setSelectedSession] = useState<number | null>(null)
   const [searchValue, setSearchValue] = useState<string>("")
 
   const [listedStudentForSelectedClass, setListedStudentForSelectedClass] = useState<Student[] | null>(null)
@@ -127,7 +133,8 @@ export const Students: React.FC = () => {
     isOpen: boolean
     type: "add" | "edit"
     selectedStudent: Student | null
-  }>({ isOpen: false, type: "add", selectedStudent: null })
+  }>({ isOpen: false, type: "add", selectedStudent: null });
+
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -138,9 +145,11 @@ export const Students: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dialogOpenForBulkUpload, setDialogOpenForBulkUpload] = useState(false)
+  const [dialogOpenForDownLoadExcel, setDialogOpenForDownLoadExcel] = useState(false)
   const [validationPassed, setValidationPassed] = useState(false)
   const [parsedData, setParsedData] = useState<any[]>([])
   const [validationDialogOpen, setValidationDialogOpen] = useState(false)
+  const [serverValidationErrors, setServerValidationErrors] = useState<ValidationResult[]>([])
 
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
@@ -148,14 +157,27 @@ export const Students: React.FC = () => {
   }, [])
 
   const handleDivisionChange = async (value: string) => {
-    if (AcademicClasses) {
+    if (AcademicClasses && SelectedSession) {
       const selectedDiv = AcademicClasses.filter(
         (cls) => cls.class == Number.parseInt(selectedClass),
       )[0].divisions.filter((div) => div.id == Number.parseInt(value))
       setSelectedDivision(selectedDiv[0])
-      getStudentForClass({ class_id: Number.parseInt(value) })
+      getStudentForClass({ class_id: Number.parseInt(value), academic_session: SelectedSession })
     }
   }
+
+  const handleAcademicSessionChange = useCallback(
+    async (value: number) => {
+      setSelectedSession(value);
+      if (selectedDivision) {
+        await getStudentForClass({
+          class_id: selectedDivision.id,
+          academic_session: Number(value),
+        });
+      }
+    },
+    [selectedDivision]
+  );
 
   const filteredStudents = useMemo(() => {
     if (listedStudentForSelectedClass) {
@@ -174,12 +196,12 @@ export const Students: React.FC = () => {
     }
   }, [AcademicClasses, selectedClass])
 
+
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
       try {
         const response = await getSingleStudent({
           student_id: student_id,
-          school_id: authState.user!.school_id,
           student_meta: true,
         })
 
@@ -213,7 +235,7 @@ export const Students: React.FC = () => {
     data.forEach((row, index) => {
       try {
         // Attempt to validate the row data against our schema
-        StudentSchema.parse(row)
+        StudentSchemaForUploadData.parse(row)
 
         // If validation passes, add a success result
         results.push({
@@ -270,6 +292,17 @@ export const Students: React.FC = () => {
           .then((parsedData) => {
             setParsedData(parsedData)
 
+            const headers = Object.keys(parsedData[0])
+            const requiredHeaders = StudentSchemaForUploadData.shape
+            const missingHeaders = Object.keys(requiredHeaders).filter(header => !headers.includes(header))
+
+            if (missingHeaders.length > 0) {
+              setUploadError(`Missing required headers: ${missingHeaders.join(", ")}`)
+              setIsValidating(false)
+              return
+            }
+
+
             // Validate the parsed data
             const validationResults = validateCsvData(parsedData)
             setUploadResults(validationResults)
@@ -298,20 +331,14 @@ export const Students: React.FC = () => {
     downloadCSVTemplate()
   }, [])
 
-  useEffect(() => {
-    if (!AcademicClasses && authState.user) {
-      getAcademicClasses(authState.user.school_id)
-    }
-  }, [AcademicClasses, authState.user, getAcademicClasses])
-
-  useEffect(() => {
-    if (studentDataForSelectedClass) {
-      setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
-      setListedStudentForSelectedClass(studentDataForSelectedClass.data)
-    }
-  }, [studentDataForSelectedClass])
 
   const handleFileUploadSubmit = async () => {
+    
+    if(!CurrentAcademicSessionForSchool){
+      setUploadError("Please select an academic session first")
+      return
+    }
+
     if (!selectedFile) {
       setUploadError("Please select a file to upload")
       return
@@ -332,6 +359,7 @@ export const Students: React.FC = () => {
       setUploadError(null)
 
       const response: any = await bulkUploadStudents({
+        academic_session: CurrentAcademicSessionForSchool!.id,
         school_id: authState.user!.school_id,
         class_id: selectedDivision.id,
         file: selectedFile,
@@ -339,7 +367,6 @@ export const Students: React.FC = () => {
 
       // Handle success response
       if (response.data) {
-        console.log("response", response)
 
         // If upload was successful
         if (response.data.totalInserted) {
@@ -362,19 +389,38 @@ export const Students: React.FC = () => {
           if (fileInputRef.current) {
             fileInputRef.current.value = ""
           }
+
+          /**
+           * Refetch the student list for the selected class
+           */
+          if (selectedDivision) {
+            await getStudentForClass({ class_id: selectedDivision.id, academic_session: CurrentAcademicSessionForSchool!.id })
+
+            // Make sure the UI updates with the new data
+            if (studentDataForSelectedClass) {
+              setListedStudentForSelectedClass(studentDataForSelectedClass.data)
+              setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
+            }
+          }
+        }
+      } else {
+        let errors = response.error.data.errors;
+        if (errors) {
+          const dbValidationResults: ValidationResult[] = errors.map((error: any) => ({
+            row: error.row,
+            hasErrors: true,
+            errors: error.errors.map((err: any) => ({
+              field: err.field,
+              message: err.message,
+            })),
+            rawData: {}, // You can add raw data if needed
+          }))
+          console.log("dbValidationResults", dbValidationResults)
+          setServerValidationErrors(dbValidationResults)
+          setValidationPassed(false)
         }
       }
 
-      // Refresh the student list
-      if (selectedDivision) {
-        await getStudentForClass({ class_id: selectedDivision.id })
-
-        // Make sure the UI updates with the new data
-        if (studentDataForSelectedClass) {
-          setListedStudentForSelectedClass(studentDataForSelectedClass.data)
-          setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
-        }
-      }
     } catch (error: any) {
       console.error("Upload error:", error)
       setUploadError(error.data?.message || "Failed to upload students. Please try again.")
@@ -393,8 +439,8 @@ export const Students: React.FC = () => {
   const handlePageChange = useCallback(
     async (page: number) => {
       setCurrentPage(page)
-      if (selectedDivision) {
-        await getStudentForClass({ class_id: selectedDivision.id, page: page }).then((response) => {
+      if (selectedDivision && SelectedSession) {
+        await getStudentForClass({ class_id: selectedDivision.id , page: page, academic_session: SelectedSession  }).then((response) => {
           setPaginationDataForSelectedClass(response.data.meta)
         })
       }
@@ -402,28 +448,6 @@ export const Students: React.FC = () => {
     [setCurrentPage, selectedDivision, getStudentForClass],
   )
 
-  // Function to fetch students for a specific class (used by ExcelDownloadModal)
-  const fetchStudentsForClass = async (classId: number): Promise<Student[]> => {
-    try {
-      const response = await getStudentForClass({
-        class_id: classId,
-        student_meta: true,
-      })
-
-      if (response.data && response.data.data) {
-        return response.data.data
-      }
-      return []
-    } catch (error) {
-      console.error("Error fetching students for Excel:", error)
-      toast({
-        variant: "destructive",
-        title: "Failed to fetch students",
-        description: "Please try again later",
-      })
-      return []
-    }
-  }
 
   // Get all unique fields from the parsed data
   const getUniqueFields = useMemo(() => {
@@ -439,13 +463,14 @@ export const Students: React.FC = () => {
       }
     })
 
+    console.log(Array.from(allFields).sort())
     // Convert to array and sort
     return Array.from(allFields).sort()
   }, [uploadResults])
 
   useEffect(() => {
     // Auto-select first class and division when AcademicClasses are loaded
-    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass) {
+    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass && SelectedSession) {
       // Find first class with divisions
       const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
 
@@ -459,11 +484,31 @@ export const Students: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id })
+          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
         }
       }
     }
-  }, [AcademicClasses, selectedClass, getStudentForClass])
+  }, [AcademicClasses, selectedClass, getStudentForClass, SelectedSession])
+
+  useEffect(() => {
+    if (CurrentAcademicSessionForSchool) {
+      setSelectedSession(CurrentAcademicSessionForSchool.id);
+      // setSelectedSessionForDownloadExcel(CurrentAcademicSessionForSchool.id);
+    }
+  }, [CurrentAcademicSessionForSchool])
+
+  useEffect(() => {
+    if (!AcademicClasses && authState.user) {
+      getAcademicClasses(authState.user.school_id)
+    }
+  }, [AcademicClasses])
+
+  useEffect(() => {
+    if (studentDataForSelectedClass) {
+      setPaginationDataForSelectedClass(studentDataForSelectedClass.meta)
+      setListedStudentForSelectedClass(studentDataForSelectedClass.data)
+    }
+  }, [studentDataForSelectedClass])
 
   // Sort validation results to show rows with errors first
   const sortedValidationResults = useMemo(() => {
@@ -481,6 +526,7 @@ export const Students: React.FC = () => {
   }, [uploadResults])
 
   return (
+
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -493,6 +539,9 @@ export const Students: React.FC = () => {
             >
               <Plus className="mr-2 h-4 w-4" /> Add New Student
             </Button>
+
+
+            {/* Upload CSV */}
             <Dialog
               open={dialogOpenForBulkUpload}
               onOpenChange={(open) => {
@@ -510,10 +559,35 @@ export const Students: React.FC = () => {
                   <Upload className="mr-2 h-4 w-4" /> Upload CSV
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[700px] overflow-auto">
                 <DialogTitle>Upload CSV File</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="upload-academic-session" className="text-sm font-medium">
+                        Academic Year
+                      </label>
+                      <Select
+                        value={SelectedSession ? SelectedSession.toString() : " "}
+                        onValueChange={(value) => handleAcademicSessionChange(Number(value))}
+                        disabled
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Academic Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=" " disabled>
+                            Academic Years
+                          </SelectItem>
+                          {AcademicSessionsForSchool &&
+                            AcademicSessionsForSchool.map((as: AcademicSession, index) => (
+                              <SelectItem key={index} value={as.id.toString()}>
+                                {`${as.session_name}`}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <label htmlFor="upload-class" className="text-sm font-medium">
                         Class
@@ -561,7 +635,6 @@ export const Students: React.FC = () => {
                       </Select>
                     </div>
                   </div>
-
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
                       Download Demo CSV Template
@@ -610,6 +683,26 @@ export const Students: React.FC = () => {
                             : `${uploadResults.filter((r) => r.hasErrors).length} of ${uploadResults.length} rows have validation errors.`}
                         </p>
                       </div>
+                    </div>
+                  )}
+
+                  {serverValidationErrors.length > 0 && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
+                      <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
+                      <ul className="list-disc list-inside text-red-700">
+                        {serverValidationErrors.map((error, index) => (
+                          <li key={index}>
+                            <strong>Row {error.row}:</strong>
+                            <ul className="list-disc list-inside ml-4">
+                              {error.errors.map((err, idx) => (
+                                <li key={idx}>
+                                  <strong>{err.field}:</strong> {err.message}
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
 
@@ -709,7 +802,7 @@ export const Students: React.FC = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {sortedValidationResults.map((result, index) => (
                           <tr key={index} className={result.hasErrors ? "bg-red-50" : ""}>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">{result.row}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">{result.row - 1}</td>
                             {getUniqueFields.map((field) => {
                               // Find if this field has an error
                               const fieldError = result.hasErrors
@@ -745,7 +838,27 @@ export const Students: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                    {/* {serverValidationErrors.length > 0 && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
+                        <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
+                        <ul className="list-disc list-inside text-red-700">
+                          {serverValidationErrors.map((error, index) => (
+                            <li key={index}>
+                              <strong>Row {error.row}:</strong>
+                              <ul className="list-disc list-inside ml-4">
+                                {error.errors.map((err, idx) => (
+                                  <li key={idx}>
+                                    <strong>{err.field}:</strong> {err.message}
+                                  </li>
+                                ))}
+                              </ul>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )} */}
                   </CardContent>
+
                 </Card>
                 <div className="flex justify-end mt-4">
                   <Button onClick={() => setValidationDialogOpen(false)}>Close</Button>
@@ -761,20 +874,26 @@ export const Students: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {/* <DropdownMenuItem>Export Data</DropdownMenuItem> */}
-                <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
-                <DropdownMenuItem>Print List</DropdownMenuItem>
+                {/* <ExcelDownloadModalForStudents academicClasses={AcademicClasses} /> */}
+                <DropdownMenuItem>
+                  <button className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => setDialogOpenForDownLoadExcel(true)}>
+                    <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  </button>
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem>Print List</DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {!AcademicClasses || AcademicClasses.length === 0 ? (
+        {!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0 ? (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Search Students</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-yellow-600">Please create Classes for your school.</p>
+              <p className="text-yellow-600">Please create Academic Sessions for your school.</p>
             </CardContent>
           </Card>
         ) : (
@@ -784,7 +903,25 @@ export const Students: React.FC = () => {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="flex gap-2">
-                <Select value={selectedClass} onValueChange={handleClassChange}>
+                <Select
+                  value={SelectedSession ? SelectedSession.toString() : " "}
+                  onValueChange={(value) => handleAcademicSessionChange(Number(value))}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select Academic Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value=" " disabled>
+                      Academic Years
+                    </SelectItem>
+                    {AcademicSessionsForSchool &&
+                      AcademicSessionsForSchool.map((as: AcademicSession, index) => (
+                        <SelectItem key={index} value={as.id.toString()}>
+                          {`${as.session_name}`}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
@@ -792,7 +929,7 @@ export const Students: React.FC = () => {
                     <SelectItem value=" " disabled>
                       Classes
                     </SelectItem>
-                    {AcademicClasses.map((cls, index) =>
+                    {AcademicClasses && AcademicClasses.map((cls, index) =>
                       cls.divisions.length > 0 ? (
                         <SelectItem key={index} value={cls.class.toString()}>
                           Class {cls.class}
@@ -804,6 +941,7 @@ export const Students: React.FC = () => {
                 <Select
                   value={selectedDivision ? selectedDivision.id.toString() : " "}
                   onValueChange={handleDivisionChange}
+                  disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Division" />
@@ -829,7 +967,6 @@ export const Students: React.FC = () => {
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
             PageDetailsForStudents={paginationDataForSelectedClass}
-            // onSearchChange={setSearchValue}
             filteredStudents={filteredStudents}
             onPageChange={handlePageChange}
             onEdit={handleAddEditStudent}
@@ -877,13 +1014,14 @@ export const Students: React.FC = () => {
                     })
 
                     // Refresh the student list if a division is selected
-                    if (selectedDivision) {
-                      getStudentForClass({
-                        class_id: selectedDivision.id,
-                        page: currentPage,
-                        student_meta: true,
-                      })
-                    }
+                    // if (selectedDivision) {
+                    //   getStudentForClass({
+                    //     class_id: selectedDivision.id,
+                    //     page: currentPage,
+                    //     student_meta: true,
+                    //     academic_session: SelectedSession,
+                    //   })
+                    // }
                   }}
                   form_type="update"
                   initial_data={studentDataForEditStudent}
@@ -898,6 +1036,20 @@ export const Students: React.FC = () => {
               )}
             </div>
           </>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogOpenForDownLoadExcel}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDialogOpenForDownLoadExcel(false)
+          }
+        }}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Download Student Data</DialogTitle>
+          </DialogHeader>
+          <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
         </DialogContent>
       </Dialog>
     </>
