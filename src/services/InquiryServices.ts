@@ -39,15 +39,15 @@ interface GetInquiryResponse {
 }
 
 interface AddInquiryRequest {
-  academic_id: number
+  academic_session_id: number
   student_name: string
-  dob: string
-  gender: string
+  dob?: string
+  gender?: string
   class_applying: number
   parent_name: string
   parent_contact: string
-  address: string
-  applying_for_quota: boolean
+  address?: string
+  applying_for_quota?: boolean
   parent_email?: string
   previous_school?: string
   previous_class?: string
