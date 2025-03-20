@@ -48,12 +48,11 @@ export default function StaffTable({
   })
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedStaff, setSelectedStaff] = useState<any>(null)
-  const handleStaffClick = (staff: any) => {
+  const [selectedStaff, setSelectedStaff] = useState<StaffType | null>(null)
+
+  const handleStaffClick = (staff: StaffType) => {
     setSelectedStaff(staff)
     setDialogOpen(true)
-    console.log("staff is here=>>", selectedStaff);
-
   }
 
   const handelPageChange = (upadatedPage: number) => {
@@ -149,12 +148,12 @@ export default function StaffTable({
               ))}
             </TableBody>
           </Table>
-          <StaffPdfDilog
+          {selectedStaff && (<StaffPdfDilog
             dialogOpen={dialogOpen}
             setDialogOpen={setDialogOpen}
             selectedStaff={selectedStaff}
             StafftDetailsPDF={StafftDetailsPDF}
-          />
+          />)}
           <SaralPagination
             currentPage={staffList.page_meta.current_page ?? staffList.page_meta.currentPage}
             totalPages={staffList.page_meta.last_page ?? staffList.page_meta.lastPage}
