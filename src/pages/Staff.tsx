@@ -9,20 +9,16 @@ import { Input } from "@/components/ui/input"
 import StaffForm from "@/components/Staff/StaffForm"
 import StaffTable from "@/components/Staff/StaffTable"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import type { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
-import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
+import type { StaffRole, StaffType } from "@/types/staff"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import {
   useLazyGetOtherStaffQuery,
   useLazyGetTeachingStaffQuery,
-  useAddTeachingStaffMutation,
-  useAddOtherStaffMutation,
-  useUpdateTeacherMutation,
-  useBulkUploadTeachersMutation,
-  useUpdateOtherStaffMutation,
   useLazyGetSchoolStaffRoleQuery,
-  useBulkUploadOtherStaffMutation
+  useAddStaffMutation,
+  useUpdateStaffMutation,
+  useBulkUploadStaffMutation
 } from "@/services/StaffService"
 import type { StaffFormData } from "@/utils/staff.validation"
 import ExcelDownloadModal from "@/components/Students/ExcelDownloadModalForStudents"
@@ -119,13 +115,13 @@ const FilterOptions: React.FC<{
 export const Staff: React.FC = () => {
 
   const authState = useAppSelector(selectAuthState)
-  const [updateOtherStaff] = useUpdateOtherStaffMutation()
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
   const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
-  const [addTeachingStaff] = useAddTeachingStaffMutation()
-  const [addOtherStaff] = useAddOtherStaffMutation()
-  const [updateTeacher] = useUpdateTeacherMutation()
+  const [AddNewStaff] = useAddStaffMutation()
+  const [updateStaff] = useUpdateStaffMutation()
   const [getStaffRoles, { data: RolesForSchoolStaff }] = useLazyGetSchoolStaffRoleQuery()
 
   const [activeTab, setActiveTab] = useState<string>("teaching")
@@ -134,36 +130,29 @@ export const Staff: React.FC = () => {
   const [staffTypeForUpload, setStaffTypeForUpload] = useState<"teaching" | "non-teaching" | null>(null)
 
   const [currentDisplayDataForTeachers, setCurrentDisplayDataForTeachers] = useState<{
-    satff: TeachingStaff[]
-    page_meta: PageMeta
+    satff: StaffType[]
+    meta: PageMeta
   } | null>(null)
 
   const [currentDisplayDataForOtherStaff, setCurrentDisplayDataForOtherStaff] = useState<{
-    satff: OtherStaff[]
-    page_meta: PageMeta
+    satff: StaffType[]
+    meta: PageMeta
   } | null>(null)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [openDialogForTeacher, setOpenDialogForTeacher] = useState<{
+  const [openDialogForStaffForm, setOpenDialogForStaffForm] = useState<{
     isOpen: boolean
     type: "add" | "edit" | "view"
-    selectedTeacher: TeachingStaff | null
-  }>({ isOpen: false, type: "add", selectedTeacher: null })
+    selectedStaff: StaffType | null
+  }>({ isOpen: false, type: "add", selectedStaff: null })
 
-  const [openDialogForOtherStaff, setOpenDialogForOtherStaff] = useState<{
-    isOpen: boolean
-    type: "add" | "edit" | "view"
-    selectedOtherStaff: OtherStaff | null
-  }>({ isOpen: false, type: "add", selectedOtherStaff: null })
-
-  const [teacherInitialData, setTeacherInitialData] = useState<TeachingStaff | null>(null)
-  const [otherInitialData, setOtherInitialData] = useState<OtherStaff>()
-  const [isdelete, setIsDelete] = useState(false)
-  const [bulkUploadTeachers] = useBulkUploadTeachersMutation()
-  const [bulkUploadOtherStaff] = useBulkUploadOtherStaffMutation()
+  const [teacherInitialData, setTeacherInitialData] = useState<StaffType | null>(null)
+  const [otherInitialData, setOtherInitialData] = useState<StaffType>()
   const [openDialogForStaffBulkUpload, setOpenDialogForStaffBulkUpload] = useState(false)
+  const [isdelete, setIsDelete] = useState(false)
+  const [bulkUploadstaff] = useBulkUploadStaffMutation()
 
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -185,19 +174,13 @@ export const Staff: React.FC = () => {
     nonTeachingStaff: []
   })
 
-  const [bulkUploadStudents] = useBulkUploadStudentsMutation();
-
-  const staffSchema = useMemo(() => {
-    // const dynamicRoles = [
-    //   ...AllRolesForSchoolStaff.teachingStaff,
-    //   ...AllRolesForSchoolStaff.nonTeachingStaff,
-    // ];
+  const staffSchemaFoeBulkUpload = useMemo(() => {
 
     return z.object({
       first_name: z.string().min(1, "First Name is required"),
-      middle_name: z.string().min(1, "Name is required").optional(),
+      middle_name: z.string().min(3, "Middle Name is required").nullable().or(z.literal("")),
       last_name: z.string().min(1, "Last Name is required"),
-      mobile_number: z
+      phone_number: z
         .string()
         .regex(/^\d{10}$/, "Phone number must be 10 digits")
         .optional()
@@ -208,13 +191,7 @@ export const Staff: React.FC = () => {
         })
         .optional()
         .or(z.literal("")),
-      aadhar_no: z
-        .string()
-        .regex(/^\d{12}$/, "Aadhar number must be 12 digits")
-        .optional()
-        .or(z.literal("")),
-      employment_status: z.enum(['Permanent', 'Trial_period', 'Resigned', 'Contact_base', 'Notice_Period']),
-
+      employment_status: z.enum(['Permanent', 'Trial_Period', 'Resigned', 'Contract_Based', 'Notice_Period']),
       // Dynamic role handling
       role: z.string().min(1, "Role is required"),
     });
@@ -228,8 +205,8 @@ export const Staff: React.FC = () => {
     data.forEach((row, index) => {
       try {
         // Check if the role is valid based on the staff type
-        const validRoles = staffTypeForUpload === "teaching" ? AllRolesForSchoolStaff.teachingStaff : AllRolesForSchoolStaff.nonTeachingStaff
-        console.log("Check this", staffTypeForUpload, validRoles)
+        const validRoles = staffTypeForUpload === "teaching" ? AllRolesForSchoolStaff.teachingStaff : AllRolesForSchoolStaff.nonTeachingStaff;
+        console.log("validRoles " , validRoles)
         if (!validRoles.includes(row.role)) {
           console.log("row.role", row.role)
           results.push({
@@ -244,7 +221,7 @@ export const Staff: React.FC = () => {
         }
 
         // Attempt to validate the row data against our schema
-        staffSchema.parse(row)
+        staffSchemaFoeBulkUpload.parse(row)
 
         // If validation passes, add a success result
         results.push({
@@ -285,7 +262,7 @@ export const Staff: React.FC = () => {
     })
 
     return results
-  }, [AllRolesForSchoolStaff, staffTypeForUpload, staffSchema])
+  }, [AllRolesForSchoolStaff, staffTypeForUpload, staffSchemaFoeBulkUpload])
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,7 +285,7 @@ export const Staff: React.FC = () => {
 
             // Validate headers
             const headers = Object.keys(parsedData[0])
-            const requiredHeaders = staffSchema.shape
+            const requiredHeaders = staffSchemaFoeBulkUpload.shape
             const missingHeaders = Object.keys(requiredHeaders).filter(header => !headers.includes(header))
 
             if (missingHeaders.length > 0) {
@@ -369,12 +346,13 @@ export const Staff: React.FC = () => {
           ? RolesForSchoolStaff.find((role: StaffRole) => role.is_teaching_role && role.role === row.role)?.id
           : RolesForSchoolStaff.find((role: StaffRole) => !role.is_teaching_role && role.role == row.role)?.id
       }))
-      // const response = null;
-      const response = staffTypeForUpload === 'teaching'
-        ? await bulkUploadTeachers({ school_id: 1, file: file })
-        : await bulkUploadOtherStaff({ school_id: 1, file: file })
-        ;
-      // Handle success response
+
+      const response = await bulkUploadstaff({
+        academic_session: CurrentAcademicSessionForSchool!.id,
+        file: file,
+        type: staffTypeForUpload as "teaching" | "non-teaching"
+      });
+
       if (response.data) {
 
         // If upload was successful
@@ -423,7 +401,7 @@ export const Staff: React.FC = () => {
             rawData: {}, // You can add raw data if needed
           }))
           console.log("dbValidationResults", dbValidationResults)
-          // setServerValidationErrors(dbValidationResults)
+          setServerValidationErrors([...dbValidationResults])
           setValidationPassed(false)
         }
       }
@@ -442,19 +420,18 @@ export const Staff: React.FC = () => {
 
   const handleStaffFormOpenChange = (open: boolean) => {
     if (!open) {
-      setOpenDialogForTeacher({ isOpen: open, type: "add", selectedTeacher: null })
+      setOpenDialogForStaffForm({ isOpen: open, type: "add", selectedStaff: null })
     }
   }
 
   const handleOtherStaffFormOpenChange = (open: boolean) => {
     if (!open) {
-      setOpenDialogForOtherStaff({ isOpen: open, type: "add", selectedOtherStaff: null });
+      setOpenDialogForStaffForm({ isOpen: open, type: "add", selectedStaff: null });
     }
   }
 
   const handleStaffFormClose = () => {
-    console.log("Close form event")
-    setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
+    setOpenDialogForStaffForm({ isOpen: false, type: "add", selectedStaff: null })
   }
 
 
@@ -505,11 +482,11 @@ export const Staff: React.FC = () => {
     (staff_id: number) => {
       const teacherInitialData = currentDisplayDataForTeachers?.satff.find((teacher) => teacher.id === staff_id)
       if (teacherInitialData) {
-        setOpenDialogForTeacher({
-          ...openDialogForTeacher,
+        setOpenDialogForStaffForm({
+          ...openDialogForStaffForm,
           isOpen: true,
           type: "edit",
-          selectedTeacher: teacherInitialData,
+          selectedStaff: teacherInitialData,
         })
         setTeacherInitialData(teacherInitialData)
       }
@@ -521,11 +498,11 @@ export const Staff: React.FC = () => {
     (staff_id: number) => {
       const otherInitialData = currentDisplayDataForOtherStaff?.satff.find((other) => other.id === staff_id)
       if (otherInitialData) {
-        setOpenDialogForOtherStaff({
-          ...openDialogForOtherStaff,
+        setOpenDialogForStaffForm({
+          ...openDialogForStaffForm,
           isOpen: true,
           type: "edit",
-          selectedOtherStaff: otherInitialData,
+          selectedStaff: otherInitialData,
         })
         setOtherInitialData(otherInitialData)
       }
@@ -541,31 +518,62 @@ export const Staff: React.FC = () => {
         staffData: [data], // Wrapping data in an array
       }
 
-      if (data.is_teaching_role) {
-        await addTeachingStaff(payload).unwrap()
-      } else {
-        await addOtherStaff(payload).unwrap()
+      const new_staff = await AddNewStaff({ payload: data, academic_sessions: CurrentAcademicSessionForSchool!.id });
+
+      if (new_staff.data) {
+        toast({
+          title: "Success",
+          description: "Staff added successfully",
+        })
+        setOpenDialogForStaffForm({ isOpen: false, type: "add", selectedStaff: null })
+        fetchDataForActiveTab(new_staff.data.is_teaching_role ? "teaching" : "non-teaching", 1)
+        setActiveTab(new_staff.data.is_teaching_role ? "teaching" : "non-teaching")
       }
-      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
-      fetchDataForActiveTab(activeTab as "teaching", 1)
+
+      if (new_staff.error) {
+        console.log("Error", new_staff.error)
+        toast({
+          title: "Error",
+          description: "Staff not added",
+          variant: "destructive",
+        })
+      }
+
     } catch (error) {
       console.error("Error adding staff:", error)
-      // Handle error (e.g., show an error message to the user)
     }
   }
 
-  const handleEditStaffSubmit = async (data: StaffFormData) => {
+  const handleSubmitForEditStaff = async (data: StaffFormData) => {
 
     try {
-      const payload = {
-        school_id: authState.user!.school_id,
-        teacher_id: openDialogForTeacher.selectedTeacher!.id,
-        data: data
+      // const payload = {
+      //   school_id: authState.user!.school_id,
+      //   teacher_id: openDialogForStaffForm.selectedStaff!.id,
+      //   data: data
+      // }
+      let updated_staff = await updateStaff({
+        payload: data, staff_id:
+          openDialogForStaffForm.isOpen ? openDialogForStaffForm.selectedStaff!.id : openDialogForStaffForm.selectedStaff!.id
+      });
+      if (updated_staff.data) {
+        console.log("updated_staff", updated_staff.data)
+        toast({
+          title: "Success",
+          description: "Staff updated successfully",
+        })
+        setOpenDialogForStaffForm({ isOpen: false, type: "add", selectedStaff: null })
+        fetchDataForActiveTab(updated_staff.data.is_teaching_role ? "teaching" : "non-teaching", 1)
+        setActiveTab(updated_staff.data.is_teaching_role ? "teaching" : "non-teaching")
+      } else {
+        console.log("Error", updated_staff.error)
+        toast({
+          title: "Error",
+          description: "Staff not updated",
+          variant: "destructive",
+        })
       }
-      await updateTeacher(payload).unwrap()
 
-      setOpenDialogForTeacher({ isOpen: false, type: "add", selectedTeacher: null })
-      fetchDataForActiveTab(activeTab as "teaching", 1)
     } catch (error) {
       console.error("Error editing staff:", error)
     }
@@ -585,71 +593,36 @@ export const Staff: React.FC = () => {
     downloadCSVTemplate(staffType)
   }
 
-  // Function to fetch all teaching staff for Excel download
-  const fetchAllTeachingStaff = async (): Promise<TeachingStaff[]> => {
-    try {
-      const response = await getTeachingStaff({
-        school_id: authState.user!.school_id,
-        // limit: 1000, // Get all staff for the Excel download
-      })
 
-      if (response.data && response.data.data) {
-        return response.data.data
-      }
-      return []
-    } catch (error) {
-      console.error("Error fetching teaching staff for Excel:", error)
-      return []
-    }
-  }
+  // const handleEditOtherStaffSubmit = async (data: StaffFormData) => {
+  //   try {
+  //     const res = await updateOtherStaff({
+  //       otherStaff_id: openDialogForStaffForm.selectedStaff!.id,
+  //       data: data,
+  //       school_id: authState.user!.school_id
+  //     });
 
-  // Function to fetch all other staff for Excel download
-  const fetchAllOtherStaff = async (): Promise<OtherStaff[]> => {
-    try {
-      const response = await getOtherStaff({
-        school_id: authState.user!.school_id,
-        // limit: 1000, // Get all staff for the Excel download
-      })
+  //     if (res.data) {
+  //       toast({
+  //         title: "Success",
+  //         description: "Staff updated successfully",
+  //       })
+  //       setOpenDialogForStaffForm({ isOpen: false, type: "edit", selectedStaff: null });
+  //       fetchDataForActiveTab(activeTab as "non-teaching", 1);
+  //     } else {
+  //       console.log("Error", res.error);
+  //       toast({
+  //         title: "Success",
+  //         variant: "destructive",
+  //         description: "Staff updated successfully",
+  //       })
+  //     }
 
-      if (response.data && response.data.data) {
-        return response.data.data
-      }
-      return []
-    } catch (error) {
-      console.error("Error fetching non-teaching staff for Excel:", error)
-      return []
-    }
-  }
+  //   } catch (error) {
+  //     console.error("Error editing staff:", error);
+  //   }
 
-  const handleEditOtherStaffSubmit = async (data: StaffFormData) => {
-    try {
-      const res = await updateOtherStaff({
-        otherStaff_id: openDialogForOtherStaff.selectedOtherStaff!.id,
-        data: data,
-        school_id: authState.user!.school_id
-      });
-
-      if (res.data) {
-        toast({
-          title: "Success",
-          description: "Staff updated successfully",
-        })
-        setOpenDialogForOtherStaff({ isOpen: false, type: "edit", selectedOtherStaff: null });
-        fetchDataForActiveTab(activeTab as "non-teaching", 1);
-      } else {
-        console.log("Error", res.error);
-        toast({
-          title: "Success",
-          variant: "destructive",
-          description: "Staff updated successfully",
-        })
-      }
-
-    } catch (error) {
-      console.error("Error editing staff:", error);
-    }
-
-  }
+  // }
 
   async function fetchDataForActiveTab(type: "teaching" | "non-teaching", page = 1) {
     try {
@@ -658,24 +631,24 @@ export const Staff: React.FC = () => {
 
       if (type === "teaching") {
         const response = await getTeachingStaff({
-          school_id: authState.user!.school_id,
+          academic_sessions: CurrentAcademicSessionForSchool!.id,
           page: page,
         })
         if (response.data) {
           setCurrentDisplayDataForTeachers({
             satff: response.data.data,
-            page_meta: response.data.meta,
+            meta: response.data.meta,
           })
         }
       } else {
         const response = await getOtherStaff({
-          school_id: authState.user!.school_id,
+          academic_sessions: CurrentAcademicSessionForSchool!.id,
           page: page,
         })
         if (response.data)
           setCurrentDisplayDataForOtherStaff({
             satff: response.data.data,
-            page_meta: response.data.meta,
+            meta: response.data.meta,
           })
       }
     } catch (err) {
@@ -702,8 +675,6 @@ export const Staff: React.FC = () => {
         })
       }
     })
-
-    console.log(Array.from(allFields).sort())
     // Convert to array and sort
     return Array.from(allFields).sort()
   }, [uploadResults])
@@ -753,10 +724,10 @@ export const Staff: React.FC = () => {
         <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <Button
             onClick={() =>
-              setOpenDialogForTeacher({
+              setOpenDialogForStaffForm({
                 isOpen: true,
                 type: "add",
-                selectedTeacher: null,
+                selectedStaff: null,
               })
             }
           >
@@ -867,15 +838,15 @@ export const Staff: React.FC = () => {
                       <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
                         <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
                         <ul className="list-disc list-inside text-red-700">
-                          {serverValidationErrors.map((error, index) => (
+                          {serverValidationErrors && serverValidationErrors.map((item, index) => (
                             <li key={index}>
-                              <strong>Row {error.row}:</strong>
+                              <strong>Row {item.row}:</strong>
                               <ul className="list-disc list-inside ml-4">
-                                {error.errors.map((err, idx) => (
+                                {Array.isArray(item.errors) && item.errors.map((err, idx) => (
                                   <li key={idx}>
                                     <strong>{err.field}:</strong> {err.message}
                                   </li>
-                                ))}
+                                ))} 
                               </ul>
                             </li>
                           ))}
@@ -1043,12 +1014,12 @@ export const Staff: React.FC = () => {
         </div>
       </div>
 
-      <FilterOptions
+      {/* <FilterOptions
         onSearchChange={handleSearchFilter}
         onStatusChange={handleStatusFilter}
         searchValue={searchValue}
         statusValue={statusValue}
-      />
+      /> */}
 
       {error && <div className="text-red-500 mb-4">{error}</div>}
 
@@ -1063,7 +1034,7 @@ export const Staff: React.FC = () => {
             <StaffTable
               staffList={{
                 staff: currentDisplayDataForTeachers?.satff,
-                page_meta: currentDisplayDataForTeachers?.page_meta,
+                page_meta: currentDisplayDataForTeachers?.meta,
               }}
               onEdit={handleEditStaff}
               onDelete={handleDelete}
@@ -1078,7 +1049,7 @@ export const Staff: React.FC = () => {
             <StaffTable
               staffList={{
                 staff: currentDisplayDataForOtherStaff?.satff,
-                page_meta: currentDisplayDataForOtherStaff?.page_meta,
+                page_meta: currentDisplayDataForOtherStaff?.meta,
               }}
               onEdit={handleEditOtherStaff}
               onDelete={handleDelete}
@@ -1090,21 +1061,21 @@ export const Staff: React.FC = () => {
       </Tabs>
 
       <Dialog
-        open={openDialogForTeacher.isOpen}
+        open={openDialogForStaffForm.isOpen}
         // id="staff-form-dialog"
         onOpenChange={(open) => handleStaffFormOpenChange(open)}
       >
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>{openDialogForTeacher.type === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
+            <DialogTitle>{openDialogForStaffForm.type === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
           </DialogHeader>
-          {openDialogForTeacher.type === "add" && (
+          {openDialogForStaffForm.type === "add" && (
             <StaffForm onSubmit={handleAddStaffSubmit} formType="create" onClose={handleStaffFormClose} />
           )}
-          {openDialogForTeacher.type === "edit" && teacherInitialData && (
+          {openDialogForStaffForm.type === "edit" && teacherInitialData && (
             <StaffForm
-              onSubmit={handleEditStaffSubmit}
-              initialData={teacherInitialData}
+              onSubmit={handleSubmitForEditStaff}
+              initial_data={openDialogForStaffForm.selectedStaff}
               formType="update"
               onClose={handleStaffFormClose}
             />
@@ -1113,19 +1084,19 @@ export const Staff: React.FC = () => {
       </Dialog>
 
       <Dialog
-        open={openDialogForOtherStaff.isOpen}
+        open={openDialogForStaffForm.isOpen}
         // id="staff-form-dialog"
         onOpenChange={(open) => handleOtherStaffFormOpenChange(open)}
       >
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>
-              {openDialogForOtherStaff.type === "add"
+              {openDialogForStaffForm.type === "add"
                 ? "Add New Staff"
                 : "Edit Staff"}
             </DialogTitle>
           </DialogHeader>
-          {openDialogForOtherStaff.type === "add" ? (
+          {openDialogForStaffForm.type === "add" ? (
             <StaffForm
               onSubmit={handleAddStaffSubmit}
               formType="create"
@@ -1133,8 +1104,8 @@ export const Staff: React.FC = () => {
             />
           ) : (
             <StaffForm
-              onSubmit={handleEditOtherStaffSubmit}
-              initialData={otherInitialData}
+              onSubmit={handleSubmitForEditStaff}
+              initial_data={openDialogForStaffForm.selectedStaff}
               formType="update"
               onClose={handleStaffFormClose}
             />
@@ -1180,7 +1151,7 @@ export const Staff: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Download Staff Data</DialogTitle>
           </DialogHeader>
-          <ExcelDownloadModalForStaff fetchTeachingStaff={fetchAllTeachingStaff} fetchOtherStaff={fetchAllOtherStaff} />
+          <ExcelDownloadModalForStaff />
         </DialogContent>
       </Dialog>
     </div>

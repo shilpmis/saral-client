@@ -1,4 +1,4 @@
-import { TeachingStaff } from "./staff";
+import { StaffType, TeachingStaff } from "./staff";
 
 export enum UserStatus {
   ACTIVE = "ACTIVE",
@@ -49,7 +49,7 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
-  teacher: TeachingStaff | null
+  teacher: StaffType | null
   school : School
 }
 

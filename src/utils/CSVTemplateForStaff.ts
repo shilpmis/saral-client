@@ -5,8 +5,7 @@ export function generateTeachingStaffCSV(): string {
     "middle_name",
     "last_name",
     "gender",
-    "aadhar_no",
-    "mobile_number",
+    "phone_number",
     "role",
     "employment_status",
   ].join(",")
@@ -14,13 +13,12 @@ export function generateTeachingStaffCSV(): string {
   // Add a sample row with example data
   const sampleRow = [
     "John",
-    "M",
+    "Monk",
     "Doe",
     "Male",
-    "123456789012",
     "9876543210",
     "Principal",
-    "Active",
+    "Permanent",
   ].join(",")
 
   // Add an empty row for the user to fill
@@ -37,8 +35,7 @@ export function generateNonTeachingStaffCSV(): string {
     "middle_name",
     "last_name",
     "gender",
-    "aadhar_no",
-    "mobile_number",
+    "phone_number",
     "role",
     "employment_status",
   ].join(",")
@@ -46,13 +43,12 @@ export function generateNonTeachingStaffCSV(): string {
   // Add a sample row with example data
   const sampleRow = [
     "Jane",
-    "A",
+    "Allu",
     "Smith",
     "Female",
-    "123456789012",
     "9876543210",
     "Clerk",
-    "Active",
+    "Permanent",
   ].join(",")
 
   // Add an empty row for the user to fill

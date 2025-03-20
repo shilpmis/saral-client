@@ -15,14 +15,18 @@ import type { PageMeta } from "@/types/global"
 import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import FeePlanDetailsDialog from "./FeePlanDetailsDialog"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
 export const FeePlanManagement: React.FC = () => {
+
   const AcademicDivision = useAppSelector(selectAllAcademicClasses)
   const authState = useAppSelector(selectAuthState)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getFeesPlan, { data: FetchedFeePlans, isLoading }] = useLazyGetFeesPlanQuery()
   const [searchTerm, setSearchTerm] = useState("")
@@ -64,7 +68,7 @@ export const FeePlanManagement: React.FC = () => {
   }
 
   const handlePageChange = (page: number) => {
-    getFeesPlan({ page })
+    getFeesPlan({  academic_sessions : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
   }
 
   // Filter fee plans based on search term
@@ -76,7 +80,7 @@ export const FeePlanManagement: React.FC = () => {
     ) || []
 
   useEffect(() => {
-    if (!FeePlansDetail) getFeesPlan({ page: 1 })
+    if (!FeePlansDetail) getFeesPlan({ academic_sessions : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
   }, [])
 
   useEffect(() => {

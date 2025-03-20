@@ -30,13 +30,15 @@ import {
 import { z } from "zod"
 import { ConcessionFormData } from "@/utils/fees.validation"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Concession } from "@/types/fees"
 
 
 export const ConcessionManagement: React.FC = () => {
 
     const authState = useAppSelector(selectAuthState)
+    const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
     // Queries and mutations
     const [getConcession, { data: concessions, isLoading }] = useLazyGetConcessionsQuery()
@@ -85,7 +87,7 @@ export const ConcessionManagement: React.FC = () => {
                     school_id: authState.user!.school_id,
                 }
             }).unwrap()
-            getConcession({ page: 1 });
+            getConcession({ academic_sessions : CurrentAcademicSessionForSchool!.id ,page: 1 });
             toast({
                 title: "Success",
                 description: "Concession created successfully",
@@ -115,7 +117,7 @@ export const ConcessionManagement: React.FC = () => {
                     status: data.is_active ? "Active" : "Inactive",
                 },
             }).unwrap()
-            getConcession({ page: 1 });
+            getConcession({academic_sessions : CurrentAcademicSessionForSchool!.id , page: 1 });
             toast({
                 title: "Success",
                 description: "Concession updated successfully",
@@ -203,7 +205,7 @@ export const ConcessionManagement: React.FC = () => {
     }
 
     useEffect(() => {
-        getConcession({ page: 1 });
+        getConcession({ academic_sessions : CurrentAcademicSessionForSchool!.id ,page: 1 });
     }, [])
 
     return (

@@ -171,9 +171,9 @@ const StaffDetailsPDF = ({ staff }:any) => {
               <Text style={styles.sectionTitle}>Other Information</Text>
               <View style={styles.row}>
                 <Text style={styles.label}>Religion:</Text>
-                <Text style={styles.value}>{staff.religiion}</Text>
+                <Text style={styles.value}>{staff.religion}</Text>
                 <Text style={styles.label}>Religion(Guj):</Text>
-                <Text style={styles.value}>{staff.religiion_in_guj}</Text>
+                <Text style={styles.value}>{staff.religion_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Caste:</Text>

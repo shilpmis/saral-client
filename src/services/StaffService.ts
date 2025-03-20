@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import type { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
+import type { StaffRole, StaffType } from "@/types/staff"
 import { setStaffRole } from "@/redux/slices/staffSlice"
 import ApiService from "./ApiService"
 import type { StaffFormData } from "@/utils/staff.validation"
@@ -17,9 +17,9 @@ export const StaffApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getSchoolStaffRole: builder.query<StaffRole[] , number>({
+    getSchoolStaffRole: builder.query<StaffRole[], number>({
       query: (schoolId) => ({
-        url: `staff/${schoolId}`,
+        url: `staff-role/${schoolId}`,
         method: "GET",
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -27,101 +27,83 @@ export const StaffApi = createApi({
         dispatch(setStaffRole(data))
       },
     }),
-    getTeachingStaff: builder.query<{ data: TeachingStaff[]; meta: PageMeta }, { school_id: number; page?: number }>({
-      query: ({ school_id, page = 1 }) => ({
-        url: `teachers/${school_id}?page=${page}`,
+    getTeachingStaff: builder.query<{ data: StaffType[]; meta: PageMeta }, { academic_sessions: number, page?: number }>({
+      query: ({ academic_sessions, page = 1 }) => ({
+        url: `staff?page=${page}&type=${'teaching'}&academic_sessions=${academic_sessions}`,
         method: "GET",
       }),
     }),
-    getAllTeachingStaff: builder.query< TeachingStaff[], { school_id: number }>({
+    getAllTeachingStaff: builder.query<StaffType[], { school_id: number }>({
       query: ({ school_id }) => ({
         url: `teachers/all/${school_id}`,
         method: "GET",
       }),
     }),
-    getOtherStaff: builder.query<{ data: OtherStaff[]; meta: PageMeta }, { school_id: number; page?: number }>({
-      query: ({ school_id, page = 1 }) => ({
-        url: `other-staff/${school_id}?page=${page}`,
+    getOtherStaff: builder.query<{ data: StaffType[]; meta: PageMeta }, { academic_sessions: number, page?: number }>({
+      query: ({ academic_sessions, page = 1 }) => ({
+        url: `staff?page=${page}&type=${'other'}&academic_sessions=${academic_sessions}`,
         method: "GET",
       }),
     }),
-    addTeachingStaff: builder.mutation<TeachingStaff, { school_id: number; staffData: StaffFormData[] }>({
-      query: ({ school_id, staffData }) => ({
-        url: `teachers/${school_id}`,
+
+    addStaff: builder.mutation<StaffType, { academic_sessions: number, payload: StaffFormData }>({
+      query: ({ academic_sessions, payload }) => ({
+        url: `staff?academic_sessions=${academic_sessions}`,
         method: "POST",
-        body: staffData,
+        body: payload,
       }),
     }),
-    
-    addOtherStaff: builder.mutation<OtherStaff, { school_id: number; staffData: StaffFormData[] }>({
-      query: ({ school_id, staffData }) => ({
-        url: `other-staff/${school_id}`,
-        method: "POST",
-        body: staffData,
-      }),
-    }),
-    
-    updateTeacher: builder.mutation<TeachingStaff,{ school_id: number; teacher_id: number; data: StaffFormData}>({
-      query: ({ school_id, teacher_id, data }) => ({
-        url: `teacher/${school_id}/${teacher_id}`,
+
+    updateStaff: builder.mutation<StaffType, { staff_id: number, payload: Partial<StaffFormData> }>({
+      query: ({ payload, staff_id }) => ({
+        url: `staff/${staff_id}`,
         method: "PUT",
-        body: data,
+        body: payload,
       }),
     }),
-    updateOtherStaff: builder.mutation<OtherStaff,{ school_id: number; otherStaff_id: number; data: StaffFormData}>({
-      query: ({ school_id, otherStaff_id, data }) => ({
-        url: `other-staff/${school_id}/${otherStaff_id}`,
-        method: "PUT",
-        body: data,
-      }),
-    }),
-    
-    bulkUploadTeachers: builder.mutation<{ message: string; totalInserted: number }, { school_id: number , file: File }>({
-      query: ({ school_id, file }) => {
+
+    bulkUploadStaff: builder.mutation<{ message: string; totalInserted: number }, { academic_session: number, type: "teaching" | "non-teaching", file: File }>({
+      query: ({ academic_session, type, file }) => {
         const formData = new FormData();
         formData.append("file", file);
         return {
-          url: `teachers/bulk-upload/${school_id}`,
+          url: `staff/bulk-upload?academic_sessions=${academic_session}&staff-type=${type}`,
           method: "POST",
           body: formData,
         };
       },
     }),
-    
-    bulkUploadOtherStaff: builder.mutation<{ message: string; totalInserted: number }, { school_id: number , file: File }>({
-      query: ({ school_id, file }) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        return {
-          url: `other-staff/bulk-upload/${school_id}`,
-          method: "POST",
-          body: formData,
-        };
-      },
+    downloadExcelTemplate: builder.mutation<any, { type: "teaching" | "non-teaching" , school_id : number, academic_session : number,  fields: string[] }>({
+      query: ({ school_id ,academic_session , fields , type }) => ({
+        url: `staff/export/${school_id}/${academic_session}?staff-type=${type}`,
+        method: "POST",
+        body: {
+          fields: fields
+        },
+        responseHandler: (response) => response.blob()
+      }),
     }),
 
   }),
 })
 
 export const {
-  
+
   useGetSchoolStaffRoleQuery,
   useLazyGetSchoolStaffRoleQuery,
   useLazyGetTeachingStaffQuery,
   useLazyGetOtherStaffQuery,
-  useAddTeachingStaffMutation,
-  useAddOtherStaffMutation,
-  useUpdateTeacherMutation,
-  useUpdateOtherStaffMutation,
-  useBulkUploadTeachersMutation,
-  useBulkUploadOtherStaffMutation  
+  useBulkUploadStaffMutation,
+  useAddStaffMutation,
+  useUpdateStaffMutation,
+  useDownloadExcelTemplateMutation
 } = StaffApi
 
 export const createStaffRole = createAsyncThunk(
   "staff/create",
-  async (payload: { role: string; is_teaching_role: boolean; school_id?: number }, { rejectWithValue }) => {
+  async ({ academic_session, payload }: { academic_session: number; payload: { role: string; is_teaching_role: boolean; school_id?: number } }, { rejectWithValue }) => {
     try {
-      const created_role = await ApiService.post(`staff`, payload)
+      const created_role = await ApiService.post(`staff-role?academic_session=${academic_session}`, payload)
       return created_role.data
     } catch (error: any) {
       console.log("Error while adding staff", error)
@@ -134,7 +116,7 @@ export const updateStaffRole = createAsyncThunk(
   "staff/update",
   async ({ staff_id, payload }: { staff_id: number; payload: { role: string } }, { rejectWithValue }) => {
     try {
-      const updated_role = await ApiService.put(`staff/${staff_id}`, payload)
+      const updated_role = await ApiService.put(`staff-role/${staff_id}`, payload)
       return updated_role.data
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to update staff role")
@@ -142,7 +124,7 @@ export const updateStaffRole = createAsyncThunk(
   },
 )
 
-export const deleteStaffRole = createAsyncThunk("staff/delete", async (staff_id: number, { rejectWithValue }) => {
+export const deleteStaffRole = createAsyncThunk("staff-role/delete", async (staff_id: number, { rejectWithValue }) => {
   try {
     const deleted_role = await ApiService.delete(`staff/${staff_id}`)
     return deleted_role.data

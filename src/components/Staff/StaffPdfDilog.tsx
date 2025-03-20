@@ -177,11 +177,11 @@ interface StaffPdfDilogProps {
                            <div className="space-y-2">
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Religion:</p>
-                               <p className="font-medium">{selectedStaff.religiion}</p>
+                               <p className="font-medium">{selectedStaff.religion}</p>
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Religion(Guj):</p>
-                               <p className="font-medium">{selectedStaff.religiion_in_guj}</p>
+                               <p className="font-medium">{selectedStaff.religion_in_guj}</p>
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Caste:</p>

@@ -18,9 +18,8 @@ import { toast } from "@/hooks/use-toast"
 import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery } from "@/services/feesService"
 import { FeesPlanDetail, InstallmentBreakdowns } from "@/types/fees"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
-import { selectAuthState } from "@/redux/slices/authSlice"
-import { useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import {  useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
 
 
 // Define the fee types interface
@@ -205,6 +204,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
   // const [getFeesPlan, { data: FetchedFeePlans }] = useLazyGetFeesPlanQuery();
   const [getAllFeesType, { data: FetchedFeesType, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery();
   const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
+
+    const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getFeePlanInDetail, { data: fetchedDetialFeePlan,
     isLoading: isFetchingFeesPlan,
@@ -536,7 +538,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
   useEffect(() => {
     if (plan_id && plan_id !== 0) {
-      getFeePlanInDetail({ plan_id })
+      getFeePlanInDetail({ academic_sessions : CurrentAcademicSessionForSchool!.id , plan_id })
     } else {
       setIsFormFieldsForEditSet(true);
     }

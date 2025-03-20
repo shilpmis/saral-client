@@ -78,6 +78,7 @@ export const {
   useGetAcademicSessionsQuery,
   useCreateAcademicSessionMutation,
   useSetActiveSessionMutation,
+  useLazyGetAllClassesWithOuutFeesPlanQuery
 } = AcademicApi
 
 /**

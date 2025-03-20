@@ -43,9 +43,9 @@ export const FeesApi = createApi({
                 body: data
             })
         }),
-        getFeesPlan: builder.query<{ data: FeesPlan[], meta: PageMeta }, { page?: number }>({
-            query: ({ page = 1 }) => ({
-                url: `/feesplan?page=${page}`,
+        getFeesPlan: builder.query<{ data: FeesPlan[], meta: PageMeta }, { academic_sessions : number , page?: number }>({
+            query: ({ academic_sessions , page = 1 }) => ({
+                url: `/feesplan?academic_sessions=${academic_sessions}&page=${page}`,
                 method: "GET"
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -57,9 +57,9 @@ export const FeesApi = createApi({
                 }
             }
         }),
-        FetchDetailFeePlan: builder.query<DetailedFeesPlan, { plan_id: number }>({
-            query: ({ plan_id }) => ({
-                url: `/feesplan/detail/${plan_id}`,
+        FetchDetailFeePlan: builder.query<DetailedFeesPlan, { academic_sessions : number ,plan_id: number }>({
+            query: ({ plan_id , academic_sessions}) => ({
+                url: `/feesplan/detail/${plan_id}?academic_sessions=${academic_sessions}`,
                 method: "GET"
             })
         }),
@@ -108,9 +108,9 @@ export const FeesApi = createApi({
             })
         }),
 
-        getConcessions: builder.query<{ data: Concession[], meta: PageMeta }, { page?: number }>({
-            query: ({ page = 1 }) => ({
-                url: `/concessions?page=${page}`,
+        getConcessions: builder.query<{ data: Concession[], meta: PageMeta }, { academic_sessions : number ,page?: number }>({
+            query: ({ page = 1 , academic_sessions}) => ({
+                url: `/concessions?academic_sessions=${academic_sessions}&page=${page}`,
                 method: "GET"
             })
         }),
