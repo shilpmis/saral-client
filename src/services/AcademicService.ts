@@ -43,6 +43,12 @@ export const AcademicApi = createApi({
         }
       }
     }),
+    getAllClassesWithOuutFeesPlan: builder.query<Division[], { school_id: number }>({
+      query: ({ school_id }) => ({
+        url: `/classes/${school_id}?without_fees_plan=true`,
+        method: "GET",
+      }),
+    }),
     getAcademicSessions: builder.query<any, number>({
       query: (school_id) => ({
         url: `/academic-sessions/${school_id}`,
@@ -62,8 +68,9 @@ export const AcademicApi = createApi({
         method: "PUT",
       }),
     }),
-  }),
+  })
 })
+
 
 export const {
   useGetAcademicClassesQuery,
@@ -71,6 +78,7 @@ export const {
   useGetAcademicSessionsQuery,
   useCreateAcademicSessionMutation,
   useSetActiveSessionMutation,
+  useLazyGetAllClassesWithOuutFeesPlanQuery
 } = AcademicApi
 
 /**
@@ -104,7 +112,7 @@ export const createDivision = createAsyncThunk<Class, Omit<Class, 'id' | 'school
   }
 )
 
-export const editDivision = createAsyncThunk<Class[], {aliases : string | null , class_id : number}>(
+export const editDivision = createAsyncThunk<Class[], { aliases: string | null, class_id: number }>(
   "academic/createDivision",
   async (paylaod, { rejectWithValue }) => {
     try {

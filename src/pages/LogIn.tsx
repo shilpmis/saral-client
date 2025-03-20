@@ -91,7 +91,7 @@ export default function LoginPage() {
   useEffect(() => {
     const isRootOrLogin = pathname === '/' || pathname === '/login';
     if (isAuthenticated && isRootOrLogin) {
-      navigate('/d/');
+      navigate('/d/students');
     }
   }, [isAuthenticated]);
 

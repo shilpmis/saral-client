@@ -32,12 +32,9 @@ interface TypeForUpdateSchoolData {
 const basicSchoolDataSchema = z.object({
   organization: z.object({
     name: z.string(),
-    organization_id: z.number(),
-    organization_logo: z.string(),
     head_contact_number: z.number(),
     head_name: z.string(),
-    pincode: z.number(),
-    username: z.string(),
+    pincode: z.number().nullable(),
     address: z.any(),
     subscription_type: z.string()
   }),
@@ -95,12 +92,9 @@ export default function GeneralSettings() {
     defaultValues: {
       organization: {
         name: "",
-        organization_id: 0,
-        organization_logo: "",
         head_contact_number: 0,
         head_name: "",
-        pincode: 0,
-        username: "",
+        pincode: null,
         address: "",
         subscription_type: ""
       },
@@ -213,6 +207,8 @@ export default function GeneralSettings() {
     })
   }, [data])
 
+  console.log(basicSchoolDataForm.formState.errors)
+
   return (
     <>
       {isSuccess && (<div className="space-y-6">
@@ -228,7 +224,7 @@ export default function GeneralSettings() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
               <img
-            src={basicSchoolDataForm.getValues('organization.organization_logo')} // Replace with your image path
+            src={data.organization.organization_logo} // Replace with your image path
             alt="Organization Icon"
             className="h-20 w-20 rounded-full" // Adjust size and style as needed
           />
@@ -291,7 +287,7 @@ export default function GeneralSettings() {
                 <FormItem>
                   <FormLabel>Pincode</FormLabel>
                   <FormControl>
-                    <Input placeholder="pincode" {...field} disabled />
+                    <Input placeholder="pincode" {...field} value={field.value ?? ''} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -139,7 +139,8 @@ const authSlice = createSlice({
 
 export const selectCurrentUser = (state: RootState) => state.auth.user;
 export const selectCurrentTeacher = (state: RootState) => state.auth.user?.teacher;
-export const selectCurrentAccademicSession = (state: RootState) => state.auth.user?.school?.academicSessions;
+export const selectAccademicSessionsForSchool = (state: RootState) => state.auth.user?.school?.academicSessions;
+export const selectActiveAccademicSessionsForSchool = (state: RootState) => state.auth.currentActiveAcademicSession;
 export const selectVerificationStatus = (state: RootState) => state.auth;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthStatus = (state: RootState) => state.auth.status;

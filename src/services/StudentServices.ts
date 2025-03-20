@@ -22,15 +22,15 @@ export const StudentApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    fetchStudentForClass: builder.query<any, { class_id: number, page?: number, student_meta?: boolean }>({
-      query: ({ class_id, page = 1, student_meta = true }) => ({
-        url: `students/${class_id}?page=${page}&student_meta=${student_meta}`,
+    fetchStudentForClass: builder.query<any, {academic_session : number, class_id: number, page?: number, student_meta?: boolean }>({
+      query: ({ academic_session , class_id, page = 1, student_meta = false }) => ({
+        url: `students/${academic_session}/${class_id}?page=${page}&student_meta=${student_meta}`,
         method: "GET",
       }),
     }),
-    fetchSingleStundet: builder.query<any, { school_id: number, student_id: number, page?: number, student_meta?: boolean }>({
-      query: ({ school_id, student_id, page = 1, student_meta = true }) => ({
-        url: `student/${school_id}/${student_id}?student_meta=${student_meta}`,
+    fetchSingleStundet: builder.query<Student, { student_id: number, page?: number, student_meta?: boolean }>({
+      query: ({  student_id, page = 1, student_meta = true }) => ({
+        url: `student/${student_id}?student_meta=${student_meta}`,
         method: "GET",
       }),
     }),
@@ -41,9 +41,9 @@ export const StudentApi = createApi({
         body: students,
       }),
     }),
-    addSingleStudent: builder.mutation<any, {payload : StudentEntry}>({
-      query: ({payload}) => ({
-        url: `student`,
+    addSingleStudent: builder.mutation<any, { payload: StudentEntry , academic_session : number }>({
+      query: ({ payload , academic_session}) => ({
+        url: `student?academic_sessions=${academic_session}`,
         method: "POST",
         body: payload,
       }),
@@ -56,20 +56,28 @@ export const StudentApi = createApi({
       }),
     }),
 
-    bulkUploadStudents: builder.mutation<
-      { message: string; totalInserted: number },
-      { school_id: number; class_id: number; file: File }
-    >({
-      query: ({ school_id, class_id, file }) => {
+    bulkUploadStudents: builder.mutation<{ message: string; totalInserted: number }, {academic_session : number, school_id: number; class_id: number; file: File }>({
+      query: ({ academic_session , school_id, class_id, file }) => {
         const formData = new FormData()
         formData.append("file", file)
-        console.log("file",file);
         return {
-          url: `students/bulk-upload/${school_id}?class_id=${class_id}`,
+          url: `students/bulk-upload/${school_id}/${academic_session}/${class_id}`,
           method: "POST",
           body: formData,
         }
       },
+    }),
+
+    downloadExcelTemplate: builder.mutation<any, { class_id: number, academic_session : number, payload: { students: string[], student_meta: string[] } }>({
+      query: ({ academic_session ,class_id, payload }) => ({
+        url: `students/export/${academic_session}/${class_id}`,
+        method: "POST",
+        body: {
+          class_id: class_id,
+          fields: payload
+        },
+        responseHandler: (response) => response.blob()
+      }),
     }),
   }),
 });
@@ -81,7 +89,8 @@ export const {
   useAddSingleStudentMutation,
   useUpdateStudentMutation,
   useLazyFetchSingleStundetQuery,
-  useBulkUploadStudentsMutation
+  useBulkUploadStudentsMutation,
+  useDownloadExcelTemplateMutation
 } = StudentApi;
 
 /**
