@@ -12,73 +12,108 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { mockClasses } from "@/mock/admissionMockData"
+import { toast } from "@/hooks/use-toast"
+import { useAddInquiryMutation } from "@/services/InquiryServices"
+
 
 const formSchema = z.object({
-  studentName: z.string().min(2, { message: "Student name is required" }),
+  student_name: z.string().min(2, { message: "Student name is required" }),
   dob: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.string().min(1, { message: "Gender is required" }),
-  classApplying: z.string().min(1, { message: "Class is required" }),
-  parentName: z.string().min(2, { message: "Parent name is required" }),
-  parentContact: z.string().min(10, { message: "Valid contact number is required" }),
-  parentEmail: z.string().email({ message: "Valid email is required" }),
+  class_applying: z.string().min(1, { message: "Class is required" }),
+  parent_name: z.string().min(2, { message: "Parent name is required" }),
+  parent_contact: z.string().min(10, { message: "Valid contact number is required" }),
+  parent_email: z.string().email({ message: "Valid email is required" }),
   address: z.string().min(5, { message: "Address is required" }),
-  previousSchool: z.string().optional(),
-  previousClass: z.string().optional(),
-  previousPercentage: z.string().optional(),
-  previousYear: z.string().optional(),
-  specialAchievements: z.string().optional(),
-  applyingForQuota: z.string().min(1, { message: "Please select an option" }),
-  quotaType: z.string().optional(),
+  previous_school: z.string().optional(),
+  previous_class: z.string().optional(),
+  previous_percentage: z.string().optional(),
+  previous_year: z.string().optional(),
+  special_achievements: z.string().optional(),
+  applying_for_quota: z.string().min(1, { message: "Please select an option" }),
+  quota_type: z.string().optional(),
 })
 
 export default function AdmissionInquiryForm() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  const [addInquiry, { isLoading }] = useAddInquiryMutation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      studentName: "",
+      student_name: "",
       dob: "",
       gender: "",
-      classApplying: "",
-      parentName: "",
-      parentContact: "",
-      parentEmail: "",
+      class_applying: "",
+      parent_name: "",
+      parent_contact: "",
+      parent_email: "",
       address: "",
-      previousSchool: "",
-      previousClass: "",
-      previousPercentage: "",
-      previousYear: "",
-      specialAchievements: "",
-      applyingForQuota: "no",
-      quotaType: "",
+      previous_school: "",
+      previous_class: "",
+      previous_percentage: "",
+      previous_year: "",
+      special_achievements: "",
+      applying_for_quota: "no",
+      quota_type: "",
     },
   })
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values)
-    setSubmitted(true)
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const response = await addInquiry({
+        academic_id: 1, // Assuming a default academic year ID
+        student_name: values.student_name,
+        dob: values.dob,
+        gender: values.gender,
+        class_applying: Number.parseInt(values.class_applying),
+        parent_name: values.parent_name,
+        parent_contact: values.parent_contact,
+        address: values.address,
+        applying_for_quota: values.applying_for_quota === "yes",
+        parent_email: values.parent_email,
+        previous_school: values.previous_school,
+        previous_class: values.previous_class,
+        previous_percentage: values.previous_percentage,
+        previous_year: values.previous_year,
+        special_achievements: values.special_achievements,
+        quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
+      })
+
+      console.log(response)
+      setSubmitted(true)
+      toast({
+        title: "Inquiry Submitted",
+        description: "Your inquiry has been successfully submitted.",
+      })
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "There was an error submitting your inquiry. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const nextStep = () => {
     if (step === 1) {
-      form.trigger(["studentName", "dob", "gender", "classApplying"])
+      form.trigger(["student_name", "dob", "gender", "class_applying"])
       if (
-        form.getFieldState("studentName").invalid ||
+        form.getFieldState("student_name").invalid ||
         form.getFieldState("dob").invalid ||
         form.getFieldState("gender").invalid ||
-        form.getFieldState("classApplying").invalid
+        form.getFieldState("class_applying").invalid
       ) {
         return
       }
     } else if (step === 2) {
-      form.trigger(["parentName", "parentContact", "parentEmail", "address"])
+      form.trigger(["parent_name", "parent_contact", "parent_email", "address"])
       if (
-        form.getFieldState("parentName").invalid ||
-        form.getFieldState("parentContact").invalid ||
-        form.getFieldState("parentEmail").invalid ||
+        form.getFieldState("parent_name").invalid ||
+        form.getFieldState("parent_contact").invalid ||
+        form.getFieldState("parent_email").invalid ||
         form.getFieldState("address").invalid
       ) {
         return
@@ -154,7 +189,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="studentName"
+                        name="student_name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Student Full Name</FormLabel>
@@ -213,7 +248,7 @@ export default function AdmissionInquiryForm() {
 
                     <FormField
                       control={form.control}
-                      name="classApplying"
+                      name="class_applying"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Class Applying For</FormLabel>
@@ -224,9 +259,9 @@ export default function AdmissionInquiryForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {mockClasses.map((cls) => (
-                                <SelectItem key={cls.id} value={cls.id}>
-                                  {cls.name}
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((cls) => (
+                                <SelectItem key={cls} value={cls.toString()}>
+                                  Class {cls}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -243,7 +278,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="parentName"
+                        name="parent_name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Parent/Guardian Name</FormLabel>
@@ -256,7 +291,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="parentContact"
+                        name="parent_contact"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Contact Number</FormLabel>
@@ -271,7 +306,7 @@ export default function AdmissionInquiryForm() {
 
                     <FormField
                       control={form.control}
-                      name="parentEmail"
+                      name="parent_email"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email Address</FormLabel>
@@ -304,7 +339,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previousSchool"
+                        name="previous_school"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Previous School</FormLabel>
@@ -317,7 +352,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previousClass"
+                        name="previous_class"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Last Class Completed</FormLabel>
@@ -333,7 +368,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previousPercentage"
+                        name="previous_percentage"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Percentage/Grade</FormLabel>
@@ -346,7 +381,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previousYear"
+                        name="previous_year"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Year</FormLabel>
@@ -361,7 +396,7 @@ export default function AdmissionInquiryForm() {
 
                     <FormField
                       control={form.control}
-                      name="specialAchievements"
+                      name="special_achievements"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Special Achievements (Sports, Arts, etc.)</FormLabel>
@@ -375,7 +410,7 @@ export default function AdmissionInquiryForm() {
 
                     <FormField
                       control={form.control}
-                      name="applyingForQuota"
+                      name="applying_for_quota"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Are you applying under any quota?</FormLabel>
@@ -400,10 +435,10 @@ export default function AdmissionInquiryForm() {
                       )}
                     />
 
-                    {form.watch("applyingForQuota") === "yes" && (
+                    {form.watch("applying_for_quota") === "yes" && (
                       <FormField
                         control={form.control}
-                        name="quotaType"
+                        name="quota_type"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Select Quota</FormLabel>
@@ -440,8 +475,8 @@ export default function AdmissionInquiryForm() {
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" className="ml-auto">
-                    Submit Inquiry
+                  <Button type="submit" className="ml-auto" disabled={isLoading}>
+                    {isLoading ? "Submitting..." : "Submit Inquiry"}
                   </Button>
                 )}
               </div>

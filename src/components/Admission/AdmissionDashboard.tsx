@@ -1,14 +1,35 @@
 import type React from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { DashboardData, AdmissionTrend } from "@/types/student"
+import { useGetInquiriesQuery } from "@/services/InquiryServices"
+
+interface DashboardData {
+  totalInquiries: number
+  pendingApplications: number
+  acceptedAdmissions: number
+  upcomingInterviews: number
+}
+
+interface AdmissionTrend {
+  grade: string
+  inquiries: number
+}
 
 interface AdmissionDashboardProps {
-  data: DashboardData
   trends: AdmissionTrend[]
 }
 
-export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, trends }) => {
+export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }) => {
+  const { data: inquiriesData, isLoading } = useGetInquiriesQuery({ page: 1, limit: 100 })
+
+  // Calculate dashboard data from API response
+  const dashboardData: DashboardData = {
+    totalInquiries: inquiriesData?.data.length || 0,
+    pendingApplications: inquiriesData?.data.filter((i) => i.status === "pending").length || 0,
+    acceptedAdmissions: inquiriesData?.data.filter((i) => i.status === "approved").length || 0,
+    upcomingInterviews: inquiriesData?.data.filter((i) => i.status === "Interview Scheduled").length || 0,
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -31,7 +52,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.totalInquiries}</div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : dashboardData.totalInquiries}</div>
             <p className="text-xs text-muted-foreground">+12% from last month</p>
           </CardContent>
         </Card>
@@ -52,7 +73,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.pendingApplications}</div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : dashboardData.pendingApplications}</div>
             <p className="text-xs text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
@@ -73,7 +94,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.acceptedAdmissions}</div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : dashboardData.acceptedAdmissions}</div>
             <p className="text-xs text-muted-foreground">+18% from last month</p>
           </CardContent>
         </Card>
@@ -95,7 +116,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.upcomingInterviews}</div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : dashboardData.upcomingInterviews}</div>
             <p className="text-xs text-muted-foreground">Scheduled this week</p>
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 "use client"
 
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -15,27 +15,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { mockInquiries } from "@/mock/admissionMockData"
-import { ChevronLeft, SquareChevronLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { SquareChevronLeft } from "lucide-react"
+import { Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
+import { toast } from "@/hooks/use-toast"
+
 
 export default function InquiriesManagement() {
-  const [inquiries, setInquiries] = useState(mockInquiries)
+  const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1 })
+  const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
   const [filter, setFilter] = useState("all")
-  const [selectedInquiry, setSelectedInquiry] = useState<null | typeof mockInquiries[0]>(null)
-  const navigate = useNavigate();
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
 
-  const filteredInquiries = filter === "all" ? inquiries : inquiries.filter((inquiry) => inquiry.status === filter)
+  const filteredInquiries =
+    filter === "all" ? inquiriesData?.data : inquiriesData?.data.filter((inquiry) => inquiry.status === filter)
 
-  const handleStatusChange = (id: string, status: string) => {
-    setInquiries(inquiries.map((inquiry) => (inquiry.id === id ? { ...inquiry, status } : inquiry)))
+  const handleStatusChange = async (id: number, status: string) => {
+    try {
+      await updateInquiry({ id, status }).unwrap()
+      toast({
+        title: "Status Updated",
+        description: "The inquiry status has been updated successfully.",
+      })
+      refetch()
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to update inquiry status. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleGoBack = () => {
-    navigate(-1);
-  }  
+    window.history.back()
+  }
 
-  const getStatusBadge = (status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
         return (
@@ -66,17 +82,30 @@ export default function InquiriesManagement() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
-        <div
-            style={{ border: '1px  black', display: 'inline-flex', padding: '1px', cursor: 'pointer', marginTop: '10px' }}
-            onClick={handleGoBack} // Add onClick to handle navigation
+          <div
+            style={{
+              border: "1px  black",
+              display: "inline-flex",
+              padding: "1px",
+              cursor: "pointer",
+              marginTop: "10px",
+            }}
+            onClick={handleGoBack}
           >
             <SquareChevronLeft className="text-xl mr-2" />
             <span>Go Back</span>
-
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Admission Inquiries</h1>
           <div className="flex items-center space-x-2">
@@ -102,52 +131,58 @@ export default function InquiriesManagement() {
             <CardDescription>Review and process admission inquiries</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Parent Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInquiries.map((inquiry) => (
-                  <TableRow key={inquiry.id}>
-                    <TableCell className="font-medium">{inquiry.studentName}</TableCell>
-                    <TableCell>{inquiry.class}</TableCell>
-                    <TableCell>{inquiry.parentName}</TableCell>
-                    <TableCell>{inquiry.contact}</TableCell>
-                    <TableCell>{new Date(inquiry.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedInquiry(inquiry)}>
-                          View
-                        </Button>
-                        <Select
-                          defaultValue={inquiry.status}
-                          onValueChange={(value) => handleStatusChange(inquiry.id, value)}
-                        >
-                          <SelectTrigger className="h-8 w-[130px]">
-                            <SelectValue placeholder="Change status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="eligible">Eligible</SelectItem>
-                            <SelectItem value="ineligible">Ineligible</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableCell>
+            {filteredInquiries && filteredInquiries.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student Name</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Parent Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredInquiries.map((inquiry) => (
+                    <TableRow key={inquiry.id}>
+                      <TableCell className="font-medium">{inquiry.student_name}</TableCell>
+                      <TableCell>{inquiry.class_applying}</TableCell>
+                      <TableCell>{inquiry.parent_name}</TableCell>
+                      <TableCell>{inquiry.parent_contact}</TableCell>
+                      <TableCell>{new Date(inquiry.dob).toLocaleDateString()}</TableCell>
+                      <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => setSelectedInquiry(inquiry)}>
+                            View
+                          </Button>
+                          <Select
+                            defaultValue={inquiry.status}
+                            onValueChange={(value) => handleStatusChange(inquiry.id, value)}
+                          >
+                            <SelectTrigger className="h-8 w-[130px]">
+                              <SelectValue placeholder="Change status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="eligible">Eligible</SelectItem>
+                              <SelectItem value="ineligible">Ineligible</SelectItem>
+                              <SelectItem value="approved">Approved</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center p-8 border rounded-lg bg-muted/50">
+                No inquiries found matching the selected filter.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -164,13 +199,13 @@ export default function InquiriesManagement() {
                     <h3 className="text-lg font-medium">Student Information</h3>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">Name:</div>
-                      <div className="text-sm">{selectedInquiry.studentName}</div>
+                      <div className="text-sm">{selectedInquiry.student_name}</div>
                       <div className="text-sm font-medium">Date of Birth:</div>
-                      <div className="text-sm">15/08/2015</div>
+                      <div className="text-sm">{new Date(selectedInquiry.dob).toLocaleDateString()}</div>
                       <div className="text-sm font-medium">Gender:</div>
-                      <div className="text-sm">Male</div>
+                      <div className="text-sm">{selectedInquiry.gender}</div>
                       <div className="text-sm font-medium">Applied for Class:</div>
-                      <div className="text-sm">{selectedInquiry.class}</div>
+                      <div className="text-sm">{selectedInquiry.class_applying}</div>
                     </div>
                   </div>
 
@@ -178,13 +213,13 @@ export default function InquiriesManagement() {
                     <h3 className="text-lg font-medium">Parent Information</h3>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">Parent Name:</div>
-                      <div className="text-sm">{selectedInquiry.parentName}</div>
+                      <div className="text-sm">{selectedInquiry.parent_name}</div>
                       <div className="text-sm font-medium">Contact:</div>
-                      <div className="text-sm">{selectedInquiry.contact}</div>
+                      <div className="text-sm">{selectedInquiry.parent_contact}</div>
                       <div className="text-sm font-medium">Email:</div>
-                      <div className="text-sm">{selectedInquiry.email || "parent@example.com"}</div>
-                      <div className="text-sm font-medium">Occupation:</div>
-                      <div className="text-sm">Software Engineer</div>
+                      <div className="text-sm">{selectedInquiry.parent_email || "N/A"}</div>
+                      <div className="text-sm font-medium">Address:</div>
+                      <div className="text-sm">{selectedInquiry.address}</div>
                     </div>
                   </div>
                 </div>
@@ -194,43 +229,26 @@ export default function InquiriesManagement() {
                     <h3 className="text-lg font-medium">Previous Education</h3>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">School Name:</div>
-                      <div className="text-sm">ABC Primary School</div>
+                      <div className="text-sm">{selectedInquiry.previous_school || "N/A"}</div>
                       <div className="text-sm font-medium">Last Class:</div>
-                      <div className="text-sm">5th</div>
+                      <div className="text-sm">{selectedInquiry.previous_class || "N/A"}</div>
                       <div className="text-sm font-medium">Percentage:</div>
-                      <div className="text-sm">85%</div>
+                      <div className="text-sm">{selectedInquiry.previous_percentage || "N/A"}</div>
                       <div className="text-sm font-medium">Year:</div>
-                      <div className="text-sm">2023</div>
+                      <div className="text-sm">{selectedInquiry.previous_year || "N/A"}</div>
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-lg font-medium">Quota Eligibility</h3>
                     <div className="grid grid-cols-1 gap-2 mt-2">
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="rte-quota" />
-                        <label htmlFor="rte-quota" className="text-sm">
-                          RTE Quota
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="staff-quota" />
-                        <label htmlFor="staff-quota" className="text-sm">
-                          Staff Quota
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="sports-quota" />
-                        <label htmlFor="sports-quota" className="text-sm">
-                          Sports Quota
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="management-quota" />
-                        <label htmlFor="management-quota" className="text-sm">
-                          Management Quota
-                        </label>
-                      </div>
+                      {selectedInquiry.applying_for_quota ? (
+                        <div className="p-2 bg-muted rounded-md">
+                          Applied for: {selectedInquiry.quota_type || "General Quota"}
+                        </div>
+                      ) : (
+                        <div className="p-2 bg-muted rounded-md">Not applying for any quota</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -243,6 +261,7 @@ export default function InquiriesManagement() {
                       handleStatusChange(selectedInquiry.id, "ineligible")
                       setSelectedInquiry(null)
                     }}
+                    disabled={isUpdating}
                   >
                     Mark Ineligible
                   </Button>
@@ -256,6 +275,7 @@ export default function InquiriesManagement() {
                       handleStatusChange(selectedInquiry.id, "eligible")
                       setSelectedInquiry(null)
                     }}
+                    disabled={isUpdating}
                   >
                     Mark Eligible
                   </Button>

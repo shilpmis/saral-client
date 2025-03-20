@@ -4,10 +4,7 @@ import type React from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useState } from "react"
-import type { PageMeta } from "@/types/global"
-import type { InquiriesForStudent } from "@/types/student"
-import { useLazyGetInquiryQuery } from "@/services/InquiryServices"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -17,60 +14,71 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
+import { toast } from "@/hooks/use-toast"
 
 export const InquiryList: React.FC = () => {
-  const [getInquiry, { isLoading: isInquiriesLoading }] = useLazyGetInquiryQuery()
-  const [selectedInquiry, setSelectedInquiry] = useState<InquiriesForStudent | null>(null)
-  const [inquiryData, setInquiryData] = useState<{ data: InquiriesForStudent[]; page: PageMeta } | null>(null)
+  const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1 })
+  const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string>("")
 
-  async function fetchInquiry(page = 1) {
-    const res = await getInquiry({ page })
-    console.log(res)
-    if (res.data) {
-      setInquiryData({
-        data: res.data.data,
-        page: res.data.page,
-      })
-    }
-  }
-
-  useEffect(() => {
-    if (!inquiryData) {
-      fetchInquiry(1)
-    }
-  }, [])
-
-  const handleViewInquiry = (inquiry: InquiriesForStudent) => {
+  const handleViewInquiry = (inquiry: Inquiry) => {
     setSelectedInquiry(inquiry)
+    setSelectedStatus(inquiry.status)
   }
 
   const closeDialog = () => {
     setSelectedInquiry(null)
   }
 
+  const handleStatusUpdate = async () => {
+    if (!selectedInquiry) return
+
+    try {
+      await updateInquiry({
+        id: selectedInquiry.id,
+        status: selectedStatus,
+      }).unwrap()
+
+      toast({
+        title: "Status Updated",
+        description: "The inquiry status has been updated successfully.",
+      })
+
+      refetch()
+      closeDialog()
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to update inquiry status. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <>
-      {inquiryData && inquiryData.data.length > 0 && (
+      {inquiriesData && inquiriesData.data.length > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Student Name</TableHead>
               <TableHead>Parent Name</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Grade</TableHead>
+              <TableHead>Class</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {inquiryData.data.map((inquiry) => (
+            {inquiriesData.data.map((inquiry) => (
               <TableRow key={inquiry.id}>
                 <TableCell>{inquiry.student_name}</TableCell>
                 <TableCell>{inquiry.parent_name}</TableCell>
-                <TableCell>{inquiry.contact_number}</TableCell>
-                <TableCell>{inquiry.email}</TableCell>
-                <TableCell>{inquiry.grade_applying}</TableCell>
+                <TableCell>{inquiry.parent_contact}</TableCell>
+                <TableCell>{inquiry.class_applying}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(inquiry.status)}>{inquiry.status}</Badge>
                 </TableCell>
@@ -85,13 +93,13 @@ export const InquiryList: React.FC = () => {
         </Table>
       )}
 
-      {isInquiriesLoading && (
+      {isLoading && (
         <div className="flex justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
 
-      {inquiryData && inquiryData.data.length === 0 && (
+      {inquiriesData && inquiriesData.data.length === 0 && (
         <div className="text-center p-8 border rounded-lg bg-muted/50">No Inquiries for now!</div>
       )}
 
@@ -109,10 +117,12 @@ export const InquiryList: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <div className="text-sm font-medium">Name:</div>
                     <div className="text-sm">{selectedInquiry.student_name}</div>
-                    <div className="text-sm font-medium">Applied for Grade:</div>
-                    <div className="text-sm">{selectedInquiry.grade_applying}</div>
-                    <div className="text-sm font-medium">Application Date:</div>
-                    <div className="text-sm">{new Date(selectedInquiry.created_at).toLocaleDateString()}</div>
+                    <div className="text-sm font-medium">Applied for Class:</div>
+                    <div className="text-sm">{selectedInquiry.class_applying}</div>
+                    <div className="text-sm font-medium">Date of Birth:</div>
+                    <div className="text-sm">{new Date(selectedInquiry.dob).toLocaleDateString()}</div>
+                    <div className="text-sm font-medium">Gender:</div>
+                    <div className="text-sm">{selectedInquiry.gender}</div>
                     <div className="text-sm font-medium">Status:</div>
                     <div className="text-sm">
                       <Badge variant={getStatusVariant(selectedInquiry.status)}>{selectedInquiry.status}</Badge>
@@ -126,9 +136,11 @@ export const InquiryList: React.FC = () => {
                     <div className="text-sm font-medium">Parent Name:</div>
                     <div className="text-sm">{selectedInquiry.parent_name}</div>
                     <div className="text-sm font-medium">Contact:</div>
-                    <div className="text-sm">{selectedInquiry.contact_number}</div>
+                    <div className="text-sm">{selectedInquiry.parent_contact}</div>
                     <div className="text-sm font-medium">Email:</div>
-                    <div className="text-sm">{selectedInquiry.email}</div>
+                    <div className="text-sm">{selectedInquiry.parent_email || "N/A"}</div>
+                    <div className="text-sm font-medium">Address:</div>
+                    <div className="text-sm">{selectedInquiry.address}</div>
                   </div>
                 </div>
               </div>
@@ -137,60 +149,50 @@ export const InquiryList: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-medium">Update Status</h3>
                   <div className="mt-2 space-y-4">
-                    <Select defaultValue={selectedInquiry.status}>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pendding">Pending</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
+                        <SelectItem value="eligible">Eligible</SelectItem>
+                        <SelectItem value="ineligible">Ineligible</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
                         <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Quota Eligibility</h4>
-                      <div className="grid grid-cols-1 gap-2">
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="rte-quota" />
-                          <label htmlFor="rte-quota" className="text-sm">
-                            RTE Quota
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="staff-quota" />
-                          <label htmlFor="staff-quota" className="text-sm">
-                            Staff Quota
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="sports-quota" />
-                          <label htmlFor="sports-quota" className="text-sm">
-                            Sports Quota
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="management-quota" />
-                          <label htmlFor="management-quota" className="text-sm">
-                            Management Quota
-                          </label>
-                        </div>
+                    {selectedInquiry.applying_for_quota ? (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Quota Applied For</h4>
+                        <div className="p-2 bg-muted rounded-md">{selectedInquiry.quota_type || "General Quota"}</div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
             </div>
             <DialogFooter className="flex justify-between">
               <div className="flex space-x-2">
-                <Button variant="destructive">Reject Application</Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setSelectedStatus("rejected")
+                    handleStatusUpdate()
+                  }}
+                  disabled={isUpdating}
+                >
+                  Reject Application
+                </Button>
               </div>
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={closeDialog}>
                   Close
                 </Button>
-                <Button>Update Status</Button>
+                <Button onClick={handleStatusUpdate} disabled={isUpdating}>
+                  {isUpdating ? "Updating..." : "Update Status"}
+                </Button>
               </div>
             </DialogFooter>
           </DialogContent>
@@ -202,14 +204,18 @@ export const InquiryList: React.FC = () => {
 
 function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
-    case "pendding":
+    case "pending":
       return "default"
     case "Interview Scheduled":
+    case "eligible":
       return "secondary"
     case "approved":
       return "outline"
-    default:
+    case "rejected":
+    case "ineligible":
       return "destructive"
+    default:
+      return "default"
   }
 }
 

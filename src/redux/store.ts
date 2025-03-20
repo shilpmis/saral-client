@@ -37,8 +37,7 @@ const store = configureStore({
     [AttendanceApi.reducerPath] : AttendanceApi.reducer, 
     [InquiryApi.reducerPath] : InquiryApi.reducer,
     [FeesApi.reducerPath] : FeesApi.reducer,
-    [QuotaApi.reducerPath]: QuotaApi.reducer,
-
+    [QuotaApi.reducerPath]: QuotaApi.reducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
     Authapi.middleware ,
@@ -51,7 +50,8 @@ const store = configureStore({
     AttendanceApi.middleware,
     InquiryApi.middleware,
     FeesApi.middleware,
-    QuotaApi.middleware
+    QuotaApi.middleware,
+    InquiryApi.middleware
   ),
 })
 

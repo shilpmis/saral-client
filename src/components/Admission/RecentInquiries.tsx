@@ -1,15 +1,13 @@
 "use client"
-
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { mockInquiries } from "@/mock/admissionMockData"
+import { useGetInquiriesQuery } from "@/services/InquiryServices"
 
 export function RecentInquiries() {
-  const [inquiries] = useState(mockInquiries.slice(0, 5))
+  const { data: inquiriesData, isLoading } = useGetInquiriesQuery({ page: 1, limit: 5 })
 
-  const getStatusBadge = (status: any) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
         return (
@@ -40,6 +38,14 @@ export function RecentInquiries() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -52,11 +58,11 @@ export function RecentInquiries() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {inquiries.map((inquiry) => (
+        {inquiriesData?.data.slice(0, 5).map((inquiry) => (
           <TableRow key={inquiry.id}>
-            <TableCell className="font-medium">{inquiry.studentName}</TableCell>
-            <TableCell>{inquiry.class}</TableCell>
-            <TableCell>{new Date(inquiry.date).toLocaleDateString()}</TableCell>
+            <TableCell className="font-medium">{inquiry.student_name}</TableCell>
+            <TableCell>{inquiry.class_applying}</TableCell>
+            <TableCell>{new Date(inquiry.dob).toLocaleDateString()}</TableCell>
             <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
             <TableCell>
               <Button variant="outline" size="sm">
