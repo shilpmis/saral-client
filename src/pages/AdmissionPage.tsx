@@ -15,7 +15,7 @@ export default function AdminAdmissonView() {
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
 
-  // Mock dashboard data
+  // Mock dashboard data - not used with current AdmissionDashboard implementation
   const dashboardData: DashboardData = {
     totalInquiries: 145,
     pendingApplications: 56,
@@ -24,7 +24,7 @@ export default function AdminAdmissonView() {
     upcomingInterviews: 23,
   }
 
-  // Mock trends data
+  // Mock trends data - not used with current AdmissionDashboard implementation
   const trendData: AdmissionTrend[] = [
     { grade: "Grade 1", inquiries: 25 },
     { grade: "Grade 2", inquiries: 18 },
@@ -74,7 +74,8 @@ export default function AdminAdmissonView() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <AdmissionDashboard data={dashboardData} trends={trendData} />
+            {/* Remove the data and trends props */}
+            <AdmissionDashboard />
           </TabsContent>
 
           <TabsContent value="inquiries" className="space-y-4">
