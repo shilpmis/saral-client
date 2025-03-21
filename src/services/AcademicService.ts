@@ -6,6 +6,13 @@ import { AcademicClasses, Division } from "@/types/academic"
 import { setAcademicClasses } from "@/redux/slices/academicSlice"
 import baseUrl from "@/utils/base-urls"
 
+interface AcademicSession {
+  id?: number
+  school_id: number
+  start_date: string
+  end_date: string
+  is_active?: boolean
+}
 
 /**
  * 
@@ -35,15 +42,48 @@ export const AcademicApi = createApi({
           console.log("Error while fetching academic classes", error)
         }
       }
-    })
+    }),
+    getAllClassesWithOuutFeesPlan: builder.query<Division[], { school_id: number }>({
+      query: ({ school_id }) => ({
+        url: `/classes/${school_id}?without_fees_plan=true`,
+        method: "GET",
+      }),
+    }),
+    getAcademicSessions: builder.query<any, number>({
+      query: (school_id) => ({
+        url: `/academic-sessions/${school_id}`,
+        method: "GET",
+      }),
+    }),
+    createAcademicSession: builder.mutation<AcademicSession, Omit<AcademicSession, "id">>({
+      query: (session) => ({
+        url: "/academic-session",
+        method: "POST",
+        body: session,
+      }),
+    }),
+    setActiveSession: builder.mutation<AcademicSession, number>({
+      query: (sessionId) => ({
+        url: `/academic-session/${sessionId}/activate`,
+        method: "PUT",
+      }),
+    }),
   })
 })
 
-export const { useGetAcademicClassesQuery , useLazyGetAcademicClassesQuery } = AcademicApi;
+
+export const {
+  useGetAcademicClassesQuery,
+  useLazyGetAcademicClassesQuery,
+  useGetAcademicSessionsQuery,
+  useCreateAcademicSessionMutation,
+  useSetActiveSessionMutation,
+  useLazyGetAllClassesWithOuutFeesPlanQuery
+} = AcademicApi
 
 /**
- *  
- *   Query using Thunk for complicated one , which need some operation after or before trigger query 
+ *
+ *   Query using Thunk for complicated one , which need some operation after or before trigger query
  */
 
 
@@ -66,12 +106,13 @@ export const createDivision = createAsyncThunk<Class, Omit<Class, 'id' | 'school
       const res = await ApiService.post('class/division', paylaod);
       return res.data
     } catch (error: any) {
+      console.log(error)
       return rejectWithValue(error.response?.data || "Failed to create class")
     }
   }
 )
 
-export const editDivision = createAsyncThunk<Class[], {aliases : string | null , class_id : number}>(
+export const editDivision = createAsyncThunk<Class[], { aliases: string | null, class_id: number }>(
   "academic/createDivision",
   async (paylaod, { rejectWithValue }) => {
     try {

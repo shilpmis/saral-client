@@ -7,15 +7,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Separator } from "@radix-ui/react-separator";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { ComponentType } from "react";
+import { StaffType } from "@/types/staff";
 
 interface StaffPdfDilogProps {
     dialogOpen: boolean;
     setDialogOpen: (open: boolean) => void;
-    selectedStaff: any;
+    selectedStaff: StaffType;
     StafftDetailsPDF: ComponentType<any>;
   }
 
+  const formatData = (value: any): string => {
+    return  value ? new Date(value).toISOString().split("T")[0] : " "
+  }
+  
   const StaffPdfDilog: React.FC<StaffPdfDilogProps> = ({ dialogOpen, setDialogOpen, selectedStaff, StafftDetailsPDF }) => {
+
+
     return (
      <>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -87,7 +94,7 @@ interface StaffPdfDilogProps {
                            Id: {selectedStaff.id}
                          </Badge>
                          <Badge variant="outline" className="text-sm">
-                           Role: {selectedStaff.role_meta.role}
+                           Role: {selectedStaff.role}
                          </Badge>
                        </div>
                      </div>
@@ -131,7 +138,7 @@ interface StaffPdfDilogProps {
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Dob:</p>
-                               <p className="font-medium">{selectedStaff.birth_date}</p>
+                               <p className="font-medium">{selectedStaff.birth_date ? formatData(selectedStaff.birth_date) : '-' }</p>
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Place</p>
@@ -177,11 +184,11 @@ interface StaffPdfDilogProps {
                            <div className="space-y-2">
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Religion:</p>
-                               <p className="font-medium">{selectedStaff.religiion}</p>
+                               <p className="font-medium">{selectedStaff.religion}</p>
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Religion(Guj):</p>
-                               <p className="font-medium">{selectedStaff.religiion_in_guj}</p>
+                               <p className="font-medium">{selectedStaff.religion_in_guj}</p>
                              </div>
                              <div className="grid grid-cols-2 gap-2">
                                <p className="text-muted-foreground">Caste:</p>
@@ -256,7 +263,7 @@ interface StaffPdfDilogProps {
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                              <div className="space-y-2">
                                <p className="text-muted-foreground">Joining Date:</p>
-                               <p className="font-medium">{selectedStaff.joining_date}</p>
+                               <p className="font-medium">{selectedStaff.joining_date ? formatData(selectedStaff.joining_date) : '-' }</p>
                              </div>
                              <div className="space-y-2">
                                <p className="text-muted-foreground">Employment Status:</p>

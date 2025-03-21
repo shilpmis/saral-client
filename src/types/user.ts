@@ -1,4 +1,4 @@
-import { TeachingStaff } from "./staff";
+import { StaffType, TeachingStaff } from "./staff";
 
 export enum UserStatus {
   ACTIVE = "ACTIVE",
@@ -6,19 +6,38 @@ export enum UserStatus {
   BANNED = "BANNED",
 }
 
-interface School {
-  id: number;
-  name: string;
-  email: string;
-  username: string;
-  contact_number: number;
-  address: string;
-  established_year: string;
-  school_type: string;
-  status: string;
-  subscription_type: string;
+export interface AcademicSession {
+  id: number,
+  uuid: string,
+  school_id: 1,
+  session_name: string,
+  start_date: string,
+  end_date: string,
+  start_month: string,
+  end_month: string,
+  start_year: string,
+  end_year: string,
+  is_active: boolean,
 }
 
+export interface School{
+  id: number,
+  name: string,
+  organization_id: number,
+  email: string,
+  branch_code: string,
+  contact_number: 9876543210,
+  status: string,
+  established_year: string,
+  school_type: string,
+  address: string,
+  district: string,
+  city: string,
+  state: string,
+  school_logo: string,
+  pincode: number,
+  academicSessions : AcademicSession[] 
+}
 export interface User {
   id: number;
   school_id: number;
@@ -30,8 +49,8 @@ export interface User {
   is_active: boolean;
   teacher_id: number | null;
   permissions: string[];
-  teacher: TeachingStaff | null;
-  school:School
+  teacher: StaffType | null
+  school : School
 }
 
 export enum UserRole {
@@ -52,6 +71,7 @@ export enum Permission {
   MANAGE_ATTENDANCE = "MANAGE_ATTENDANCE",
   MANAGE_PAYROLL = "MANAGE_PAYROLL",
   MANAGE_FEES = "MANAGE_FEES",
+  PAY_FEES = "PAY_FEES",
   VIEW_REPORTS = "VIEW_REPORTS",
   MANAGE_SETTINGS = "MANAGE_SETTINGS",
   MANAGE_LEAVES = "MANAGE_LEAVES",
@@ -73,7 +93,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_REPORTS,
     Permission.MANAGE_SETTINGS,
     Permission.MANAGE_LEAVES,
-    Permission.MANAGE_ADMISSION
+    Permission.MANAGE_ADMISSION,
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
@@ -94,7 +114,8 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_DASHBOARD,
     Permission.MANAGE_FEES,
     Permission.MANAGE_ADMISSION,
-    Permission.MANAGE_LEAVES
+    Permission.MANAGE_LEAVES,
+    Permission.PAY_FEES
   ],
   [UserRole.IT_ADMIN]: [
     Permission.VIEW_DASHBOARD,

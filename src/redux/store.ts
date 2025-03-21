@@ -11,11 +11,12 @@ import { SchoolApi } from "@/services/SchoolServices";
 import { AcademicApi } from "@/services/AcademicService";
 import { StaffApi } from "@/services/StaffService";
 import { LeaveApi } from "@/services/LeaveService";
-import { StudentApi } from "@/services/StundetServices";
+import { StudentApi } from "@/services/StudentServices";
 import { UserManagementApi } from "@/services/UserManagementService";
 import { AttendanceApi } from "@/services/AttendanceServices";
-import { InquiryApi } from "@/services/InquiryServices";
 import { FeesApi } from "@/services/feesService";
+import { InquiryApi } from "@/services/InquiryServices";
+import { QuotaApi } from "@/services/QuotaService";
 
 const store = configureStore({
   reducer: {
@@ -35,7 +36,8 @@ const store = configureStore({
     [LeaveApi.reducerPath] : LeaveApi.reducer,
     [AttendanceApi.reducerPath] : AttendanceApi.reducer, 
     [InquiryApi.reducerPath] : InquiryApi.reducer,
-    [FeesApi.reducerPath] : FeesApi.reducer
+    [FeesApi.reducerPath] : FeesApi.reducer,
+    [QuotaApi.reducerPath]: QuotaApi.reducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
     Authapi.middleware ,
@@ -47,7 +49,9 @@ const store = configureStore({
     LeaveApi.middleware ,
     AttendanceApi.middleware,
     InquiryApi.middleware,
-    FeesApi.middleware    
+    FeesApi.middleware,
+    QuotaApi.middleware,
+    InquiryApi.middleware
   ),
 })
 

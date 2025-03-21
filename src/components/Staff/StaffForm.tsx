@@ -11,22 +11,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { StaffFormData, staffSchema } from "@/utils/staff.validation";
-import { useGetSchoolStaffRoleQuery, useLazyGetOtherStaffQuery, useLazyGetSchoolStaffRoleQuery, useLazyGetTeachingStaffQuery } from "@/services/StaffService"
-import { OtherStaff, StaffRole, TeachingStaff } from "@/types/staff"
+import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
+import { StaffRole, StaffType } from "@/types/staff"
 
 interface StaffFormProps {
-  // initialData?: Partial<StaffFormData>   
-  initialData?: OtherStaff | TeachingStaff
+  // initial_data?: Partial<StaffFormData>   
+  initial_data?: StaffType | null
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
 }
 
-const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, formType }) => {
+const formatData = (value: any): string => {
+  return value ? new Date(value).toISOString().split("T")[0] : " "
+}
+
+const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, formType }) => {
 
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  const [getSchoolStaff, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
+  const [getStaffRoles, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
 
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<StaffRole[] | null>(null)
@@ -38,32 +42,32 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
       is_teaching_role: true,
       staff_role_id: undefined,
       first_name: "",
-      middle_name: "",
+      middle_name: null,
       last_name: "",
-      first_name_in_guj: "",
-      middle_name_in_guj: "",
-      last_name_in_guj: "",
-      gender: "Male",
-      birth_date: "",
-      aadhar_no: undefined,
+      first_name_in_guj: null,
+      middle_name_in_guj: null,
+      last_name_in_guj: null,
+      gender: undefined,
+      birth_date: null,
+      aadhar_no: null,
       mobile_number: undefined,
-      email: "",
-      qualification: "",
-      subject_specialization: "",
-      religiion: "",
-      religiion_in_guj: "",
-      caste: "",
-      caste_in_guj: "",
-      category: undefined,
-      address: "",
-      district: "",
-      city: "",
-      state: "",
-      postal_code: "",
-      bank_name: "",
-      account_no: undefined,
-      IFSC_code: undefined,
-      joining_date: "",
+      email: null,
+      qualification: null,
+      subject_specialization: null,
+      religion: null,
+      religion_in_guj: null,
+      caste: null,
+      caste_in_guj: null,
+      category: null,
+      address: null,
+      district: null,
+      city: null,
+      state: null,
+      postal_code: null,
+      bank_name: null,
+      account_no: null,
+      IFSC_code: null,
+      joining_date: null,
     }
   });
 
@@ -84,8 +88,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
     email: "contact",
     qualification: "contact",
     subject_specialization: "contact",
-    religiion: "other",
-    religiion_in_guj: "other",
+    religion: "other",
+    religion_in_guj: "other",
     caste: "other",
     caste_in_guj: "other",
     category: "other",
@@ -141,19 +145,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
   }, [form.formState.errors]);
 
   useEffect(() => {
-    if (initialData) {
-      if (formType === 'update' && initialData?.staff_role_id) {
-        form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
-        form.setValue('staff_role_id', initialData?.staff_role_id)
-      } else {
-        alert('Something went wrong');
-      }
-    }
-  }, [initialData])
-
-  useEffect(() => {
     if (!teachingRoles || !nonTeachingRoles) {
-      getSchoolStaff(1)
+      getStaffRoles(1)
     }
   }, [])
 
@@ -161,20 +154,51 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
     if (schoolStaff) {
       setTeachingRoles(schoolStaff.filter((role: StaffRole) => role?.is_teaching_role))
       setNonTeachingRoles(schoolStaff?.filter((role: StaffRole) => !role?.is_teaching_role))
-      // if(formType === 'update' && initialData?.staff_role_id){
-      //   form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
-      //   form.setValue('staff_role_id', initialData?.staff_role_id)
+      // if(formType === 'update' && initial_data?.staff_role_id){
+      //   form.setValue('is_teaching_role', initial_data?.staff_role_id === 1)
+      //   form.setValue('staff_role_id', initial_data?.staff_role_id)
       // }
 
     }
   }, [schoolStaff])
 
-  useEffect(()=>{
-    if(formType === 'update' && initialData?.staff_role_id){
-      form.setValue('is_teaching_role', initialData?.staff_role_id === 1)
-      form.setValue('staff_role_id', initialData?.staff_role_id)
+  useEffect(() => {
+    console.log(formType, initial_data)
+    if (formType === 'update' && initial_data?.staff_role_id) {
+      form.reset({
+        is_teaching_role: Boolean(initial_data?.is_teching_staff),
+        staff_role_id: initial_data?.staff_role_id,
+        first_name: initial_data?.first_name,
+        middle_name: initial_data?.middle_name ?? null,
+        last_name: initial_data?.last_name,
+        first_name_in_guj: initial_data?.first_name_in_guj ?? null,
+        last_name_in_guj: initial_data?.last_name_in_guj ?? null,
+        middle_name_in_guj: initial_data?.middle_name_in_guj ?? null,
+        gender: initial_data?.gender,
+        birth_date: initial_data?.birth_date ? formatData(initial_data.birth_date) : "",
+        aadhar_no: initial_data?.aadhar_no,
+        mobile_number: initial_data?.mobile_number,
+        email: initial_data?.email,
+        religion: initial_data?.religion,
+        religion_in_guj: initial_data?.religion_in_guj,
+        caste: initial_data?.caste,
+        caste_in_guj: initial_data?.caste_in_guj,
+        category: initial_data?.category,
+        address: initial_data?.address,
+        district: initial_data?.district,
+        city: initial_data?.city,
+        postal_code: initial_data?.postal_code ? initial_data?.postal_code.toString() : null,
+        bank_name: initial_data?.bank_name,
+        account_no: initial_data?.account_no,
+        IFSC_code: initial_data?.IFSC_code,
+        joining_date: initial_data?.birth_date ? formatData(initial_data.birth_date) : "",
+        employment_status: initial_data?.employment_status,
+        state: initial_data?.state,
+        qualification: initial_data?.qualification ?? null,
+        subject_specialization: initial_data?.subject_specialization ?? null
+      })
     }
-  },[formType])
+  }, [formType])
 
   return (
     <Form {...form}>
@@ -285,7 +309,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -298,7 +322,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Middle Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -311,7 +335,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -326,7 +350,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>First Name (Gujarati)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -339,7 +363,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Middle Name (Gujarati)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -352,7 +376,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Last Name (Gujarati)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -366,7 +390,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -388,7 +412,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Date of Birth</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -401,7 +425,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Aadhar Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -434,7 +458,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Mobile Number</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
+                          <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -447,7 +471,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" {...field} />
+                          <Input type="email" {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -462,9 +486,32 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Qualification</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select qualification" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="D.Ed">D.Ed</SelectItem>
+                              <SelectItem value="B.Ed">B.Ed</SelectItem>
+                              <SelectItem value="M.Ed">M.Ed</SelectItem>
+                              <SelectItem value="B.A + B.Ed">B.A + B.Ed</SelectItem>
+                              <SelectItem value="B.Sc + B.Ed">B.Sc + B.Ed</SelectItem>
+                              <SelectItem value="M.A + B.Ed">M.A + B.Ed</SelectItem>
+                              <SelectItem value="M.Sc + B.Ed"> M.Sc + B.Ed</SelectItem>
+                              <SelectItem value="Ph.D">Ph.D</SelectItem>
+                              <SelectItem value="Diploma">Diploma</SelectItem>
+                              <SelectItem value="B.Com">B.Com</SelectItem>
+                              <SelectItem value="BBA">BBA</SelectItem>
+                              <SelectItem value="MBA">MBA</SelectItem>
+                              <SelectItem value="M.Com">M.Com</SelectItem>
+                              <SelectItem value="ITI">ITI</SelectItem>
+                              <SelectItem value="SSC">SSC</SelectItem>
+                              <SelectItem value="HSC">HSC</SelectItem>
+                              <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -475,9 +522,30 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Subject Specialization</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select subject specialization" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Mathematics">Mathematics</SelectItem>
+                              <SelectItem value="Physics">Physics</SelectItem>
+                              <SelectItem value="Chemistry">Chemistry</SelectItem>
+                              <SelectItem value="Biology">Biology</SelectItem>
+                              <SelectItem value="English">English</SelectItem>
+                              <SelectItem value="Hindi">Hindi</SelectItem>
+                              <SelectItem value="Gujarati">Gujarati</SelectItem>
+                              <SelectItem value="Social Science">Social Science</SelectItem>
+                              <SelectItem value="Computer Science">Computer Science</SelectItem>
+                              <SelectItem value="Commerce">Commerce</SelectItem>
+                              <SelectItem value="Economics">Economics</SelectItem>
+                              <SelectItem value="Physical Education">Physical Education</SelectItem>
+                              <SelectItem value="Arts">Arts</SelectItem>
+                              <SelectItem value="Music">Music</SelectItem>
+                              <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -505,12 +573,12 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="religiion"
+                    name="religion"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Religion</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -518,12 +586,12 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                   />
                   <FormField
                     control={form.control}
-                    name="religiion_in_guj"
+                    name="religion_in_guj"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Religion (Gujarati)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -538,7 +606,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Caste</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -551,7 +619,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Caste (Gujarati)</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -564,7 +632,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -606,7 +674,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     <FormItem>
                       <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -620,7 +688,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>District</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -633,7 +701,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -648,7 +716,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -661,7 +729,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                       <FormItem>
                         <FormLabel>Postal Code</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input type="number" {...field} value={field.value ?? ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -693,7 +761,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     <FormItem>
                       <FormLabel>Bank Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -706,7 +774,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     <FormItem>
                       <FormLabel>Account Number</FormLabel>
                       <FormControl>
-                        <Input type="number"{...field} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                        <Input type="number"{...field} value={field.value ?? ""} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -719,7 +787,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     <FormItem>
                       <FormLabel>IFSC Code</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -743,34 +811,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                 <CardTitle>Employment Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {form.watch("is_teaching_role") && (
-                  <FormField
-                    control={form.control}
-                    name="class_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned Class</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select assigned class" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {/* Replace with actual class data */}
-                            <SelectItem value="1">Class 1</SelectItem>
-                            <SelectItem value="2">Class 2</SelectItem>
-                            <SelectItem value="3">Class 3</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+
                 <FormField
                   control={form.control}
                   name="joining_date"
@@ -778,7 +819,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                     <FormItem>
                       <FormLabel>Joining Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -798,9 +839,9 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initialData, onClose, f
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="Permanent">Permanent</SelectItem>
-                          <SelectItem value="Trial_period">Trial Period</SelectItem>
+                          <SelectItem value="Trial_Period">Trial Period</SelectItem>
                           <SelectItem value="Resigned">Resigned</SelectItem>
-                          <SelectItem value="Contact_base">Contract Base</SelectItem>
+                          <SelectItem value="Contract_Based">Contract Base</SelectItem>
                           <SelectItem value="Notice_Period">Notice Period</SelectItem>
                         </SelectContent>
                       </Select>

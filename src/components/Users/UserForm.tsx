@@ -92,6 +92,12 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
             title: `User for this role already crated !`,
           })
         }
+        else if (new_user.error.data.message.code == 'E_VALIDATION_ERROR') {
+          toast({
+            variant: "destructive",
+            title: `${new_user.error.data.message.messages[0].message}`,
+          })
+        }
       }
     }
   }

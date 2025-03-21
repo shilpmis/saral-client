@@ -9,22 +9,8 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import gujFonts from "./gujarat_noto_sans.ttf";
+import { User } from "@/types/user";
  
-
-// Register fonts (optional but recommended for better styling)
-// Font.register({
-//   family: "Roboto",
-//   fonts: [
-//     {
-//       src: "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxP.ttf",
-//       fontWeight: "normal",
-//     },
-//     {
-//       src: "https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc9.ttf",
-//       fontWeight: "bold",
-//     },
-//   ],
-// });
 
 Font.register({
   family: "NotoSansGujarati",
@@ -113,24 +99,26 @@ const styles = StyleSheet.create({
 
 type Props = {
   student: Student;
+  currentUser : User | null
 }; 
 
-const StudentDetailsPDF = ({ student }: Props) => {
+const StudentDetailsPDF = ({ student , currentUser }: Props) => {
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* School Header */}
         <View style={styles.header}>
-                <Image src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe7Ba2aq-TTW-H_ieh4nDoE_23MZ1qs0TOxg&s"} style={{ width: 130, height: 100 }} />
+                <Image src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfqnOKYunGlk9yZAe2k5DV3npmLXSCI4hJwg&s"} style={{ width: 130, height: 100 }} />
           <View style={{ marginLeft: 7}}>
-            <Text style={styles.title}>Pragti Gujrat Goverment School</Text>
-            <Text style={{fontSize: 10, fontWeight: 8}}>Address : 123 Education Lane, Knowledge City, KC 12345</Text>
+            <Text style={styles.title}>{currentUser?.school.name}</Text>
+            <Text style={{fontSize: 10, fontWeight: 8}}>{currentUser?.school.address}</Text>
           </View>
         </View>
 
         {/* Student Profile Header */}
         <View style={styles.profileSection}>
-          <Image src={student.gender.toLowerCase() === 'female' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRt03ZDzrVA93OrtiL5b818YcwLzNHlN1vug&s" : "https://www.shutterstock.com/image-vector/man-icon-vector-logo-template-260nw-1579487446.jpg"} style={{ width: 130, height: 100 }}/>
+          <Image src={student.gender === 'Female' ? "../default_image_for_girl.png" : "../default_image_for_boy.png"} style={{ width: 130, height: 100 }}/>
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.studentName}>{student.first_name} {student.middle_name} {student.last_name}</Text>
             <Text style={styles.studentId}>GR No: {student.gr_no} | Roll No: {student.roll_number}</Text>
@@ -142,7 +130,9 @@ const StudentDetailsPDF = ({ student }: Props) => {
           <Text style={styles.sectionTitle}>Personal Details</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Name in Gujarati:</Text>
-            <Text style={styles.value}>{student.first_name_in_guj+" "+ student.middle_name_in_guj +" "+ student.last_name_in_guj}</Text>
+            <Text style={styles.value}>
+              {`${student.first_name_in_guj ?? ""} ${student.middle_name_in_guj ?? ""} ${student.last_name_in_guj ?? ""}`.trim()}
+            </Text>
             <Text style={styles.label}>Gender:</Text>
             <Text style={styles.value}>{student.gender}</Text>
           </View>
@@ -219,9 +209,9 @@ const StudentDetailsPDF = ({ student }: Props) => {
               <Text style={styles.sectionTitle}>Other Details</Text>
               <View style={styles.row}>
                 <Text style={styles.label}>Religion:</Text>
-                <Text style={styles.value}>{student.student_meta?.religiion}</Text>
+                <Text style={styles.value}>{student.student_meta?.religion}</Text>
                 <Text style={styles.label}>In Gujarati:</Text>
-                <Text style={styles.value}>{student.student_meta?.religiion_in_guj}</Text>
+                <Text style={styles.value}>{student.student_meta?.religion_in_guj}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Caste:</Text>

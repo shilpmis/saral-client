@@ -20,7 +20,7 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       'Middle name should contain only alphabets and spaces'
-    ),
+    ).nullable(),
 
   last_name: z
     .string()
@@ -30,9 +30,9 @@ export const studentSchema = z.object({
       'Last name should contain only alphabets and spaces'
     ),
 
-  first_name_in_guj: z.string().min(2, 'First name in Gujarati is required'),
-  middle_name_in_guj: z.string().min(2, 'Middle name in Gujarati is required'),
-  last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required'),
+  first_name_in_guj: z.string().min(2, 'First name in Gujarati is required').nullable(),
+  middle_name_in_guj: z.string().min(2, 'Middle name in Gujarati is required').nullable(),
+  last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required').nullable(),
 
   gender: z.enum(['Male', 'Female'], {
     errorMap: () => ({ message: 'Gender must be either Male or Female' })
@@ -52,6 +52,22 @@ export const studentSchema = z.object({
       {
         message: 'Birth date cannot be in the future'
       }
+    )
+    .refine(
+      date => {
+        const parsedDate = new Date(date)
+        const today = new Date()
+        const age = today.getFullYear() - parsedDate.getFullYear()
+        const monthDiff = today.getMonth() - parsedDate.getMonth()
+        const dayDiff = today.getDate() - parsedDate.getDate()
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          return age - 1 >= 3 // Minimum age is 3 years
+        }
+        return age >= 3
+      },
+      {
+        message: 'Student must be at least 3 years old'
+      }
     ),
 
   birth_place: z
@@ -60,9 +76,9 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       'Birth place should contain only alphabets and spaces'
-    ),
+    ).nullable(),
 
-  birth_place_in_guj: z.string().min(2, 'Birth place in Gujarati is required'),
+  birth_place_in_guj: z.string().min(2, 'Birth place in Gujarati is required').nullable(),
 
   aadhar_no: z
     .number()
@@ -76,12 +92,12 @@ export const studentSchema = z.object({
       {
         message: 'Aadhar number must be exactly 12 digits'
       }
-    ),
+    ).nullable(),
 
   aadhar_dise_no: z
     .number()
     .int('Aadhar DISE number must be an integer')
-    .positive('Aadhar DISE number must be positive'),
+    .positive('Aadhar DISE number must be positive').nullable(),
 
   // Family Details
   father_name: z
@@ -90,11 +106,11 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       "Father's name should contain only alphabets and spaces"
-    ),
+    ).nullable(),
 
   father_name_in_guj: z
     .string()
-    .min(2, "Father's name in Gujarati is required"),
+    .min(2, "Father's name in Gujarati is required").nullable(),
 
   mother_name: z
     .string()
@@ -102,11 +118,11 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       "Mother's name should contain only alphabets and spaces"
-    ),
+    ).nullable(),
 
   mother_name_in_guj: z
     .string()
-    .min(2, "Mother's name in Gujarati is required"),
+    .min(2, "Mother's name in Gujarati is required").nullable(),
 
   primary_mobile: z
     .number()
@@ -134,7 +150,7 @@ export const studentSchema = z.object({
       {
         message: 'Secondary mobile number must be 10 digits and start with 6-9'
       }
-    ),
+    ).nullable(),
 
   // Academic Details
   gr_no: z
@@ -145,7 +161,7 @@ export const studentSchema = z.object({
   roll_number: z
     .number()
     .int('Roll number must be an integer')
-    .positive('Roll number must be positive'),
+    .positive('Roll number must be positive').nullable(),
 
   admission_date: z
     .string()
@@ -161,12 +177,12 @@ export const studentSchema = z.object({
       {
         message: 'Admission date cannot be in the future'
       }
-    ),
+    ).nullable(),
 
   class: z.string().min(1, 'Class is required'),
   division: z.string().min(1, 'Division is required'),
-  admission_class: z.string().min(1, 'Admission Class is required'),
-  admission_division: z.string().min(1, 'Admission Division is required'),
+  admission_class: z.string().min(1, 'Admission Class is required').nullable(),
+  admission_division: z.string().min(1, 'Admission Division is required').nullable(),
 
   privious_school: z
     .string()
@@ -174,39 +190,39 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z0-9\s.,&-]+$/,
       'Previous school name contains invalid characters'
-    ),
+    ).nullable(),
 
   privious_school_in_guj: z
     .string()
     .min(
       3,
       'Previous school name in Gujarati should be more than 3 characters'
-    ),
+    ).nullable(),
 
   // Other Details
-  religiion: z
+  religion: z
     .string()
     .min(2, 'Religion is required')
     .regex(
       /^[A-Za-z\s]+$/,
       'Religion should contain only alphabets and spaces'
-    ),
+    ).nullable(),
 
-  religiion_in_guj: z.string().min(2, 'Religion in Gujarati is required'),
+  religion_in_guj: z.string().min(2, 'Religion in Gujarati is required').nullable(),
 
   caste: z
     .string()
     .min(2, 'Caste is required')
-    .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces'),
+    .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces').nullable(),
 
-  caste_in_guj: z.string().min(2, 'Caste in Gujarati is required'),
+  caste_in_guj: z.string().min(2, 'Caste in Gujarati is required').nullable(),
 
   category: z.enum(['ST', 'SC', 'OBC', 'OPEN'], {
     errorMap: () => ({ message: 'Category must be ST, SC, OBC, or OPEN' })
-  }),
+  }).nullable(),
 
   // Address Details
-  address: z.string().min(5, 'Address is required'),
+  address: z.string().min(5, 'Address is required').nullable(),
 
   district: z
     .string()
@@ -214,21 +230,21 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       'District should contain only alphabets and spaces'
-    ),
+    ).nullable(),
 
   city: z
     .string()
     .min(2, 'City is required')
-    .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces'),
+    .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces').nullable(),
 
   state: z
     .string()
     .min(2, 'State is required')
-    .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces'),
+    .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces').nullable(),
 
   postal_code: z
     .string()
-    .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits'),
+    .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits').nullable(),
 
   // Bank Details
   bank_name: z
@@ -237,7 +253,7 @@ export const studentSchema = z.object({
     .regex(
       /^[A-Za-z\s]+$/,
       'Bank name should contain only alphabets and spaces'
-    ),
+    ).nullable(),
 
   account_no: z
     .number()
@@ -251,11 +267,11 @@ export const studentSchema = z.object({
       {
         message: 'Account number must be between 9 and 18 digits'
       }
-    ),
+    ).nullable(),
 
   IFSC_code: z
     .string()
-    .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'IFSC code must be in format ABCD0123456')
+    .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'IFSC code must be in format ABCD0123456').nullable()
 })
 
 export const addressSchema = z.object({

@@ -8,6 +8,30 @@ export interface FeesType {
     // is_concession_applicable: boolean,
 }
 
+export interface Concession {
+    id: number,
+    school_id: number,
+    academic_year_id: number,
+    name: string,
+    description: string,
+    applicable_to : 'fees_types' | 'plan' | 'students'
+    status: "Active" | "Inactive",
+    category : 'Family'| 'Sports' | 'Staff' | 'Education' | 'Financial' | 'Other'
+}
+
+export interface ConcessionDetailForPlan {
+    concession_id : number,
+    academic_year_id : number,
+    fees_plan_id : number,
+    fees_type_id : number
+    deduction_type : 'percentage' | 'fixed_amount',
+    amount : number | null,
+    percentage : number | null,
+    status : 'Active'| 'Inactive',
+    concession : Concession,
+    fees_plan : FeesPlan
+}
+
 export interface FeesPlan {
     id: number,
     name: string,
@@ -16,6 +40,7 @@ export interface FeesPlan {
     description: string,
     total_amount: number,
     status: "Active" | "Inactive"
+    concession : ConcessionDetailForPlan[]
 }
 
 export interface FeesPlanDetail {
@@ -57,7 +82,8 @@ export interface DetailedFeesPlan {
     fees_types: {
         fees_type : FeesPlanDetail
         installment_breakDowns: InstallmentBreakdowns[]
-    }[]
+    }[],
+    consession : ConcessionDetailForPlan[]
 }
 
 // Types for fees module
@@ -137,6 +163,7 @@ export interface FeeStatus {
       roll_number: number
       class_id: number
       fees_status: FeeStatus & { id: number }
+      provided_concession : ApplyConcessioinToStudent[] 
     }
     fees_plan: {
       fees_details: FeePlanDetail[]
@@ -169,4 +196,53 @@ export interface FeeStatus {
     reason: string
   }
   
+  export interface AppliedPlan {
+    id: number
+    concession_id: number
+    fees_plan_id: number
+    fees_type_id: number | null
+    deduction_type: "percentage" | "amount"
+    amount: string | null
+    percentage: string | null
+    status: string
+    fees_plan?: {
+      id: number
+      name: string
+      class_id: number
+      total_amount: string
+      status: string
+    }
+    fees_type?: {
+      id: number
+      name: string
+    }
+  }
   
+  export interface ConcessionDetails  {
+    concession : Concession
+    applied_plans: ConcessionDetailForPlan[]
+    applied_fee_types?: { id: number; name: string }[]
+    applied_students?: { id: number; name: string }[]
+  }
+  
+  export interface ApplyConcessionRequest {
+    concession_id: number
+    fees_plan_id: number
+    fees_type_id: number | null
+    deduction_type: "percentage" | "amount"
+    amount: number | null
+    percentage: number | null
+  }
+  
+  export interface ApplyConcessioinToStudent {
+    id: number,
+    academic_year_id: number,
+    concession_id: number,
+    student_id: number,
+    fees_plan_id: number,
+    fees_type_id: number | null,
+    deduction_type: string,
+    amount: number | null,
+    percentage: string | null,
+    status: "Active" | "Inactive"
+  }
