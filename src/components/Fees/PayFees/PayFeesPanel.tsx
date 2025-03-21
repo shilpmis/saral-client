@@ -19,6 +19,7 @@ import type { StudentWithFeeStatus } from "@/types/fees"
 import { toast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
 const PayFeesPanel: React.FC = () => {
 //   const router = useRouter()
@@ -60,7 +61,7 @@ const PayFeesPanel: React.FC = () => {
       setSelectedDivision(selectedDiv[0])
 
       try {
-        await getClassFeesStatus(1)
+        await getClassFeesStatus({class_id : selectedDiv[0].id})
       } catch (error) {
         toast({
           variant: "destructive",
@@ -177,7 +178,7 @@ const PayFeesPanel: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch fees data for this class and division
-          getClassFeesStatus(1)
+          selectedDivision && getClassFeesStatus({class_id : selectedDivision.id})
         }
       }
     }
@@ -186,7 +187,7 @@ const PayFeesPanel: React.FC = () => {
   // Update students when fees data changes
   useEffect(() => {
     if (feesData) {
-      setStudents(feesData as unknown as StudentWithFeeStatus[])
+      setStudents(feesData.data as unknown as StudentWithFeeStatus[])
     }
   }, [feesData])
 
@@ -398,6 +399,11 @@ const PayFeesPanel: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+          {feesData && selectedDivision &&  (<SaralPagination
+          currentPage={feesData.meta.last_page}
+          totalPages={feesData.meta.last_page}
+          onPageChange={(page) => getClassFeesStatus({ class_id: selectedDivision.id, page})}
+          ></SaralPagination>)}
         </CardContent>
       </Card>
     </div>

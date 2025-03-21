@@ -14,9 +14,9 @@ import { Fees } from "@/pages/Fees";
 import Login from "@/pages/LogIn";
 import Students from "@/pages/Students";
 import GeneralSettings from "../Settings/GeneralSettings";
-import AcademicSettings from "../Settings/AcademicSettings";
+import AcademicSettings from "../Settings/AcademicSettings/AcademicSettings";
 import StaffSettings from "../Settings/StaffSettings";
-import PayrollSettings from "../Settings/PayrollSettings"; 
+import PayrollSettings from "../Settings/PayrollSettings";
 import { useAppSelector } from "@/redux/hooks/useAppSelector";
 import { selectIsAuthenticated } from "@/redux/slices/authSlice";
 import PrivateRoute from "./private.routes";
@@ -31,12 +31,15 @@ import { SearchProvider } from "../Dashboard/searchContext";
 import NotFound from "@/pages/NotFound";
 import LeaveDashboardForTeachers from "@/pages/LeaveDashboardForTeachers";
 import { Toaster } from "@/components/ui/toaster";
-import { AdmissionModule } from "@/pages/AdmissionPage";
+import AdminAdmissonView from "@/pages/AdmissionPage";
 import TimeTableManager from "../Settings/TimeTableManager";
 import FeeSettings from "../Settings/FeesSettings";
 import { StudentFeeDetails } from "../Fees/StudentFee/StudentFeeDetails";
 import StudentFeesPanel from "@/pages/StudentFeesPanel";
 import PayFeesPanel from "../Fees/PayFees/PayFeesPanel";
+import AdmissionSetting from "../Settings/AdmissionSettings/AdmissionSetting";
+import QuotaManagement from "../Settings/AdmissionSettings/QuotaSetting";
+import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -119,10 +122,10 @@ export default function RootRoute() {
             />
 
             <Route
-              path="payments"
+              path="pay-fees"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
+                  allowedRoles={[UserRole.CLERK]}
                   allowedPermissions={[Permission.MANAGE_FEES]}>
                   <PayFeesPanel />
                 </PrivateRoute>
@@ -131,7 +134,7 @@ export default function RootRoute() {
 
             {/* Fees */}
             <Route
-              path="payments/:student_id"
+              path="pay-fees/:student_id"
               element={
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK]}
@@ -159,7 +162,7 @@ export default function RootRoute() {
               path="leave-applications"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.SCHOOL_TEACHER ,UserRole.CLERK ]}
+                  allowedRoles={[UserRole.SCHOOL_TEACHER, UserRole.CLERK]}
                 >
                   <LeaveDashboardForTeachers />
                 </PrivateRoute>
@@ -171,7 +174,7 @@ export default function RootRoute() {
               path="leaves"
               element={
                 <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.HEAD_TEACHER, UserRole.PRINCIPAL]}
+                  allowedRoles={[UserRole.ADMIN, UserRole.HEAD_TEACHER, UserRole.PRINCIPAL , UserRole.CLERK]}
                 >
                   <AdminLeaveManagement />
                 </PrivateRoute>
@@ -220,7 +223,7 @@ export default function RootRoute() {
                 <PrivateRoute
                   allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}
                 >
-                  <AdmissionModule />
+                  <AdminAdmissonView />
                 </PrivateRoute>
               }
             />
@@ -275,7 +278,27 @@ export default function RootRoute() {
               } />
               <Route path="timeTable" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
-                 <TimeTableManager></TimeTableManager>
+                  <TimeTableManager></TimeTableManager>
+                </PrivateRoute>
+              } />
+               <Route path="admission" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <AdmissionSetting/>
+                </PrivateRoute>
+              } />
+              <Route path="quotas" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <QuotaManagement/>
+                </PrivateRoute>
+              } />
+              <Route path="quotas" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <QuotaManagement/>
+                </PrivateRoute>
+              } />
+              <Route path="seats" element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                 <SeatsManagement/>
                 </PrivateRoute>
               } />
             </Route>

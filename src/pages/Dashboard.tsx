@@ -74,11 +74,52 @@ export default function DashboardPage() {
               <p className="text-xl font-bold tracking-tight">{greeting}</p>
             </div>
           </div>
-
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1,234</div>
+                {/* <p className="text-xs text-muted-foreground">+12% from last month</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">98</div>
+                {/* <p className="text-xs text-muted-foreground">+2 new this month</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium"> Present/Absent Staff today</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> <span className="text-green-500">10</span> / <span className="text-red-500">2</span> </div>
+                {/* <p className="text-xs text-muted-foreground">+3 new courses added</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$53,624</div>
+                <p className="text-xs text-muted-foreground">+7% from last month</p>
+              </CardContent>
+            </Card>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <Card>
               <CardHeader>
-                <CardTitle>{t("admission_dashboard")}</CardTitle>
+                <CardTitle>Admission</CardTitle>
               </CardHeader>
               <CardContent>
                 <AdmissionDashboard data={dashboardData} trends={admissionTrends} />
@@ -174,7 +215,8 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 hidden">
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
                 <CardTitle>Overview</CardTitle>

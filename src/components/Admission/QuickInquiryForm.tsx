@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -25,7 +27,6 @@ interface QuickInquiryFormProps {
 }
 
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
-
   const [addInquiries, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
   const { t } = useTranslation()
 
@@ -42,33 +43,34 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Handle form submission
-
     const res = await addInquiries({
       payload: {
         contact_number: Number(values.contact_number),
         email: values.email,
         grade_applying: Number(values.grade_applying),
         parent_name: values.parent_name,
-        student_name: values.student_name
-      }
+        student_name: values.student_name,
+      },
     })
+
     if (res.data) {
       form.reset()
       toast({
-        variant: 'default',
-        title: 'Inquiry added successfully',
-        description: 'Inquiry added successfully'
+        variant: "default",
+        title: "Inquiry added successfully",
+        description: "Inquiry added successfully",
       })
+      onClose()
     }
-    if(res.error){
-      console.log("Check this error" , res.error)
+
+    if (res.error) {
+      console.log("Check this error", res.error)
       toast({
-        variant: 'destructive',
-        title: '',
+        variant: "destructive",
+        title: "Error adding inquiry",
+        description: "There was an error adding the inquiry. Please try again.",
       })
     }
-    console.log(values)
-    // onClose()
   }
 
   return (
@@ -156,7 +158,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               )}
             />
             <DialogFooter>
-              <Button type="submit">{t("submit_inquiry")}</Button>
+              <Button type="submit" disabled={isAddingInquiry}>
+                {isAddingInquiry ? "Submitting..." : "Submit Inquiry"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

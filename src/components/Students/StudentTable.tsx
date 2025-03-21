@@ -14,6 +14,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import dynamic from "next/dynamic"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectCurrentUser } from "@/redux/slices/authSlice"
 
 
 interface StudentTableProps {
@@ -34,8 +36,10 @@ export default function StudentTable({
   onPageChange
 }: StudentTableProps)
  {
+
+  const currentUse = useAppSelector(selectCurrentUser);
+
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const {t} = useTranslation()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
@@ -52,9 +56,7 @@ export default function StudentTable({
   // Function to handle student name click
   const handleStudentClick = (student:any) => {
     setSelectedStudent(student)
-    setDialogOpen(true)
-    console.log(selectedStudent);
-    
+    setDialogOpen(true)   
   }
 
   const StudentDetailsPDF = dynamic(() => import("./StudentPdf"), {
@@ -87,20 +89,20 @@ export default function StudentTable({
   return (
     <div className="p-1">
       {paginatedData(currentPage).length === 0 ? (
-        <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
+        <div className="text-center py-4 text-gray-500">no_records_found</div>
       ) : (
         <>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("gr_no")}</TableHead>
-              <TableHead>{t("name")}</TableHead>
-              <TableHead>{t("roll_no")}</TableHead>
-              <TableHead>{t("gender")}</TableHead>
-              <TableHead>{t("father_name")}</TableHead>
-              <TableHead>{t("contact_number")}</TableHead>
-              <TableHead>{t("aadhar_no")}</TableHead>
-              <TableHead>{t("actions")}</TableHead>
+              <TableHead>gr_no</TableHead>
+              <TableHead>name</TableHead>
+              <TableHead>roll_no</TableHead>
+              <TableHead>gender</TableHead>
+              <TableHead>father_name</TableHead>
+              <TableHead>contact_number</TableHead>
+              <TableHead>aadhar_no</TableHead>
+              <TableHead>actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -149,7 +151,7 @@ export default function StudentTable({
                       <div>
                         {typeof window !== "undefined" && (
                           <PDFDownloadLink
-                            document={<StudentDetailsPDF student={selectedStudent} />}
+                            document={<StudentDetailsPDF student={selectedStudent} currentUser={currentUse} />}
                             fileName={`${selectedStudent.first_name}_${selectedStudent.last_name}_details.pdf`}
                           >
                             {({ blob, url, loading, error }: { blob: Blob | null; url: string | null; loading: boolean; error: Error | null }) => (
@@ -184,16 +186,16 @@ export default function StudentTable({
                 {/* Student Profile Section */}
                 <div className="flex flex-col items-start justify-start">
                   <div className="bg-primary/10 rounded-full p-6 mb-4 border-4 border-primary/20">
-                    {selectedStudent.gender.toLowerCase() === "male" ? (
+                    {selectedStudent.gender === "Male" ? (
                      <img 
-                     src="https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-623.jpg?w=900"
+                     src="../default_image_for_boy.png"
                      alt="Male Student"
                      className="h-24 w-24 md:h-32 md:w-32 rounded-full"
                    />
                     ) : (
                       <img 
-                      src="https://img.freepik.com/free-vector/woman-with-long-brown-hair-pink-shirt_90220-2940.jpg?t=st=1741346084~exp=1741349684~hmac=8fb79fbe2b8651184e68b2303365403937006e7dc31d5335f32abf58e7e2b083&w=900" // Replace with your male image path
-                      alt="Male Student"
+                      src="../default_image_for_girl.png"
+                      alt="FeMale Student"
                       className="h-24 w-24 md:h-32 md:w-32 rounded-full"
                     />
                     )}
@@ -354,11 +356,11 @@ export default function StudentTable({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.religiion}</p>
+                          <p className="font-medium">{selectedStudent.student_meta!.religion}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion(Guj):</p>
-                          <p className="font-medium">{selectedStudent.student_meta?.religiion_in_guj}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.religion_in_guj}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Caste:</p>

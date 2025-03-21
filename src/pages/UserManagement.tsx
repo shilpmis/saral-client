@@ -32,11 +32,10 @@ const managementRoles = [
 export const UserManagement: React.FC = () => {
 
   const users = useAppSelector((state) => state.auth.user)
-
   const [fetchUsers, { isLoading, isError }] = useLazyFetchManagementUsersQuery();
-
   const [fetchTeacherAsUser, { isLoading: loadingForFetchTeacherAsUser }] = useLazyFetchUserAsTeacherQuery()
 
+  
   const [activeTab, setActiveTab] = useState("management")
   const [isDialogForManagmentUserOpen, setIsDialogForManagmentUserOpen]
     = useState<{ isOpen: boolean, type: "create" | "edit", user: User | null }>({
@@ -118,16 +117,17 @@ export const UserManagement: React.FC = () => {
         return ;
     }
     else if (isDialogForManagmentUserOpen.type === 'create') {
-      let new_displayedManagementUser = currentDisplayedManagementUser;
-      if (new_displayedManagementUser) {
-        new_displayedManagementUser.users.unshift(user!);
-        setCurrentDisplayedManagementUser(new_displayedManagementUser); 
-        setIsDialogForManagmentUserOpen({
-          isOpen: false,
-          type: "create",
-          user: null
-        })
-      }
+      // let new_displayedManagementUser = currentDisplayedManagementUser;
+      // if (new_displayedManagementUser) {
+      //   new_displayedManagementUser.users = [user!, ...new_displayedManagementUser.users];
+      //   setCurrentDisplayedManagementUser(new_displayedManagementUser); 
+      // }
+      fetchDataForActiveTab(activeTab as 'management' | 'staff', 1)
+      setIsDialogForManagmentUserOpen({
+        isOpen: false,
+        type: "create",
+        user: null
+      })
     } else {
       let new_displayedManagementUser = currentDisplayedManagementUser;
       if (new_displayedManagementUser) {

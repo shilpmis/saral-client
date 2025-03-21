@@ -15,13 +15,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "@/hooks/use-toast"
-import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetFeesPlanQuery } from "@/services/feesService"
-import { FeesPlanDetail } from "@/types/fees"
+import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery } from "@/services/feesService"
+import { FeesPlanDetail, InstallmentBreakdowns } from "@/types/fees"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
-import { selectAuthState } from "@/redux/slices/authSlice"
-import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { useTranslation } from "@/redux/hooks/useTranslation"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import {  useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
 
 
 // Define the fee types interface
@@ -29,24 +27,6 @@ interface FeeType {
   id: number
   name: string
 }
-
-// Mock fee types - replace with actual data from your API
-const mockFeeTypes: FeeType[] = [
-  { id: 1, name: "Admission Fee" },
-  { id: 2, name: "Tuition Fee" },
-  { id: 3, name: "Library Fee" },
-  { id: 4, name: "Computer Fee" },
-  { id: 5, name: "Sports Fee" },
-]
-
-// Mock classes - replace with actual data from your API
-const mockClasses = [
-  { id: 1, name: "Class 1" },
-  { id: 2, name: "Class 2" },
-  { id: 3, name: "Class 3" },
-  { id: 4, name: "Class 4" },
-  { id: 5, name: "Class 5" },
-]
 
 // Define the installment types
 const installmentTypes = [
@@ -220,12 +200,13 @@ interface AddFeePlanFormProps {
 
 export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, plan_id }) => {
 
-  const AcademicDivision = useAppSelector(selectAllAcademicClasses)
   const authState = useAppSelector(selectAuthState)
-  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getFeesPlan, { data: FetchedFeePlans, isLoading }] = useLazyGetFeesPlanQuery();
-  const {t} = useTranslation()
-  
+  // const [getFeesPlan, { data: FetchedFeePlans }] = useLazyGetFeesPlanQuery();
+  const [getAllFeesType, { data: FetchedFeesType, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery();
+  const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
+
+    const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getFeePlanInDetail, { data: fetchedDetialFeePlan,
     isLoading: isFetchingFeesPlan,
@@ -260,6 +241,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
     append: appendPlanDetail,
     remove: removePlanDetail,
     update: updatePlanDetail,
+    replace: replacePlanDetails,
   } = useFieldArray({
     control: form.control,
     name: "fees_types",
@@ -381,8 +363,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
   const handleAddFeeType = () => {
     appendPlanDetail({
       fees_type_id: 0,
-      installment_type: "Yearly",
-      total_installment: 1,
+      installment_type: "",
+      total_installment: 0,
       total_amount: 0,
       installment_breakDowns: [],
     })
@@ -477,23 +459,23 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
         removePlanDetail(0)
       }
 
-      // Add each fee type one by one to ensure proper ID generation by useFieldArray
-      fees_types.forEach((feeType: any) => {
-        console.log("Check now --->", feeType)
-        appendPlanDetail({
-          fees_type_id: feeType.fees_type_id,
-          installment_type: feeType.installment_type,
-          total_installment: feeType.total_installment,
-          total_amount: feeType.total_amount,
-          installment_breakDowns: feeType.installment_breakDowns.map((breakdown: any) => ({
-            installment_no: breakdown.installment_no,
-            due_date: format(new Date(breakdown.due_date), "yyyy-MM-dd"),
-            installment_amount: breakdown.installment_amount,
-          })),
-        })
-      })
+      let data_to_appned = fees_types.map((feeType: { fees_type: FeesPlanDetail, installment_breakDowns: InstallmentBreakdowns[] }) => ({
+        fees_type_id: feeType.fees_type.id,
+        installment_type: feeType.fees_type.installment_type,
+        total_installment: feeType.fees_type.total_installment,
+        total_amount: feeType.fees_type.total_amount,
+        installment_breakDowns: feeType.installment_breakDowns?.map((breakdown: any) => ({
+          installment_no: breakdown.installment_no,
+          due_date: format(new Date(breakdown.due_date), "yyyy-MM-dd"),
+          installment_amount: breakdown.installment_amount,
+        })) || [],
+      }))
 
+      data_to_appned.map((data: any) => {
+        appendPlanDetail(data)
+      })
       // Update active fee type index to show the first fee type
+
       setActiveFeeTypeIndex(0)
       setIsFormFieldsForEditSet(true);
       // If there are fee types, switch to the fee types tab
@@ -501,19 +483,13 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
         setActiveTab("feeTypes")
       }
     }
-  }, [fetchedDetialFeePlan, appendPlanDetail, removePlanDetail, planDetailsFields.length, form])
+  }, [fetchedDetialFeePlan, replacePlanDetails, form])
 
   /**
    * Fetch Plan if plan_id is provided
    */
 
-  useEffect(() => {
-    if (plan_id && plan_id !== 0) {
-      getFeePlanInDetail({ plan_id })
-    } else {
-      setIsFormFieldsForEditSet(true);
-    }
-  }, [plan_id])
+
 
   /**
    * Use Effect for catch nested  nested objects errors been thrown by zod
@@ -560,244 +536,220 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
   }, [isErrorInFetchFessPlanInDetail])
 
 
-
-  /**
-   *  useEffect for fetch other essentila thing , classes , fees type etc 
-   */
-
   useEffect(() => {
-    if (!AcademicDivision) {
-      getAcademicClasses(authState.user!.school_id)
+    if (plan_id && plan_id !== 0) {
+      getFeePlanInDetail({ academic_sessions : CurrentAcademicSessionForSchool!.id , plan_id })
+    } else {
+      setIsFormFieldsForEditSet(true);
     }
-    else {
-      // fetch academic division
-    }
-  }, [])
+    getClassesWithoutFeesPlan({ school_id: authState.user!.school_id });
+    getAllFeesType();
+  }, [plan_id])
+
 
   return (
     <Form {...form}>
-      {((!isErrorInFetchFessPlanInDetail && fetchedDetialFeePlan) || type === 'create') && isFormFieldsForEditSet && (<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="basic">{t("basic_information")}</TabsTrigger>
-            <TabsTrigger value="feeTypes">{t("fee_type_&_installments")}</TabsTrigger>
-          </TabsList>
+      {((!isErrorInFetchFessPlanInDetail && fetchedDetialFeePlan) || type === 'create')
+        && isFormFieldsForEditSet &&
+        (<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="basic">Basic Information</TabsTrigger>
+              <TabsTrigger value="feeTypes">Fee Types & Installments</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="basic" className="space-y-4 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("fee_plan_details")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fees_plan.name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("plan_name")}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t("enter_fee_plan_name")} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="fees_plan.description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("description")}</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder={t("enter_plan_description")} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="fees_plan.class_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("class")}</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                        value={field.value ? field.value.toString() : undefined}
-                      >
+            <TabsContent value="basic" className="space-y-4 pt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fee Plan Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="fees_plan.name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plan Name</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("select_a_class")} />
-                          </SelectTrigger>
+                          <Input placeholder="Enter fee plan name" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {AcademicDivision && AcademicDivision.map((cls) => (
-                            <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
-                              {cls.class}-{cls.division}  {cls.aliases}
-                            </SelectItem>
-                          ))}
-                          {!AcademicDivision && (
-                            <SelectItem value="loading" disabled>
-                              Loading...
-                            </SelectItem>
-                          ) }
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" onClick={() => setActiveTab("feeTypes")}>
-                    {t("next:_add_fee_type")}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  <FormField
+                    control={form.control}
+                    name="fees_plan.description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Enter plan description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          <TabsContent value="feeTypes" className="space-y-4 pt-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">{t("fee_types")}</h3>
-              <Button type="button" onClick={handleAddFeeType} variant="outline">
-                <Plus className="h-4 w-4 mr-2" /> {t("add_fee_type")}
-              </Button>
-            </div>
+                  {type === 'create' && (<FormField
+                    control={form.control}
+                    name="fees_plan.class_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                          value={field.value ? field.value.toString() : undefined}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a class" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {ClassesWithOutFeesPlan && ClassesWithOutFeesPlan.map((cls) => (
+                              <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
+                                {cls.class}-{cls.division}  {cls.aliases}
+                              </SelectItem>
+                            ))}
+                            {(isClassWithOutFeesPlanLoading || !ClassesWithOutFeesPlan) && (
+                              <SelectItem value="loading" disabled>
+                                Loading...
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />)}
 
-            {planDetailsFields.length === 0 ? (
-              <div
-                className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow"
-                role="alert"
-              >
-                <div className="flex">
-                  <div className="py-1">
-                    <svg
-                      className="fill-current h-6 w-6 text-yellow-500 mr-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
-                    </svg>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={() => setActiveTab("feeTypes")}>
+                      Next: Add Fee Types
+                    </Button>
                   </div>
-                  <div>
-                    <p className="font-bold">{t("no_fee_types_added")}</p>
-                    <p className="text-sm">{t("click_the_add_fee_type_button_to_add_fee_types_to_this_plan")}</p>
-                  </div>
-                </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="feeTypes" className="space-y-4 pt-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Fee Types</h3>
+                <Button type="button" onClick={handleAddFeeType} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" /> Add Fee Type
+                </Button>
               </div>
-            ) : (
-              <Tabs
-                value={activeFeeTypeIndex.toString()}
-                onValueChange={(value) => setActiveFeeTypeIndex(Number.parseInt(value))}
-              >
-                <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                  {planDetailsFields.map((field, index) => {
-                    const feeTypeId = form.watch(`fees_types.${index}.fees_type_id`)
-                    const feeTypeName = mockFeeTypes.find((ft) => ft.id === feeTypeId)?.name || `Fee Type ${index + 1}`
 
-                    return (
-                      <TabsTrigger key={field.id} value={index.toString()} className="truncate">
-                        {feeTypeName}
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
+              {planDetailsFields.length === 0 ? (
+                <div
+                  className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow"
+                  role="alert"
+                >
+                  <div className="flex">
+                    <div className="py-1">
+                      <svg
+                        className="fill-current h-6 w-6 text-yellow-500 mr-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-bold">No fee types added</p>
+                      <p className="text-sm">Click the "Add Fee Type" button to add fee types to this plan.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Tabs
+                  value={activeFeeTypeIndex.toString()}
+                  onValueChange={(value) => setActiveFeeTypeIndex(Number.parseInt(value))}
+                >
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                    {planDetailsFields.map((field, index) => {
+                      const feeTypeId = form.watch(`fees_types.${index}.fees_type_id`)
+                      const feeTypeName = FetchedFeesType && FetchedFeesType.find((ft) => ft.id === feeTypeId)?.name || `Fee Type ${index + 1}`
 
-                <ScrollArea className="max-h-[70vh] overflow-auto">
-                  {planDetailsFields.map((field, index) => {
-                    // Get the installment breakdowns for this fee type
-                    const installmentBreakdowns = form.watch(`fees_types.${index}.installment_breakDowns`) || []
-                    const installmentType = form.watch(`fees_types.${index}.installment_type`)
-                    const totalAmount = form.watch(`fees_types.${index}.total_amount`)
-                    console.log("Chrekc this", planDetailsFields)
-                    const installmentTotal = calculateInstallmentTotal(index)
-                    const isAmountExceeded = installmentTotal > Number.parseInt(totalAmount.toString() || "0", 10)
+                      return (
+                        <TabsTrigger key={field.id} value={index.toString()} className="truncate">
+                          {feeTypeName}
+                        </TabsTrigger>
+                      )
+                    })}
+                  </TabsList>
 
-                    return (
-                      <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>{t("fee_type_details")}</CardTitle>
-                            <Button
-                              className="text-white"
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                removePlanDetail(index)
-                                if (index > 0) {
-                                  setActiveFeeTypeIndex(index - 1)
-                                } else if (planDetailsFields.length > 1) {
-                                  setActiveFeeTypeIndex(0)
-                                } else {
-                                  setActiveTab("basic")
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />{t("remove")} 
-                            </Button>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name={`fees_types.${index}.fees_type_id`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t("fee_types")}</FormLabel>
-                                  <Select
-                                    onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                                    value={field.value ? field.value.toString() : undefined}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder={t("select_a_fee_type")} />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {mockFeeTypes.map((feeType) => (
-                                        <SelectItem
-                                          key={feeType.id}
-                                          value={feeType.id.toString()}
-                                          disabled={isFeeTypeSelected(feeType.id, index)}
-                                        >
-                                          {feeType.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                  <ScrollArea className="max-h-[70vh] overflow-auto">
+                    {planDetailsFields && planDetailsFields.map((field, index) => {
+                      // Get the installment breakdowns for this fee type
+                      const installmentBreakdowns = form.watch(`fees_types.${index}.installment_breakDowns`) || []
+                      const installmentType = form.watch(`fees_types.${index}.installment_type`)
+                      const totalAmount = form.watch(`fees_types.${index}.total_amount`)
+                      const installmentTotal = calculateInstallmentTotal(index)
+                      const isAmountExceeded = installmentTotal > Number.parseInt(totalAmount.toString() || "0", 10)
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      return (
+                        <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                              <CardTitle>Fee Type Details</CardTitle>
+                              <Button
+                                className="text-white"
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  removePlanDetail(index)
+                                  if (index > 0) {
+                                    setActiveFeeTypeIndex(index - 1)
+                                  } else if (planDetailsFields.length > 1) {
+                                    setActiveFeeTypeIndex(0)
+                                  } else {
+                                    setActiveTab("basic")
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Remove
+                              </Button>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
                               <FormField
                                 control={form.control}
-                                name={`fees_types.${index}.installment_type`}
+                                name={`fees_types.${index}.fees_type_id`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("installment_type")} </FormLabel>
+                                    <FormLabel>Fee Type</FormLabel>
                                     <Select
-                                      onValueChange={(value) => {
-                                        field.onChange(value)
-                                        handleInstallmentTypeChange(index, value)
-                                      }}
-                                      value={field.value}
+                                      onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                                      value={field.value ? field.value.toString() : undefined}
                                     >
                                       <FormControl>
                                         <SelectTrigger>
-                                          <SelectValue placeholder={t("select_installment_type")} />
+                                          <SelectValue placeholder="Select a fee type" />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        {installmentTypes.map((type) => (
-                                          <SelectItem key={type.value} value={type.value}>
-                                            {type.label}
+                                        {FetchedFeesType && FetchedFeesType.map((feeType) => (
+                                          <SelectItem
+                                            key={feeType.id}
+                                            value={feeType.id.toString()}
+                                            disabled={isFeeTypeSelected(feeType.id, index)}
+                                          >
+                                            {feeType.name}
                                           </SelectItem>
                                         ))}
+                                        {
+                                          (isFeeTypeLoading || !FetchedFeesType) && (
+                                            <SelectItem value="loading" disabled>
+                                              Loading...
+                                            </SelectItem>
+                                          )
+                                        }
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -805,257 +757,289 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                 )}
                               />
 
-                              <FormField
-                                control={form.control}
-                                name={`fees_types.${index}.total_installment`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("total_installments")}</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...field}
-                                        value={field.value || ""}
-                                        disabled={isFixedInstallmentType(installmentType)}
-                                        onChange={(e) => {
-                                          // Only allow numeric input
-                                          const numericValue = e.target.value.replace(/[^0-9]/g, "")
-                                          const maxInstallments = getMaxInstallments(installmentType)
-
-                                          // Ensure value is within valid range
-                                          let value = numericValue ? Number.parseInt(numericValue, 10) : ""
-                                          if (value && Number(value) > Number(maxInstallments)) value = maxInstallments
-                                          if (value && Number(value) < 1) value = 1
-
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name={`fees_types.${index}.installment_type`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Installment Type</FormLabel>
+                                      <Select
+                                        onValueChange={(value) => {
                                           field.onChange(value)
-                                          // Only generate breakdowns if we have a valid number
-                                          if (value && typeof value === "number") {
-                                            // Use setTimeout to prevent immediate re-render
-                                            setTimeout(() => {
-                                              handleInstallmentCountChange(index, value)
-                                            }, 0)
-                                          }
+                                          handleInstallmentTypeChange(index, value)
                                         }}
-                                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                    {installmentType && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Max: {getMaxInstallments(installmentType)} installments
-                                      </p>
-                                    )}
-                                  </FormItem>
+                                        value={field.value}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select installment type" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {installmentTypes.map((type) => (
+                                            <SelectItem key={type.value} value={type.value}>
+                                              {type.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`fees_types.${index}.total_installment`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Total Installments</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="text"
+                                          inputMode="numeric"
+                                          {...field}
+                                          value={field.value || ""}
+                                          disabled={isFixedInstallmentType(installmentType)}
+                                          onChange={(e) => {
+                                            // Only allow numeric input
+                                            const numericValue = e.target.value.replace(/[^0-9]/g, "")
+                                            const maxInstallments = getMaxInstallments(installmentType)
+
+                                            // Ensure value is within valid range
+                                            let value = numericValue ? Number.parseInt(numericValue, 10) : ""
+                                            if (value && Number(value) > Number(maxInstallments)) value = maxInstallments
+                                            if (value && Number(value) < 1) value = 1
+
+                                            field.onChange(value)
+                                            // Only generate breakdowns if we have a valid number
+                                            if (value && typeof value === "number") {
+                                              // Use setTimeout to prevent immediate re-render
+                                              setTimeout(() => {
+                                                handleInstallmentCountChange(index, value)
+                                              }, 0)
+                                            }
+                                          }}
+                                          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                      {installmentType && (
+                                        <p className="text-xs text-muted-foreground">
+                                          Max: {getMaxInstallments(installmentType)} installments
+                                        </p>
+                                      )}
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`fees_types.${index}.total_amount`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Total Amount</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          {...field}
+                                          type="text"
+                                          inputMode="numeric"
+                                          value={field.value || ""}
+                                          onChange={(e) => {
+                                            // Only allow numeric input
+                                            const numericValue = e.target.value.replace(/[^0-9]/g, "")
+                                            const value = numericValue
+                                              ? Math.min(Number.parseInt(numericValue, 10), 1000000)
+                                              : ""
+                                            field.onChange(value)
+
+                                            // Reset all breakdown amounts when total amount changes
+                                            if (installmentBreakdowns.length > 0) {
+                                              const currentPlanDetail = form.getValues(`fees_types.${index}`)
+                                              const resetBreakdowns = currentPlanDetail.installment_breakDowns.map(
+                                                (breakdown) => ({
+                                                  ...breakdown,
+                                                  installment_amount: 0,
+                                                }),
+                                              )
+
+                                              form.setValue(`fees_types.${index}.installment_breakDowns`, resetBreakdowns, {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                                shouldTouch: true,
+                                              })
+                                            }
+                                          }}
+                                          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                      <p className="text-xs text-muted-foreground">Max: ₹10,00,000</p>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => distributeAmount(index)}
+                                  disabled={!totalAmount || Number(totalAmount) <= 0 || installmentBreakdowns.length === 0}
+                                >
+                                  Distribute Amount Evenly
+                                </Button>
+                              </div>
+
+                              <div className="pt-4">
+                                <div className="flex justify-between items-center mb-2">
+                                  <h4 className="text-sm font-medium">Installment Breakdown</h4>
+                                  {Number(totalAmount) > 0 && (
+                                    <div className="text-sm">
+                                      <span
+                                        className={
+                                          isAmountExceeded ? "text-red-500 font-medium" : "text-green-600 font-medium"
+                                        }
+                                      >
+                                        Total: ₹{installmentTotal.toLocaleString()}
+                                      </span>
+                                      <span className="text-muted-foreground"> / ₹{totalAmount.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {isAmountExceeded && (
+                                  <div className={
+                                    isAmountExceeded ? "text-red-500 font-medium" : "text-green-600 font-medium"
+                                  }>
+                                    Sum of installment amounts (₹{installmentTotal.toLocaleString()}) exceeds total
+                                    amount (₹{totalAmount.toLocaleString()})
+                                  </div>
                                 )}
-                              />
 
-                              <FormField
-                                control={form.control}
-                                name={`fees_types.${index}.total_amount`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("total_amount")}</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        {...field}
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={field.value || ""}
-                                        onChange={(e) => {
-                                          // Only allow numeric input
-                                          const numericValue = e.target.value.replace(/[^0-9]/g, "")
-                                          const value = numericValue
-                                            ? Math.min(Number.parseInt(numericValue, 10), 1000000)
-                                            : ""
-                                          field.onChange(value)
+                                {installmentBreakdowns.length > 0 ? (
+                                  <div className="border rounded-md">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Installment #</TableHead>
+                                          <TableHead>Due Date</TableHead>
+                                          <TableHead>Amount</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {installmentBreakdowns.map((installment, installmentIndex) => (
+                                          <TableRow key={`${index}-${installmentIndex}`}>
+                                            <TableCell>{installment.installment_no}</TableCell>
+                                            <TableCell>
+                                              <Controller
+                                                control={form.control}
+                                                name={`fees_types.${index}.installment_breakDowns.${installmentIndex}.due_date`}
+                                                defaultValue={""}
+                                                render={({ field }) => (
+                                                  <input
+                                                    type="date"
+                                                    value={field.value || ""}
+                                                    onChange={(e) => {
+                                                      const formattedDate = e.target.value
+                                                      field.onChange(formattedDate)
+                                                      updateInstallment(index, installmentIndex, {
+                                                        ...installment,
+                                                        due_date: formattedDate,
+                                                      })
+                                                    }}
+                                                    onBlur={field.onBlur}
+                                                    ref={field.ref} // Important for React Hook Form to track field focus
+                                                    className="border border-gray-300 p-2 rounded-md w-full"
+                                                  />
+                                                )}
+                                              />
 
-                                          // Reset all breakdown amounts when total amount changes
-                                          if (installmentBreakdowns.length > 0) {
-                                            const currentPlanDetail = form.getValues(`fees_types.${index}`)
-                                            const resetBreakdowns = currentPlanDetail.installment_breakDowns.map(
-                                              (breakdown) => ({
-                                                ...breakdown,
-                                                installment_amount: 0,
-                                              }),
-                                            )
+                                            </TableCell>
+                                            <TableCell>
+                                              <FormField
+                                                control={form.control}
+                                                name={`fees_types.${index}.installment_breakDowns.${installmentIndex}.installment_amount`}
+                                                render={({ field }) => (
+                                                  <Input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    onChange={(e) => {
+                                                      // Only allow numeric input
+                                                      const numericValue = e.target.value.replace(/[^0-9]/g, "")
+                                                      const value = numericValue
+                                                        ? Math.min(Number.parseInt(numericValue, 10), 1000000)
+                                                        : ""
+                                                      field.onChange(value)
 
-                                            form.setValue(`fees_types.${index}.installment_breakDowns`, resetBreakdowns, {
-                                              shouldDirty: true,
-                                              shouldValidate: true,
-                                              shouldTouch: true,
-                                            })
-                                          }
-                                        }}
-                                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                    <p className="text-xs text-muted-foreground">Max: ₹10,00,000</p>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-
-                            <div className="flex justify-end">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => distributeAmount(index)}
-                                disabled={!totalAmount || Number(totalAmount) <= 0 || installmentBreakdowns.length === 0}
-                              >
-                                {t("distribute_amount_evenly")}
-                              </Button>
-                            </div>
-
-                            <div className="pt-4">
-                              <div className="flex justify-between items-center mb-2">
-                                <h4 className="text-sm font-medium">{t("installment_breakdown")}</h4>
-                                {Number(totalAmount) > 0 && (
-                                  <div className="text-sm">
-                                    <span
-                                      className={
-                                        isAmountExceeded ? "text-red-500 font-medium" : "text-green-600 font-medium"
-                                      }
-                                    >
-                                      Total: ₹{installmentTotal.toLocaleString()}
-                                    </span>
-                                    <span className="text-muted-foreground"> / ₹{totalAmount.toLocaleString()}</span>
+                                                      // Update the installment with the new amount
+                                                      updateInstallment(index, installmentIndex, {
+                                                        ...installment,
+                                                        installment_amount: value,
+                                                      })
+                                                    }}
+                                                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                  />
+                                                )}
+                                              />
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                ) : (
+                                  <div
+                                    className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow"
+                                    role="alert"
+                                  >
+                                    <div className="flex">
+                                      <div className="py-1">
+                                        <svg
+                                          className="fill-current h-6 w-6 text-yellow-500 mr-4"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <p className="font-bold">No installments defined</p>
+                                        <p className="text-sm">
+                                          Set the installment type, count, and total amount to generate installments.
+                                        </p>
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </div>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      )
+                    })}
+                  </ScrollArea>
+                </Tabs>
+              )}
 
-                              {isAmountExceeded && (
-                                <div className={
-                                  isAmountExceeded ? "text-red-500 font-medium" : "text-green-600 font-medium"
-                                }>
-                                  Sum of installment amounts (₹{installmentTotal.toLocaleString()}) exceeds total
-                                  amount (₹{totalAmount.toLocaleString()})
-                                </div>
-                              )}
-
-                              {installmentBreakdowns.length > 0 ? (
-                                <div className="border rounded-md">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>{t("installment")} #</TableHead>
-                                        <TableHead>{t("due_date")}</TableHead>
-                                        <TableHead>{t("amount")}</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {installmentBreakdowns.map((installment, installmentIndex) => (
-                                        <TableRow key={`${index}-${installmentIndex}`}>
-                                          <TableCell>{installment.installment_no}</TableCell>
-                                          <TableCell>
-                                            <Controller
-                                              control={form.control}
-                                              name={`fees_types.${index}.installment_breakDowns.${installmentIndex}.due_date`}
-                                              defaultValue={""}
-                                              render={({ field }) => (
-                                                <input
-                                                  type="date"
-                                                  value={field.value || ""}
-                                                  onChange={(e) => {
-                                                    const formattedDate = e.target.value
-                                                    field.onChange(formattedDate)
-                                                    updateInstallment(index, installmentIndex, {
-                                                      ...installment,
-                                                      due_date: formattedDate,
-                                                    })
-                                                  }}
-                                                  onBlur={field.onBlur}
-                                                  ref={field.ref} // Important for React Hook Form to track field focus
-                                                  className="border border-gray-300 p-2 rounded-md w-full"
-                                                />
-                                              )}
-                                            />
-
-                                          </TableCell>
-                                          <TableCell>
-                                            <FormField
-                                              control={form.control}
-                                              name={`fees_types.${index}.installment_breakDowns.${installmentIndex}.installment_amount`}
-                                              render={({ field }) => (
-                                                <Input
-                                                  type="text"
-                                                  inputMode="numeric"
-                                                  {...field}
-                                                  value={field.value || ""}
-                                                  onChange={(e) => {
-                                                    // Only allow numeric input
-                                                    const numericValue = e.target.value.replace(/[^0-9]/g, "")
-                                                    const value = numericValue
-                                                      ? Math.min(Number.parseInt(numericValue, 10), 1000000)
-                                                      : ""
-                                                    field.onChange(value)
-
-                                                    // Update the installment with the new amount
-                                                    updateInstallment(index, installmentIndex, {
-                                                      ...installment,
-                                                      installment_amount: value,
-                                                    })
-                                                  }}
-                                                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                />
-                                              )}
-                                            />
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              ) : (
-                                <div
-                                  className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow"
-                                  role="alert"
-                                >
-                                  <div className="flex">
-                                    <div className="py-1">
-                                      <svg
-                                        className="fill-current h-6 w-6 text-yellow-500 mr-4"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
-                                      </svg>
-                                    </div>
-                                    <div>
-                                      <p className="font-bold">{t("no_installments_defined")}</p>
-                                      <p className="text-sm">
-                                        {t("set_the_installment_type,_count,_and_total_amount_to_generate_installments.")}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-                    )
-                  })}
-                </ScrollArea>
-              </Tabs>
-            )}
-
-            <div className="flex justify-between pt-4">
-              <Button type="button" variant="outline" onClick={() => setActiveTab("basic")}>
-                {t("back_to_basic_information")}
-              </Button>
-              <div className="space-x-2">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  {t("cancel")}
+              <div className="flex justify-between pt-4">
+                <Button type="button" variant="outline" onClick={() => setActiveTab("basic")}>
+                  Back to Basic Information
                 </Button>
-                <Button type="submit">{plan_id ? "Update Fee Plan" : t("create_fee_plan")}</Button>
+                <div className="space-x-2">
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">{plan_id ? "Update Fee Plan" : "Create Fee Plan"}</Button>
+                </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </form>)}
+            </TabsContent>
+          </Tabs>
+        </form>)}
       {
         isErrorInFetchFessPlanInDetail && !fetchedDetialFeePlan && (
           <div className="text-red-500">

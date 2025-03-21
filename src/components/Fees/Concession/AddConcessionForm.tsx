@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,87 +7,58 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useTranslation } from "@/redux/hooks/useTranslation"
-
-const concessionSchema = z.object({
-  name: z.string().min(2, { message: "Concession name must be at least 2 characters" }),
-  category: z.string().min(1, { message: "Category is required" }),
-  discountType: z.enum(["percentage", "fixed"]),
-  discountValue: z.number().min(0),
-  applicableFeeTypes: z.array(z.string()).min(1, { message: "At least one fee type must be selected" }),
-  isActive: z.boolean(),
-})
-
-interface Concession {
-  id: string
-  name: string
-  category: string
-  discountType: "percentage" | "fixed"
-  discountValue: number
-  applicableFeeTypes: string[]
-  isActive: boolean
-}
+import { Textarea } from "@/components/ui/textarea"
+import { Loader2 } from "lucide-react"
+import { concessionSchema } from "@/utils/fees.validation"
+import { Concession } from "@/types/fees"
 
 interface AddConcessionFormProps {
   initialData: Concession | null
-  onSubmit: (data: Concession) => void
+  onSubmit: (data: z.infer<typeof concessionSchema>) => void
   onCancel: () => void
+  isSubmitting?: boolean
 }
 
-const feeTypes = [
-  "tuition_fee",
-  "activity_fee",
-  "transport_fee",
-  "library_fee",
-  "technology_fee",
-  "sports_fee",
-  "examination_fee",
-  "development_fee",
-]
-
-export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({ initialData, onSubmit, onCancel }) => {
-  const {t} = useTranslation()
+export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+}) => {
   const form = useForm<z.infer<typeof concessionSchema>>({
     resolver: zodResolver(concessionSchema),
     defaultValues: initialData
       ? {
           name: initialData.name,
+          description: initialData.description,
+          applicable_to: initialData.applicable_to as "plan" | "fees_types" ,
           category: initialData.category,
-          discountType: initialData.discountType,
-          discountValue: initialData.discountValue,
-          applicableFeeTypes: initialData.applicableFeeTypes,
-          isActive: initialData.isActive,
+          is_active: initialData.status !== "Inactive",
         }
       : {
           name: "",
-          category: "",
-          discountType: "percentage",
-          discountValue: 0,
-          applicableFeeTypes: [],
-          isActive: true,
+          description: "",
+          applicable_to: "plan",
+          category: "Other",
+          is_active: true,
         },
   })
 
-  const handleSubmit = (values: z.infer<typeof concessionSchema>) => {
-    onSubmit({
-      id: initialData?.id || "0",
-      ...values,
-    })
-  }
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("concession_name")}</FormLabel>
+              <FormLabel>concession_name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Enter concession name" />
               </FormControl>
+              <FormDescription>
+                A descriptive name for the concession (e.g., "Sibling Discount", "Merit Scholarship")
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -97,48 +66,44 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({ initialDat
 
         <FormField
           control={form.control}
-          name="category"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("category")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("select_category")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Family">{t("family")}</SelectItem>
-                  <SelectItem value="Staff">{t("staff")}</SelectItem>
-                  <SelectItem value="Academic">{t("academic")}</SelectItem>
-                  <SelectItem value="Sports">{t("sports")}</SelectItem>
-                  <SelectItem value="Financial">{t("financial")}</SelectItem>
-                  <SelectItem value="Other">{t("other")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder="Enter a detailed description of this concession"
+                  className="min-h-[100px]"
+                />
+              </FormControl>
+              <FormDescription>Explain the purpose and conditions of this concession</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="discountType"
+            name="applicable_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("discount_type")}</FormLabel>
+                <FormLabel>Applicable To</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select discount type" />
+                      <SelectValue placeholder="Select where this concession applies" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="percentage">{t("percentage")} (%)</SelectItem>
-                    <SelectItem value="fixed">{t("fixed_amount")} (₹)</SelectItem>
+                    <SelectItem value="plan">Fee Plan (Entire plan)</SelectItem>
+                    <SelectItem value="students">Students (Apply to selected students)</SelectItem>
+                    {/* <SelectItem value="fees_types">Fee Type (Specific fee types)</SelectItem> */}
+                    {/* <SelectItem value="student">Student (Individual students)</SelectItem> */}
                   </SelectContent>
                 </Select>
+                <FormDescription>Determines how this concession will be applied</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -146,18 +111,26 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({ initialDat
 
           <FormField
             control={form.control}
-            name="discountValue"
+            name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("discount_value")}</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseFloat(e.target.value))} />
-                </FormControl>
-                <FormDescription>
-                  {form.watch("discountType") === "percentage"
-                    ? "Enter percentage value (0-100)"
-                    : "Enter amount in rupees"}
-                </FormDescription>
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Family">Family</SelectItem>
+                    <SelectItem value="Staff">Staff</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                    <SelectItem value="Financial">Financial</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>Categorize this concession for easier management</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -166,52 +139,12 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({ initialDat
 
         <FormField
           control={form.control}
-          name="applicableFeeTypes"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel>{t("applicable_fee_types")}</FormLabel>
-                <FormDescription>{t("select_the_fee_types_to_which_this_concession_applies")}</FormDescription>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {feeTypes.map((feeType) => (
-                  <FormField
-                    key={feeType}
-                    control={form.control}
-                    name="applicableFeeTypes"
-                    render={({ field }) => {
-                      return (
-                        <FormItem key={feeType} className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(feeType)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, feeType])
-                                  : field.onChange(field.value?.filter((value) => value !== feeType))
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">{t(feeType)}</FormLabel>
-                        </FormItem>
-                      )
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="isActive"
+          name="is_active"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">{t("active_status")}</FormLabel>
-                <FormDescription>{t("enable_or_disable_this_concession")}</FormDescription>
+                <FormLabel className="text-base">active_status</FormLabel>
+                <FormDescription>enable_or_disable_this_concession</FormDescription>
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -221,10 +154,21 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({ initialDat
         />
 
         <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {t("cancel")}
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
           </Button>
-          <Button type="submit">{initialData ? t("update_concession") : t("create_concession")}</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {initialData ? "Updating..." : "Creating..."}
+              </>
+            ) : initialData ? (
+              "Update Concession"
+            ) : (
+              "Create Concession"
+            )}
+          </Button>
         </div>
       </form>
     </Form>

@@ -1,4 +1,4 @@
-import { OtherStaff, StaffRole, TeachingStaff } from "./staff"
+import { StaffType , StaffRole } from "./staff"
 
 export interface LeaveRequest {
   id: string
@@ -64,7 +64,7 @@ export interface LeaveApplicationForTeachingStaff {
   applied_by_self: boolean,
   applied_by: number,
   leave_type: LeaveType,
-  staff: TeachingStaff
+  staff: StaffType
 }
 
 export interface LeaveApplicationForOtherStaff {
@@ -85,5 +85,5 @@ export interface LeaveApplicationForOtherStaff {
   applied_by_self: boolean,
   applied_by: number,
   leave_type: LeaveType,
-  staff: OtherStaff
+  staff: StaffType
 } 

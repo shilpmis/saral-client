@@ -79,6 +79,11 @@ const navigationSections: NavSection[] = [
         title: "time_table_management",
         icon: Clock,
         href: "timeTable",
+      },
+      {
+        title: "Admission Management",
+        icon: Building2,
+        href: "admission",
       }
     ],
   },
