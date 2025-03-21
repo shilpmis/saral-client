@@ -1,4 +1,5 @@
 import { Division } from "@/types/academic"
+import baseUrl from "@/utils/base-urls"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 export interface Quota {
@@ -72,7 +73,7 @@ export interface QuotaSeatAllocationRequest {
 export const QuotaApi = createApi({
   reducerPath: "quotaApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3333/api/v1/",
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
         headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
         return headers
