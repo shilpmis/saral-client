@@ -1,16 +1,80 @@
 import type React from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { DashboardData, AdmissionTrend } from "@/types/student"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2 } from "lucide-react"
+import { useGetAdmissionDashboardQuery, useGetAdmissionDetailedStatsQuery, useGetAdmissionTrendsQuery } from "@/services/dashboardServices"
+import { useEffect, useState } from "react"
 
-interface AdmissionDashboardProps {
-  data: DashboardData
-  trends: AdmissionTrend[]
+interface DashboardData {
+  totalInquiries: number
+  pendingApplications: number
+  acceptedAdmissions: number
+  upcomingInterviews: number
 }
 
-export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, trends }) => {
+interface ClassWiseTrend {
+  time_period: string
+  total: number
+  [className: string]: number | string
+}
+
+interface TrendResponse {
+  trends: ClassWiseTrend[]
+  classes: string[]
+}
+
+interface StatusCounts {
+  [key: string]: number
+}
+
+export const AdmissionDashboard: React.FC = () => {
+  // State for trend period
+  const [trendPeriod, setTrendPeriod] = useState<'day' | 'week' | 'month'>('week')
+  
+  // Fetch basic dashboard metrics
+  const { 
+    data: dashboardData, 
+    isLoading: isLoadingDashboard 
+  } = useGetAdmissionDashboardQuery()
+  
+  // Fetch detailed status statistics
+  const { 
+    data: statusStats, 
+    isLoading: isLoadingStats 
+  } = useGetAdmissionDetailedStatsQuery()
+  
+  // Fetch trend data with period state
+  const { 
+    data: trendResponse, 
+    isLoading: isLoadingTrends 
+  } = useGetAdmissionTrendsQuery({ period: trendPeriod, limit: 6 }) as { data: TrendResponse | undefined; isLoading: boolean }
+
+  // Array of colors for different classes
+  const classColors = [
+    "#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088fe", "#00C49F", 
+    "#FFBB28", "#FF8042", "#a4de6c", "#d0ed57"
+  ]
+
+  // Create data for status-based chart
+  const statusChartData = statusStats 
+    ? Object.entries(statusStats).map(([status, count]) => ({
+        status,
+        count
+      }))
+    : []
+
+  // Loading state indicator
+  const isLoading = isLoadingDashboard || isLoadingStats || isLoadingTrends
+  
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="flex justify-center p-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -31,10 +95,13 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.totalInquiries}</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">
+              {isLoadingDashboard ? "..." : dashboardData?.totalInquiries}
+            </div>
+            <p className="text-xs text-muted-foreground">Total applications received</p>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
@@ -52,10 +119,13 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.pendingApplications}</div>
+            <div className="text-2xl font-bold">
+              {isLoadingDashboard ? "..." : dashboardData?.pendingApplications}
+            </div>
             <p className="text-xs text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Accepted Admissions</CardTitle>
@@ -73,10 +143,13 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.acceptedAdmissions}</div>
-            <p className="text-xs text-muted-foreground">+18% from last month</p>
+            <div className="text-2xl font-bold">
+              {isLoadingDashboard ? "..." : dashboardData?.acceptedAdmissions}
+            </div>
+            <p className="text-xs text-muted-foreground">Approved admissions</p>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Upcoming Interviews</CardTitle>
@@ -95,32 +168,155 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ data, tr
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.upcomingInterviews}</div>
-            <p className="text-xs text-muted-foreground">Scheduled this week</p>
+            <div className="text-2xl font-bold">
+              {isLoadingDashboard ? "..." : dashboardData?.upcomingInterviews}
+            </div>
+            <p className="text-xs text-muted-foreground">Scheduled interviews</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Admission Trends by Grade</CardTitle>
-          <CardDescription>Number of inquiries received for each grade</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="grade" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="inquiries" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="trends">
+        <TabsList className="mb-4">
+          <TabsTrigger value="trends">Admission Trends</TabsTrigger>
+          <TabsTrigger value="status">Status Breakdown</TabsTrigger>
+          <TabsTrigger value="class">Class-wise Trends</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="trends">
+          <Card>
+            <CardHeader>
+              <CardTitle>Admission Trends Over Time</CardTitle>
+              <CardDescription>
+                <div className="flex items-center gap-4">
+                  <span>Number of inquiries received per time period</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setTrendPeriod('day')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Daily
+                    </button>
+                    <button 
+                      onClick={() => setTrendPeriod('week')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Weekly
+                    </button>
+                    <button 
+                      onClick={() => setTrendPeriod('month')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Monthly
+                    </button>
+                  </div>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendResponse?.trends || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time_period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="#8884d8" 
+                      strokeWidth={2} 
+                      name="Total Inquiries" 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="status">
+          <Card>
+            <CardHeader>
+              <CardTitle>Applications by Status</CardTitle>
+              <CardDescription>Breakdown of applications by current status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="status" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" name="Applications" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="class">
+          <Card>
+            <CardHeader>
+              <CardTitle>Class-wise Admission Trends</CardTitle>
+              <CardDescription>
+                <div className="flex items-center gap-4">
+                  <span>Admission inquiries by class over time</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setTrendPeriod('day')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Daily
+                    </button>
+                    <button 
+                      onClick={() => setTrendPeriod('week')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Weekly
+                    </button>
+                    <button 
+                      onClick={() => setTrendPeriod('month')}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    >
+                      Monthly
+                    </button>
+                  </div>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={trendResponse?.trends || []} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time_period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    {trendResponse?.classes?.map((className, index) => (
+                      <Bar 
+                        key={className}
+                        dataKey={className} 
+                        stackId="a" 
+                        fill={classColors[index % classColors.length]} 
+                        name={className} 
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
 
+export default AdmissionDashboard

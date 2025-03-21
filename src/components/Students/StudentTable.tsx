@@ -315,7 +315,7 @@ export default function StudentTable({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Admission Date:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.admission_date}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.admission_date ?? '-'}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Admission Class Id:</p>
@@ -357,7 +357,7 @@ export default function StudentTable({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.religion}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.religion}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <p className="text-muted-foreground">Religion(Guj):</p>
@@ -386,11 +386,11 @@ export default function StudentTable({
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <p className="text-muted-foreground">Address:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.address}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.address}</p>
                         </div>
                         <div className="space-y-2">
                           <p className="text-muted-foreground">District:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.district}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.district}</p>
                         </div>
                         <div className="space-y-2">
                           <p className="text-muted-foreground">City:</p>
@@ -415,11 +415,11 @@ export default function StudentTable({
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <p className="text-muted-foreground">Bank Name:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.bank_name}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.bank_name}</p>
                         </div>
                         <div className="space-y-2">
                           <p className="text-muted-foreground">Account No:</p>
-                          <p className="font-medium">{selectedStudent.student_meta!.account_no}</p>
+                          <p className="font-medium">{selectedStudent.student_meta?.account_no}</p>
                         </div>
                         <div className="space-y-2">
                           <p className="text-muted-foreground">IFSC :</p>

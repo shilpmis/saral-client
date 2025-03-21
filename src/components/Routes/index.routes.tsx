@@ -40,6 +40,8 @@ import PayFeesPanel from "../Fees/PayFees/PayFeesPanel";
 import AdmissionSetting from "../Settings/AdmissionSettings/AdmissionSetting";
 import QuotaManagement from "../Settings/AdmissionSettings/QuotaSetting";
 import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting";
+import AdmissionInquiryForm from "../Admission/AdmissionInquiryForm";
+import InquiriesManagement from "../Admission/Inquiries";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -228,6 +230,17 @@ export default function RootRoute() {
               }
             />
 
+            <Route
+              path="admissions/inquiry"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}
+                >
+                  <InquiriesManagement />
+                </PrivateRoute>
+              }
+            />
+
             {/* Settings - nested routes */}
             <Route path="settings"
               element={
@@ -286,17 +299,12 @@ export default function RootRoute() {
                  <AdmissionSetting/>
                 </PrivateRoute>
               } />
-              <Route path="quotas" element={
+              <Route path="admission/quotas" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                  <QuotaManagement/>
                 </PrivateRoute>
               } />
-              <Route path="quotas" element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
-                 <QuotaManagement/>
-                </PrivateRoute>
-              } />
-              <Route path="seats" element={
+              <Route path="admission/seats" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                  <SeatsManagement/>
                 </PrivateRoute>

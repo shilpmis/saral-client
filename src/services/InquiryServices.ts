@@ -1,103 +1,167 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { PageMeta } from "@/types/global"
-import { InquiriesForStudent } from "@/mock/admissionMockData"
+import baseUrl from "@/utils/base-urls"
 
-interface GetInquiryResponse {
-  data: InquiriesForStudent[]
+// Define the Inquiry type based on the API response
+export interface Inquiry {
+  id: number
+  school_id: number
+  academic_id: number
+  student_name: string
+  dob: string
+  gender: string
+  class_applying: number
+  parent_name: string
+  parent_contact: string
+  parent_email: string | null
+  address: string
+  previous_school: string | null
+  previous_class: string | null
+  previous_percentage: string | null
+  previous_year: string | null
+  special_achievements: string | null
+  applying_for_quota: number
+  quota_type: string | null
+  status: string
+  admin_notes: string | null
+  created_by: number
+  is_converted_to_student: number
+}
+
+interface GetInquiriesResponse {
+  data: Inquiry[]
   page: PageMeta
 }
 
-interface GetInquiryRequest {
-  page?: number
+interface GetInquiryResponse {
+  message?: string
+  inquiry: Inquiry
 }
 
 interface AddInquiryRequest {
-  payload: {
-    student_name: string
-    parent_name: string
-    contact_number: number
-    email: string
-    grade_applying: number
-  }
+  academic_session_id: number
+  student_name: string
+  dob?: string
+  gender?: string
+  class_applying: number
+  parent_name: string
+  parent_contact: string
+  address?: string
+  applying_for_quota?: boolean
+  parent_email?: string
+  previous_school?: string
+  previous_class?: string
+  previous_percentage?: string
+  previous_year?: string
+  special_achievements?: string
+  quota_type?: string
 }
 
-// This is a mock implementation since we don't have a real API
+interface AddInquiryResponse {
+  message: string
+  inquiry: Inquiry
+}
+
+interface UpdateInquiryRequest {
+  id: number
+  academic_id?: number
+  student_name?: string
+  dob?: string
+  gender?: string
+  class_applying?: number
+  parent_name?: string
+  parent_contact?: string
+  address?: string
+  applying_for_quota?: boolean
+  parent_email?: string
+  previous_school?: string
+  previous_class?: string
+  previous_percentage?: string
+  previous_year?: string
+  special_achievements?: string
+  quota_type?: string
+  status?: string
+  admin_notes?: string
+}
+
+interface UpdateInquiryResponse {
+  message: string
+  inquiry: Inquiry
+}
+
+// Create the API service
 export const InquiryApi = createApi({
-  reducerPath: "inquiryApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
+  reducerPath: "InquiryApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: `${baseUrl.serverUrl}api/v1/`,
+    prepareHeaders: (headers, { getState }) => {
+      headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
+      return headers
+    },
+  }),
+  tagTypes: ['Inquiry'],
   endpoints: (builder) => ({
-    getInquiry: builder.query<GetInquiryResponse, GetInquiryRequest>({
-      queryFn: async ({ page = 1 }) => {
-        // Mock data for demonstration
-        const mockData: InquiriesForStudent[] = [
-          {
-            id: 1,
-            student_name: "Rahul Sharma",
-            parent_name: "Vikram Sharma",
-            contact_number: "9876543210",
-            email: "vikram.sharma@example.com",
-            grade_applying: "5",
-            status: "pendding",
-            created_at: "2023-03-15T10:30:00Z",
-            updated_at: "2023-03-15T10:30:00Z",
-          },
-          {
-            id: 2,
-            student_name: "Priya Patel",
-            parent_name: "Nitin Patel",
-            contact_number: "9876543211",
-            email: "nitin.patel@example.com",
-            grade_applying: "3",
-            status: "Interview Scheduled",
-            created_at: "2023-03-16T11:45:00Z",
-            updated_at: "2023-03-16T11:45:00Z",
-          },
-          {
-            id: 3,
-            student_name: "Arjun Singh",
-            parent_name: "Rajinder Singh",
-            contact_number: "9876543212",
-            email: "rajinder.singh@example.com",
-            grade_applying: "7",
-            status: "rejected",
-            created_at: "2023-03-17T09:15:00Z",
-            updated_at: "2023-03-17T09:15:00Z",
-          },
-          {
-            id: 4,
-            student_name: "Ananya Gupta",
-            parent_name: "Sanjay Gupta",
-            contact_number: "9876543213",
-            email: "sanjay.gupta@example.com",
-            grade_applying: "1",
-            status: "approved",
-            created_at: "2023-03-18T14:20:00Z",
-            updated_at: "2023-03-18T14:20:00Z",
-          },
-        ]
-
-        const mockPageMeta: PageMeta = {
-          current_page: page,
-          first_page: 1,
-          last_page: 1,
-          per_page: 10,
-          total: mockData.length,
-          first_page_url: "http://localhost:3000/api/inquiry?page=1",
-          last_page_url: "http://localhost:3000/api/inquiry?page=1",
-        }
-
-        return { data: { data: mockData, page: mockPageMeta } }
-      },
+    // Get all inquiries with pagination
+    getInquiries: builder.query<GetInquiriesResponse, { page?: number, limit?: number }>({
+      query: ({ page = 1, limit = 10 }) => ({
+        url: `/inquiries`,
+        // params: { page, limit },
+      }),
+      providesTags: (result) => 
+        result 
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Inquiry' as const, id })),
+              { type: 'Inquiry', id: 'LIST' },
+            ]
+          : [{ type: 'Inquiry', id: 'LIST' }],
     }),
-    addInquiry: builder.mutation<{ success: boolean }, AddInquiryRequest>({
-      queryFn: async ({ payload }) => {
-        // Mock successful response
-        console.log("Adding inquiry:", payload)
-        return { data: { success: true } }
-      },
+    
+    // Get a single inquiry by ID
+    getInquiryById: builder.query<Inquiry, number>({
+      query: (id) => `/inquiry/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Inquiry', id }],
+    }),
+    
+    // Add a new inquiry
+    addInquiry: builder.mutation<AddInquiryResponse, AddInquiryRequest>({
+      query: (body) => ({
+        url: '/inquiry',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: 'Inquiry', id: 'LIST' }],
+    }),
+    
+    // Update an existing inquiry
+    updateInquiry: builder.mutation<UpdateInquiryResponse, UpdateInquiryRequest>({
+      query: ({ id, ...body }) => ({
+        url: `/inquiry/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Inquiry', id },
+        { type: 'Inquiry', id: 'LIST' }
+      ],
+    }),
+    
+    // Delete an inquiry
+    deleteInquiry: builder.mutation<{ message: string }, number>({
+      query: (id) => ({
+        url: `/inquiry/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Inquiry', id: 'LIST' }],
     }),
   }),
 })
 
-export const { useLazyGetInquiryQuery, useAddInquiryMutation } = InquiryApi
-
+// Export hooks for usage in components
+export const { 
+  useGetInquiriesQuery,
+  useLazyGetInquiriesQuery,
+  useGetInquiryByIdQuery,
+  useAddInquiryMutation,
+  useUpdateInquiryMutation,
+  useDeleteInquiryMutation
+} = InquiryApi
