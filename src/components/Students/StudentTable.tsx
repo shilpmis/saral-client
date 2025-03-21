@@ -42,6 +42,7 @@ export default function StudentTable({
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const {t} = useTranslation()
 
   const perPageData = PageDetailsForStudents?.per_page || 6
   const totalPages = Math.ceil(filteredStudents.length / perPageData)
@@ -89,20 +90,20 @@ export default function StudentTable({
   return (
     <div className="p-1">
       {paginatedData(currentPage).length === 0 ? (
-        <div className="text-center py-4 text-gray-500">no_records_found</div>
+        <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
       ) : (
         <>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>gr_no</TableHead>
-              <TableHead>name</TableHead>
-              <TableHead>roll_no</TableHead>
-              <TableHead>gender</TableHead>
-              <TableHead>father_name</TableHead>
-              <TableHead>contact_number</TableHead>
-              <TableHead>aadhar_no</TableHead>
-              <TableHead>actions</TableHead>
+              <TableHead>{t("gr_no")}</TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead>{t("roll_no")}</TableHead>
+              <TableHead>{t("gender")}</TableHead>
+              <TableHead>{t("father_name")}</TableHead>
+              <TableHead>{t("contact_number")}</TableHead>
+              <TableHead>{t("aadhar_no")}</TableHead>
+              <TableHead>{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -124,7 +125,7 @@ export default function StudentTable({
                 <TableCell>{student.aadhar_no}</TableCell>
                 <TableCell>
                   <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEdit(student)}>
-                    <Edit className="h-4 w-4 mr-1" /> Edit
+                    <Edit className="h-4 w-4 mr-1" /> {t("edit")}
                   </Button>
                   {/* <Button
                     variant="outline"
@@ -142,7 +143,7 @@ export default function StudentTable({
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <div className="flex justify-between items-center p-4 md:p-6 sticky top-0 bg-background z-10 border-b">
-            <DialogTitle className="text-xl md:text-2xl font-bold">Student Details</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl font-bold">{t("student_details")}</DialogTitle>
             <div className="flex items-center gap-2">
             {selectedStudent && (
                 <TooltipProvider>

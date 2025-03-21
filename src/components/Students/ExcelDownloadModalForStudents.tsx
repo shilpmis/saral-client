@@ -14,6 +14,7 @@ import type { AcademicClasses, Division } from "@/types/academic"
 import { useDownloadExcelTemplateMutation } from "@/services/StudentServices"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ExcelDownloadModalProps {
   academicClasses: AcademicClasses[] | null
@@ -76,6 +77,7 @@ const fieldGroups = {
 export default function ExcelDownloadModalForStudents({ academicClasses }: ExcelDownloadModalProps) {
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const {t} = useTranslation()
 
   const [isOpen, setIsOpen] = useState(false)
   const [selectedClass, setSelectedClass] = useState<string>("")
@@ -206,12 +208,12 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     <div>
       <Card className="border shadow-sm">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Select Academic Year, Class, and Division</CardTitle>
+          <CardTitle className="text-base">{t("select_academic_year,_class,_and_division")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="academic-session">Select Academic Year</Label>
+              <Label htmlFor="academic-session">{t("select_academic_year")}</Label>
               <Select value={selectedAcademicSession} onValueChange={handleAcademicSessionChange}>
                 <SelectTrigger id="academic-session">
                   <SelectValue placeholder="Select Academic Year" />
@@ -226,10 +228,10 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="class">Select Class</Label>
+              <Label htmlFor="class">{t("select_class")}</Label>
               <Select value={selectedClass} onValueChange={handleClassChange}>
                 <SelectTrigger id="class">
-                  <SelectValue placeholder="Select Class" />
+                  <SelectValue placeholder={t("select_class")} />
                 </SelectTrigger>
                 <SelectContent>
                   {academicClasses?.map((cls) =>
@@ -243,14 +245,14 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="division">Select Division</Label>
+              <Label htmlFor="division">{t("select_division")}</Label>
               <Select
                 value={selectedDivision ? selectedDivision.id.toString() : ""}
                 onValueChange={handleDivisionChange}
                 disabled={!selectedClass}
               >
                 <SelectTrigger id="division">
-                  <SelectValue placeholder="Select Division" />
+                  <SelectValue placeholder={t("select_division")} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableDivisions?.divisions.map((division) => (
@@ -273,7 +275,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
         <>
           <Card className="border shadow-sm mt-4">
             <CardHeader className="py-3">
-              <CardTitle className="text-base">Select Fields ({selectedFieldCount} fields selected)</CardTitle>
+              <CardTitle className="text-base">{t("select_fields")} ({selectedFieldCount} fields selected)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <ScrollArea className="h-[300px] pr-4">
@@ -331,7 +333,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
         ) : (
           <>
             <FileDown className="mr-2 h-4 w-4" />
-            Download Excel
+            {t("download_excel")}
           </>
         )}
       </Button>

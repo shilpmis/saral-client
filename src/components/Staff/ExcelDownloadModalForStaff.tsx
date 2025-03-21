@@ -13,6 +13,7 @@ import { useDownloadExcelTemplateMutation } from "@/services/StaffService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { current } from "@reduxjs/toolkit"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ExcelDownloadModalProps {}
 
@@ -47,6 +48,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
   const [staffType, setStaffType] = useState<"teaching" | "non-teaching">("teaching")
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({})
   const [isDownloading, setIsDownloading] = useState(false)
+  const {t} = useTranslation()
 
     const authState = useAppSelector(selectAuthState)
     const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -128,7 +130,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
     <div>
       <Card className="border shadow-sm">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Select Staff Type</CardTitle>
+          <CardTitle className="text-base">{t("select_staff_type")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-4">
@@ -138,7 +140,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
                 checked={staffType === "teaching"}
                 onCheckedChange={() => setStaffType("teaching")}
               />
-              <Label htmlFor="teaching">Teaching Staff</Label>
+              <Label htmlFor="teaching">{t("teaching_staff")}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -146,7 +148,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
                 checked={staffType === "non-teaching"}
                 onCheckedChange={() => setStaffType("non-teaching")}
               />
-              <Label htmlFor="non-teaching">Non-Teaching Staff</Label>
+              <Label htmlFor="non-teaching">{t("non_teaching_staff")}</Label>
             </div>
           </div>
         </CardContent>
@@ -154,7 +156,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
 
       <Card className="border shadow-sm mt-4">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Select Fields ({selectedFieldCount} fields selected)</CardTitle>
+          <CardTitle className="text-base">{t("select_fields")} ({selectedFieldCount} fields selected)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <ScrollArea className="h-[300px] pr-4">
@@ -210,7 +212,7 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
         ) : (
           <>
             <FileDown className="mr-2 h-4 w-4" />
-            Download Excel
+            {t("download_excel")}
           </>
         )}
       </Button>

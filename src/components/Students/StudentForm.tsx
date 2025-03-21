@@ -745,7 +745,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gender</FormLabel>
+                        <FormLabel>{t("gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                           <FormControl>
                             <SelectTrigger>
@@ -808,7 +808,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="aadhar_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Aadhar Number</FormLabel>
+                        <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ''} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
@@ -996,7 +996,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="admission_class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Admission Class</FormLabel>
+                        <FormLabel>{t("admission_class")}</FormLabel>
                         <Select
                           value={field.value ?? ""} onValueChange={(value) => {
                             field.onChange(value);
@@ -1005,12 +1005,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Class" />
+                              <SelectValue placeholder={t("select_class")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Classes
+                              {t("classes")}
                             </SelectItem>
 
                             {AcademicClasses.map(
@@ -1043,12 +1043,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Division" />
+                              <SelectValue placeholder={t("select_division")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Divisions
+                              {t("divisions")}
                             </SelectItem>
                             {availableDivisionsForAdmissionClass &&
                               availableDivisionsForAdmissionClass.divisions.map((division, index) => (
@@ -1080,12 +1080,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Class" />
+                              <SelectValue placeholder={t("select_class")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Classes
+                              {t("classes")}
                             </SelectItem>
                             {AcademicClasses.map(
                               (cls, index) =>
@@ -1117,12 +1117,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Division" />
+                              <SelectValue placeholder={t("select_division")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Divisions
+                              {t("divisions")}
                             </SelectItem>
                             {availableDivisions &&
                               availableDivisions.divisions.map((division, index) => (
@@ -1244,11 +1244,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t("category")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
+                            <SelectValue placeholder={t("select_category")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1340,7 +1340,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="postal_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Postal Code</FormLabel>
+                        <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1409,10 +1409,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="submit">
-                  {!isStundetGetingUpdate && (form_type === "create" ? "Submit" : "Update")}
+                  {!isStundetGetingUpdate && (form_type === "create" ? t("submit") : "Update")}
                   {isStundetGetingUpdate && <Loader2 className="animate-spin" />}
                 </Button>
               </CardFooter>

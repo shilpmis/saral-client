@@ -6,7 +6,6 @@ import { PlusCircle, FileText, UserCheck, UserX, Calendar } from "lucide-react"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
 import { InquiryList } from "@/components/Admission/InquiryList"
-import { useTranslation } from "@/redux/hooks/useTranslation"
 import { AdmissionTrend, DashboardData } from "@/types/student"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 
