@@ -16,12 +16,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const InquiryList: React.FC = () => {
   const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1 })
   const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string>("")
+  const {t} = useTranslation()
 
   const handleViewInquiry = (inquiry: Inquiry) => {
     setSelectedInquiry(inquiry)
@@ -64,12 +66,12 @@ export const InquiryList: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student Name</TableHead>
-              <TableHead>Parent Name</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t("student_name")}</TableHead>
+              <TableHead>{t("parent_name")}</TableHead>
+              <TableHead>{t("contact")}</TableHead>
+              <TableHead>{t("class")}</TableHead>
+              <TableHead>{t("status")}</TableHead>
+              <TableHead>{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -84,7 +86,7 @@ export const InquiryList: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <Button variant="outline" size="sm" onClick={() => handleViewInquiry(inquiry)}>
-                    View
+                    {t("view")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -100,30 +102,30 @@ export const InquiryList: React.FC = () => {
       )}
 
       {inquiriesData && inquiriesData.data.length === 0 && (
-        <div className="text-center p-8 border rounded-lg bg-muted/50">No Inquiries for now!</div>
+        <div className="text-center p-8 border rounded-lg bg-muted/50">{t("no_inquiries_for_now!")}</div>
       )}
 
       {selectedInquiry && (
         <Dialog open={!!selectedInquiry} onOpenChange={closeDialog}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Inquiry Details</DialogTitle>
-              <DialogDescription>Review complete details and determine eligibility</DialogDescription>
+              <DialogTitle>{t("inquiry_details")}</DialogTitle>
+              <DialogDescription>{t("review_complete_details_and_determine_eligibility")}</DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium">Student Information</h3>
+                  <h3 className="text-lg font-medium">{t("student_information")}</h3>
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    <div className="text-sm font-medium">Name:</div>
+                    <div className="text-sm font-medium">{t("name")}:</div>
                     <div className="text-sm">{selectedInquiry.student_name}</div>
-                    <div className="text-sm font-medium">Applied for Class:</div>
+                    <div className="text-sm font-medium">{t("applied_for_class")}:</div>
                     <div className="text-sm">{selectedInquiry.class_applying}</div>
-                    <div className="text-sm font-medium">Date of Birth:</div>
+                    <div className="text-sm font-medium">{t("date_of_birth")}:</div>
                     <div className="text-sm">{new Date(selectedInquiry.dob).toLocaleDateString()}</div>
-                    <div className="text-sm font-medium">Gender:</div>
+                    <div className="text-sm font-medium">{t("gender")}:</div>
                     <div className="text-sm">{selectedInquiry.gender}</div>
-                    <div className="text-sm font-medium">Status:</div>
+                    <div className="text-sm font-medium">{t("status")}:</div>
                     <div className="text-sm">
                       <Badge variant={getStatusVariant(selectedInquiry.status)}>{selectedInquiry.status}</Badge>
                     </div>
@@ -131,15 +133,15 @@ export const InquiryList: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium">Parent Information</h3>
+                  <h3 className="text-lg font-medium">{t("parent_information")}</h3>
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    <div className="text-sm font-medium">Parent Name:</div>
+                    <div className="text-sm font-medium">{t("parent_name")}:</div>
                     <div className="text-sm">{selectedInquiry.parent_name}</div>
-                    <div className="text-sm font-medium">Contact:</div>
+                    <div className="text-sm font-medium">{t("contact")}:</div>
                     <div className="text-sm">{selectedInquiry.parent_contact}</div>
-                    <div className="text-sm font-medium">Email:</div>
+                    <div className="text-sm font-medium">{t("email")}:</div>
                     <div className="text-sm">{selectedInquiry.parent_email || "N/A"}</div>
-                    <div className="text-sm font-medium">Address:</div>
+                    <div className="text-sm font-medium">{t("address")}:</div>
                     <div className="text-sm">{selectedInquiry.address}</div>
                   </div>
                 </div>
@@ -147,25 +149,25 @@ export const InquiryList: React.FC = () => {
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium">Update Status</h3>
+                  <h3 className="text-lg font-medium">{t("update_status")}</h3>
                   <div className="mt-2 space-y-4">
                     <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder={t("select_status")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
-                        <SelectItem value="eligible">Eligible</SelectItem>
-                        <SelectItem value="ineligible">Ineligible</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="pending">{t("pending")}</SelectItem>
+                        <SelectItem value="Interview Scheduled">{t("interview_scheduled")}</SelectItem>
+                        <SelectItem value="eligible">{t("eligible")}</SelectItem>
+                        <SelectItem value="ineligible">{t("ineligible")}</SelectItem>
+                        <SelectItem value="approved">{t("approved")}</SelectItem>
+                        <SelectItem value="rejected">{t("rejected")}</SelectItem>
                       </SelectContent>
                     </Select>
 
                     {selectedInquiry.applying_for_quota ? (
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Quota Applied For</h4>
+                        <h4 className="text-sm font-medium mb-2">{t("quota_applied_for")}</h4>
                         <div className="p-2 bg-muted rounded-md">{selectedInquiry.quota_type || "General Quota"}</div>
                       </div>
                     ) : null}
@@ -183,15 +185,15 @@ export const InquiryList: React.FC = () => {
                   }}
                   disabled={isUpdating}
                 >
-                  Reject Application
+                  {t("reject_application")}
                 </Button>
               </div>
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={closeDialog}>
-                  Close
+                  {t("close")}
                 </Button>
                 <Button onClick={handleStatusUpdate} disabled={isUpdating}>
-                  {isUpdating ? "Updating..." : "Update Status"}
+                  {isUpdating ? "Updating..." : t("update_status")}
                 </Button>
               </div>
             </DialogFooter>

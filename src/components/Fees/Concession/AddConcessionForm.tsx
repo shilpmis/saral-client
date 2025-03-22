@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 import { concessionSchema } from "@/utils/fees.validation"
 import { Concession } from "@/types/fees"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface AddConcessionFormProps {
   initialData: Concession | null
@@ -43,7 +44,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           is_active: true,
         },
   })
-
+  const {t} = useTranslation()
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -52,12 +53,12 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>concession_name</FormLabel>
+              <FormLabel>{t("concession_name")}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter concession name" />
+                <Input {...field} placeholder={t("enter_concession_name")} />
               </FormControl>
               <FormDescription>
-                A descriptive name for the concession (e.g., "Sibling Discount", "Merit Scholarship")
+              {t("a_descriptive_name_for_the_concession")} (e.g., "Sibling Discount", "Merit Scholarship")
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -69,15 +70,15 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t("description")}</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
-                  placeholder="Enter a detailed description of this concession"
+                  placeholder={t("enter_a_detailed_description_of_this_concession")}
                   className="min-h-[100px]"
                 />
               </FormControl>
-              <FormDescription>Explain the purpose and conditions of this concession</FormDescription>
+              <FormDescription>{t("explain_the_purpose_and_conditions_of_this_concession")}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -89,21 +90,21 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             name="applicable_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Applicable To</FormLabel>
+                <FormLabel>{t("applicable_to")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select where this concession applies" />
+                      <SelectValue placeholder={t("select_where_this_concession_applies")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="plan">Fee Plan (Entire plan)</SelectItem>
-                    <SelectItem value="students">Students (Apply to selected students)</SelectItem>
+                    <SelectItem value="plan">{t("fee_plan_(entire_plan)")}</SelectItem>
+                    <SelectItem value="students">{t("students_(apply_to_selected_students)")}</SelectItem>
                     {/* <SelectItem value="fees_types">Fee Type (Specific fee types)</SelectItem> */}
                     {/* <SelectItem value="student">Student (Individual students)</SelectItem> */}
                   </SelectContent>
                 </Select>
-                <FormDescription>Determines how this concession will be applied</FormDescription>
+                <FormDescription>{t("determines_how_this_concession_will_be_applied")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -114,23 +115,23 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>{t("category")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t("select_category")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Family">Family</SelectItem>
-                    <SelectItem value="Staff">Staff</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
-                    <SelectItem value="Sports">Sports</SelectItem>
-                    <SelectItem value="Financial">Financial</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Family">{t("family")}</SelectItem>
+                    <SelectItem value="Staff">{t("staff")}</SelectItem>
+                    <SelectItem value="Education">{t("education")}</SelectItem>
+                    <SelectItem value="Sports">{t("sports")}</SelectItem>
+                    <SelectItem value="Financial">{t("financial")}</SelectItem>
+                    <SelectItem value="Other">{t("other")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>Categorize this concession for easier management</FormDescription>
+                <FormDescription>{t("categorize_this_concession_for_easier_management")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -143,8 +144,8 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">active_status</FormLabel>
-                <FormDescription>enable_or_disable_this_concession</FormDescription>
+                <FormLabel className="text-base">{t("active_status")}</FormLabel>
+                <FormDescription>{t("enable_or_disable_this_concession")}</FormDescription>
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -155,7 +156,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
 
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
@@ -166,7 +167,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             ) : initialData ? (
               "Update Concession"
             ) : (
-              "Create Concession"
+              t("create_concession")
             )}
           </Button>
         </div>

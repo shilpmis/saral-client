@@ -232,7 +232,7 @@ export default function GeneralSettings() {
             className="h-20 w-20 rounded-full" // Adjust size and style as needed
           />
           <div className="flex flex-col">
-            <CardTitle>Organization Details </CardTitle>
+            <CardTitle>{t("organization_details")} </CardTitle>
           </div>
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function GeneralSettings() {
               name="organization.name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
+                  <FormLabel>{t("organization_name")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled />
                   </FormControl>
@@ -260,7 +260,7 @@ export default function GeneralSettings() {
               name="organization.head_contact_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Head Contact Number</FormLabel>
+                  <FormLabel>{t("head_contact_number")}</FormLabel>
                   <FormControl>
                     <Input placeholder=" " {...field} disabled />
                   </FormControl>
@@ -274,7 +274,7 @@ export default function GeneralSettings() {
               name="organization.head_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Head Name</FormLabel>
+                  <FormLabel>{t("head_name")}</FormLabel>
                   <FormControl>
                     <Input placeholder="" {...field} disabled />
                   </FormControl>
@@ -288,7 +288,7 @@ export default function GeneralSettings() {
               name="organization.pincode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pincode</FormLabel>
+                  <FormLabel>{t("pincode")}</FormLabel>
                   <FormControl>
                     <Input placeholder="pincode" {...field} value={field.value ?? ''} disabled />
                   </FormControl>
@@ -302,7 +302,7 @@ export default function GeneralSettings() {
               name="organization.address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t("address")}</FormLabel>
                   <FormControl>
                     <Input placeholder="address" {...field} disabled />
                   </FormControl>
@@ -316,7 +316,7 @@ export default function GeneralSettings() {
               name="organization.subscription_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subscription Type</FormLabel>
+                  <FormLabel>{t("subscription_type")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled />
                   </FormControl>

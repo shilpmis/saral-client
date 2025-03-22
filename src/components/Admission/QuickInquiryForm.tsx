@@ -151,11 +151,11 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="class_applying"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class Applying For</FormLabel>
+                  <FormLabel>{t("class_applying_for")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
+                        <SelectValue placeholder={t("select_class")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -172,7 +172,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <DialogFooter>
               <Button type="submit" disabled={isAddingInquiry}>
-                {isAddingInquiry ? "Submitting..." : "Submit Inquiry"}
+                {isAddingInquiry ? "Submitting..." : t("submit_inquiry")}
               </Button>
             </DialogFooter>
           </form>

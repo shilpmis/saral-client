@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -10,10 +10,12 @@ import { InquiryList } from "@/components/Admission/InquiryList"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
 import { Link } from "react-router-dom"
 import AdmissionInquiryForm from "@/components/Admission/AdmissionInquiryForm"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function AdminAdmissonView() {
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const { t } = useTranslation()
 
   // Mock dashboard data
   const dashboardData: DashboardData = {
@@ -37,18 +39,21 @@ export default function AdminAdmissonView() {
     { grade: "Grade 9", inquiries: 5 },
     { grade: "Grade 10", inquiries: 0 },
   ]
-
+  useEffect(()=> {
+    const translated = t("view_all_admission_inquiries");
+    console.log("translated", translated);
+  })
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
         <div className="flex justify-between items-center gap-4">
-          <h1 className="text-xl font-bold tracking-tight">Admission Dashboard</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t("admission_dashboard")}</h1>
           <div className="flex gap-4">
             <Link to="/d/admissions/inquiry">
-              <Button size="lg">View All Admission Inquiries</Button>
+              <Button size="lg">{t("view_all_admission_inquiries")}</Button>
             </Link>
-            <Button onClick={() => setIsQuickInquiryOpen(true)}>Add Quick Inquiry</Button>
-            <Button onClick={() => setIsInquiryOpen(true)}>Add Admission Inquiry</Button>
+            <Button onClick={() => setIsQuickInquiryOpen(true)}>{t("add_quick_inquiry")}</Button>
+            <Button onClick={() => setIsInquiryOpen(true)}>{t("add_admission_inquiry")}</Button>
           </div>
         </div>
 
@@ -57,7 +62,7 @@ export default function AdminAdmissonView() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Add Admission Inquiry</h2>
+                <h2 className="text-xl font-bold">{t("add_admission_inquiry")}</h2>
                 <Button variant="ghost" onClick={() => setIsInquiryOpen(false)}>Close</Button>
               </div>
               <AdmissionInquiryForm />
@@ -68,20 +73,20 @@ export default function AdminAdmissonView() {
         {/* Tabs Section */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="inquiries">Recent Inquiries</TabsTrigger>
-            <TabsTrigger value="quotas">Quota Distribution</TabsTrigger>
+            <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
+            <TabsTrigger value="inquiries">{t("recent_inquiries")}</TabsTrigger>
+            <TabsTrigger value="quotas">{t("quota_distribution")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <AdmissionDashboard data={dashboardData} trends={trendData} />
+            <AdmissionDashboard />
           </TabsContent>
 
           <TabsContent value="inquiries" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Admission Inquiries</CardTitle>
-                <CardDescription>Manage and process admission inquiries</CardDescription>
+                <CardTitle>{t("recent_admission_inquiries")}</CardTitle>
+                <CardDescription>{t("manage_and_process_admission_inquiries")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <InquiryList />
@@ -92,12 +97,12 @@ export default function AdminAdmissonView() {
           <TabsContent value="quotas" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Quota Distribution</CardTitle>
-                <CardDescription>Current allocation of seats across different quotas</CardDescription>
+                <CardTitle>{t("quota_distribution")}</CardTitle>
+                <CardDescription>{t("current_allocation_of_seats_across_different_quotas")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Quota distribution visualization will be displayed here</p>
+                  <p className="text-muted-foreground">{t("quota_distribution_visualization_will_be_displayed_here")}</p>
                 </div>
               </CardContent>
             </Card>

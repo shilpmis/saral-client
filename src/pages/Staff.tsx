@@ -746,7 +746,7 @@ export const Staff: React.FC = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t("upload_staff_CSV_data")}</DialogTitle>
+                <DialogTitle>{t("upload_staff_csv_data")}</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6">

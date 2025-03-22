@@ -562,7 +562,7 @@ export const Students: React.FC = () => {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[700px] overflow-auto">
-                <DialogTitle>{t("upload_CSV_file")}</DialogTitle>
+                <DialogTitle>{t("upload_csv_file")}</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>

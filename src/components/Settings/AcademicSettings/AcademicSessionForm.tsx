@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { useCreateAcademicSessionMutation } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z
   .object({
@@ -32,6 +33,7 @@ const formSchema = z
 export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
   const user = useAppSelector(selectCurrentUser)
   const [createAcademicSession, { isLoading }] = useCreateAcademicSessionMutation()
+  const {t} = useTranslation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -85,7 +87,7 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
             name="start_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
+                <FormLabel>{t("start_date")}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -119,7 +121,7 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
             name="end_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>End Date</FormLabel>
+                <FormLabel>{t("end_date")}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -157,7 +159,7 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
               Creating...
             </>
           ) : (
-            "Create Academic Session"
+            t("create_academic_session")
           )}
         </Button>
       </form>

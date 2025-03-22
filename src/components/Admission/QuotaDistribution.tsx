@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z.object({
   student_name: z.string().min(2, { message: "Student name is required" }),
@@ -29,6 +30,7 @@ interface QuickInquiryFormProps {
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
   const [addInquiries, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
   const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const {t} = useTranslation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,7 +79,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Inquiry Form</DialogTitle>
+          <DialogTitle>{t("quick_inquiry_form")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { useGetAcademicSessionsQuery } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface AcademicSessionsListProps {
   onActivate: (sessionId: number) => Promise<void>
@@ -19,6 +20,7 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
   const user = useAppSelector(selectCurrentUser)
   const { data: sessions, isLoading, refetch } = useGetAcademicSessionsQuery(user?.school_id ?? 0)
   const [activatingId, setActivatingId] = useState<number | null>(null)
+  const {t} = useTranslation()
 
   const handleSetActive = async (sessionId: number) => {
     if (!sessionId) return
@@ -43,17 +45,17 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
   }
 
   if (!sessions || sessions.length === 0) {
-    return <div className="text-center p-4 text-muted-foreground">No academic sessions found</div>
+    return <div className="text-center p-4 text-muted-foreground">{t("no_academic_sessions_found")}</div>
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead>{t("start_date")}</TableHead>
+          <TableHead>{t("end_date")}</TableHead>
+          <TableHead>{t("status")}</TableHead>
+          <TableHead className="text-right">{t("actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -64,10 +66,10 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
             <TableCell>
               {session.is_active ? (
                 <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                  Active
+                  {t("active")}
                 </Badge>
               ) : (
-                <Badge variant="outline">Inactive</Badge>
+                <Badge variant="outline">{t("inactive")}</Badge>
               )}
             </TableCell>
             <TableCell className="text-right">
@@ -88,7 +90,7 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
                     Active
                   </>
                 ) : (
-                  "Set Active"
+                  t("set_active")
                 )}
               </Button>
             </TableCell>

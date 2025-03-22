@@ -188,7 +188,7 @@ const AdminAttendanceView: React.FC = () => {
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Class</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("class")}</label>
             <Select value={selectedClass} onValueChange={(value: any)=>handleClassSelect(value)}>
               <SelectTrigger>
                 <SelectValue placeholder={t("select_class")} />
@@ -208,7 +208,7 @@ const AdminAttendanceView: React.FC = () => {
             </Select>
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Division</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("division")}</label>
             <Select value={selectedDivision} onValueChange={(value:string)=>handleDivisionSelect(value)}>
               <SelectTrigger>
                 <SelectValue placeholder={t("select_division")} />

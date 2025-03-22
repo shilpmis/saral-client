@@ -275,7 +275,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
         <>
           <Card className="border shadow-sm mt-4">
             <CardHeader className="py-3">
-              <CardTitle className="text-base">{t("select_fields")} ({selectedFieldCount} fields selected)</CardTitle>
+              <CardTitle className="text-base">{t("select_fields")} ({selectedFieldCount} {t("fields_selected")})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <ScrollArea className="h-[300px] pr-4">
