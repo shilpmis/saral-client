@@ -126,19 +126,19 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             name="concessions_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Concession Type</FormLabel>
+                <FormLabel>{t("concession_type")}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select concession type" />
+                      <SelectValue placeholder={t("select_concession_type")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="plan">Entire Plan (Apply to whole fee plan)</SelectItem>
-                    <SelectItem value="fees_type">Fee Types (Apply to specific fee types)</SelectItem>
+                    <SelectItem value="plan">{t("entire_plan_(apply_to_whole_fee_plan)")}</SelectItem>
+                    <SelectItem value="fees_type">{t("fee_types_(apply_to_specific_fee_types)")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>Determines what this concession will be applied to</FormDescription>
+                <FormDescription>{t("determines_what_this_concession_will_be_applied_to")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -149,11 +149,11 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
         {applicableTo && concessionsTo && (
           <Alert variant="default" className="bg-muted">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Concession Application</AlertTitle>
+            <AlertTitle>{t("concession_application")}</AlertTitle>
             <AlertDescription>
               {applicableTo === "plan" &&
                 concessionsTo === "plan" &&
-                "This concession will be applied to entire fee plans. The deduction will apply to the total plan amount."}
+                t("this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.")}
               {applicableTo === "plan" &&
                 concessionsTo === "fees_type" &&
                 "This concession will be applied to specific fee types within fee plans. You'll be able to select which fee types when applying the concession."}

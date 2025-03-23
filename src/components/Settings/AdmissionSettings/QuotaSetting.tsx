@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2 } from "lucide-react"
 import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotaAllocationsQuery, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function QuotaManagement() {
   const { data: quotas, isLoading, isError, error } = useGetQuotasQuery()
@@ -39,6 +40,7 @@ export default function QuotaManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const {t} = useTranslation()
 
   useEffect(() => {
     console.log("allocations", allocations)
@@ -122,7 +124,7 @@ export default function QuotaManagement() {
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Quota Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("quota_management")}</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -132,21 +134,20 @@ export default function QuotaManagement() {
                   setEditingId(null)
                 }}
               >
-                Add New Quota
+                {t("add_new_quota")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{isEditing ? "Edit Quota" : "Create New Quota"}</DialogTitle>
+                <DialogTitle>{isEditing ? t("edit_quota") : t("create_new_quota")}</DialogTitle>
                 <DialogDescription>
-                  {isEditing ? "Update quota details" : "Add a new quota category for admission"}. Click save when
-                  you're done.
+                  {isEditing ? t("update_quota_details") : t("add_a_new_quota_category_for_admission")}. {t("click_save_when_you're_done.")}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">
-                    Name
+                    {t("name")}
                   </Label>
                   <Input
                     id="name"
@@ -157,7 +158,7 @@ export default function QuotaManagement() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="description" className="text-right">
-                    Description
+                    {t("description")}
                   </Label>
                   <Input
                     id="description"
@@ -168,7 +169,7 @@ export default function QuotaManagement() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="criteria" className="text-right">
-                    Eligibility Criteria
+                    {t("eligibility_criteria")}
                   </Label>
                   <Textarea
                     id="criteria"
@@ -180,7 +181,7 @@ export default function QuotaManagement() {
               </div>
               <DialogFooter>
                 <Button onClick={isEditing ? handleUpdateQuota : handleAddQuota}>
-                  {isEditing ? "Update Quota" : "Save Quota"}
+                  {isEditing ? "Update Quota" : t("save_quota")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -189,17 +190,17 @@ export default function QuotaManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Available Quotas</CardTitle>
-            <CardDescription>Manage quota categories for admission</CardDescription>
+            <CardTitle>{t("available_quotas")}</CardTitle>
+            <CardDescription>{t("manage_quota_categories_for_admission")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Eligibility Criteria</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("name")}</TableHead>
+                  <TableHead>{t("description")}</TableHead>
+                  <TableHead>{t("eligibility_criteria")}</TableHead>
+                  <TableHead>{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -212,10 +213,10 @@ export default function QuotaManagement() {
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" onClick={() => handleEditClick(quota)}>
-                            Edit
+                            {t("edit")}
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => handleDeleteQuota(quota.id)}>
-                            Delete
+                            {t("delete")}
                           </Button>
                         </div>
                       </TableCell>
@@ -224,7 +225,7 @@ export default function QuotaManagement() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4">
-                      No quotas found. Add a new quota to get started.
+                      {t("no_quotas_found._add_a_new_quota_to_get_started.")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -235,8 +236,8 @@ export default function QuotaManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Quota Allocation Overview</CardTitle>
-            <CardDescription>Current allocation of seats across different quotas</CardDescription>
+            <CardTitle>{t("quota_allocation_overview")}</CardTitle>
+            <CardDescription>{t("current_allocation_of_seats_across_different_quotas")}</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingAllocations ? (
@@ -245,17 +246,17 @@ export default function QuotaManagement() {
               </div>
             ) : isErrorAllocations ? (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                <p>Error loading quota allocations</p>
+                <p>{t("error_loading_quota_allocations")}</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Quota Name</TableHead>
-                    <TableHead>Total Allocated Seats</TableHead>
-                    <TableHead>Filled Seats</TableHead>
-                    <TableHead>Available Seats</TableHead>
-                    <TableHead>Classes</TableHead>
+                    <TableHead>{t("quota_name")}</TableHead>
+                    <TableHead>{t("total_allocated_seats")}</TableHead>
+                    <TableHead>{t("filled_seats")}</TableHead>
+                    <TableHead>{t("available_seats")}</TableHead>
+                    <TableHead>{t("classes")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -272,7 +273,7 @@ export default function QuotaManagement() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-4">
-                        No quota allocations found.
+                        {t("no_quota_allocations_found.")}
                       </TableCell>
                     </TableRow>
                   )}
