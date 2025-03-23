@@ -14,6 +14,7 @@ import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "@/hooks/use-toast"
 import { useAddInquiryMutation } from "@/services/InquiryServices"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 
 const formSchema = z.object({
@@ -38,7 +39,8 @@ export default function AdmissionInquiryForm() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [addInquiry, { isLoading }] = useAddInquiryMutation()
-
+  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+ 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,7 +65,7 @@ export default function AdmissionInquiryForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const response = await addInquiry({
-        academic_id: 1, // Assuming a default academic year ID
+        academic_session_id: currentAcademicSession?.id || 1,
         student_name: values.student_name,
         dob: values.dob,
         gender: values.gender,
@@ -124,7 +126,7 @@ export default function AdmissionInquiryForm() {
   }
 
   const prevStep = () => setStep(step - 1)
-
+  const handleClose = () => setSubmitted(true)
   if (submitted) {
     return (
       <div className="container mx-auto py-10 max-w-3xl">
@@ -146,15 +148,9 @@ export default function AdmissionInquiryForm() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <p>Your inquiry has been successfully submitted. Your inquiry reference number is:</p>
-            <p className="text-2xl font-bold">INQ-{Math.floor(100000 + Math.random() * 900000)}</p>
-            <p className="text-sm text-muted-foreground">
-              We will review your application and get back to you within 3-5 working days. You can check the status of
-              your application using the reference number.
-            </p>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button onClick={() => (window.location.href = "/")}>Back to Home</Button>
+            <Button onClick={handleClose}>Back to Home</Button>
           </CardFooter>
         </Card>
       </div>

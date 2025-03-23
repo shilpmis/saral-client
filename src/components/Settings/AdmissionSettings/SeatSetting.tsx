@@ -53,10 +53,6 @@ export default function SeatsManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    console.log("classSeats", classSeats)
-  }, [classSeats])
-
   const filteredSeats =
     selectedClass === "all" ? classSeats : classSeats?.filter((seat) => seat.class_id.toString() === selectedClass)
 

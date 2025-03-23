@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
 
 
 const formSchema = z.object({
@@ -32,7 +35,9 @@ interface QuickInquiryFormProps {
 
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
   const [addInquiry, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
-
+  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,7 +57,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
     try {
       // Handle form submission
       const response = await addInquiry({
-        academic_id: 1, // Assuming a default academic year ID
+        academic_session_id: currentAcademicSession?.id || 1,
         student_name: values.student_name,
         dob: values.dob || new Date().toISOString().split("T")[0],
         gender: values.gender,
@@ -153,9 +158,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((grade) => (
-                        <SelectItem key={grade} value={grade.toString()}>
-                          Class {grade}
+                    {classSeats?.map((seat) => (
+                        <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                          Class {seat.class.class} {seat.class.division}
                         </SelectItem>
                       ))}
                     </SelectContent>
