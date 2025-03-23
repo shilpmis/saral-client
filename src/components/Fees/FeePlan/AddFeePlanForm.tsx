@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Trash2 } from "lucide-react"
+import { Loader2, Plus, Trash2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "@/hooks/use-toast"
-import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery } from "@/services/feesService"
+import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery, useUpdateFeesPlanMutation } from "@/services/feesService"
 import { FeesPlanDetail, InstallmentBreakdowns } from "@/types/fees"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
@@ -23,20 +23,14 @@ import {  useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQu
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
-// Define the fee types interface
-interface FeeType {
-  id: number
-  name: string
-}
-
 // Define the installment types
 const installmentTypes = [
   { value: "Monthly", label: "Monthly", maxInstallments: 12 },
   { value: "Quarterly", label: "Quarterly", maxInstallments: 4 },
-  { value: "Half-Yearly", label: "Half-Yearly", maxInstallments: 2 },
+  { value: "Half Yearly", label: "Half-Yearly", maxInstallments: 2 },
   { value: "Yearly", label: "Yearly", maxInstallments: 1 },
   { value: "Admission", label: "One-time (Admission)", maxInstallments: 1 },
-  { value: "Custom", label: "Custom", maxInstallments: 24 },
+  // { value: "Custom", label: "Custom", maxInstallments: 24 },
 ]
 
 // Define the schema for the form with enhanced validation
@@ -50,8 +44,8 @@ const feePlanSchema = z.object({
     .array(
       z
         .object({
-          fees_type_id: z.number({ required_error: "Please select a fee type" }),
-          installment_type: z.string({ required_error: "Please select an installment type" }),
+          fees_type_id: z.number({ required_error: "Please select a fee type" }).min(1, { message: "Please select a fee type" }),
+          installment_type: z.string({ required_error: "Please select an installment type" }).min(1, { message: "Please select an installment type" }),
           total_installment: z.union([
             z.string().refine(
               (val) => {
@@ -194,21 +188,22 @@ const feePlanSchema = z.object({
 type FeePlanFormValues = z.infer<typeof feePlanSchema>
 
 interface AddFeePlanFormProps {
-  onCancel: () => void
+  onCancel: () => void,
+  onSuccessfulSubmit : () => void,
   type: 'create' | 'update',
   plan_id: number | null
 }
 
-export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, plan_id }) => {
+export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSuccessfulSubmit, type, plan_id }) => {
 
   const authState = useAppSelector(selectAuthState)
   // const [getFeesPlan, { data: FetchedFeePlans }] = useLazyGetFeesPlanQuery();
   const {t} = useTranslation()
   const [getAllFeesType, { data: FetchedFeesType, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery();
   const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
-
-    const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
-    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getFeePlanInDetail, { data: fetchedDetialFeePlan,
     isLoading: isFetchingFeesPlan,
@@ -216,6 +211,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
     error: ErrorInFetchFessPlanInDetail }] = useLazyFetchDetailFeePlanQuery();
 
   const [createFeesPlan, { isLoading: isCreatingFeePlan, isError }] = useCreateFeesPlanMutation();
+  const [updateFeesPlan, { isLoading: isUpdatinFeePlan }] = useUpdateFeesPlanMutation();
 
   const [activeTab, setActiveTab] = useState("basic")
   const [activeFeeTypeIndex, setActiveFeeTypeIndex] = useState(0)
@@ -370,15 +366,80 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
       total_amount: 0,
       installment_breakDowns: [],
     })
-    generateEmptyInstallmentBreakdowns(1, 0)
+    generateEmptyInstallmentBreakdowns(1, planDetailsFields.length)
     setActiveFeeTypeIndex(planDetailsFields.length)
     setActiveTab("feeTypes")
   }
 
   // Handle form submission
-  const handleSubmit = (values: FeePlanFormValues) => {
-    console.log(values)
-    // onSubmit(values)
+  const handleSubmit = async (values: FeePlanFormValues) => {
+    
+    let response;
+    if (type === 'create') {
+      response = await createFeesPlan({
+        data: {
+          fees_plan : {
+            name: values.fees_plan.name,
+            description: values.fees_plan.description ?? '',
+            class_id: values.fees_plan.class_id,    
+          },
+          plan_details: values.fees_types.map((detail) => ({
+            fees_type_id: detail.fees_type_id,
+            installment_type: detail.installment_type,
+            total_installment: Number(detail.total_installment),
+            total_amount: Number(detail.total_amount),
+            installment_breakDowns: detail.installment_breakDowns.map((breakdown) => ({
+              installment_no: breakdown.installment_no,
+              due_date: breakdown.due_date,
+              installment_amount: Number(breakdown.installment_amount),
+            })),
+          }),
+        )},
+        academic_session: CurrentAcademicSessionForSchool!.id,
+      })
+    } else {
+      const newFeeTypes = values.fees_types.filter((_, index) => !fetchedDetialFeePlan?.fees_types[index])
+    
+      const updatedPlan = {
+        fees_plan: {
+          name: values.fees_plan.name,
+          description: values.fees_plan.description ?? '',
+        },
+        plan_details: newFeeTypes.map((detail) => ({
+          fees_type_id: detail.fees_type_id,
+          installment_type: detail.installment_type,
+          total_installment: Number(detail.total_installment),
+          total_amount: Number(detail.total_amount),
+          installment_breakDowns: detail.installment_breakDowns.map((breakdown) => ({
+            installment_no: breakdown.installment_no,
+            due_date: breakdown.due_date,
+            installment_amount: Number(breakdown.installment_amount),
+          })),
+        })),
+      }
+
+      // Call update API here
+      response = await updateFeesPlan({
+        data: updatedPlan,
+        plan_id: plan_id!,
+      })
+    }
+
+    if (response?.data) {         
+      toast({
+        variant: "default",
+        title: `Fee Plan ${type}`,
+        description: "Fee Plan has been updated successfully.",
+      })
+      onSuccessfulSubmit();
+    } else {
+      console.log(response?.error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred while updating the fee plan. Please try again later.",
+      })
+    }
   }
 
   // Check if a fee type is already selected
@@ -442,9 +503,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
   useEffect(() => {
     if (fetchedDetialFeePlan) {
-      console.log("fetchedDetialFeePlan====>", fetchedDetialFeePlan)
-
-      const { fees_plan, fees_types } = fetchedDetialFeePlan
+      const { fees_plan, fees_types } = fetchedDetialFeePlan;
 
       // First, reset the form with the basic plan details
       form.reset({
@@ -462,7 +521,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
       }
 
       let data_to_appned = fees_types.map((feeType: { fees_type: FeesPlanDetail, installment_breakDowns: InstallmentBreakdowns[] }) => ({
-        fees_type_id: feeType.fees_type.id,
+        fees_type_id: feeType.fees_type.fees_type_id,
         installment_type: feeType.fees_type.installment_type,
         total_installment: feeType.fees_type.total_installment,
         total_amount: feeType.fees_type.total_amount,
@@ -487,39 +546,44 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
     }
   }, [fetchedDetialFeePlan, replacePlanDetails, form])
 
-  /**
-   * Fetch Plan if plan_id is provided
-   */
-
-
 
   /**
-   * Use Effect for catch nested  nested objects errors been thrown by zod
+   * Use Effect for catch nested objects errors thrown by zod
    */
   useEffect(() => {
     if (form.formState.errors.fees_plan) {
       setActiveTab('basic')
-    }
-    else if (Array.isArray(form.formState.errors.fees_types)) {
-      if (form.formState.errors.fees_types[0].total_amount) {
-        console.log(form.formState.errors.fees_types[0].total_amount)
+    } else if (Array.isArray(form.formState.errors.fees_types)) {
+      // Filter out null values from the errors array
+      const nonNullErrors = form.formState.errors.fees_types.filter(error => error !== null)
+      const firstError = nonNullErrors[0]
+
+      if (firstError?.fees_type_id) {
+        toast({
+          variant: "destructive",
+          title: 'Fee Type',
+          description: `${firstError.fees_type_id.message}`,
+        })
+      } else if (firstError?.installment_type) {
+        toast({
+          variant: "destructive",
+          title: 'Installment Type',
+          description: `${firstError.installment_type.message}`,
+        })
+      } else if (firstError?.total_amount) {
         toast({
           variant: "destructive",
           title: 'Total Amount',
-          description: `${form.formState.errors.fees_types[0].total_amount.message}`,
+          description: `${firstError.total_amount.message}`,
         })
-      }
-
-      else if (form.formState.errors.fees_types[0].installment_breakDowns) {
+      } else if (firstError?.installment_breakDowns) {
         toast({
           variant: "destructive",
           title: 'Installment Amount',
-          description: `${form.formState.errors.fees_types[0].installment_breakDowns.root.message}`,
+          description: `${firstError.installment_breakDowns.root.message}`,
         })
       }
-
-    }
-    else if (form.formState.errors.fees_types) {
+    } else if (form.formState.errors.fees_types) {
       toast({
         title: form.formState.errors.fees_types.message,
         variant: "destructive",
@@ -540,14 +604,15 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
 
   useEffect(() => {
     if (plan_id && plan_id !== 0) {
-      getFeePlanInDetail({ academic_sessions : CurrentAcademicSessionForSchool!.id , plan_id })
+      getFeePlanInDetail({ academic_session : CurrentAcademicSessionForSchool!.id , plan_id })
     } else {
       setIsFormFieldsForEditSet(true);
     }
     getClassesWithoutFeesPlan({ school_id: authState.user!.school_id });
-    getAllFeesType();
+    getAllFeesType({
+      academic_session_id: CurrentAcademicSessionForSchool!.id 
+    });
   }, [plan_id])
-
 
   return (
     <Form {...form}>
@@ -675,9 +740,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                 >
                   <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {planDetailsFields.map((field, index) => {
+                      console.log("FetchedFeesType" , field)
                       const feeTypeId = form.watch(`fees_types.${index}.fees_type_id`)
-                      const feeTypeName = FetchedFeesType && FetchedFeesType.find((ft) => ft.id === feeTypeId)?.name || `Fee Type ${index + 1}`
-
+                      const feeTypeName = FetchedFeesType && FetchedFeesType.find((ft) => ft.id === feeTypeId)?.name || `Fee Type ${index + 1}`;
                       return (
                         <TabsTrigger key={field.id} value={index.toString()} className="truncate">
                           {feeTypeName}
@@ -699,25 +764,27 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                         <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
                           <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
-                              <CardTitle>{t("fee_type_details")}</CardTitle>
-                              <Button
-                                className="text-white"
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  removePlanDetail(index)
-                                  if (index > 0) {
-                                    setActiveFeeTypeIndex(index - 1)
-                                  } else if (planDetailsFields.length > 1) {
-                                    setActiveFeeTypeIndex(0)
-                                  } else {
-                                    setActiveTab("basic")
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" /> {t("remove")}
-                              </Button>
+                              <CardTitle>t("fee_type_details")</CardTitle>
+                              {type === 'create' && (
+                                <Button
+                                  className="text-white"
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    removePlanDetail(index)
+                                    if (index > 0) {
+                                      setActiveFeeTypeIndex(index - 1)
+                                    } else if (planDetailsFields.length > 1) {
+                                      setActiveFeeTypeIndex(0)
+                                    } else {
+                                      setActiveTab("basic")
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Remove
+                                </Button>
+                              )}
                             </CardHeader>
                             <CardContent className="space-y-4">
                               <FormField
@@ -729,6 +796,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                     <Select
                                       onValueChange={(value) => field.onChange(Number.parseInt(value))}
                                       value={field.value ? field.value.toString() : undefined}
+                                      disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]}
                                     >
                                       <FormControl>
                                         <SelectTrigger>
@@ -772,6 +840,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                           handleInstallmentTypeChange(index, value)
                                         }}
                                         value={field.value}
+                                        disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]}
                                       >
                                         <FormControl>
                                           <SelectTrigger>
@@ -803,7 +872,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                           inputMode="numeric"
                                           {...field}
                                           value={field.value || ""}
-                                          disabled={isFixedInstallmentType(installmentType)}
+                                          disabled={isFixedInstallmentType(installmentType) || (type === 'update' && !!fetchedDetialFeePlan?.fees_types[index])}
                                           onChange={(e) => {
                                             // Only allow numeric input
                                             const numericValue = e.target.value.replace(/[^0-9]/g, "")
@@ -848,6 +917,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                           type="text"
                                           inputMode="numeric"
                                           value={field.value || ""}
+                                          disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]}
                                           onChange={(e) => {
                                             // Only allow numeric input
                                             const numericValue = e.target.value.replace(/[^0-9]/g, "")
@@ -944,6 +1014,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                                   <input
                                                     type="date"
                                                     value={field.value || ""}
+                                                    disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]?.installment_breakDowns[installmentIndex]}
                                                     onChange={(e) => {
                                                       const formattedDate = e.target.value
                                                       field.onChange(formattedDate)
@@ -970,6 +1041,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                                                     inputMode="numeric"
                                                     {...field}
                                                     value={field.value || ""}
+                                                    disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]?.installment_breakDowns[installmentIndex]}
                                                     onChange={(e) => {
                                                       // Only allow numeric input
                                                       const numericValue = e.target.value.replace(/[^0-9]/g, "")
@@ -1036,7 +1108,10 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, type, 
                   <Button type="button" variant="outline" onClick={onCancel}>
                     {t("cancel")}
                   </Button>
-                  <Button type="submit">{plan_id ? t("update_fee_plan") : t("create_fee_plan")}</Button>
+                  <Button type="submit" disabled={isCreatingFeePlan} >
+                    {isCreatingFeePlan && <Loader2/>}
+                    {plan_id ? t("update_fee_plan") : t("create_fee_plan")}
+                  </Button>
                 </div>
               </div>
             </TabsContent>

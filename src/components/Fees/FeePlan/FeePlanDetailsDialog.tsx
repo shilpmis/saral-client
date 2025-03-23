@@ -18,12 +18,13 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 interface FeePlanDetailsDialogProps {
   isOpen: boolean
   onClose: () => void
-  planId: number | null
+  planId: number | null,
+  academic_sessions : number
 }
 
 interface Concession {
   id: number
-  academic_year_id: number
+  academic_session_id: number
   concession_id: number
   fees_plan_id: number
   fees_type_id: number | null
@@ -34,7 +35,7 @@ interface Concession {
   concession?: {
     id: number
     school_id: number
-    academic_year_id: number
+    academic_session_id: number
     name: string
     description: string
     applicable_to: string
@@ -42,14 +43,14 @@ interface Concession {
   }
 }
 
-const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onClose, planId }) => {
-  const {t} = useTranslation()
+const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onClose, planId , academic_sessions}) => {
   const [activeTab, setActiveTab] = useState("overview")
   const [fetchDetailFeePlan, { data: feePlanDetails, isLoading, isError }] = useLazyFetchDetailFeePlanQuery()
+  const {t} = useTranslation();
 
   useEffect(() => {
     if (isOpen && planId) {
-      fetchDetailFeePlan({ plan_id: planId })
+      fetchDetailFeePlan({ plan_id: planId , academic_session : academic_sessions })
         .unwrap()
         .catch((error) => {
           toast({
@@ -139,7 +140,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
         ) : isError ? (
           <div className="p-6 text-center">
             <p className="text-red-500">Failed to load fee plan details. Please try again.</p>
-            <Button onClick={() => fetchDetailFeePlan({ plan_id: planId! })} className="mt-4">
+            <Button onClick={() => fetchDetailFeePlan({ plan_id: planId!, academic_session : academic_sessions })} className="mt-4">
               Retry
             </Button>
           </div>
@@ -176,7 +177,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                     <CardContent>
                       <p className="text-2xl font-bold">{formatCurrency(feePlanDetails.fees_plan.total_amount)}</p>
                       <p className="text-sm text-muted-foreground">
-                        For Academic Year {feePlanDetails.fees_plan.academic_year_id}
+                        For Academic Year {feePlanDetails.fees_plan.academic_session_id}
                       </p>
                     </CardContent>
                   </Card>
@@ -349,7 +350,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                             {feePlanDetails.consession.map((concession : ConcessionDetailForPlan) => (
                               <TableRow key={concession.concession_id}>
                                 <TableCell className="font-medium">
-                                  {concession.concession?.name || `Concession #${concession.concession_id}`}
+                                  {concession.concession?.description || `Concession #${concession.concession_id}`}
                                 </TableCell>
                                 <TableCell>{concession.concession?.category || "Other"}</TableCell>
                                 <TableCell className="capitalize">{concession.deduction_type}</TableCell>

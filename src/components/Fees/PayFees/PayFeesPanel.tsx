@@ -13,7 +13,7 @@ import { useLazyGetStudentFeesDetailsForClassQuery } from "@/services/feesServic
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
 import type { StudentWithFeeStatus } from "@/types/fees"
 import { toast } from "@/hooks/use-toast"
@@ -26,7 +26,8 @@ const PayFeesPanel: React.FC = () => {
   const navigate = useNavigate();  
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
-
+  
+  const {t} = useTranslation()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getClassFeesStatus, { data: feesData, isLoading, isError }] = useLazyGetStudentFeesDetailsForClassQuery()
 
@@ -35,7 +36,8 @@ const PayFeesPanel: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "ascending" | "descending" } | null>(null)
   const [students, setStudents] = useState<StudentWithFeeStatus[]>([])
-  const {t} = useTranslation()
+
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   // Get available divisions for selected class
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
@@ -61,7 +63,7 @@ const PayFeesPanel: React.FC = () => {
       setSelectedDivision(selectedDiv[0])
 
       try {
-        await getClassFeesStatus({class_id : selectedDiv[0].id})
+        await getClassFeesStatus({class_id : selectedDiv[0].id , academic_session : CurrentAcademicSessionForSchool!.id})
       } catch (error) {
         toast({
           variant: "destructive",
@@ -178,7 +180,10 @@ const PayFeesPanel: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch fees data for this class and division
-          selectedDivision && getClassFeesStatus({class_id : selectedDivision.id})
+          selectedDivision && getClassFeesStatus({
+            class_id : selectedDivision.id,
+            academic_session : CurrentAcademicSessionForSchool!.id
+          })
         }
       }
     }
@@ -402,7 +407,11 @@ const PayFeesPanel: React.FC = () => {
           {feesData && selectedDivision &&  (<SaralPagination
           currentPage={feesData.meta.last_page}
           totalPages={feesData.meta.last_page}
-          onPageChange={(page) => getClassFeesStatus({ class_id: selectedDivision.id, page})}
+          onPageChange={(page) => getClassFeesStatus({ 
+            class_id: selectedDivision.id,
+            academic_session: CurrentAcademicSessionForSchool!.id, 
+            page
+          })}
           ></SaralPagination>)}
         </CardContent>
       </Card>

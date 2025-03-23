@@ -15,6 +15,8 @@ import {
     useLazyGetConcessionsQuery,
     useCreateConcessionsMutation,
     useUpdateConcessionsMutation,
+    useApplyConcessionsToPlanMutation,
+    useApplyConcessionsToStudentMutation,
 } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -29,7 +31,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { z } from "zod"
-import { ConcessionFormData } from "@/utils/fees.validation"
+import { ApplyConcessionToPlanData, ApplyConcessionToStudentData, ConcessionFormData } from "@/utils/fees.validation"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Concession } from "@/types/fees"
@@ -46,6 +48,9 @@ export const ConcessionManagement: React.FC = () => {
     const [getConcession, { data: concessions, isLoading }] = useLazyGetConcessionsQuery()
     const [createConcession, { isLoading: isCreating }] = useCreateConcessionsMutation()
     const [updateConcession, { isLoading: isUpdating }] = useUpdateConcessionsMutation()
+
+    const [ApplyConcessionToPlan , {isLoading : ApplyingConcessionToPlan}] = useApplyConcessionsToPlanMutation()
+    const [ApplyConcessionToStudent , {isLoading : ApplyingConcessionToStudent}] = useApplyConcessionsToStudentMutation()
 
     // Local state
     const [searchTerm, setSearchTerm] = useState("")
@@ -85,11 +90,12 @@ export const ConcessionManagement: React.FC = () => {
                     applicable_to: data.applicable_to,
                     category: data.category,
                     status: "Active",
-                    academic_year_id: 1,
+                    academic_session_id: CurrentAcademicSessionForSchool!.id,
                     school_id: authState.user!.school_id,
+                    concessions_to : data.concessions_to
                 }
             }).unwrap()
-            getConcession({ academic_sessions : CurrentAcademicSessionForSchool!.id ,page: 1 });
+            getConcession({ academic_session : CurrentAcademicSessionForSchool!.id ,page: 1 });
             toast({
                 title: "Success",
                 description: "Concession created successfully",
@@ -119,7 +125,7 @@ export const ConcessionManagement: React.FC = () => {
                     status: data.is_active ? "Active" : "Inactive",
                 },
             }).unwrap()
-            getConcession({academic_sessions : CurrentAcademicSessionForSchool!.id , page: 1 });
+            getConcession({academic_session : CurrentAcademicSessionForSchool!.id , page: 1 });
             toast({
                 title: "Success",
                 description: "Concession updated successfully",
@@ -136,48 +142,60 @@ export const ConcessionManagement: React.FC = () => {
 
     // Handle deleting a concession
     const handleDeleteConcession = async () => {
-        // if (!deleteDialogState.concession) return
-
-        // try {
-        //   await deleteConcession(deleteDialogState.concession.id).unwrap()
-
-        //   toast({
-        //     title: "Success",
-        //     description: "Concession deleted successfully",
-        //   })
-
-        //   refetch()
-        //   setDeleteDialogState({ isOpen: false, concession: null })
-        // } catch (error) {
-        //   toast({
-        //     title: "Error",
-        //     description: "Failed to delete concession",
-        //     variant: "destructive",
-        //   })
-        // }
     }
 
     // Handle applying a concession to a fee plan
-    const handleApplyConcession = async (data: any) => {
+    const handleApplyConcession = async (data: ApplyConcessionToStudentData | ApplyConcessionToPlanData) => {
         if (!dialogState.concession) return
-
+        let res;
+        console.log("data" , data)
         try {
-            // Implement the API call to apply concession to fee plan
-            // This would use a mutation like useApplyConcessionToFeePlanMutation
-
+          if(dialogState.concession.applicable_to === 'plan') {
+            res = await ApplyConcessionToPlan({
+              payload : {
+                concession_id : data.concession_id,
+                fees_plan_id : data.fees_plan_id,
+                fees_type_ids : data.fees_type_ids,
+                deduction_type: data.deduction_type,  
+                amount: data.fixed_amount ,  
+                percentage: data.percentage,    
+              }
+            }).unwrap()
+          }else if(dialogState.concession.applicable_to === 'students' && 'student_id' in data){
+            res = await ApplyConcessionToStudent({
+              payload : {
+                student_id : data.student_id,
+                concession_id : data.concession_id,
+                fees_plan_id : data.fees_plan_id,
+                fees_type_ids : data.fees_type_ids,
+                deduction_type: data.deduction_type,  
+                amount: data.fixed_amount ,  
+                percentage: data.percentage ,    
+              }
+            }).unwrap()
+          }else{
             toast({
-                title: "Success",
-                description: "Concession applied to fee plan successfully",
-            })
-
-            closeDialog()
+              title: "Error",
+              description: "Failed to apply concession to fee plan",
+              variant: "destructive",
+            }) 
+          return;
+          }
+          console.log("Res===>",res);
+          toast({
+            title: "Success",
+            description: "Concession applied to fee plan successfully",
+        })          
         } catch (error) {
+          console.log("Error" , error)
             toast({
                 title: "Error",
                 description: "Failed to apply concession to fee plan",
                 variant: "destructive",
             })
         }
+   
+
     }
 
     // Open dialog for adding, editing, applying, or viewing concession details
@@ -207,7 +225,7 @@ export const ConcessionManagement: React.FC = () => {
     }
 
     useEffect(() => {
-        getConcession({ academic_sessions : CurrentAcademicSessionForSchool!.id ,page: 1 });
+        getConcession({ academic_session : CurrentAcademicSessionForSchool!.id ,page: 1 });
     }, [])
 
     return (
@@ -327,7 +345,7 @@ export const ConcessionManagement: React.FC = () => {
                 open={dialogState.isOpen && (dialogState.type === "add" || dialogState.type === "edit")}
                 onOpenChange={(open) => !open && closeDialog()}
             >
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
                     <DialogHeader>
                         <DialogTitle>{dialogState.type === "edit" ? "Edit Concession" : t("add_new_concession")}</DialogTitle>
                     </DialogHeader>
@@ -344,7 +362,7 @@ export const ConcessionManagement: React.FC = () => {
             <Dialog open={dialogState.isOpen && dialogState.type === "apply"} onOpenChange={(open) => !open && closeDialog()}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
                     <DialogHeader>
-                        <DialogTitle>Apply Concession to Fee Plan</DialogTitle>
+                        <DialogTitle>{dialogState.concession?.applicable_to === 'plan' ? 'Apply Concession to Fee Plan' : 'Apply Concession to Student'}</DialogTitle>
                     </DialogHeader>
                     {dialogState.concession && (
                         <ApplyConcessionForm
@@ -368,31 +386,6 @@ export const ConcessionManagement: React.FC = () => {
                     {dialogState.concession && <ConcessionDetailsDialog concessionId={dialogState.concession.id} />}
                 </DialogContent>
             </Dialog>
-
-            {/* Delete Confirmation Dialog */}
-            {/* <AlertDialog
-        open={deleteDialogState.isOpen}
-        onOpenChange={(open) => !open && setDeleteDialogState({ isOpen: false, concession: null })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the concession "{deleteDialogState.concession?.name}". This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConcession}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
         </div>
     )
 }

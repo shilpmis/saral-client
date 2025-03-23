@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+import type { Concession } from "@/types/fees"
+import { useEffect } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { concessionSchema } from "@/utils/fees.validation"
-import { Concession } from "@/types/fees"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface AddConcessionFormProps {
@@ -28,23 +30,34 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
 }) => {
   const form = useForm<z.infer<typeof concessionSchema>>({
     resolver: zodResolver(concessionSchema),
-    defaultValues: initialData
-      ? {
-          name: initialData.name,
-          description: initialData.description,
-          applicable_to: initialData.applicable_to as "plan" | "fees_types" ,
-          category: initialData.category,
-          is_active: initialData.status !== "Inactive",
-        }
-      : {
-          name: "",
-          description: "",
-          applicable_to: "plan",
-          category: "Other",
-          is_active: true,
-        },
+    defaultValues: {
+      name: "",
+      description: "",
+      applicable_to: "plan",
+      concessions_to: "plan",
+      category: "other",
+      is_active: true,
+    },
   })
   const {t} = useTranslation()
+
+  // Watch applicable_to to show relevant information
+  const applicableTo = form.watch("applicable_to")
+  const concessionsTo = form.watch("concessions_to")
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name,
+        description: initialData.description,
+        applicable_to: initialData.applicable_to as "plan" | "students",
+        concessions_to: (initialData.concessions_to as "plan" | "fees_type") || "plan",
+        category: initialData.category,
+        is_active: initialData.status !== "Inactive",
+      })
+    }
+  }, [initialData, form])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -91,7 +104,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t("applicable_to")}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder={t("select_where_this_concession_applies")} />
@@ -99,9 +112,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="plan">{t("fee_plan_(entire_plan)")}</SelectItem>
-                    <SelectItem value="students">{t("students_(apply_to_selected_students)")}</SelectItem>
-                    {/* <SelectItem value="fees_types">Fee Type (Specific fee types)</SelectItem> */}
-                    {/* <SelectItem value="student">Student (Individual students)</SelectItem> */}
+                    <SelectItem value="students">{t("students_(apply_to_selected_students)")})</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>{t("determines_how_this_concession_will_be_applied")}</FormDescription>
@@ -112,10 +123,57 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
 
           <FormField
             control={form.control}
-            name="category"
+            name="concessions_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("category")}</FormLabel>
+                <FormLabel>Concession Type</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select concession type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="plan">Entire Plan (Apply to whole fee plan)</SelectItem>
+                    <SelectItem value="fees_type">Fee Types (Apply to specific fee types)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>Determines what this concession will be applied to</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Informational alert based on selected options */}
+        {applicableTo && concessionsTo && (
+          <Alert variant="default" className="bg-muted">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Concession Application</AlertTitle>
+            <AlertDescription>
+              {applicableTo === "plan" &&
+                concessionsTo === "plan" &&
+                "This concession will be applied to entire fee plans. The deduction will apply to the total plan amount."}
+              {applicableTo === "plan" &&
+                concessionsTo === "fees_type" &&
+                "This concession will be applied to specific fee types within fee plans. You'll be able to select which fee types when applying the concession."}
+              {applicableTo === "students" &&
+                concessionsTo === "plan" &&
+                "This concession will be applied to individual students' fee plans. The deduction will apply to the total plan amount for selected students."}
+              {applicableTo === "students" &&
+                concessionsTo === "fees_type" &&
+                "This concession will be applied to specific fee types for individual students. You'll be able to select which fee types when applying the concession to a student."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            
+            <FormItem>
+              <FormLabel>{t("category")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -132,11 +190,10 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                   </SelectContent>
                 </Select>
                 <FormDescription>{t("categorize_this_concession_for_easier_management")}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

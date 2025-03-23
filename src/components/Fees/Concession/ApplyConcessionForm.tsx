@@ -2,7 +2,7 @@ import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
+import type * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Search, UserPlus, AlertCircle } from "lucide-react"
+import { Loader2, Search, UserPlus, AlertCircle, Info } from "lucide-react"
 import {
   useLazyGetFeesPlanQuery,
   useLazyGetAllFeesTypeQuery,
@@ -30,97 +30,43 @@ import {
 } from "@/services/feesService"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { toast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { AcademicClasses, Division } from "@/types/academic"
-import { Concession } from "@/types/fees"
+import type { AcademicClasses, Division } from "@/types/academic"
+import type { Concession } from "@/types/fees"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
-
-// Define the schema for plan concessions
-const planConcessionSchema = z
-  .object({
-    concession_id: z.number(),
-    fees_plan_id: z.number().optional(),
-    fees_type_id: z.number().nullable().optional(),
-    deduction_type: z.enum(["percentage", "amount"]),
-    amount: z.number().nullable().optional(),
-    percentage: z.number().nullable().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.deduction_type === "percentage") {
-        return (
-          data.percentage !== null && data.percentage !== undefined && data.percentage > 0 && data.percentage <= 100
-        )
-      } else {
-        return data.amount !== null && data.amount !== undefined && data.amount > 0
-      }
-    },
-    {
-      message: "You must provide a valid amount or percentage based on the deduction type",
-      path: ["amount", "percentage"],
-    },
-  )
-  .refine(
-    (data) => {
-      return data.fees_plan_id !== undefined
-    },
-    {
-      message: "You must select a fee plan",
-      path: ["fees_plan_id"],
-    },
-  )
-
-// Define the schema for student concessions
-const studentConcessionSchema = z
-  .object({
-    concession_id: z.number(),
-    student_id: z.number(),
-    deduction_type: z.enum(["percentage", "amount"]),
-    amount: z.number().nullable().optional(),
-    percentage: z.number().nullable().optional(),
-    reason: z.string().min(1, "Reason is required"),
-  })
-  .refine(
-    (data) => {
-      if (data.deduction_type === "percentage") {
-        return (
-          data.percentage !== null && data.percentage !== undefined && data.percentage > 0 && data.percentage <= 100
-        )
-      } else {
-        return data.amount !== null && data.amount !== undefined && data.amount > 0
-      }
-    },
-    {
-      message: "You must provide a valid amount or percentage based on the deduction type",
-      path: ["amount", "percentage"],
-    },
-  )
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ApplyConcessionToPlanData, applyConcessionToPlanSchema, ApplyConcessionToStudentData, applyConcessionToStudentSchema } from "@/utils/fees.validation"
 
 interface ApplyConcessionFormProps {
   concession: Concession
-  onSubmit: (data: any) => void
+  onSubmit: (data: ApplyConcessionToPlanData | ApplyConcessionToStudentData ) => void
   onCancel: () => void
 }
 
 export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ concession, onSubmit, onCancel }) => {
-
+  
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   // Queries and mutations
   const [getFeePlans, { data: feePlans, isLoading: isLoadingFeePlans }] = useLazyGetFeesPlanQuery()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getClassFeesStatus, { data: studentFeesStatuForClass,
-    isLoading: isLoadingStudentFeesStatuForClass,
-    isError: isErroWhileFetchingStudentFeesStatuForClass,
-    error: ErrorWhileFetchingStudentFeesStatuForClass
-  }] = useLazyGetStudentFeesDetailsForClassQuery()
+  const [
+    getClassFeesStatus,
+    {
+      data: studentFeesStatuForClass,
+      isLoading: isLoadingStudentFeesStatuForClass,
+      isError: isErroWhileFetchingStudentFeesStatuForClass,
+      error: ErrorWhileFetchingStudentFeesStatuForClass,
+    },
+  ] = useLazyGetStudentFeesDetailsForClassQuery()
+
   const [applyConcessionToPlan, { isLoading: isApplyingToPlan }] = useApplyConcessionsToPlanMutation()
   const [applyConcessionToStudent, { isLoading: isApplyingToStudent }] = useApplyConcessionsToPlanMutation()
   const [getAllFeesType, { data: feeTypes, isLoading: isLoadingFeeTypes }] = useLazyGetAllFeesTypeQuery()
@@ -138,25 +84,30 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const [studentsPerPage] = useState(10)
   const [studentDialogOpen, setStudentDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null)
+  const [selectedStudentFeeTypes, setSelectedStudentFeeTypes] = useState<number[]>([])
 
-  // Initialize forms
-  const planForm = useForm<z.infer<typeof planConcessionSchema>>({
-    resolver: zodResolver(planConcessionSchema),
+  // Initialize forms based on concession type
+  const planForm = useForm<z.infer<typeof applyConcessionToPlanSchema>>({
+    resolver: zodResolver(applyConcessionToPlanSchema),
     defaultValues: {
       concession_id: concession.id,
+      fees_plan_id: undefined,
+      fees_type_ids: null,
       deduction_type: "percentage",
-      amount: null,
+      fixed_amount: null,
       percentage: null,
     },
   })
 
-  const studentForm = useForm<z.infer<typeof studentConcessionSchema>>({
-    resolver: zodResolver(studentConcessionSchema),
+  const studentForm = useForm<z.infer<typeof applyConcessionToStudentSchema>>({
+    resolver: zodResolver(applyConcessionToStudentSchema),
     defaultValues: {
       concession_id: concession.id,
       student_id: 0,
+      fees_plan_id: 0,
+      fees_type_ids: null,
       deduction_type: "percentage",
-      amount: null,
+      fixed_amount: null,
       percentage: null,
       reason: "",
     },
@@ -173,10 +124,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   // Filter students based on search term
   const filteredStudents = studentFeesStatuForClass
     ? studentFeesStatuForClass.data.filter((student) => {
-      const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
-      const grNumber = student.gr_no.toString()
-      return fullName.includes(searchTermStudent.toLowerCase()) || grNumber.includes(searchTermStudent.toLowerCase())
-    })
+        const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
+        const grNumber = student.gr_no.toString()
+        return fullName.includes(searchTermStudent.toLowerCase()) || grNumber.includes(searchTermStudent.toLowerCase())
+      })
     : []
 
   // Pagination for students
@@ -194,78 +145,79 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   }, [academicClasses, selectedClass])
 
   // Handle form submission for plan concessions
-  const handlePlanFormSubmit = async (values: z.infer<typeof planConcessionSchema>) => {
-    // try {
-    //   // If applicable_to is "type", handle multiple fee types
-    //   if (concession.applicable_to === "type" && selectedFeeTypes.length > 0) {
-    //     // Apply concession to each selected fee type
-    //     for (const feeTypeId of selectedFeeTypes) {
-    //       await applyConcessionToPlan({
-    //         concession_id: values.concession_id,
-    //         fees_plan_id: values.fees_plan_id!,
-    //         fees_type_id: feeTypeId,
-    //         deduction_type: values.deduction_type,
-    //         amount: values.deduction_type === "amount" ? values.amount : null,
-    //         percentage: values.deduction_type === "percentage" ? values.percentage : null,
-    //       }).unwrap()
-    //     }
-    //   } else {
-    //     // Apply concession to the entire plan
-    //     await applyConcessionToPlan({
-    //       concession_id: values.concession_id,
-    //       fees_plan_id: values.fees_plan_id!,
-    //       fees_type_id: null,
-    //       deduction_type: values.deduction_type,
-    //       amount: values.deduction_type === "amount" ? values.amount : null,
-    //       percentage: values.deduction_type === "percentage" ? values.percentage : null,
-    //     }).unwrap()
-    //   }
+  const handleSubmitForApplyConcessionToPlan = async (values: z.infer<typeof applyConcessionToPlanSchema>) => {
+    try {
+      // Prepare the submission data
+      const submissionData = {
+        concession_id: values.concession_id,
+        fees_plan_id: values.fees_plan_id,
+        fees_type_ids:
+        concession.concessions_to === "fees_type" ? (selectedFeeTypes.length > 0 ? selectedFeeTypes : null) : null,
+        deduction_type: values.deduction_type,
+        fixed_amount: values.deduction_type === "fixed_amount" ? values.fixed_amount : null,
+        percentage: values.deduction_type === "percentage" ? values.percentage : null,
+      }
 
-    //   toast({
-    //     title: "Success",
-    //     description: "Concession applied to fee plan successfully",
-    //   })
+      // Call the onSubmit function with the prepared data
+      onSubmit(submissionData)
 
-    //   onSubmit(values)
-    // } catch (error) {
-    //   toast({
-    //     title: "Error",
-    //     description: "Failed to apply concession to fee plan",
-    //     variant: "destructive",
-    //   })
-    // }
+      toast({
+        title: "Success",
+        description: "Concession applied to fee plan successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to apply concession to fee plan",
+        variant: "destructive",
+      })
+    }
   }
 
   // Handle form submission for student concessions
-  const handleStudentFormSubmit = async (values: z.infer<typeof studentConcessionSchema>) => {
-    // try {
-    //   await applyConcessionToStudent({
-    //     concession_id: values.concession_id,
-    //     student_id: values.student_id,
-    //     deduction_type: values.deduction_type,
-    //     amount: values.deduction_type === "amount" ? values.amount : null,
-    //     percentage: values.deduction_type === "percentage" ? values.percentage : null,
-    //     reason: values.reason,
-    //   }).unwrap()
+  const handleSubmitForApplyConcessionToStudents = async (values: z.infer<typeof applyConcessionToStudentSchema>) => {
+    try {
+      // Prepare the submission data
+      const submissionData = {
+        concession_id: values.concession_id,
+        student_id: values.student_id,
+        fees_plan_id: values.fees_plan_id,
+        fees_type_ids:
+          concession.concessions_to === "fees_type"
+            ? selectedStudentFeeTypes.length > 0
+              ? selectedStudentFeeTypes
+              : null
+            : null,
+        deduction_type: values.deduction_type,
+        amount: values.deduction_type === "fixed_amount" ? values.fixed_amount : null,
+        percentage: values.deduction_type === "percentage" ? values.percentage : null,
+        fixed_amount: values.deduction_type === "fixed_amount" ? values.fixed_amount : null,
+      }
 
-    //   toast({
-    //     title: "Success",
-    //     description: "Concession applied to student successfully",
-    //   })
+      // Call the onSubmit function with the prepared data
+      onSubmit(submissionData)
 
-    //   setStudentDialogOpen(false)
+      // setStudentDialogOpen(false)
 
-    //   // Refresh student data
-    //   if (selectedClass && selectedDivision) {
-    //     getClassFeesStatus(Number(selectedDivision))
-    //   }
-    // } catch (error) {
-    //   toast({
-    //     title: "Error",
-    //     description: "Failed to apply concession to student",
-    //     variant: "destructive",
-    //   })
-    // }
+      toast({
+        title: "Success",
+        description: "Concession applied to student successfully",
+      })
+
+      // Refresh student data
+      if (selectedClass && selectedDivision) {
+        getClassFeesStatus({
+          class_id: selectedDivision.id,
+          academic_session: CurrentAcademicSessionForSchool!.id,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to apply concession to student",
+        variant: "destructive",
+      })
+    }
   }
 
   // Handle fee plan selection
@@ -274,9 +226,20 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
     planForm.setValue("fees_plan_id", planId)
   }
 
-  // Handle fee type selection
+  // Handle fee type selection for plans
   const handleFeeTypeSelect = (feeTypeId: number) => {
     setSelectedFeeTypes((prev) => {
+      if (prev.includes(feeTypeId)) {
+        return prev.filter((id) => id !== feeTypeId)
+      } else {
+        return [...prev, feeTypeId]
+      }
+    })
+  }
+
+  // Handle fee type selection for students
+  const handleStudentFeeTypeSelect = (feeTypeId: number) => {
+    setSelectedStudentFeeTypes((prev) => {
       if (prev.includes(feeTypeId)) {
         return prev.filter((id) => id !== feeTypeId)
       } else {
@@ -301,7 +264,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       setSelectedDivision(selectedDiv[0])
 
       try {
-        await getClassFeesStatus({ class_id: selectedDiv[0].id }).unwrap()
+        await getClassFeesStatus({
+          class_id: selectedDiv[0].id,
+          academic_session: CurrentAcademicSessionForSchool!.id,
+        }).unwrap()
       } catch (error) {
         console.log("Error while fetching fees data", error)
         toast({
@@ -316,7 +282,9 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   // Handle opening student concession dialog
   const handleOpenStudentDialog = (student: any) => {
     setSelectedStudent(student)
+    setSelectedStudentFeeTypes([])
     studentForm.setValue("student_id", student.id)
+    studentForm.setValue("fees_plan_id", student.fees_status.fees_plan_id)
     setStudentDialogOpen(true)
   }
 
@@ -332,21 +300,27 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber)
     if (selectedDivision) {
-      getClassFeesStatus({ class_id: selectedDivision.id, page: pageNumber })
+      getClassFeesStatus({
+        class_id: selectedDivision.id,
+        page: pageNumber,
+        academic_session: CurrentAcademicSessionForSchool!.id,
+      })
     }
   }
 
   // Fetch initial data
   useEffect(() => {
-    console.log("I am academicClasses", concession.applicable_to);
     if (concession.applicable_to === "plan") {
-      getFeePlans({ page: 1 })
+      getFeePlans({ page: 1, academic_session: CurrentAcademicSessionForSchool!.id })
     } else if (concession.applicable_to === "students" && !academicClasses) {
       getAcademicClasses(authState.user!.school_id)
     }
+
+    // Always fetch fee types for both concession types
+    getAllFeesType({ academic_session_id: CurrentAcademicSessionForSchool!.id })
   }, [])
 
-
+  // Auto-select first class and division when academicClasses are loaded
   useEffect(() => {
     if (academicClasses && academicClasses.length > 0 && !selectedClass) {
       // Find first class with divisions
@@ -362,34 +336,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           setSelectedDivision(firstDivision)
 
           // Fetch fees data for this class and division
-          selectedDivision && getClassFeesStatus({ class_id: selectedDivision.id })
+          getClassFeesStatus({ class_id: firstDivision.id, academic_session: CurrentAcademicSessionForSchool!.id })
         }
       }
     }
   }, [academicClasses])
-
-
-  // Auto-select first class and division when academicClasses are loaded
-  useEffect(() => {
-    if (concession.applicable_to === "students" && academicClasses && academicClasses.length > 0 && !selectedClass) {
-      // Find first class with divisions
-      const firstClassWithDivisions = academicClasses.find((cls) => cls.divisions.length > 0)
-
-      if (firstClassWithDivisions) {
-        // Set the first class
-        setSelectedClass(firstClassWithDivisions.class.toString())
-
-        // Set the first division of that class
-        if (firstClassWithDivisions.divisions.length > 0) {
-          const firstDivision = firstClassWithDivisions.divisions[0]
-          setSelectedDivision(firstDivision)
-
-          // Fetch students for this class and division
-          getClassFeesStatus({ class_id: firstDivision.id })
-        }
-      }
-    }
-  }, [academicClasses, concession.applicable_to, getClassFeesStatus, selectedClass])
 
   return (
     <div className="space-y-6">
@@ -399,13 +350,27 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         <p className="text-sm text-muted-foreground mb-1">
           Applicable to: <span className="capitalize">{concession.applicable_to}</span>
         </p>
+        <p className="text-sm text-muted-foreground mb-1">
+          Concession applies to: <span className="capitalize">{concession.concessions_to || "plan"}</span>
+        </p>
         <p className="text-sm text-muted-foreground">{concession.description}</p>
       </div>
+
+      {/* Warning about deduction type */}
+      <Alert variant="destructive" className="bg-amber-50 border-amber-200">
+        <Info className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-800">Important Information</AlertTitle>
+        <AlertDescription className="text-amber-700">
+          {concession.concessions_to === "fees_type"
+            ? "This concession will be applied to specific fee types. The deduction amount or percentage will be applied to each selected fee type individually."
+            : "This concession will be applied to the entire fee plan. The deduction amount or percentage will be applied to the total plan amount."}
+        </AlertDescription>
+      </Alert>
 
       {concession.applicable_to === "plan" ? (
         // Plan Concession Form
         <Form {...planForm}>
-          <form onSubmit={planForm.handleSubmit(handlePlanFormSubmit)} className="space-y-6">
+          <form onSubmit={planForm.handleSubmit(handleSubmitForApplyConcessionToPlan)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={planForm.control}
@@ -462,7 +427,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
               ) : (
                 <FormField
                   control={planForm.control}
-                  name="amount"
+                  name="fixed_amount"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Amount</FormLabel>
@@ -555,7 +520,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
               </CardContent>
             </Card>
 
-            {concession.applicable_to === "plan" && selectedPlan && (
+            {concession.concessions_to === "fees_type" && selectedPlan && (
               <Card>
                 <CardHeader>
                   <CardTitle>Select Fee Types</CardTitle>
@@ -606,7 +571,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                 disabled={
                   isApplyingToPlan ||
                   !selectedPlan ||
-                  (concession.applicable_to === "plan" && selectedFeeTypes.length === 0)
+                  (concession.concessions_to === "fees_type" && selectedFeeTypes.length === 0)
                 }
               >
                 {isApplyingToPlan ? (
@@ -712,113 +677,82 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   {searchTermStudent ? "No students match your search" : "No students found in this class/division"}
                 </div>
               ) : isErroWhileFetchingStudentFeesStatuForClass ? (
-                <div className="text-center py-8 text-red-500">
-                  `This class has no Fees Plan for now.`
-                </div>
-              )
-                : (
-                  <ScrollArea className="h-[400px] rounded-md">
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Student</TableHead>
-                            <TableHead>GR Number</TableHead>
-                            <TableHead>Roll Number</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Due Amount</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {isLoadingStudentFeesStatuForClass ? (
-                            Array(5)
-                              .fill(0)
-                              .map((_, index) => (
-                                <TableRow key={`loading-${index}`}>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[200px]" />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[80px]" />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[80px]" />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[100px]" />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[100px]" />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Skeleton className="h-10 w-[120px]" />
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                          ) : filteredStudents.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                                {searchTermStudent
-                                  ? "No students match your search"
-                                  : "No students found in this class/division"}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            currentStudents.map((student) => (
-                              <TableRow key={student.id}>
-                                <TableCell>
-                                  <div className="flex items-center space-x-3">
-                                    <Avatar className="h-9 w-9">
-                                      <AvatarImage src={`/placeholder.svg?height=36&width=36`} alt={student.first_name} />
-                                      <AvatarFallback>
-                                        {student.first_name.charAt(0)}
-                                        {student.last_name.charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <div className="font-medium">
-                                        {student.first_name} {student.middle_name} {student.last_name}
-                                      </div>
-                                    </div>
+                <div className="text-center py-8 text-red-500">This class has no Fees Plan for now.</div>
+              ) : (
+                <ScrollArea className="h-[400px] rounded-md">
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Student</TableHead>
+                          <TableHead>GR Number</TableHead>
+                          <TableHead>Roll Number</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Due Amount</TableHead>
+                          <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentStudents.map((student) => (
+                          <TableRow key={student.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-9 w-9">
+                                  <AvatarImage src={`/placeholder.svg?height=36&width=36`} alt={student.first_name} />
+                                  <AvatarFallback>
+                                    {student.first_name.charAt(0)}
+                                    {student.last_name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium">
+                                    {student.first_name} {student.middle_name} {student.last_name}
                                   </div>
-                                </TableCell>
-                                <TableCell>{student.gr_no}</TableCell>
-                                <TableCell>{student.roll_number}</TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant={
-                                      student.fees_status.status === "Paid"
-                                        ? "default"
-                                        : student.fees_status.status === "Partially Paid"
-                                          ? "outline"
-                                          : "destructive"
-                                    }
-                                  >
-                                    {student.fees_status.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{formatCurrency(student.fees_status.due_amount)}</TableCell>
-                                <TableCell className="text-right">
-                                  <Button variant="outline" size="sm" onClick={() => handleOpenStudentDialog(student)}>
-                                    <UserPlus className="h-4 w-4 mr-2" />
-                                    Apply Concession
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    {studentFeesStatuForClass && (<SaralPagination
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{student.gr_no}</TableCell>
+                            <TableCell>{student.roll_number}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  student.fees_status.status === "Paid"
+                                    ? "default"
+                                    : student.fees_status.status === "Partially Paid"
+                                      ? "outline"
+                                      : "destructive"
+                                }
+                              >
+                                {student.fees_status.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatCurrency(student.fees_status.due_amount)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="outline" size="sm" onClick={() => handleOpenStudentDialog(student)}>
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Apply Concession
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {studentFeesStatuForClass && (
+                    <SaralPagination
                       totalPages={studentFeesStatuForClass.meta.last_page}
                       currentPage={studentFeesStatuForClass.meta.current_page}
-                      onPageChange={(page) => getClassFeesStatus({ class_id: selectedDivision.id, page: page })} >
-                    </SaralPagination>)}
-                  </ScrollArea>
-                )}
-
+                      onPageChange={(page) =>
+                        getClassFeesStatus({
+                          class_id: selectedDivision!.id,
+                          page: page,
+                          academic_session: CurrentAcademicSessionForSchool!.id,
+                        })
+                      }
+                    />
+                  )}
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
 
@@ -843,7 +777,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
               </DialogHeader>
 
               <Form {...studentForm}>
-                <form onSubmit={studentForm.handleSubmit(handleStudentFormSubmit)} className="space-y-4">
+                <form onSubmit={studentForm.handleSubmit(handleSubmitForApplyConcessionToStudents)} className="space-y-4">
                   <FormField
                     control={studentForm.control}
                     name="deduction_type"
@@ -864,7 +798,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
-                                <RadioGroupItem value="amount" />
+                                <RadioGroupItem value="fixed_amount" />
                               </FormControl>
                               <FormLabel className="font-normal">Fixed Amount (₹)</FormLabel>
                             </FormItem>
@@ -899,7 +833,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   ) : (
                     <FormField
                       control={studentForm.control}
-                      name="amount"
+                      name="fixed_amount"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Amount</FormLabel>
@@ -917,6 +851,50 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                         </FormItem>
                       )}
                     />
+                  )}
+
+                  {/* Fee Types selection for student concessions */}
+                  {concession.concessions_to === "fees_type" && (
+                    <div className="space-y-3">
+                      <FormLabel>Select Fee Types</FormLabel>
+                      <FormDescription>
+                        Choose the specific fee types to which this concession will be applied
+                      </FormDescription>
+
+                      {isLoadingFeeTypes ? (
+                        <div className="space-y-2">
+                          {Array(4)
+                            .fill(0)
+                            .map((_, index) => (
+                              <Skeleton key={`loading-${index}`} className="h-8 w-full" />
+                            ))}
+                        </div>
+                      ) : feeTypes && feeTypes.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-2 border rounded-md p-3">
+                          {feeTypes.map((feeType) => (
+                            <div key={feeType.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`student-fee-type-${feeType.id}`}
+                                checked={selectedStudentFeeTypes.includes(feeType.id)}
+                                onCheckedChange={() => handleStudentFeeTypeSelect(feeType.id)}
+                              />
+                              <label
+                                htmlFor={`student-fee-type-${feeType.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {feeType.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No fee types available</p>
+                      )}
+
+                      {concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0 && (
+                        <p className="text-sm text-red-500">Please select at least one fee type</p>
+                      )}
+                    </div>
                   )}
 
                   <FormField
@@ -943,7 +921,13 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isApplyingToStudent}>
+                    <Button
+                      type="submit"
+                      disabled={
+                        isApplyingToStudent ||
+                        (concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0)
+                      }
+                    >
                       {isApplyingToStudent ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

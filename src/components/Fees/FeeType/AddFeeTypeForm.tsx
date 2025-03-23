@@ -36,15 +36,13 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
         name: initialData.name,
         description: initialData.description || "",
         // is_concession_applicable: initialData.is_concession_applicable,
-        status: initialData.status,
-        academic_year_id: initialData.academic_year_id,
+        status: initialData.status
       }
       : {
         name: "",
         description: "",
         // is_concession_applicable: false,
         status: "Active",
-        academic_year_id: 1,
       },
   })
 
