@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const paymentSchema = z.object({
   amount: z.number().min(1, { message: "Amount must be greater than 0" }),
@@ -40,6 +41,7 @@ interface PayFeeFormProps {
 
 export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { t } = useTranslation()
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -70,22 +72,22 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Student Information</CardTitle>
+            <CardTitle>{t("student_information")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Name:</div>
+                <div className="text-sm font-medium">{t("name")}:</div>
                 <div>{student.studentName}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Class:</div>
+                <div className="text-sm font-medium">{t("class")}:</div>
                 <div>
                   {student.class}-{student.division}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Roll Number:</div>
+                <div className="text-sm font-medium">{t("roll_number")}:</div>
                 <div>{student.rollNumber}</div>
               </div>
             </div>
@@ -94,24 +96,24 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
 
         <Card>
           <CardHeader>
-            <CardTitle>Fee Information</CardTitle>
+            <CardTitle>{t("fee_information")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Total Fees:</div>
+                <div className="text-sm font-medium">{t("total_fees")}:</div>
                 <div>₹{student.totalFees.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Paid Amount:</div>
+                <div className="text-sm font-medium">{t("paid_amount")}:</div>
                 <div>₹{student.paidAmount.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Pending Amount:</div>
+                <div className="text-sm font-medium">{t("pending_amount")}:</div>
                 <div className="font-bold text-red-600">₹{student.pendingAmount.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2 gap-1">
-                <div className="text-sm font-medium">Due Date:</div>
+                <div className="text-sm font-medium">{t("due_date")}:</div>
                 <div>{new Date(student.dueDate).toLocaleDateString()}</div>
               </div>
             </div>
@@ -126,7 +128,7 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Payment Amount (₹)</FormLabel>
+                <FormLabel>{t("payment_amount")} (₹)</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} onChange={(e) => field.onChange(Number.parseFloat(e.target.value))} />
                 </FormControl>
@@ -141,7 +143,7 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
             name="paymentMode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Payment Mode</FormLabel>
+                <FormLabel>{t("payment_mode")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -149,10 +151,10 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
-                    <SelectItem value="Online">Online</SelectItem>
-                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="Cash">{t("cash")}</SelectItem>
+                    <SelectItem value="Cheque">{t("cheque")}</SelectItem>
+                    <SelectItem value="Online">{t("online")}</SelectItem>
+                    <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -165,11 +167,11 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
             name="referenceNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Reference Number</FormLabel>
+                <FormLabel>{t("reference_number")}</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
-                <FormDescription>Required for Cheque, Online, and Bank Transfer payments</FormDescription>
+                <FormDescription>{t("required_for_cheque,_online,_and_bank_transfer_payments")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -180,7 +182,7 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
             name="remarks"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Remarks</FormLabel>
+                <FormLabel>{t("remarks")}</FormLabel>
                 <FormControl>
                   <Textarea {...field} />
                 </FormControl>
@@ -191,10 +193,10 @@ export const PayFeeForm: React.FC<PayFeeFormProps> = ({ student, onSubmit }) => 
 
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onSubmit}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Processing..." : "Submit Payment"}
+              {isSubmitting ? "Processing..." : t("submit_payment")}
             </Button>
           </div>
         </form>

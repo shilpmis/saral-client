@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Trash2, Plus, Search, Link, Eye } from "lucide-react"
 import { AddConcessionForm } from "./AddConcessionForm"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 import { ApplyConcessionForm } from "./ApplyConcessionForm"
 import { ConcessionDetailsDialog } from "./ConcessionDetailsDialog"
 import {
@@ -41,6 +42,7 @@ export const ConcessionManagement: React.FC = () => {
     const authState = useAppSelector(selectAuthState)
     const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
     const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+    const {t} = useTranslation()
 
     // Queries and mutations
     const [getConcession, { data: concessions, isLoading }] = useLazyGetConcessionsQuery()
@@ -229,22 +231,22 @@ export const ConcessionManagement: React.FC = () => {
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Concession Management</h1>
+                <h1 className="text-3xl font-bold">{t("concession_management")}</h1>
                 <Button onClick={() => openDialog("add")}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Concession
+                    <Plus className="mr-2 h-4 w-4" /> {t("add_concession")}
                 </Button>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Concessions</CardTitle>
+                    <CardTitle>{t("concessions")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center mb-4">
                         <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search concessions..."
+                                placeholder={t("search_concessions...")}
                                 className="pl-8"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -256,12 +258,12 @@ export const ConcessionManagement: React.FC = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Applicable To</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Actions</TableHead>
+                                    <TableHead>{t("name")}</TableHead>
+                                    <TableHead>{t("category")}</TableHead>
+                                    <TableHead>{t("description")}</TableHead>
+                                    <TableHead>{t("applicable_to")}</TableHead>
+                                    <TableHead>{t("status")}</TableHead>
+                                    <TableHead>{t("actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -278,7 +280,7 @@ export const ConcessionManagement: React.FC = () => {
                                 ) : filteredConcessions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                                            {searchTerm ? "No concessions match your search" : "No concessions found"}
+                                            {searchTerm ? "No concessions match your search" : t("no_concessions_found")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -345,7 +347,7 @@ export const ConcessionManagement: React.FC = () => {
             >
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
                     <DialogHeader>
-                        <DialogTitle>{dialogState.type === "edit" ? "Edit Concession" : "Add New Concession"}</DialogTitle>
+                        <DialogTitle>{dialogState.type === "edit" ? "Edit Concession" : t("add_new_concession")}</DialogTitle>
                     </DialogHeader>
                     <AddConcessionForm
                         initialData={dialogState.concession}

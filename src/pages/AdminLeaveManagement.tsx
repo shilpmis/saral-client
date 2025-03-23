@@ -14,12 +14,13 @@ import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from 
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
 import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 
 const AdminLeaveManagement: React.FC = () => {
 
-
+  const { t } = useTranslation()
   const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
   const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
 
@@ -170,18 +171,17 @@ const AdminLeaveManagement: React.FC = () => {
     }
   }, [selectedDate])
 
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-primary mb-4 sm:mb-0">Leave Requests Management</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary mb-4 sm:mb-0">{t("leave_requests_management")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="teacher">Teacher Leave Requests</TabsTrigger>
-              <TabsTrigger value="other">Other Staff Leave Requests</TabsTrigger>
+              <TabsTrigger value="teacher">{t("teacher_leave_requests")}</TabsTrigger>
+              <TabsTrigger value="other">{t("other_staff_leave_requests")}</TabsTrigger>
             </TabsList>
             <TabsContent value="teacher">
               {LeaveRequestsForTeachingStaff && (<LeaveRequestsTable
@@ -209,9 +209,9 @@ const AdminLeaveManagement: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {/* <SelectItem value="all">All</SelectItem> */}
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="pending">{t("pending")}</SelectItem>
+                  <SelectItem value="approved">{t("approved")}</SelectItem>
+                  <SelectItem value="rejected">{t("rejected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -230,12 +230,12 @@ const AdminLeaveManagement: React.FC = () => {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle> Leave Request</DialogTitle>
+            <DialogTitle> {t("leave_request")}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="reason" className="text-right">
-                Reason (Optional)
+                {t("reason")} (Optional)
               </Label>
               <Textarea
                 id="reason"
@@ -247,9 +247,9 @@ const AdminLeaveManagement: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
-            <Button onClick={confirmStatusChange}>Confirm</Button>
+            <Button onClick={confirmStatusChange}>{t("confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -17,6 +17,7 @@ import {
 } from "recharts"
 import { DollarSign, Users, Clock, AlertTriangle } from "lucide-react"
 import { FeeCollectionTable } from "../Tables/FeeCollectionTable"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const feeCollectionData = [
   { month: "Apr", amount: 120000 },
@@ -42,9 +43,11 @@ const feeStatusData = [
 const COLORS = ["#10b981", "#f59e0b", "#ef4444"]
 
 export const FeeDashboard: React.FC = () => {
+  const {t} = useTranslation()
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Fee Management Dashboard</h1>
+      <h1 className="text-3xl font-bold">{t("fee_management_dashboard")}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -54,7 +57,7 @@ export const FeeDashboard: React.FC = () => {
                 <DollarSign className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Collected</p>
+                <p className="text-sm font-medium text-gray-500">{t("total_collected")}</p>
                 <h3 className="text-2xl font-bold">₹24,50,000</h3>
               </div>
             </div>
@@ -68,7 +71,7 @@ export const FeeDashboard: React.FC = () => {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Pending</p>
+                <p className="text-sm font-medium text-gray-500">{t("pending")}</p>
                 <h3 className="text-2xl font-bold">₹8,20,000</h3>
               </div>
             </div>
@@ -82,7 +85,7 @@ export const FeeDashboard: React.FC = () => {
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Overdue</p>
+                <p className="text-sm font-medium text-gray-500">{t("overdue")}</p>
                 <h3 className="text-2xl font-bold">₹5,30,000</h3>
               </div>
             </div>
@@ -96,7 +99,7 @@ export const FeeDashboard: React.FC = () => {
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Students</p>
+                <p className="text-sm font-medium text-gray-500">{t("total_students")}</p>
                 <h3 className="text-2xl font-bold">1,250</h3>
               </div>
             </div>
@@ -107,8 +110,8 @@ export const FeeDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Fee Collection Trend</CardTitle>
-            <CardDescription>Monthly fee collection for the current academic year</CardDescription>
+            <CardTitle>{t("fee_collection_trend")}</CardTitle>
+            <CardDescription>{t("monthly_fee_collection_for_the_current_academic_year")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -127,8 +130,8 @@ export const FeeDashboard: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Fee Status</CardTitle>
-            <CardDescription>Overall fee payment status</CardDescription>
+            <CardTitle>{t("fee_status")}</CardTitle>
+            <CardDescription>{t("overall_fee_payment_status")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -159,8 +162,8 @@ export const FeeDashboard: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Fee Collections</CardTitle>
-          <CardDescription>Latest fee transactions</CardDescription>
+          <CardTitle>{t("recent_fee_collections")}</CardTitle>
+          <CardDescription>{t("latest_fee_transactions")}</CardDescription>
         </CardHeader>
         <CardContent>
           <FeeCollectionTable />

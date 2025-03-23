@@ -26,6 +26,7 @@ import {
 import type { z } from "zod"
 import type { Student, StudentEntry, UpdateStudent } from "@/types/student"
 import { Loader2 } from "lucide-react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentFormProps {
   onClose: () => void
@@ -50,6 +51,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const AcademicClasses = useAppSelector(selectAcademicClasses)
   const authState = useAppSelector(selectAuthState)
   const isLoading = useAppSelector((state) => state.academic.loading)
+  const {t} = useTranslation()
 
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
@@ -641,18 +643,18 @@ const StudentForm: React.FC<StudentFormProps> = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="family">Family</TabsTrigger>
-            <TabsTrigger value="academic">Academic</TabsTrigger>
-            <TabsTrigger value="other">Other</TabsTrigger>
-            <TabsTrigger value="address">Address</TabsTrigger>
-            <TabsTrigger value="bank">Bank</TabsTrigger>
+            <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
+            <TabsTrigger value="family">{t("family")}</TabsTrigger>
+            <TabsTrigger value="academic">{t("academic")}</TabsTrigger>
+            <TabsTrigger value="other">{t("other")}</TabsTrigger>
+            <TabsTrigger value="address">{t("address")}</TabsTrigger>
+            <TabsTrigger value="bank">{t("bank")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Details</CardTitle>
+                <CardTitle>{t("personal_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -661,7 +663,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t("first_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -674,7 +676,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="middle_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Middle Name</FormLabel>
+                        <FormLabel>{t("middle_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -687,7 +689,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t("last_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -702,7 +704,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="first_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("first_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -715,7 +717,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="middle_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Middle Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("middle_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -728,7 +730,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="last_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("last_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -743,7 +745,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gender</FormLabel>
+                        <FormLabel>{t("gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                           <FormControl>
                             <SelectTrigger>
@@ -751,8 +753,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Male">{t("male")}</SelectItem>
+                            <SelectItem value="Female">{t("female")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -764,7 +766,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="birth_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
+                        <FormLabel>{t("date_of_birth")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -779,7 +781,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="birth_place"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Birth Place</FormLabel>
+                        <FormLabel>{t("birth_place")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -792,7 +794,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="birth_place_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Birth Place (Gujarati)</FormLabel>
+                        <FormLabel>{t("birth_place")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -806,7 +808,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="aadhar_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Aadhar Number</FormLabel>
+                        <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ''} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
                         </FormControl>
@@ -819,7 +821,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="aadhar_dise_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Aadhar DISE Number</FormLabel>
+                        <FormLabel>{t("aadhar_DISE_number")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -831,7 +833,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -840,7 +842,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <TabsContent value="family">
             <Card>
               <CardHeader>
-                <CardTitle>Family Details</CardTitle>
+                <CardTitle>{t("family_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -849,7 +851,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="father_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Father's Name</FormLabel>
+                        <FormLabel>{t("father's_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value || ""} />
                         </FormControl>
@@ -862,7 +864,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="father_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Father's Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("father's_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -877,7 +879,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="mother_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mother's Name</FormLabel>
+                        <FormLabel>{t("mother's_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -890,7 +892,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="mother_name_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mother's Name (Gujarati)</FormLabel>
+                        <FormLabel>{t("mother's_name")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -905,7 +907,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="primary_mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Primary Mobile</FormLabel>
+                        <FormLabel>{t("mobile_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -918,7 +920,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="secondary_mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Secondary Mobile</FormLabel>
+                        <FormLabel>{t("other_mobile_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -930,10 +932,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -942,7 +944,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <TabsContent value="academic">
             <Card>
               <CardHeader>
-                <CardTitle>Academic Details</CardTitle>
+                <CardTitle>{t("academic_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -951,7 +953,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="gr_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>GR Number</FormLabel>
+                        <FormLabel>{t("gr_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -964,7 +966,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="roll_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Roll Number</FormLabel>
+                        <FormLabel>{t("roll_number")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -979,7 +981,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="admission_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Admission Date</FormLabel>
+                        <FormLabel>{t("admission_date")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -994,7 +996,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="admission_class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Admission Class</FormLabel>
+                        <FormLabel>{t("admission_class")}</FormLabel>
                         <Select
                           value={field.value ?? ""} onValueChange={(value) => {
                             field.onChange(value);
@@ -1003,12 +1005,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Class" />
+                              <SelectValue placeholder={t("select_class")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Classes
+                              {t("classes")}
                             </SelectItem>
 
                             {AcademicClasses.map(
@@ -1030,7 +1032,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="admission_division"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Admission Division</FormLabel>
+                        <FormLabel>{t("admission_division")}</FormLabel>
                         <Select
                           value={field.value ?? ""}
                           onValueChange={(value) => {
@@ -1041,12 +1043,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Division" />
+                              <SelectValue placeholder={t("select_division")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Divisions
+                              {t("divisions")}
                             </SelectItem>
                             {availableDivisionsForAdmissionClass &&
                               availableDivisionsForAdmissionClass.divisions.map((division, index) => (
@@ -1067,7 +1069,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Class</FormLabel>
+                        <FormLabel>{t("current_class")}</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
@@ -1078,12 +1080,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Class" />
+                              <SelectValue placeholder={t("select_class")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Classes
+                              {t("classes")}
                             </SelectItem>
                             {AcademicClasses.map(
                               (cls, index) =>
@@ -1104,7 +1106,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="division"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Division</FormLabel>
+                        <FormLabel>{t("current_division")}</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
@@ -1115,12 +1117,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Division" />
+                              <SelectValue placeholder={t("select_division")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value=" " disabled>
-                              Divisions
+                              {t("divisions")}
                             </SelectItem>
                             {availableDivisions &&
                               availableDivisions.divisions.map((division, index) => (
@@ -1141,7 +1143,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="privious_school"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Previous School</FormLabel>
+                        <FormLabel>{t("previous_school")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1154,7 +1156,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="privious_school_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Previous School (Gujarati)</FormLabel>
+                        <FormLabel>{t("previous_school")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1166,10 +1168,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -1178,7 +1180,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <TabsContent value="other">
             <Card>
               <CardHeader>
-                <CardTitle>Other Details</CardTitle>
+                <CardTitle>{t("other_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1187,7 +1189,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="religion"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Religion</FormLabel>
+                        <FormLabel>{t("religion")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1200,7 +1202,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="religion_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Religion (Gujarati)</FormLabel>
+                        <FormLabel>{t("religion")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1215,7 +1217,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="caste"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Caste</FormLabel>
+                        <FormLabel>{t("caste")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1228,7 +1230,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="caste_in_guj"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Caste (Gujarati)</FormLabel>
+                        <FormLabel>{t("caste")} (Gujarati)</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1242,11 +1244,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t("category")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
+                            <SelectValue placeholder={t("select_category")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1263,10 +1265,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -1275,7 +1277,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <TabsContent value="address">
             <Card>
               <CardHeader>
-                <CardTitle>Address Details</CardTitle>
+                <CardTitle>{t("address_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -1283,7 +1285,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>{t("address")}</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                       </FormControl>
@@ -1297,7 +1299,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="district"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>District</FormLabel>
+                        <FormLabel>{t("district")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1310,7 +1312,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("city")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1325,7 +1327,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State</FormLabel>
+                        <FormLabel>{t("state")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1338,7 +1340,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="postal_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Postal Code</FormLabel>
+                        <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1350,10 +1352,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                  Next
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -1362,7 +1364,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <TabsContent value="bank">
             <Card>
               <CardHeader>
-                <CardTitle>Bank Details</CardTitle>
+                <CardTitle>{t("bank_details")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -1370,7 +1372,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="bank_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bank Name</FormLabel>
+                      <FormLabel>{t("bank_name")}</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                       </FormControl>
@@ -1383,7 +1385,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="account_no"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Number</FormLabel>
+                      <FormLabel>{t("account_number")}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                       </FormControl>
@@ -1396,7 +1398,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   name="IFSC_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>IFSC Code</FormLabel>
+                      <FormLabel>{t("ifsc_code")}</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                       </FormControl>
@@ -1407,10 +1409,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
-                  Previous
+                  {t("previous")}
                 </Button>
                 <Button type="submit">
-                  {!isStundetGetingUpdate && (form_type === "create" ? "Submit" : "Update")}
+                  {!isStundetGetingUpdate && (form_type === "create" ? t("submit") : "Update")}
                   {isStundetGetingUpdate && <Loader2 className="animate-spin" />}
                 </Button>
               </CardFooter>

@@ -8,6 +8,7 @@ import type { User } from "@/types/user"
 import { use, useEffect } from "react"
 import { SaralPagination } from "../ui/common/SaralPagination"
 import { PageMeta } from "@/types/global"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 type Role = {
     id: number
@@ -32,17 +33,18 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
         onPageChange(page)
     }
 
+    const {t} = useTranslation()
     return (
         <>
             {initalData.users.length > 0 ? (<Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Name</TableHead>
+                        <TableHead>{t("name")}</TableHead>
                         {/* <TableHead>Username</TableHead> */}
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t("email")}</TableHead>
+                        <TableHead>{t("role")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead className="text-right">{t("actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -61,7 +63,7 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                                 <TableCell className="text-right">
                                     <Button variant="outline" onClick={() => onEditUser(user)}>
                                         {/* <span className=""> */}
-                                        Edit
+                                        {t("edit")}
                                         {/* </span> */}
                                     </Button>
                                 </TableCell>
@@ -69,7 +71,7 @@ const ManagementUserTable: React.FC<ManagementUserTableProps> = ({ initalData, r
                         )
                     })}
                 </TableBody>
-            </Table>) : <div className="text-center">No users found</div>}
+            </Table>) : <div className="text-center">{t("no_users_found")}</div>}
             {initalData.page_meta.last_page > 1 && (<SaralPagination
                 currentPage={initalData.page_meta.current_page}
                 totalPages={initalData.page_meta.last_page}

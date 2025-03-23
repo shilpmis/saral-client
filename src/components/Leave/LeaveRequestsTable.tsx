@@ -12,6 +12,7 @@ import { Button } from "../ui/button"
 import { SaralPagination } from "../ui/common/SaralPagination"
 import { PageMeta } from "@/types/global"
 import { Badge } from "../ui/badge";
+import { useTranslation } from "@/redux/hooks/useTranslation";
 
 interface LeaveRequestsTableProps {
     staff_type: "teacher" | "other",
@@ -42,18 +43,18 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         onPageChange(page);
     }
 
-
+    const {t} = useTranslation()
     return (
         <div>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Employee</TableHead>
-                        <TableHead>Leave Type</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>End Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("employee")}</TableHead>
+                        <TableHead>{t("leave_type")}</TableHead>
+                        <TableHead>{t("start_date")}</TableHead>
+                        <TableHead>{t("end_date")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -75,10 +76,10 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                             onClick={() => handleStatusChange(request.uuid, "approved" ,  staff_type)}
                                             className="mr-2"
                                         >
-                                            Approve
+                                            {t("approve")}
                                         </Button>
                                         <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.uuid, "rejected" , staff_type)}>
-                                            Reject
+                                            {t("reject")}
                                         </Button>
                                     </>
                                 )}

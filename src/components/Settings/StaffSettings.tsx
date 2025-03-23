@@ -45,6 +45,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 const formSchemaForStaffRole = z.object({
@@ -80,6 +81,7 @@ export default function StaffSettings() {
   const [getSchoolStaff, { data, isLoading, isFetching, isSuccess, isError, error }] = useLazyGetSchoolStaffRoleQuery();
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDialogForDeleteStaffOpen, setIsDialogForDeleteStaffOpen] = useState<boolean>(false)
+  const {t} = useTranslation()
 
 
   const handleOpenDialog = (mode: "add" | "edit", role?: StaffRole) => {
@@ -189,27 +191,27 @@ export default function StaffSettings() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Staff Settings</h1>
+      <h1 className="text-3xl font-bold mb-6">{t("staff_settings")}</h1>
       {(isFetching || isLoading) && <div>Loading...</div>}
       {StaffRoleState && StaffRoleState.length > 0 && (<Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Manage Staff Roles</CardTitle>
-          <CardDescription>Add, edit, or remove staff roles for your school.</CardDescription>
+          <CardTitle className="text-2xl">{t("manage_satff_roles")}</CardTitle>
+          <CardDescription>{t("add,_edit,_or_remove_staff_roles_for_your_school")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Roles</h2>
+            <h2 className="text-xl font-semibold">{t("roles")}</h2>
             <Button onClick={() => handleOpenDialog("add")}>
-              <Plus className="mr-2 h-4 w-4" /> Add Role
+              <Plus className="mr-2 h-4 w-4" />{t("add_role")} 
             </Button>
           </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Role Name</TableHead>
-                  <TableHead>Role Type</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("role_name")}</TableHead>
+                  <TableHead>{t("role_type")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,7 +226,7 @@ export default function StaffSettings() {
                         className="mr-2"
                         onClick={() => handleOpenDialog("edit", staff)}
                       >
-                        <Edit className="h-4 w-4 mr-1" /> Edit
+                        <Edit className="h-4 w-4 mr-1" />{t("edit")}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => {
                         formForStaffRole.setValue('role_id', staff.id)
@@ -232,7 +234,7 @@ export default function StaffSettings() {
                       }}
                         className="hover:bg-red-600 hover:text-white"
                       >
-                        <Trash className="h-4 w-4 mr-1" /> Delete
+                        <Trash className="h-4 w-4 mr-1" />{t("delete")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -248,15 +250,15 @@ export default function StaffSettings() {
             <div className="flex justify-center text-red-500 mb-3">
               <AlertCircle className="w-12 h-12" />
             </div>
-            <CardTitle className="text-xl font-semibold">No Staff Role Available</CardTitle>
+            <CardTitle className="text-xl font-semibold">{t("no_staff_role_available")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600">Please cretae role for your school staff !.</p>
+            <p className="text-gray-600">{t("please_create_role_for_your_school_staff!")}</p>
           </CardContent>
           <CardFooter className="flex justify-center space-x-4 mt-4">
             <Button variant="secondary">Refresh</Button>
             <Button onClick={() => handleOpenDialog("add")}>
-              <Plus className="mr-2 h-4 w-4" /> Add Role
+              <Plus className="mr-2 h-4 w-4" />{t("add_role")}
             </Button>
           </CardFooter>
         </Card>
@@ -265,11 +267,11 @@ export default function StaffSettings() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? "Add New Role" : "Edit Role"}</DialogTitle>
+            <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? t("add_new_role") : t("edit_role")}</DialogTitle>
             <DialogDescription>
               {formForStaffRole.getValues('formType') === "create"
-                ? "Enter the details of the new role here."
-                : "Update the details of the role here."}
+                ? t("enter_the_details_of_the_new_role_here.")
+                : t("update_the_details_of_the_role_here.")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -280,7 +282,7 @@ export default function StaffSettings() {
                   name="role_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role</FormLabel>
+                      <FormLabel>{t("role")}</FormLabel>
                       <FormControl>
                         <Input type="text" {...field} />
                       </FormControl>
@@ -293,7 +295,7 @@ export default function StaffSettings() {
                   name="role_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role Type</FormLabel>
+                      <FormLabel>{t("role_type")}</FormLabel>
                       <FormControl>
                         <Select
                           {...field}
@@ -304,8 +306,8 @@ export default function StaffSettings() {
                             <SelectValue placeholder="Select role type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="teaching">Teaching</SelectItem>
-                            <SelectItem value="non-teaching">Non-Teaching</SelectItem>
+                            <SelectItem value="teaching">{t("teaching")}</SelectItem>
+                            <SelectItem value="non-teaching">{t("non_teaching")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -315,10 +317,10 @@ export default function StaffSettings() {
                 />
                 <div className="flex justify-end space-x-4 pt-4">
                   <Button type="button" variant="secondary" onClick={handleCloseDialog}>
-                    Cancel
+                    {t("cancel")}
                   </Button>
                   <Button type="submit">
-                    {formForStaffRole.getValues('formType') === "create" ? "Add Role" : "Update Role"}
+                    {formForStaffRole.getValues('formType') === "create" ? t("add_role") : t("update_role")}
                   </Button>
                 </div>
               </form>
@@ -331,17 +333,17 @@ export default function StaffSettings() {
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">
             <AlertTriangle className="text-red-600 w-7 h-7" />
-            <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Are you sure you want to Delete ?
+            {t("are_you_sure_you_want_to_delete ?")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex justify-center space-x-4">
             <Button type="button" variant="outline" onClick={() => setIsDialogForDeleteStaffOpen(false)} className="px-6 py-2 rounded-lg">
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="button" variant="destructive" onClick={() => handleDeleteRole(formForStaffRole.getValues('role_id')!)} className="px-6 py-2 rounded-lg bg-red-600 text-white">
-              Delete
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

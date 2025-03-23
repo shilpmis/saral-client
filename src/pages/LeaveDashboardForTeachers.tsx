@@ -15,6 +15,7 @@ import { selectAuthState } from "@/redux/slices/authSlice"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { selectLeavePolicyForUser } from "@/redux/slices/leaveSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface LeaveStatus {
   total: number
@@ -139,12 +140,14 @@ const LeaveDashboardForTeachers: React.FC = () => {
       })
   }, [leaveApplicationsData])
 
+  const {t} = useTranslation()
+
   return (
 
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Leave Status</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("Leave Status")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -169,7 +172,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
       </Card>
 
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Leave Applications</h2>
+        <h2 className="text-2xl font-bold">{t("Leave Applications")}</h2>
         <div className="flex items-center space-x-2">
           <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className="w-[150px]">
@@ -195,7 +198,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button onClick={() => handleDialog("create", null)}>Apply for Leave</Button>
+              <Button onClick={() => handleDialog("create", null)}>{t("Apply for Leave")}</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] lg:h-[600px] overflow-auto">
               <DialogHeader>
@@ -219,7 +222,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Leave Type</TableHead>
+                <TableHead>{t("Leave Type")}</TableHead>
                 <TableHead>From</TableHead>
                 <TableHead>To</TableHead>
                 <TableHead>Status</TableHead>

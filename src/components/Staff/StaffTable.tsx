@@ -15,6 +15,7 @@ import dynamic from "next/dynamic"
 import StaffPdfDilog from "./StaffPdfDilog";
 import { Trash2 } from "lucide-react";
 import { PageMeta } from "@/types/global";
+import { useTranslation } from "@/redux/hooks/useTranslation";
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +55,10 @@ export default function StaffTable({
     setSelectedStaff(staff)
     setDialogOpen(true)
   }
+  const perPageData = 6;
+  const totalPages = staffList.page_meta.last_page;
+  
+  const {t} = useTranslation();
 
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
@@ -69,13 +74,13 @@ export default function StaffTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Designation</TableHead>
-                <TableHead>Current Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t("user_id")}</TableHead>
+                <TableHead>{t("name")}</TableHead>
+                <TableHead>{t("email")}</TableHead>
+                <TableHead>{t("mobile")}</TableHead>
+                <TableHead>{t("designation")}</TableHead>
+                <TableHead>{t("current_status")}</TableHead>
+                <TableHead>{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -94,14 +99,14 @@ export default function StaffTable({
                     {isValidEmail(staff.email) ? (
                       staff.email
                     ) : (
-                      <span className="text-red-500">Invalid Email</span>
+                      <span className="text-red-500">{t("invalid_email")}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     {isValidMobile(staff.mobile_number) ? (
                       staff.mobile_number
                     ) : (
-                      <span className="text-red-500">Invalid Mobile</span>
+                      <span className="text-red-500">{t("invalid_mobile")}</span>
                     )}
                   </TableCell>
                   <TableCell>{staff.role}</TableCell>
@@ -138,7 +143,7 @@ export default function StaffTable({
                     </DropdownMenuContent>
                   </DropdownMenu> */}
                     <Button variant="outline" onClick={() => onEdit(staff.id)}>
-                      Edit
+                      {t("edit")}
                     </Button>
                     {/* <Button className="ms-2" variant="outline" onClick={() => onDelete(staff.id)}>
                       <Trash2 className="text-red-500" />
@@ -162,7 +167,7 @@ export default function StaffTable({
 
         </>
       ) : (
-        <div className="text-center py-4 text-gray-500">No records found</div>
+        <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
       )}
     </div>
   );

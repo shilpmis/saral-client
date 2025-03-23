@@ -12,6 +12,7 @@ import { Loader2, Tag } from "lucide-react"
 import { concessionSchema, type ConcessionFormData } from "@/utils/fees.validation"
 // import { useApplyFeeConcessionMutation } from "@/services/FeesService"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ConcessionDialogProps {
   isOpen: boolean
@@ -21,7 +22,9 @@ interface ConcessionDialogProps {
 }
 
 const ConcessionDialog: React.FC<ConcessionDialogProps> = ({ isOpen, onClose, studentId, maxAmount }) => {
-//   const [applyFeeConcession, { isLoading }] = useApplyFeeConcessionMutation()
+//   const [applyFeeConcession, { isLoading }] = useApplyFeeConcessionMutation().
+
+  const {t} = useTranslation()
 
   const form = useForm<ConcessionFormData>({
     resolver: zodResolver(concessionSchema),
@@ -79,7 +82,7 @@ const ConcessionDialog: React.FC<ConcessionDialogProps> = ({ isOpen, onClose, st
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl">
             <Tag className="mr-2 h-5 w-5" />
-            Apply Fee Concession
+            {t("apply_fee_concession")}
           </DialogTitle>
         </DialogHeader>
 
@@ -90,7 +93,7 @@ const ConcessionDialog: React.FC<ConcessionDialogProps> = ({ isOpen, onClose, st
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Concession Amount</FormLabel>
+                  <FormLabel>{t("concession_amount")}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -111,11 +114,11 @@ const ConcessionDialog: React.FC<ConcessionDialogProps> = ({ isOpen, onClose, st
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason for Concession</FormLabel>
+                  <FormLabel>{t("reason_for_concession")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Explain the reason for this concession"
+                      placeholder={t("explain_the_reason_for_this_concession")}
                       className="min-h-[100px]"
                     />
                   </FormControl>
@@ -126,13 +129,13 @@ const ConcessionDialog: React.FC<ConcessionDialogProps> = ({ isOpen, onClose, st
 
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={onClose} disabled={false}>
-                Cancel
+                {t("cancel")}
               </Button>
               <Button type="submit" disabled={false}>
                 {true ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    {t("processing..")}
                   </>
                 ) : (
                   "Apply Concession"

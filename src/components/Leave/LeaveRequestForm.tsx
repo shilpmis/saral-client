@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useEffect, useCallback } from "react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const leaveRequestSchema = z
   .object({
@@ -48,6 +49,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
   })
 
   const [duration, setDuration] = useState(0)
+  const {t} = useTranslation()
 
   const calculateDuration = useCallback((startDate: string, endDate: string) => {
     const start = new Date(startDate)
@@ -73,7 +75,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Apply for Leave</DialogTitle>
+          <DialogTitle>{t("apply_for_leave")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -82,7 +84,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
               name="startDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Start Date</FormLabel>
+                  <FormLabel>{t("start_date")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -95,7 +97,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
               name="endDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>End Date</FormLabel>
+                  <FormLabel>{t("end_date")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -109,7 +111,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
               name="leaveTypes"
               render={() => (
                 <FormItem>
-                  <FormLabel>Leave Types</FormLabel>
+                  <FormLabel>{t("leave_types")}</FormLabel>
                   <div className="space-y-2">
                     {Object.entries(leavesBalance).map(([leaveType, balance]) => (
                       <div key={leaveType} className="flex items-center space-x-2">
@@ -143,7 +145,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason</FormLabel>
+                  <FormLabel>{t("reason")}</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -151,7 +153,7 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({ onClose, onSubmit, 
                 </FormItem>
               )}
             />
-            <Button type="submit">Submit Leave Request</Button>
+            <Button type="submit">{t("submit_leave_request")}</Button>
           </form>
         </Form>
       </DialogContent>

@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import { Loader2, Receipt, AlertCircle } from "lucide-react"
-// import { useApplyFeePaymentMutation } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 import type { InstallmentBreakdown, AppliedConcessioinToStudent, FeePaymentRequest } from "@/types/fees"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -64,6 +64,9 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
   planConcessions = [],
   availableConcessionBalance = { student_concession: 0, plan_concession: 0 },
 }) => {
+
+  const {t} = useTranslation()
+  
   // const [applyFeePayment, { isLoading }] = useApplyFeePaymentMutation()
   const [discountedAmounts, setDiscountedAmounts] = useState<Record<number, number>>({})
   const [totalDiscountApplied, setTotalDiscountApplied] = useState(0)

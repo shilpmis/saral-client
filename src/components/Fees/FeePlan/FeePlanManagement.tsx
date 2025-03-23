@@ -18,9 +18,11 @@ import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import FeePlanDetailsDialog from "./FeePlanDetailsDialog"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const FeePlanManagement: React.FC = () => {
 
+  const { t } = useTranslation()
   const AcademicDivision = useAppSelector(selectAllAcademicClasses)
   const authState = useAppSelector(selectAuthState)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
@@ -113,21 +115,21 @@ export const FeePlanManagement: React.FC = () => {
     <>
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Fee Plan Management</h1>
+          <h1 className="text-3xl font-bold">{t("fee_plan_management")}</h1>
           <Button onClick={() => setDialogForFeesPlan({ isOpen: true, paln_id: null, type: "create" })}>
-            <Plus className="mr-2 h-4 w-4" /> Add Fee Plan
+            <Plus className="mr-2 h-4 w-4" /> {t("add_fee_plan")}
           </Button>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Fee Plans</CardTitle>
+            <CardTitle>{t("fee_plans")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row gap-4 mb-4">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search fee plans..."
+                  placeholder={t("search_fee_plans...")}
                   className="pl-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -135,7 +137,7 @@ export const FeePlanManagement: React.FC = () => {
               </div>
               <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Academic Year" />
+                  <SelectValue placeholder={t("academic_year")} />
                 </SelectTrigger>
                 <SelectContent>
                   {AcademicSessionsForSchool && 
@@ -150,12 +152,12 @@ export const FeePlanManagement: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Plan Name</TableHead>
-                    <TableHead>Class</TableHead>
-                    {/* <TableHead>Academic Year</TableHead> */}
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("plan_name")}</TableHead>
+                    <TableHead>{t("class")}</TableHead>
+                    {/* <TableHead>{t("academic_year")}</TableHead> */}
+                    <TableHead>{t("total_amount")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -270,7 +272,7 @@ export const FeePlanManagement: React.FC = () => {
       >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>{DialogForFeesPlan.type === "update" ? "Edit Fee Plan" : "Create New Fee Plan"}</DialogTitle>
+            <DialogTitle>{DialogForFeesPlan.type === "update" ? t("edit_fee_plan") : t("create_new_fee_plan")}</DialogTitle>
           </DialogHeader>
           <div className="h-full">
             <AddFeePlanForm

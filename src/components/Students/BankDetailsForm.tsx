@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { bankDetailsSchema } from "@/utils/student.validation"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 type BankDetailsFormProps = {
   onSubmit: (data: any) => void
@@ -17,6 +18,7 @@ export function BankDetailsForm({ onSubmit, onPrevious, defaultValues }: BankDet
     defaultValues: defaultValues || {},
   })
 
+  const {t} = useTranslation()
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -63,7 +65,7 @@ export function BankDetailsForm({ onSubmit, onPrevious, defaultValues }: BankDet
           <Button type="button" variant="outline" onClick={onPrevious}>
             Previous
           </Button>
-          <Button type="submit">Submit</Button>
+          <Button type="submit">{t("submit")}</Button>
         </div>
       </form>
     </Form>

@@ -28,6 +28,8 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { set } from "date-fns"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
 
 // Add this extended interface at the top of the file, after the imports
@@ -39,7 +41,8 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
 type StudentFeesPanelProps = {}
 
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
-  const navigate = useNavigate()
+  const {t} = useTranslation();
+  const navigate = useNavigate();
   const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()

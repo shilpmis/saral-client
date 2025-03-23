@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 const formSchema = z.object({
@@ -37,7 +38,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
   const [addInquiry, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
   const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
   const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
-  
+  const { t } = useTranslation()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -89,7 +90,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Inquiry Form</DialogTitle>
+          <DialogTitle>{t("quick_inquiry_form")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -98,9 +99,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="student_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student Name</FormLabel>
+                  <FormLabel>{t("student_name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter student name" {...field} />
+                    <Input placeholder={t("enter_student_name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,9 +112,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="parent_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent Name</FormLabel>
+                  <FormLabel>{t("parent_name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter parent name" {...field} />
+                    <Input placeholder={t("enter_parent_name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,9 +125,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="parent_contact"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contact Number</FormLabel>
+                  <FormLabel>{t("contact_number")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter contact number" {...field} />
+                    <Input placeholder={t("enter_contact_number")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -137,9 +138,9 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="parent_email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email" {...field} />
+                    <Input type="email" placeholder={t("enter_email")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -150,11 +151,11 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="class_applying"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class Applying For</FormLabel>
+                  <FormLabel>{t("class_applying_for")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
+                        <SelectValue placeholder={t("select_class")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -171,7 +172,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <DialogFooter>
               <Button type="submit" disabled={isAddingInquiry}>
-                {isAddingInquiry ? "Submitting..." : "Submit Inquiry"}
+                {isAddingInquiry ? "Submitting..." : t("submit_inquiry")}
               </Button>
             </DialogFooter>
           </form>

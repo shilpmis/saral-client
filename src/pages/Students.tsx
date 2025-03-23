@@ -26,6 +26,7 @@ import ExcelDownloadModalForStudents from "@/components/Students/ExcelDownloadMo
 import { z } from "zod"
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AcademicSession } from "@/types/user"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 // Define Zod schema for student data validation
 const StudentSchemaForUploadData = z.object({
@@ -109,6 +110,7 @@ interface Props {
 
 export const Students: React.FC = () => {
 
+  const {t} = useTranslation()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
@@ -530,14 +532,14 @@ export const Students: React.FC = () => {
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">Students</h2>
+          <h2 className="text-3xl font-bold">{t("students")}</h2>
           <div className="flex space-x-2">
             <Button
               onClick={() =>
                 setOpenDialogForStudent({ ...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })
               }
             >
-              <Plus className="mr-2 h-4 w-4" /> Add New Student
+              <Plus className="mr-2 h-4 w-4" /> {t("add_new_student")}
             </Button>
 
 
@@ -556,16 +558,16 @@ export const Students: React.FC = () => {
             >
               <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
-                  <Upload className="mr-2 h-4 w-4" /> Upload CSV
+                  <Upload className="mr-2 h-4 w-4" /> {t("upload_csv")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[700px] overflow-auto">
-                <DialogTitle>Upload CSV File</DialogTitle>
+                <DialogTitle>{t("upload_csv_file")}</DialogTitle>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="upload-academic-session" className="text-sm font-medium">
-                        Academic Year
+                        {t("academic_year")}
                       </label>
                       <Select
                         value={SelectedSession ? SelectedSession.toString() : " "}
@@ -577,7 +579,7 @@ export const Students: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value=" " disabled>
-                            Academic Years
+                            {t("academic_years")}
                           </SelectItem>
                           {AcademicSessionsForSchool &&
                             AcademicSessionsForSchool.map((as: AcademicSession, index) => (
@@ -590,7 +592,7 @@ export const Students: React.FC = () => {
                     </div>
                     <div>
                       <label htmlFor="upload-class" className="text-sm font-medium">
-                        Class
+                        {t("class")}
                       </label>
                       <Select value={selectedClass} onValueChange={handleClassChange}>
                         <SelectTrigger className="w-full">
@@ -598,7 +600,7 @@ export const Students: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value=" " disabled>
-                            Classes
+                            {t("classes")}
                           </SelectItem>
                           {AcademicClasses?.map((cls, index) =>
                             cls.divisions.length > 0 ? (
@@ -612,7 +614,7 @@ export const Students: React.FC = () => {
                     </div>
                     <div>
                       <label htmlFor="upload-division" className="text-sm font-medium">
-                        Division
+                        {t("division")}
                       </label>
                       <Select
                         value={selectedDivision ? selectedDivision.id.toString() : " "}
@@ -623,7 +625,7 @@ export const Students: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value=" " disabled>
-                            Divisions
+                            {t("divisions")}
                           </SelectItem>
                           {availableDivisions &&
                             availableDivisions.divisions.map((division, index) => (
@@ -637,10 +639,10 @@ export const Students: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={handleDownloadDemo} className="w-1/2 mr-2">
-                      Download Demo CSV Template
+                      {t("download_demo_CSV_template")}
                     </Button>
                     <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
-                      Choose CSV File
+                      {t("choose_CSV_file")}
                     </Button>
                   </div>
                   <Input
@@ -688,7 +690,7 @@ export const Students: React.FC = () => {
 
                   {serverValidationErrors.length > 0 && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
-                      <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
+                      <h3 className="text-red-700 font-bold mb-2">{t("server_validation_errors")}</h3>
                       <ul className="list-disc list-inside text-red-700">
                         {serverValidationErrors.map((error, index) => (
                           <li key={index}>
@@ -710,7 +712,7 @@ export const Students: React.FC = () => {
                   {uploadResults.length > 0 && (
                     <Button variant="outline" className="w-full" onClick={() => setValidationDialogOpen(true)}>
                       <FileText className="mr-2 h-4 w-4" />
-                      View Validation Results
+                      {t("view_validation_results")}
                     </Button>
                   )}
 
@@ -745,7 +747,7 @@ export const Students: React.FC = () => {
             <Dialog open={validationDialogOpen} onOpenChange={setValidationDialogOpen}>
               <DialogContent className="max-w-5xl max-h-[80vh] overflow-auto">
                 <DialogHeader>
-                  <DialogTitle>CSV Validation Results</DialogTitle>
+                  <DialogTitle>{t("CSV_validation_results")}</DialogTitle>
                 </DialogHeader>
                 <div className="px-6 py-2 bg-gray-50 border-t border-b text-xs">
                   <div className="flex items-center space-x-4">
@@ -878,7 +880,7 @@ export const Students: React.FC = () => {
                 <DropdownMenuItem>
                   <button className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setDialogOpenForDownLoadExcel(true)}>
-                    <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                    <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
                   </button>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem>Print List</DropdownMenuItem> */}
@@ -890,7 +892,7 @@ export const Students: React.FC = () => {
         {!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0 ? (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Search Students</CardTitle>
+              <CardTitle>{t("search_students")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-yellow-600">Please create Academic Sessions for your school.</p>
@@ -899,7 +901,7 @@ export const Students: React.FC = () => {
         ) : (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Search Students</CardTitle>
+              <CardTitle>{t("search_students")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="flex gap-2">
@@ -911,7 +913,7 @@ export const Students: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" " disabled>
-                      Academic Years
+                      {t("academic_years")}
                     </SelectItem>
                     {AcademicSessionsForSchool &&
                       AcademicSessionsForSchool.map((as: AcademicSession, index) => (
@@ -927,7 +929,7 @@ export const Students: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" " disabled>
-                      Classes
+                      {t("classes")}
                     </SelectItem>
                     {AcademicClasses && AcademicClasses.map((cls, index) =>
                       cls.divisions.length > 0 ? (
@@ -948,7 +950,7 @@ export const Students: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" " disabled>
-                      Divisions
+                      {t("divisions")}
                     </SelectItem>
                     {availableDivisions &&
                       availableDivisions.divisions.map((division, index) => (
@@ -988,7 +990,7 @@ export const Students: React.FC = () => {
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{openDialogForStudent.type === "edit" ? "Edit Student" : "Add New Student"}</DialogTitle>
+            <DialogTitle>{openDialogForStudent.type === "edit" ? "Edit Student" : t("add_new_student")}</DialogTitle>
           </DialogHeader>
           <>
             <div className="w-full lg:h-[600px] overflow-auto">
@@ -1047,7 +1049,7 @@ export const Students: React.FC = () => {
         }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Download Student Data</DialogTitle>
+            <DialogTitle>{t("download_student_data")}</DialogTitle>
           </DialogHeader>
           <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
         </DialogContent>

@@ -29,6 +29,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "@/redux/store"
+import { setLanguage } from "@/redux/slices/languageSlice"
+import { useTranslation } from "@/redux/hooks/useTranslation"
+import LanguageSwitcher from "@/components/traslater/languageSwitcher"
 import { AlertTriangle, Bell, LogOut, Moon, Settings, Sun, User, Zap } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -45,9 +50,11 @@ const shortFormForRole: any = {
   6: "TE",
 }
 
+
 export default function Header() {
   const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
+  const {t} = useTranslation()
 
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
@@ -119,6 +126,7 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
           <Search />
+          <LanguageSwitcher />
 
           {/* Theme Toggle */}
           {/* <TooltipProvider>
@@ -194,12 +202,12 @@ export default function Header() {
                   <Dialog>
                     <DialogTrigger className="w-full flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>My Profile</span>
+                      <span>{t("my_profile")}</span>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[350px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[600px] mx-5">
                       <DialogHeader>
-                        <DialogTitle>Your Profile</DialogTitle>
-                        <DialogDescription>View and manage your profile information</DialogDescription>
+                        <DialogTitle>{t("your_profile")}</DialogTitle>
+                        <DialogDescription>{t("view_and_manage_your_profile_information")}</DialogDescription>
                       </DialogHeader>
                       <div className="flex justify-center my-4">
                         <Avatar className="h-24 w-24">
@@ -219,13 +227,13 @@ export default function Header() {
                         <div className="space-y-4">
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name" className="text-right">
-                              Name
+                              {t("name")}
                             </Label>
                             <Input id="name" defaultValue={users?.name} className="col-span-3" readOnly />
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="schoolName" className="text-right">
-                              School Name
+                              {t("school_name")}
                             </Label>
                             <Input
                               id="schoolName"
@@ -239,13 +247,13 @@ export default function Header() {
                         <div className="space-y-4">
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="status" className="text-right">
-                              Status
+                              {t("status")}
                             </Label>
                             <Input id="status" defaultValue={users?.school?.status} className="col-span-3" readOnly />
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="contactNumber" className="text-right">
-                              Contact Number
+                              {t("contact_number")}
                             </Label>
                             <Input
                               id="contactNumber"
@@ -267,18 +275,18 @@ export default function Header() {
                   <Dialog>
                     <DialogTrigger className="w-full flex items-center gap-2">
                       <Settings className="h-4 w-4" />
-                      <span>Settings</span>
+                      <span>{t("settings")}</span>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                       <DialogHeader>
-                        <DialogTitle>Settings</DialogTitle>
-                        <DialogDescription>Adjust your account settings here.</DialogDescription>
+                        <DialogTitle>{t("settings")}</DialogTitle>
+                        <DialogDescription>{t("adjust_your_account_settings_here.")}</DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                            <Label htmlFor="theme">Dark Mode</Label>
+                            <Label htmlFor="theme">{t("dark_mode")}</Label>
                           </div>
                           <Switch id="theme" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
                         </div>
@@ -286,13 +294,13 @@ export default function Header() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Bell className="h-4 w-4" />
-                            <Label htmlFor="notifications">Notifications</Label>
+                            <Label htmlFor="notifications">{t("notifications")}</Label>
                           </div>
                           <Switch id="notifications" defaultChecked />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button type="submit">Save settings</Button>
+                        <Button type="submit">{t("save_settings")}</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -305,7 +313,7 @@ export default function Header() {
                   onClick={() => setIsLogoutDialogOpen(true)}
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                  <span>{t("logout")}</span>
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>
@@ -325,10 +333,10 @@ export default function Header() {
               <AlertTriangle className="text-red-600 w-7 h-7" />
             </motion.div>
             <DialogTitle className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              Logout Confirmation
+              {t("logout_confirmation")}
             </DialogTitle>
             <DialogDescription className="text-gray-600 dark:text-gray-400">
-              Are you sure you want to logout? You will be redirected to the login page.
+              {t("are_you_sure_you_want_to_logout?_you_will_be_redirected_to_the_login_page.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex justify-center space-x-4">
@@ -338,7 +346,7 @@ export default function Header() {
               onClick={() => setIsLogoutDialogOpen(false)}
               className="px-6 py-2 rounded-lg"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -346,7 +354,7 @@ export default function Header() {
               onClick={handleLogout}
               className="px-6 py-2 rounded-lg bg-red-600 text-white"
             >
-              Logout
+              {t("logout")}
             </Button>
           </DialogFooter>
         </DialogContent>

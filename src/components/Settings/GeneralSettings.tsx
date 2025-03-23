@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Building2, Mail, Phone, MapPin, Crown, Loader } from 'lucide-react'
 import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { toast } from '@/hooks/use-toast'
+import { useTranslation } from '@/redux/hooks/useTranslation'
 import { sub } from 'date-fns'
 // import { useToast } from "@/components/hooks/use-toast"
 
@@ -121,6 +122,8 @@ export default function GeneralSettings() {
     },
   })
 
+  const {t} = useTranslation()
+
   async function onSubmitBasicSchoolData(values: z.infer<typeof basicSchoolDataSchema>) {
     setLoading(prev => ({ ...prev, basicSchoolData: true }))
 
@@ -213,9 +216,9 @@ export default function GeneralSettings() {
     <>
       {isSuccess && (<div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">General Settings</h1>
+          <h1 className="text-2xl font-semibold">{t("general_seetings")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your school's basic information, contact details, and subscription
+          {t("manage_your_school's_basic_information,_contact_details,_and_subscription")}
           </p>
         </div>
 
@@ -229,7 +232,7 @@ export default function GeneralSettings() {
             className="h-20 w-20 rounded-full" // Adjust size and style as needed
           />
           <div className="flex flex-col">
-            <CardTitle>Organization Details </CardTitle>
+            <CardTitle>{t("organization_details")} </CardTitle>
           </div>
         </div>
       </div>
@@ -243,7 +246,7 @@ export default function GeneralSettings() {
               name="organization.name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
+                  <FormLabel>{t("organization_name")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled />
                   </FormControl>
@@ -257,7 +260,7 @@ export default function GeneralSettings() {
               name="organization.head_contact_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Head Contact Number</FormLabel>
+                  <FormLabel>{t("head_contact_number")}</FormLabel>
                   <FormControl>
                     <Input placeholder=" " {...field} disabled />
                   </FormControl>
@@ -271,7 +274,7 @@ export default function GeneralSettings() {
               name="organization.head_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Head Name</FormLabel>
+                  <FormLabel>{t("head_name")}</FormLabel>
                   <FormControl>
                     <Input placeholder="" {...field} disabled />
                   </FormControl>
@@ -285,7 +288,7 @@ export default function GeneralSettings() {
               name="organization.pincode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pincode</FormLabel>
+                  <FormLabel>{t("pincode")}</FormLabel>
                   <FormControl>
                     <Input placeholder="pincode" {...field} value={field.value ?? ''} disabled />
                   </FormControl>
@@ -299,7 +302,7 @@ export default function GeneralSettings() {
               name="organization.address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t("address")}</FormLabel>
                   <FormControl>
                     <Input placeholder="address" {...field} disabled />
                   </FormControl>
@@ -313,7 +316,7 @@ export default function GeneralSettings() {
               name="organization.subscription_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subscription Type</FormLabel>
+                  <FormLabel>{t("subscription_type")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled />
                   </FormControl>
@@ -331,10 +334,10 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {/* <Building2 className="h-5 w-5" /> */}
-              Basic School Data
+              {t("basic_school_data")}
             </CardTitle>
             <CardDescription>
-              Update your school's fundamental information
+            {t("update_your_school's_fundamental_information")}
             </CardDescription>
           </CardHeader>
           <Form {...basicSchoolDataForm}>
@@ -345,7 +348,7 @@ export default function GeneralSettings() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>School Name</FormLabel>
+                      <FormLabel>{t("school_name")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter school name" {...field} />
                       </FormControl>
@@ -373,7 +376,7 @@ export default function GeneralSettings() {
                   name="established_year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Established Year</FormLabel>
+                      <FormLabel>{t("established_year")}</FormLabel>
                       <FormControl>
                         <Input placeholder="YYYY" {...field} />
                       </FormControl>
@@ -387,7 +390,7 @@ export default function GeneralSettings() {
                   name="school_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>School Type</FormLabel>
+                      <FormLabel>{t("school_type")}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -395,10 +398,10 @@ export default function GeneralSettings() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value=" " disabled>Select Type</SelectItem>
-                          <SelectItem value="Public">Public</SelectItem>
-                          <SelectItem value="Private">Private</SelectItem>
-                          <SelectItem value="Charter">Charter</SelectItem>
+                          <SelectItem value=" " disabled>{t("select_type")}</SelectItem>
+                          <SelectItem value="Public">{t("public")}</SelectItem>
+                          <SelectItem value="Private">{t("private")}</SelectItem>
+                          <SelectItem value="Charter">{t("charter")}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -408,7 +411,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.basicSchoolData}>
-                  {loading.basicSchoolData ? "Saving..." : "Save"}
+                  {loading.basicSchoolData ? "Saving..." : t("save")}
                 </Button>
               </CardFooter>
             </form>
@@ -419,10 +422,10 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {/* <Mail className="h-5 w-5" /> */}
-              Contact Information
+              {t("contact_information")}
             </CardTitle>
             <CardDescription>
-              Update your school's contact details
+            {t("update_your_school's_contact_details")}
             </CardDescription>
           </CardHeader>
           <Form {...contactInformationForm}>
@@ -433,7 +436,7 @@ export default function GeneralSettings() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>{t("email_address")}</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="school@example.com" {...field} disabled />
                       </FormControl>
@@ -446,7 +449,7 @@ export default function GeneralSettings() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>{t("phone_number")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter contact number for school" type='number' {...field} />
                       </FormControl>
@@ -459,7 +462,7 @@ export default function GeneralSettings() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>{t("address")}</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Enter school address"
@@ -474,7 +477,7 @@ export default function GeneralSettings() {
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={loading.contactInformation}>
-                  {loading.contactInformation ? "Saving..." : "Save"}
+                  {loading.contactInformation ? "Saving..." : t("save")}
                 </Button>
               </CardFooter>
             </form>

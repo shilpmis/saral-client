@@ -2,6 +2,7 @@ import type React from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import type { User, UserStatus } from "@/types/user"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 type UserTableProps = {
   users: User[]
@@ -21,6 +22,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, searchTerm, statusF
     return matchesSearch && matchesStatus
   })
 
+  const {t} = useTranslation()
   return (
     <Table>
       <TableHeader>

@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label"
 import { downloadCSVTemplate } from "@/utils/CSVTemplateForStaff"
 import ExcelDownloadModalForStaff from "@/components/Staff/ExcelDownloadModalForStaff"
 import { PageMeta } from "@/types/global"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 import { motion } from "framer-motion"
 import { DialogDescription } from "@radix-ui/react-dialog"
 import { toast } from "@/hooks/use-toast"
@@ -113,7 +114,7 @@ const FilterOptions: React.FC<{
 }
 
 export const Staff: React.FC = () => {
-
+  const {t} = useTranslation();
   const authState = useAppSelector(selectAuthState)
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -720,7 +721,9 @@ export const Staff: React.FC = () => {
   return (
     <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">Staff Management</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-0">
+          {t("staff_management")}
+        </h2>
         <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <Button
             onClick={() =>
@@ -731,26 +734,26 @@ export const Staff: React.FC = () => {
               })
             }
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Staff
+            <Plus className="mr-2 h-4 w-4" /> {t("add_staff")}
           </Button>
 
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Upload className="h-4 w-4 ms-2" />
-                <span>Upload CSV</span>
+                <span>{t("upload_csv")}</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Upload Staff CSV Data</DialogTitle>
+                <DialogTitle>{t("upload_staff_csv_data")}</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6">
                 {/* Step 1: Select Staff Type */}
                 <Card className="border shadow-sm">
                   <CardHeader className="py-3">
-                    <CardTitle className="text-base">Select Staff Type</CardTitle>
+                    <CardTitle className="text-base">{t("select_staff_type")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <RadioGroup
@@ -760,11 +763,11 @@ export const Staff: React.FC = () => {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="teaching" id="upload-teaching" />
-                        <Label htmlFor="upload-teaching">Teaching Staff</Label>
+                        <Label htmlFor="upload-teaching">{t("teaching_staff")}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="non-teaching" id="upload-non-teaching" />
-                        <Label htmlFor="upload-non-teaching">Non-Teaching Staff</Label>
+                        <Label htmlFor="upload-non-teaching">{t("non_teaching_staff")}</Label>
                       </div>
                     </RadioGroup>
                   </CardContent>
@@ -776,7 +779,7 @@ export const Staff: React.FC = () => {
                     {(!RolesForSchoolStaff || RolesForSchoolStaff.length === 0) && (
                       <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                         <AlertTriangle className="h-5 w-5 text-yellow-500 inline-block mr-2" />
-                        <span className="text-yellow-700">No roles available for staff. Please try again later.</span>
+                        <span className="text-yellow-700">{t("no_roles_available_for_staff._please_try_again_later.")}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
@@ -785,10 +788,10 @@ export const Staff: React.FC = () => {
                         onClick={() => handleDownloadDemo(staffTypeForUpload)}
                         className="w-1/2 mr-2"
                       >
-                        Download Demo CSV
+                        {t("download_demo_CSV")}
                       </Button>
                       <Button variant="outline" onClick={handleChooseFile} className="w-1/2 mr-2">
-                        Choose CSV File
+                        {t("choose_CSV_file")}
                       </Button>
                     </div>
                     <Input
@@ -836,7 +839,7 @@ export const Staff: React.FC = () => {
 
                     {serverValidationErrors.length > 0 && (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
-                        <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
+                        <h3 className="text-red-700 font-bold mb-2">{t("server_validation_errors")}</h3>
                         <ul className="list-disc list-inside text-red-700">
                           {serverValidationErrors && serverValidationErrors.map((item, index) => (
                             <li key={index}>
@@ -858,7 +861,7 @@ export const Staff: React.FC = () => {
                     {uploadResults.length > 0 && (
                       <Button variant="outline" className="w-full" onClick={() => setValidationDialogOpen(true)}>
                         <FileText className="mr-2 h-4 w-4" />
-                        View Validation Results
+                        {t("view_validation_results")}
                       </Button>
                     )}
 
@@ -894,7 +897,7 @@ export const Staff: React.FC = () => {
           <Dialog open={validationDialogOpen} onOpenChange={setValidationDialogOpen}>
             <DialogContent className="max-w-5xl max-h-[80vh] overflow-auto">
               <DialogHeader>
-                <DialogTitle>CSV Validation Results</DialogTitle>
+                <DialogTitle>{t("CSV_validation_results")}</DialogTitle>
               </DialogHeader>
               <div className="px-6 py-2 bg-gray-50 border-t border-b text-xs">
                 <div className="flex items-center space-x-4">
@@ -1005,7 +1008,7 @@ export const Staff: React.FC = () => {
             <DropdownMenuContent>
               <DropdownMenuItem onSelect={() => setDialogOpenForDownLoadExcel(true)}>
                 <div className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
-                  <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                  <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
                 </div>
               </DropdownMenuItem>
               {/* <DropdownMenuItem>Print List</DropdownMenuItem> */}
@@ -1025,8 +1028,8 @@ export const Staff: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="teaching">Teaching Staff</TabsTrigger>
-          <TabsTrigger value="non-teaching">Non-Teaching Staff</TabsTrigger>
+          <TabsTrigger value="teaching">{t("teaching_staff")}</TabsTrigger>
+          <TabsTrigger value="non-teaching">{t("non_teaching_staff")}</TabsTrigger>
         </TabsList>
         <TabsContent value="teaching">
           {isTeachingOtherLoading && <div className="flex justify-center p-4">Loading...</div>}
@@ -1092,8 +1095,8 @@ export const Staff: React.FC = () => {
           <DialogHeader>
             <DialogTitle>
               {openDialogForStaffForm.type === "add"
-                ? "Add New Staff"
-                : "Edit Staff"}
+                ? t("add_new_staff")
+                : t("edit_staff")}
             </DialogTitle>
           </DialogHeader>
           {openDialogForStaffForm.type === "add" ? (
@@ -1124,17 +1127,17 @@ export const Staff: React.FC = () => {
             >
               <Trash className="text-red-600 w-7 h-7" />
             </motion.div>
-            <DialogTitle className="text-2xl font-bold text-gray-800">Delete Confirmation</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Are you sure you want to Delete Staff?
+              {t("are_you_sure_you_want_to_delete_staff?")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex justify-center space-x-4">
             <Button type="button" variant="outline" onClick={() => setIsDelete(false)} className="px-6 py-2 rounded-lg">
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="button" variant="destructive" className="px-6 py-2 rounded-lg bg-red-600 text-white">
-              Delete
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1149,7 +1152,7 @@ export const Staff: React.FC = () => {
         }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Download Staff Data</DialogTitle>
+            <DialogTitle>{t("download_staff_data")}</DialogTitle>
           </DialogHeader>
           <ExcelDownloadModalForStaff />
         </DialogContent>

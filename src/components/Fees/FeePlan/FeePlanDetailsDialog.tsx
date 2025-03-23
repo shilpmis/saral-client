@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
 import { ConcessionDetailForPlan, InstallmentBreakdown, InstallmentBreakdowns } from "@/types/fees"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface FeePlanDetailsDialogProps {
   isOpen: boolean
@@ -45,6 +46,7 @@ interface Concession {
 const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onClose, planId , academic_sessions}) => {
   const [activeTab, setActiveTab] = useState("overview")
   const [fetchDetailFeePlan, { data: feePlanDetails, isLoading, isError }] = useLazyFetchDetailFeePlanQuery()
+  const {t} = useTranslation();
 
   useEffect(() => {
     if (isOpen && planId) {

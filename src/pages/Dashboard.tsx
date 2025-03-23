@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RecentActivity } from "@/components/Dashboard/RecentActivity"
 import { GraduationCap, Users, BookOpen, DollarSign, FileText, UserCheck, UserX, Calendar } from "lucide-react"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function DashboardPage() {
   const [greeting, setGreeting] = useState("")
-
+  
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
 
   const dashboardData = {
@@ -36,6 +37,8 @@ export default function DashboardPage() {
       setGreeting("Good evening")
     }
   }, [])
+
+  const {t} = useTranslation();
 
   return (
     <>
@@ -66,7 +69,7 @@ export default function DashboardPage() {
         </div> */}
         <div className="flex-1 space-y-4 p-8 pt-6">
           <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <h2 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h2>
             <div className="flex items-center space-x-2">
               <p className="text-xl font-bold tracking-tight">{greeting}</p>
             </div>
@@ -125,42 +128,42 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
+                <CardTitle>{t("quick_stats")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center p-4 bg-blue-100 rounded-lg">
                     <FileText className="h-6 w-6 text-blue-600 mr-2" />
                     <div>
-                      <p className="text-sm text-blue-600">Total Inquiries</p>
+                      <p className="text-sm text-blue-600">{t("total_inquiries")}</p>
                       <p className="text-2xl font-bold text-blue-800">{dashboardData.totalInquiries}</p>
                     </div>
                   </div>
                   <div className="flex items-center p-4 bg-yellow-100 rounded-lg">
                     <FileText className="h-6 w-6 text-yellow-600 mr-2" />
                     <div>
-                      <p className="text-sm text-yellow-600">Pending Applications</p>
+                      <p className="text-sm text-yellow-600">{t("pending_applications")}</p>
                       <p className="text-2xl font-bold text-yellow-800">{dashboardData.pendingApplications}</p>
                     </div>
                   </div>
                   <div className="flex items-center p-4 bg-green-100 rounded-lg">
                     <UserCheck className="h-6 w-6 text-green-600 mr-2" />
                     <div>
-                      <p className="text-sm text-green-600">Accepted Admissions</p>
+                      <p className="text-sm text-green-600">{t("accepted_application")}</p>
                       <p className="text-2xl font-bold text-green-800">{dashboardData.acceptedAdmissions}</p>
                     </div>
                   </div>
                   <div className="flex items-center p-4 bg-red-100 rounded-lg">
                     <UserX className="h-6 w-6 text-red-600 mr-2" />
                     <div>
-                      <p className="text-sm text-red-600">Rejected Applications</p>
+                      <p className="text-sm text-red-600">{t("rejected_applications")}</p>
                       <p className="text-2xl font-bold text-red-800">{dashboardData.rejectedApplications}</p>
                     </div>
                   </div>
                   <div className="flex items-center p-4 bg-purple-100 rounded-lg col-span-2">
                     <Calendar className="h-6 w-6 text-purple-600 mr-2" />
                     <div>
-                      <p className="text-sm text-purple-600">Upcoming Interviews</p>
+                      <p className="text-sm text-purple-600">{t("upcoming_interviews")}</p>
                       <p className="text-2xl font-bold text-purple-800">{dashboardData.upcomingInterviews}</p>
                     </div>
                   </div>
@@ -169,6 +172,48 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("total_students")}</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1,234</div>
+                {/* <p className="text-xs text-muted-foreground">+12% from last month</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("total_teachers")}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">98</div>
+                {/* <p className="text-xs text-muted-foreground">+2 new this month</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium"> {t("present/absent_staff_today")}</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> <span className="text-green-500">10</span> / <span className="text-red-500">2</span> </div>
+                {/* <p className="text-xs text-muted-foreground">+3 new courses added</p> */}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("total_revenue")}</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$53,624</div>
+                <p className="text-xs text-muted-foreground">+7% from last month</p>
+              </CardContent>
+            </Card>
+          </div>
 
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

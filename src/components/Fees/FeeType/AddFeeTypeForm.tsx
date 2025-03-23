@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { FeesType } from "@/types/fees"
 import { feeTypeSchema } from "@/utils/fees.validation"
 import { Loader2 } from "lucide-react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
 interface AddFeeTypeFormProps {
@@ -48,6 +49,7 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
   const handleSubmit = (values: z.infer<typeof feeTypeSchema>) => {
     onSubmit(values)
   }
+  const {t} = useTranslation()
 
   return (
     <Form {...form}>
@@ -57,7 +59,7 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Fee Type Name</FormLabel>
+              <FormLabel>{t("fee_type_name")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -71,10 +73,10 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t("description")}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter a description for this fee type"
+                  placeholder={t("enter_the_description_for_this_fee_type.")}
                   className="resize-none"
                   {...field}
                 />
@@ -122,22 +124,22 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>{t("status")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t("select_status")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Active">{t("active")}</SelectItem>
+                    <SelectItem value="Inactive">{t("inactive")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>Set the status of this fee type</FormDescription>
+                <FormDescription>{t("set_the_status_of_this_fee_type.")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -146,11 +148,11 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
 
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={isLoading} className="flex items-center justify-center space-x-2">
               {isLoading && <div className="ml-2"><Loader2 className="animate-spin" /></div>}
-              {!isLoading && initialData ? "Update Fee Type" : "Create Fee Type"}
+              {!isLoading && initialData ? t("update_fee_type") : t("create_fee_type")}
             </Button>
         </div>
       </form>

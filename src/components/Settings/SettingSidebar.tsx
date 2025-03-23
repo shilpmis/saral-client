@@ -18,6 +18,7 @@ import {
   Clock,
 } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface NavItem {
   title: string
@@ -32,78 +33,78 @@ interface NavSection {
 
 const navigationSections: NavSection[] = [
   {
-    title: "User Settings",
+    title: "user_seetings",
     items: [
       {
-        title: "General Management",
+        title: "general_seetings",
         icon: Settings,
         href: "/d/settings/general",
       },
       {
-        title: "Notifications",
+        title: "notifications",
         icon: Bell,
         href: "notifications",
       },
     ],
   },
   {
-    title: "School Settings",
+    title: "school_settings",
     items: [
       {
-        title: "Academic Management",
+        title: "academic_management",
         icon: GraduationCap,
         href: "academic",
       },
       {
-        title: "Staff Management",
+        title: "staff_management",
         icon: Users,
         href: "staff",
       },
       {
-        title: "Leave Management",
+        title: "leave_management",
         icon: Aperture,
         href: "leave",
       },
       {
-        title: "Payroll Management",
+        title: "payroll_management",
         icon: DollarSign,
         href: "payroll",
       },
       {
-        title: "Fees Management",
+        title: "fees_management",
         icon: CreditCard,
         href: "fees",
       },
       {
-        title: "Time Table Management",
+        title: "time_table_management",
         icon: Clock,
         href: "timeTable",
       },
       {
-        title: "Admission Management",
+        title: "admission_management",
         icon: Building2,
         href: "admission",
       }
     ],
   },
 ]
-
 interface SettingsSidebarProps {
   currentPath: string
 }
 
 export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
+  const{t} = useTranslation()
   return (
     <div className="w-64 min-h-screen border-r bg-gray-50/40">
       <ScrollArea className="h-full py-6">
         <div className="px-4 pb-4">
-          <h2 className="px-2 text-lg font-semibold tracking-tight">Settings</h2>
+          <h2 className="px-2 text-lg font-semibold tracking-tight">{t("settings")}</h2>
         </div>
         <div className="space-y-6">
           {navigationSections.map((section, i) => (
             <div key={section.title} className="px-3">
               <div className="space-y-1">
-                <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{section.title}</h3>
+                <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{t(section.title)}</h3>
                 <div className="space-y-1">
                   {section.items.map((item) => (
                     <Link
@@ -115,7 +116,7 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
                       )}
                     >
                       <item.icon className="h-4 w-4" />
-                      {item.title}
+                      {t(item.title)}
                     </Link>
                   ))}
                 </div>

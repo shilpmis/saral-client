@@ -14,10 +14,11 @@ import { selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } from "@/services/AttendanceServices"
 import type { AttendanceDetails } from "@/types/attendance"
 import { Loader2, Search } from "lucide-react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useGetAcademicClassesQuery } from "@/services/AcademicService"
 import { format } from "date-fns"
  
-  const AdminAttendanceView: React.FC = () => {
+const AdminAttendanceView: React.FC = () => {
     const dummyData = [
       { id: 1, date: new Date("2025-03-07"), class: "1", division: "A", student: "John Doe", score: 85 },
       { id: 2, date: new Date("2025-03-07"), class: "2", division: "A", student: "Jane Smith", score: 92 },
@@ -41,6 +42,7 @@ import { format } from "date-fns"
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "late" | "half_day">("all")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceDetails | null>(null)
+  const {t} = useTranslation()
   const {data: AcademicClasses} = useGetAcademicClassesQuery(user!.school_id);
 
   const availableDivisions = useMemo<any | null>(() => {
@@ -174,22 +176,22 @@ import { format } from "date-fns"
   return (
     <Card className="container mx-auto p-6">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold">Admin Attendance Dashboard</CardTitle>
+        <CardTitle className="text-3xl font-bold">{t("admin_attendance_dashboard")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("date")}</label>
             <SaralDatePicker
               date={selectedDate}
               onDateChange={(date: Date | undefined) => handleDateSelect(date)}
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Class</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("class")}</label>
             <Select value={selectedClass} onValueChange={(value: any)=>handleClassSelect(value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select Class" />
+                <SelectValue placeholder={t("select_class")} />
               </SelectTrigger>
               <SelectContent>
               {AcademicClasses?.map((cls: any, index: any) =>
@@ -206,10 +208,10 @@ import { format } from "date-fns"
             </Select>
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Division</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("division")}</label>
             <Select value={selectedDivision} onValueChange={(value:string)=>handleDivisionSelect(value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select Division" />
+                <SelectValue placeholder={t("select_division")} />
               </SelectTrigger>
               <SelectContent>
               {availableDivisions &&
@@ -231,7 +233,7 @@ import { format } from "date-fns"
             </Select>
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Filter</label>
+            <label className="text-sm font-medium text-gray-700 mb-1">{t("filter")}</label>
             <Select
               value={filter}
               onValueChange={(value: "all" | "present" | "absent" | "late" | "half_day") => handleFilter(value)}
@@ -240,11 +242,11 @@ import { format } from "date-fns"
                 <SelectValue placeholder="Filter attendance" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="present">Present</SelectItem>
-                <SelectItem value="absent">Absent</SelectItem>
-                <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="half_day">Half Day</SelectItem>
+                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="present">{t("present")}</SelectItem>
+                <SelectItem value="absent">{t("absent")}</SelectItem>
+                <SelectItem value="late">{t("late")}</SelectItem>
+                <SelectItem value="half_day">{t("half_day")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -255,7 +257,7 @@ import { format } from "date-fns"
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search by name or roll number"
+              placeholder={t("search_by_name_or_roll_number")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 w-full"
@@ -279,8 +281,8 @@ import { format } from "date-fns"
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Incomplete Selection</p>
-                <p className="text-sm">Please select a date, class, and division to view or record attendance.</p>
+                <p className="font-bold">{t("incomplete_selection")}</p>
+                <p className="text-sm">{t("please_select_a_date,_class,_and_division_to_view_or_record_attendance.")}</p>
               </div>
             </div>
           </div>
@@ -297,8 +299,8 @@ import { format } from "date-fns"
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Sunday Notice</p>
-                <p className="text-sm">It's Sunday. No attendance is required.</p>
+                <p className="font-bold">{t("sunday_notice")}</p>
+                <p className="text-sm">{t("it's_sunday._no_attendance_is_required.")}</p>
               </div>
             </div>
           </div>
@@ -318,8 +320,8 @@ import { format } from "date-fns"
                 </svg>
               </div>
               <div>
-                <p className="font-bold">Future Date</p>
-                <p className="text-sm">You cannot mark attendance for future dates.</p>
+                <p className="font-bold">{t("future_date")}</p>
+                <p className="text-sm">{t("you_cannot_mark_attendance_for_future_dates.")}</p>
               </div>
             </div>
           </div>
