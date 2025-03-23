@@ -30,7 +30,8 @@ export const FeePlanManagement: React.FC = () => {
 
   const [getFeesPlan, { data: FetchedFeePlans, isLoading }] = useLazyGetFeesPlanQuery()
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState("2023-2024")
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(CurrentAcademicSessionForSchool ? CurrentAcademicSessionForSchool?.id.toString() : '');
+  
   const [DialogForFeesPlan, setDialogForFeesPlan] = useState<{
     isOpen: boolean
     paln_id: number | null
@@ -68,7 +69,7 @@ export const FeePlanManagement: React.FC = () => {
   }
 
   const handlePageChange = (page: number) => {
-    getFeesPlan({  academic_sessions : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
+    getFeesPlan({  academic_session : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
   }
 
   // Filter fee plans based on search term
@@ -78,10 +79,6 @@ export const FeePlanManagement: React.FC = () => {
         plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         plan.description?.toLowerCase().includes(searchTerm.toLowerCase()),
     ) || []
-
-  useEffect(() => {
-    if (!FeePlansDetail) getFeesPlan({ academic_sessions : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
-  }, [])
 
   useEffect(() => {
     if (FetchedFeePlans) {
@@ -101,6 +98,16 @@ export const FeePlanManagement: React.FC = () => {
       getAcademicClasses(authState.user!.school_id)
     }
   }, [])
+
+  useEffect(() => {
+    if(selectedAcademicYear){
+      getFeesPlan({ academic_session : parseInt(selectedAcademicYear) ,  page: 1 })
+    }else{
+      getFeesPlan({ academic_session : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
+    }
+  },[selectedAcademicYear])
+
+  console.log("AcademicDivision" ,AcademicDivision);
 
   return (
     <>
@@ -131,8 +138,10 @@ export const FeePlanManagement: React.FC = () => {
                   <SelectValue placeholder="Academic Year" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2023-2024">2023-2024</SelectItem>
-                  <SelectItem value="2024-2025">2024-2025</SelectItem>
+                  {AcademicSessionsForSchool && 
+                  AcademicSessionsForSchool.map((academic , index)=>{
+                    return (<SelectItem key={index} value={academic.id.toString()}>{academic.session_name}</SelectItem>)}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -143,7 +152,7 @@ export const FeePlanManagement: React.FC = () => {
                   <TableRow>
                     <TableHead>Plan Name</TableHead>
                     <TableHead>Class</TableHead>
-                    <TableHead>Academic Year</TableHead>
+                    {/* <TableHead>Academic Year</TableHead> */}
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -169,11 +178,15 @@ export const FeePlanManagement: React.FC = () => {
                       <TableRow key={feePlan.id}>
                         <TableCell className="font-medium">{feePlan.name}</TableCell>
                         <TableCell>
-                          {AcademicDivision &&
+                            {AcademicDivision &&
                             AcademicDivision.find((division) => division.id == feePlan.class_id)?.aliases}
+                            {AcademicDivision &&
+                            AcademicDivision.find((division) => division.id == feePlan.class_id)?.class}
+                            {AcademicDivision &&
+                            AcademicDivision.find((division) => division.id == feePlan.class_id)?.division}
                           {!AcademicDivision && "Loading..."}
                         </TableCell>
-                        <TableCell>{feePlan.academic_year_id}</TableCell>
+                        {/* <TableCell>{feePlan.academic_session_id}</TableCell> */}
                         <TableCell>₹{Number(feePlan.total_amount).toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant={feePlan.status === "Active" ? "default" : "destructive"}>
@@ -263,6 +276,14 @@ export const FeePlanManagement: React.FC = () => {
             <AddFeePlanForm
               type={DialogForFeesPlan.type}
               plan_id={DialogForFeesPlan.paln_id}
+              onSuccessfulSubmit={() => {
+                getFeesPlan({ academic_session : CurrentAcademicSessionForSchool!.id  ,  page: 1 })
+                setDialogForFeesPlan({
+                  isOpen: false,
+                  paln_id: null,
+                  type: "create",
+                })
+              }}
               onCancel={() => {
                 setDialogForFeesPlan({
                   isOpen: false,
@@ -280,6 +301,7 @@ export const FeePlanManagement: React.FC = () => {
         isOpen={detailsDialog.isOpen}
         onClose={() => setDetailsDialog({ isOpen: false, planId: null })}
         planId={detailsDialog.planId}
+        academic_sessions={Number(selectedAcademicYear)}
       />
     </>
   )
