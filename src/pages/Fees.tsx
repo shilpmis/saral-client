@@ -5,7 +5,7 @@ import { FeeDashboard } from "@/components/Fees/Dashboard/FeeDashboard"
 import { FeeTypeManagement } from "@/components/Fees/FeeType/FeeTypeManagement"
 import { FeePlanManagement } from "@/components/Fees/FeePlan/FeePlanManagement"
 import { ConcessionManagement } from "@/components/Fees/Concession/ConcessionManagement"
-import { StudentFeeManagement } from "@/components/Fees/StudentFee/StudentFeeManagement"
+import StudentFeesManagement from "@/components/Fees/StudentFee/StudentFeeManagement"
 import { ReportGeneration } from "@/components/Fees/Reports/ReportGeneration"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
@@ -41,7 +41,7 @@ export const Fees: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="student-fees">
-          <StudentFeeManagement />
+          <StudentFeesManagement />
         </TabsContent>
 
         <TabsContent value="reports">

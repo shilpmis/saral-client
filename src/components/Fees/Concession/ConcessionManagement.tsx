@@ -35,6 +35,7 @@ import { ApplyConcessionToPlanData, ApplyConcessionToStudentData, ConcessionForm
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Concession } from "@/types/fees"
+import { set } from "date-fns"
 
 
 export const ConcessionManagement: React.FC = () => {
@@ -122,7 +123,7 @@ export const ConcessionManagement: React.FC = () => {
                     name: data.name,
                     description: data.description,
                     category: data.category,                    
-                    status: data.is_active ? "Active" : "Inactive",
+                    status: data.status,
                 },
             }).unwrap()
             getConcession({academic_session : CurrentAcademicSessionForSchool!.id , page: 1 });
@@ -181,6 +182,11 @@ export const ConcessionManagement: React.FC = () => {
             }) 
           return;
           }
+          setDialogState({
+            type: null,
+            isOpen: false,
+            concession: null,
+          })
           console.log("Res===>",res);
           toast({
             title: "Success",

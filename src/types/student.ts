@@ -82,7 +82,10 @@ export interface PageDetailsForStudents {
 }
 
 export interface StudentEntry {
-  students_data: Omit<Student, "id" | "student_meta" | "school_id">;
+  students_data: Omit<
+    Student,
+    "id" | "student_meta" | "school_id" | "acadamic_class"
+  >;
   student_meta_data: StudentMeta;
 }
 

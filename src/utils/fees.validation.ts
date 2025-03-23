@@ -37,16 +37,15 @@ export const concessionSchema = z.object({
   concessions_to: z.enum(["plan", "fees_type"], {
     required_error: "Please select what this concession applies to",
   }),
-  // category: z.string().min(1, { message: "Category is required" }),
-  category: z.enum([
-    "family",
-    "sports",
-    "staff",
-    "education",
-    "financial",
-    "other",
-  ]),
-  is_active: z.boolean().default(true),
+  category: z.enum(
+    ["family", "sports", "staff", "education", "financial", "other"],
+    {
+      required_error: "Category is required",
+    }
+  ),
+  status: z.enum(["Active", "Inactive"], {
+    required_error: "Status is required",
+  }),
 });
 
 // Validation schema for applying concessions to plans
@@ -60,26 +59,22 @@ export const applyConcessionToPlanSchema = z
     percentage: z.number().nullable(),
   })
   .refine(
-    (data) => {
-      if (data.deduction_type === "percentage") {
-        return (
-          data.percentage !== null &&
-          data.percentage !== undefined &&
-          data.percentage > 0 &&
-          data.percentage <= 100
-        );
-      } else {
-        return (
-          data.fixed_amount !== null &&
-          data.fixed_amount !== undefined &&
-          data.fixed_amount > 0
-        );
-      }
-    },
+    (data) =>
+      (data.deduction_type === "percentage" &&
+        data.percentage !== null &&
+        data.percentage !== undefined &&
+        data.percentage > 0 &&
+        data.percentage <= 100 &&
+        data.fixed_amount === null) ||
+      (data.deduction_type === "fixed_amount" &&
+        data.fixed_amount !== null &&
+        data.fixed_amount !== undefined &&
+        data.fixed_amount > 0 &&
+        data.percentage === null),
     {
       message:
-        "You must provide a valid amount or percentage based on the deduction type",
-      path: ["amount", "percentage"],
+        "You must provide a valid percentage between 1 and 100 or a valid fixed amount greater than 0, depending on the deduction type",
+      path: ["deduction_type"],
     }
   );
 
@@ -96,26 +91,22 @@ export const applyConcessionToStudentSchema = z
     reason: z.string().min(1, "Reason is required"),
   })
   .refine(
-    (data) => {
-      if (data.deduction_type === "percentage") {
-        return (
-          data.percentage !== null &&
-          data.percentage !== undefined &&
-          data.percentage > 0 &&
-          data.percentage <= 100
-        );
-      } else {
-        return (
-          data.fixed_amount !== null &&
-          data.fixed_amount !== undefined &&
-          data.fixed_amount > 0
-        );
-      }
-    },
+    (data) =>
+      (data.deduction_type === "percentage" &&
+        data.percentage !== null &&
+        data.percentage !== undefined &&
+        data.percentage > 0 &&
+        data.percentage <= 100 &&
+        data.fixed_amount === null) ||
+      (data.deduction_type === "fixed_amount" &&
+        data.fixed_amount !== null &&
+        data.fixed_amount !== undefined &&
+        data.fixed_amount > 0 &&
+        data.percentage === null),
     {
       message:
-        "You must provide a valid amount or percentage based on the deduction type",
-      path: ["amount", "percentage"],
+        "You must provide a valid percentage between 1 and 100 or a valid fixed amount greater than 0, depending on the deduction type",
+      path: ["deduction_type"],
     }
   );
 
