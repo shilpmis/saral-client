@@ -16,7 +16,7 @@ export interface Concession {
   academic_session_id: number;
   name: string;
   description: string;
-  applicable_to: "fees_types" | "plan" | "students";
+  applicable_to: "plan" | "students";
   concessions_to: "fees_type" | "plan";
   status: "Active" | "Inactive";
   category: "family" | "sports" | "staff" | "education" | "financial" | "other";
@@ -256,7 +256,7 @@ export interface AppliedConcessioinToPlan {
   deduction_type: "percentage" | "amount";
   amount: string | null;
   percentage: string | null;
-  status: string;
+  status: "Active" | "Inactive";
   fees_plan?: FeesPlan;
   fees_type?: FeesType;
   student?: Partial<Student>;

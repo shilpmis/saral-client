@@ -27,6 +27,8 @@ import {
   useApplyConcessionsToPlanMutation,
   // useApplyConcessionToStudentMutation,
   useLazyGetStudentFeesDetailsForClassQuery,
+  useLazyGetFilteredFeesPlanQuery,
+  useLazyGetFilterdStudentFeesDetailsForClassQuery,
 } from "@/services/feesService"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -55,17 +57,17 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   // Queries and mutations
-  const [getFeePlans, { data: feePlans, isLoading: isLoadingFeePlans }] = useLazyGetFeesPlanQuery()
+  const [getFilterFeePlans, { data: feePlans, isLoading: isLoadingFeePlans }] = useLazyGetFilteredFeesPlanQuery()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [
-    getClassFeesStatus,
+    getFilterClassFeesStatus,
     {
       data: studentFeesStatuForClass,
       isLoading: isLoadingStudentFeesStatuForClass,
       isError: isErroWhileFetchingStudentFeesStatuForClass,
       error: ErrorWhileFetchingStudentFeesStatuForClass,
     },
-  ] = useLazyGetStudentFeesDetailsForClassQuery()
+  ] = useLazyGetFilterdStudentFeesDetailsForClassQuery()
 
   const [applyConcessionToPlan, { isLoading: isApplyingToPlan }] = useApplyConcessionsToPlanMutation()
   const [applyConcessionToStudent, { isLoading: isApplyingToStudent }] = useApplyConcessionsToPlanMutation()
@@ -103,8 +105,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
     resolver: zodResolver(applyConcessionToStudentSchema),
     defaultValues: {
       concession_id: concession.id,
-      student_id: 0,
-      fees_plan_id: 0,
+      student_id: undefined,
+      fees_plan_id: undefined,
       fees_type_ids: null,
       deduction_type: "percentage",
       fixed_amount: null,
@@ -174,6 +176,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
     }
   }
 
+  useEffect(()=>{
+    console.log("studentForm.formState.errors" ,studentForm.formState.errors)
+  },[studentForm.formState.errors])
+
   // Handle form submission for student concessions
   const handleSubmitForApplyConcessionToStudents = async (values: z.infer<typeof applyConcessionToStudentSchema>) => {
     try {
@@ -206,9 +212,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
       // Refresh student data
       if (selectedClass && selectedDivision) {
-        getClassFeesStatus({
+        getFilterClassFeesStatus({
           class_id: selectedDivision.id,
           academic_session: CurrentAcademicSessionForSchool!.id,
+          filter_by : 'eligible_for_concession',
+          value : concession.id
         })
       }
     } catch (error) {
@@ -264,9 +272,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       setSelectedDivision(selectedDiv[0])
 
       try {
-        await getClassFeesStatus({
+        await getFilterClassFeesStatus({
           class_id: selectedDiv[0].id,
           academic_session: CurrentAcademicSessionForSchool!.id,
+          filter_by : 'eligible_for_concession',
+          value : concession.id
         }).unwrap()
       } catch (error) {
         console.log("Error while fetching fees data", error)
@@ -300,10 +310,12 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber)
     if (selectedDivision) {
-      getClassFeesStatus({
+      getFilterClassFeesStatus({
         class_id: selectedDivision.id,
         page: pageNumber,
         academic_session: CurrentAcademicSessionForSchool!.id,
+        filter_by : 'eligible_for_concession',
+        value : concession.id
       })
     }
   }
@@ -311,7 +323,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   // Fetch initial data
   useEffect(() => {
     if (concession.applicable_to === "plan") {
-      getFeePlans({ page: 1, academic_session: CurrentAcademicSessionForSchool!.id })
+      getFilterFeePlans({ page: 1, 
+        academic_session: CurrentAcademicSessionForSchool!.id,
+        filter_by : 'eligible_for_concession',
+        value : concession.id
+      })
     } else if (concession.applicable_to === "students" && !academicClasses) {
       getAcademicClasses(authState.user!.school_id)
     }
@@ -336,7 +352,12 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           setSelectedDivision(firstDivision)
 
           // Fetch fees data for this class and division
-          getClassFeesStatus({ class_id: firstDivision.id, academic_session: CurrentAcademicSessionForSchool!.id })
+          getFilterClassFeesStatus({ 
+            class_id: firstDivision.id,
+            academic_session: CurrentAcademicSessionForSchool!.id,
+            filter_by : 'eligible_for_concession',
+            value : concession.id
+             })
         }
       }
     }
@@ -351,7 +372,9 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           Applicable to: <span className="capitalize">{concession.applicable_to}</span>
         </p>
         <p className="text-sm text-muted-foreground mb-1">
-          Concession applies to: <span className="capitalize">{concession.concessions_to || "plan"}</span>
+          Concession applies to: <span className="capitalize">
+            {concession.concessions_to === 'fees_type' ? 'Fee Type' : "Plan"}
+            </span>
         </p>
         <p className="text-sm text-muted-foreground">{concession.description}</p>
       </div>
@@ -392,7 +415,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="amount" />
+                            <RadioGroupItem value="fixed_amount" />
                           </FormControl>
                           <FormLabel className="font-normal">Fixed Amount (₹)</FormLabel>
                         </FormItem>
@@ -419,8 +442,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                         />
                       </FormControl>
-                      <FormDescription>Enter a value between 1 and 100</FormDescription>
                       <FormMessage />
+                      <FormDescription>Enter a value between 1 and 100</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -440,8 +463,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                         />
                       </FormControl>
-                      <FormDescription>Enter the fixed amount to deduct</FormDescription>
                       <FormMessage />
+                      <FormDescription>Enter the fixed amount to deduct</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -743,10 +766,12 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       totalPages={studentFeesStatuForClass.meta.last_page}
                       currentPage={studentFeesStatuForClass.meta.current_page}
                       onPageChange={(page) =>
-                        getClassFeesStatus({
+                        getFilterClassFeesStatus({
                           class_id: selectedDivision!.id,
                           page: page,
                           academic_session: CurrentAcademicSessionForSchool!.id,
+                          filter_by : 'eligible_for_concession',
+                          value : concession.id
                         })
                       }
                     />

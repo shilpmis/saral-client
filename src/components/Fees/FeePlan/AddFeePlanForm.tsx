@@ -622,7 +622,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="basic">{t("basic_information")}</TabsTrigger>
-              <TabsTrigger value="feeTypes">{t("fee_types_&_installments")}</TabsTrigger>
+              <TabsTrigger value="feeTypes">{t("fee_type_and_installments")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 pt-4">
@@ -764,7 +764,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                         <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
                           <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
-                              <CardTitle>t("fee_type_details")</CardTitle>
+                              <CardTitle>{t("fee_type_details")}</CardTitle>
                               {type === 'create' && (
                                 <Button
                                   className="text-white"
@@ -1110,7 +1110,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   </Button>
                   <Button type="submit" disabled={isCreatingFeePlan} >
                     {isCreatingFeePlan && <Loader2/>}
-                    {plan_id ? t("update_fee_plan") : t("create_fee_plan")}
+                    {plan_id ? t("edit_fee_plan") : t("create_fee_plan")}
                   </Button>
                 </div>
               </div>

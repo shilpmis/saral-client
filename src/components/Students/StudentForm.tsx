@@ -335,25 +335,33 @@ const StudentForm: React.FC<StudentFormProps> = ({
         },
       }
 
-      const new_student: any = await createStudent({ payload: payload, academic_session: CurrentAcademicSessionForSchool!.id })
-
-      if (new_student.data) {
+      try{
+        await createStudent({ payload: payload, academic_session: CurrentAcademicSessionForSchool!.id }).unwrap();
         toast({
           variant: "default",
           title: "Success",
           description: "Student Created Successfully",
         });
         onClose();
-      }
-
-      if (new_student.error) {
-        new_student.error.data.errors.map((error: any) => {
+        
+      }catch(error : any){
+        if(error.data.errors.code === 'E_VALIDATION_ERROR'){
+          error.data.errors.messages.map((msg: any) => {
+            toast({
+              variant: "destructive",
+              title: "Validation Error",
+              description: msg.message,
+            })
+          }) 
+        }else{
+          console.log("Erro while Update Student :" ,error)
           toast({
             variant: "destructive",
-            title: error,
+            title: "Internal Error ! Please Check Developer Mode",
           })
-        })
+        }
       }
+
     } else if (form_type === "update") {
       const payload: UpdateStudent = {
         student_meta_data: {},
@@ -476,18 +484,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
         payload.students_data.aadhar_no = values.aadhar_no
       }
 
-      const updated_student: any = await updateStudent({ student_id: initial_data!.id, payload: payload })
-
-      if (updated_student.data) {
+      try {
+        const updated_student: any 
+        = await updateStudent({ student_id: initial_data!.id, payload: payload }).unwrap()
         toast({
           variant: "default",
           title: "Student has been updated !",
         })
-
-        /**
-         * Need to update this with optimal way
-         */
-
         // Fetch the updated student list for the current class
         const response = await getStudentForClass({
           class_id: initial_data!.class_id,
@@ -495,7 +498,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           student_meta: true,
           academic_session: CurrentAcademicSessionForSchool!.id
         })
-
+  
         // Update the parent component's state with the new data
         if (response.data) {
           if (setListedStudentForSelectedClass)
@@ -504,19 +507,23 @@ const StudentForm: React.FC<StudentFormProps> = ({
             setPaginationDataForSelectedClass(response.data.meta);
           onClose()
         }
-      }
 
-      if (updated_student.error) {
-        toast({
-          variant: "destructive",
-          title: "Something went wrong !",
-        })
-        updated_student.error.data.errors.map((error: any) => {
+      } catch (error : any) {
+        if(error.data.errors.code === 'E_VALIDATION_ERROR'){
+          error.data.errors.messages.map((msg: any) => {
+            toast({
+              variant: "destructive",
+              title: "Validation Error",
+              description: msg.message,
+            })
+          }) 
+        }else{
+          console.log("Erro while Update Student :" ,error)
           toast({
             variant: "destructive",
-            title: error,
+            title: "Internal Error ! Please Check Developer Mode",
           })
-        })
+        }
       }
     } else {
       toast({
