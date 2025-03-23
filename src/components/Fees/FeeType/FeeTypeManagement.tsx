@@ -15,12 +15,17 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { feeTypeSchema } from "@/utils/fees.validation"
 import { z } from "zod"
 import { toast } from "@/hooks/use-toast"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 export const FeeTypeManagement: React.FC = () => {
 
     const [getFeesType, { data: FeesType, isLoading: loagingFeesType }] = useLazyGetFeesTypeQuery();
     const [createFeesType, { isLoading: isCreateFeesTypeLoading }] = useCreateFeesTypeMutation();
     const [updateFeesType, { isLoading: isUpdateFeesTypeLoading }] = useUpdateFeesTypeMutation();
+
+    const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
     const [searchTerm, setSearchTerm] = useState("")
     const [DialogForFeeType, setDialogForFeeType] = useState<{ isOpen: boolean, type: 'create' | 'edit', data: FeesType | null }>({
@@ -50,7 +55,6 @@ export const FeeTypeManagement: React.FC = () => {
     }
 
     const handleSubmit = async (values: z.infer<typeof feeTypeSchema>) => {
-        console.log(values)
         if (DialogForFeeType.type === 'edit') {
             const fees_type = await updateFeesType({
                 id: DialogForFeeType.data!.id,
@@ -58,7 +62,6 @@ export const FeeTypeManagement: React.FC = () => {
                     name: values.name,
                     description: values.description ? values.description : "",
                     status: values.status,
-                    academic_year_id: 1,
                 }
             })
             if (fees_type.data) {
@@ -66,12 +69,12 @@ export const FeeTypeManagement: React.FC = () => {
                     variant: "default",
                     title: "Fee Type Updated Successfully"
                 })
-                getFeesType({ page: 1 })
+                getFeesType({ page: 1 , academic_session : CurrentAcademicSessionForSchool!.id})
             } else {
-                console.log("Error updating Fee Type", fees_type.error)
+                console.log("Error updating Fee Type", fees_type.error);
                 toast({
                     variant: "destructive",
-                    title: "Error updating Fee Type"
+                    title: (fees_type.error as any).data.message ?? "Error updating Fee Type"
                 })
             }
         } else if (DialogForFeeType.type === 'create') {
@@ -79,12 +82,12 @@ export const FeeTypeManagement: React.FC = () => {
                 data: {
                     name: values.name,
                     description: values.description ? values.description : "",
-                    status: values.status,
-                    academic_year_id: 1
+                    status: values.status,      
+                    academic_session_id : CurrentAcademicSessionForSchool!.id              
                 }
             })
             if (fees_type.data) {
-                getFeesType({ page: 1 })
+                getFeesType({ page: 1 , academic_session : CurrentAcademicSessionForSchool!.id })
                 toast({
                     variant: "default",
                     title: "Fee Type Updated Successfully"
@@ -102,12 +105,12 @@ export const FeeTypeManagement: React.FC = () => {
     }
 
     const handlePageChange = (page: number) => {
-        getFeesType({ page })
+        getFeesType({ page , academic_session : CurrentAcademicSessionForSchool!.id })
     }
 
     useEffect(() => {
         if (!DataForFeesType)
-            getFeesType({ page: 1 });
+            getFeesType({ page: 1 , academic_session : CurrentAcademicSessionForSchool!.id});
     }, [])
 
     useEffect(() => {

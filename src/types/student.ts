@@ -1,6 +1,5 @@
-
-
 import { EnumValues } from "zod";
+import { ClassData } from "./academic";
 
 export enum StudentStatus {
   ACTIVE = "ACTIVE",
@@ -8,6 +7,17 @@ export enum StudentStatus {
   BANNED = "BANNED",
 }
 
+export interface StudentEnrollment {
+  id: number;
+  academic_session_id: number;
+  class_id: number;
+  student_id: number;
+  quota_id: number | null;
+  status: string;
+  remarks: string | null;
+  type: string;
+  class: ClassData;
+}
 
 export interface StudentMeta {
   aadhar_dise_no: number | null;
@@ -17,35 +27,35 @@ export interface StudentMeta {
   religion_in_guj: string | null;
   caste: string | null;
   caste_in_guj: string | null;
-  category: 'ST' | 'SC' | 'OBC' | 'OPEN' | null;
+  category: "ST" | "SC" | "OBC" | "OPEN" | null;
   // category_in_guj: string;
-  admission_date: string| null;
-  admission_class_id: number| null;
-  secondary_mobile: number| null;
-  privious_school: string| null;
-  privious_school_in_guj: string| null;
-  address: string| null;
-  district: string| null;
-  city: string| null;
-  state: string| null;
-  postal_code: string| null;
-  bank_name: string| null;
-  account_no: number| null;
-  IFSC_code: string| null;
+  admission_date: string | null;
+  admission_class_id: number | null;
+  secondary_mobile: number | null;
+  privious_school: string | null;
+  privious_school_in_guj: string | null;
+  address: string | null;
+  district: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  bank_name: string | null;
+  account_no: number | null;
+  IFSC_code: string | null;
 }
 
 export interface Student {
-  id: number,
+  id: number;
   school_id: number;
   first_name: string;
   middle_name: string | null;
   last_name: string;
   first_name_in_guj: string | null;
-  middle_name_in_guj: string| null;
-  last_name_in_guj: string| null;
-  gender: 'Male' | 'Female';
+  middle_name_in_guj: string | null;
+  last_name_in_guj: string | null;
+  gender: "Male" | "Female";
   gr_no: number;
-  birth_date: string| null;
+  birth_date: string | null;
   primary_mobile: number;
   father_name: string | null;
   father_name_in_guj: string | null;
@@ -55,29 +65,30 @@ export interface Student {
   roll_number: number | null;
   aadhar_no: number | null;
   is_active: boolean;
-  student_meta?: StudentMeta
+  student_meta?: StudentMeta;
+  acadamic_class: StudentEnrollment[];
 }
 
 export interface PageDetailsForStudents {
-  total: number,
-  per_page: number,
-  current_page: number,
-  last_page: number,
-  first_page: number,
-  first_page_url: string | null,
-  last_page_url: string | null,
-  next_page_url: string | null,
-  previous_page_url: string | null
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  first_page: number;
+  first_page_url: string | null;
+  last_page_url: string | null;
+  next_page_url: string | null;
+  previous_page_url: string | null;
 }
 
 export interface StudentEntry {
-  students_data: Omit<Student, 'id' | 'student_meta' | 'school_id'>;
+  students_data: Omit<Student, "id" | "student_meta" | "school_id">;
   student_meta_data: StudentMeta;
 }
 
 export interface UpdateStudent {
-  students_data: Partial<Student>,
-  student_meta_data: Partial<StudentMeta>
+  students_data: Partial<Student>;
+  student_meta_data: Partial<StudentMeta>;
 }
 
 export interface AddStudentsRequest {
@@ -85,27 +96,26 @@ export interface AddStudentsRequest {
   students: StudentEntry[];
 }
 export interface InquiriesForStudent {
-  id: number
-  student_name: string
-  parent_name: string
-  contact_number: string
-  email: string
-  grade_applying: string
-  status: string
-  created_at: string
-  updated_at: string
+  id: number;
+  student_name: string;
+  parent_name: string;
+  contact_number: string;
+  email: string;
+  grade_applying: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DashboardData {
-  totalInquiries: number
-  pendingApplications: number
-  acceptedAdmissions: number
-  rejectedApplications: number
-  upcomingInterviews: number
+  totalInquiries: number;
+  pendingApplications: number;
+  acceptedAdmissions: number;
+  rejectedApplications: number;
+  upcomingInterviews: number;
 }
 
 export interface AdmissionTrend {
-  grade: string
-  inquiries: number
+  grade: string;
+  inquiries: number;
 }
-
