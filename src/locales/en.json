@@ -772,5 +772,8 @@
   "fee_types_(apply_to_specific_fee_types)": "Fee Types (Apply to specific fee types)",
   "determines_what_this_concession_will_be_applied_to": "Determines what this concession will be applied to",
   "concession_application": "Concession Application",
-  "this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.": "This concession will be applied to entire fee plans. The deduction will apply to the total plan amount."
+  "this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.": "This concession will be applied to entire fee plans. The deduction will apply to the total plan amount.",
+  "edit_student": "Edit Student",
+  "upload": "Upload",
+  "download_demo_CSV": "Download Demo CSV"
 }

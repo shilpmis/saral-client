@@ -773,5 +773,8 @@
   "fee_types_(apply_to_specific_fee_types)": "ફી પ્રકાર (વિશિષ્ટ ફી પ્રકાર પર લાગુ કરો)",
   "determines_what_this_concession_will_be_applied_to": "આ શિષ્યવૃત્તિ કેવી રીતે લાગુ થશે તે નિર્ધારિત કરે છે",
   "concession_application": "શિષ્યવૃત્તિ અરજી",
-  "this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.": "આ શિષ્યવૃત્તિ સંપૂર્ણ ફી યોજનામાં લાગુ થશે. કટૂન કુલ યોજના રકમ પર લાગુ થશે."
+  "this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.": "આ શિષ્યવૃત્તિ સંપૂર્ણ ફી યોજનામાં લાગુ થશે. કટૂન કુલ યોજના રકમ પર લાગુ થશે.",
+  "edit_student": "વિદ્યાર્થી સંપાદિત કરો",
+  "upload": "અપલોડ",
+  "download_demo_CSV": "ડેમો CSV ડાઉનલોડ કરો"
 } 
