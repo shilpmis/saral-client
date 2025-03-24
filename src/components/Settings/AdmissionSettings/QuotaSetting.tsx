@@ -36,6 +36,10 @@ export default function QuotaManagement() {
     eligibility_criteria: "",
   })
 
+  useEffect(()=> {
+    console.log("newQuota", newQuota);
+  }, [newQuota])
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -84,7 +88,7 @@ export default function QuotaManagement() {
     setNewQuota({
       name: quota.name,
       description: quota.description,
-      eligibility_criteria: quota.eligibilityCriteria,
+      eligibility_criteria: quota.eligibility_criteria,
     })
     setIsEditing(true)
     setEditingId(quota.id)

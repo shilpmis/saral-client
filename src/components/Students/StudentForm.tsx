@@ -308,6 +308,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           mother_name_in_guj: values.mother_name_in_guj,
           roll_number: values.roll_number,
           aadhar_no: values.aadhar_no,
+          address: values.address,
           is_active: true,
         },
         student_meta_data: {
@@ -324,7 +325,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           secondary_mobile: values.secondary_mobile,
           privious_school: values.privious_school,
           privious_school_in_guj: values.privious_school_in_guj,
-          address: values.address,
+          // address: values.address,
           district: values.district,
           city: values.city,
           state: values.state,
@@ -408,9 +409,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
       if (values.privious_school_in_guj !== initial_data?.student_meta?.privious_school_in_guj) {
         payload.student_meta_data.privious_school_in_guj = values.privious_school_in_guj
       }
-      if (values.address !== initial_data?.student_meta?.address) {
-        payload.student_meta_data.address = values.address
-      }
+      // if (values.address !== initial_data?.student_meta?.address) {
+      //   payload.student_meta_data.address = values.address
+      // }
       if (values.district !== initial_data?.student_meta?.district) {
         payload.student_meta_data.district = values.district
       }
@@ -594,7 +595,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         category: initial_data?.student_meta?.category,
         privious_school: initial_data?.student_meta?.privious_school,
         privious_school_in_guj: initial_data?.student_meta?.privious_school_in_guj,
-        address: initial_data?.student_meta?.address,
+        // address: initial_data?.student_meta?.address,
         district: initial_data?.student_meta?.district,
         city: initial_data?.student_meta?.city,
         state: initial_data?.student_meta?.state,

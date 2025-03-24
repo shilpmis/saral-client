@@ -129,7 +129,7 @@ export default function AdmissionInquiryForm() {
   const handleClose = () => setSubmitted(true)
   if (submitted) {
     return (
-      <div className="container mx-auto py-10 max-w-3xl">
+      <div className="container mx-auto py-10 max-w-3xl mt-0">
         <Card>
           <CardHeader>
             <CardTitle className="text-center text-2xl">Admission Inquiry Submitted</CardTitle>

@@ -7,12 +7,15 @@ export interface Inquiry {
   id: number
   school_id: number
   academic_id: number
-  student_name: string
-  dob: string
+  enrollment_id: string
+  first_name: string
+  middle_name: string | null
+  last_name: string
+  birth_date: string
   gender: string
   class_applying: number
-  parent_name: string
-  parent_contact: string
+  father_name: string
+  primary_mobile: string
   parent_email: string | null
   address: string
   previous_school: string | null
@@ -65,6 +68,7 @@ interface AddInquiryResponse {
 interface UpdateInquiryRequest {
   id: number
   academic_id?: number
+  enrollment_id?:string
   student_name?: string
   dob?: string
   gender?: string
