@@ -122,7 +122,7 @@ export default function DashboardPage() {
                 <CardTitle>Admission</CardTitle>
               </CardHeader>
               <CardContent>
-                <AdmissionDashboard data={dashboardData} trends={admissionTrends} />
+                <AdmissionDashboard />
               </CardContent>
             </Card>
 

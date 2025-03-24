@@ -7,12 +7,15 @@ export interface Inquiry {
   id: number
   school_id: number
   academic_id: number
-  student_name: string
-  dob: string
+  enrollment_id: string
+  first_name: string
+  middle_name: string | null
+  last_name: string
+  birth_date: string
   gender: string
   class_applying: number
-  parent_name: string
-  parent_contact: string
+  father_name: string
+  primary_mobile: string
   parent_email: string | null
   address: string
   previous_school: string | null
@@ -40,16 +43,18 @@ interface GetInquiryResponse {
 
 interface AddInquiryRequest {
   academic_session_id: number
-  student_name: string
-  dob?: string
+  first_name: string
+  middle_name?: string | null
+  last_name: string
+  birth_date?: string
   gender?: string
   class_applying: number
-  parent_name: string
-  parent_contact: string
+  father_name: string
+  primary_mobile: string
   address?: string
   applying_for_quota?: boolean
   parent_email?: string
-  previous_school?: string
+  privious_school?: string
   previous_class?: string
   previous_percentage?: string
   previous_year?: string
@@ -65,16 +70,19 @@ interface AddInquiryResponse {
 interface UpdateInquiryRequest {
   id: number
   academic_id?: number
-  student_name?: string
-  dob?: string
+  enrollment_id?: string
+  first_name?: string
+  middle_name?: string | null
+  last_name?: string
+  birth_date?: string
   gender?: string
   class_applying?: number
-  parent_name?: string
-  parent_contact?: string
+  father_name?: string
+  primary_mobile?: string
   address?: string
   applying_for_quota?: boolean
   parent_email?: string
-  previous_school?: string
+  privious_school?: string
   previous_class?: string
   previous_percentage?: string
   previous_year?: string
@@ -95,73 +103,71 @@ export const InquiryApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
-      headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
+      headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
       return headers
     },
   }),
-  tagTypes: ['Inquiry'],
+  tagTypes: ["Inquiry"],
   endpoints: (builder) => ({
     // Get all inquiries with pagination
-    getInquiries: builder.query<GetInquiriesResponse, { page?: number, limit?: number }>({
+    getInquiries: builder.query<GetInquiriesResponse, { page?: number; limit?: number }>({
       query: ({ page = 1, limit = 10 }) => ({
         url: `/inquiries`,
         // params: { page, limit },
       }),
-      providesTags: (result) => 
-        result 
-          ? [
-              ...result.data.map(({ id }) => ({ type: 'Inquiry' as const, id })),
-              { type: 'Inquiry', id: 'LIST' },
-            ]
-          : [{ type: 'Inquiry', id: 'LIST' }],
+      providesTags: (result) =>
+        result
+          ? [...result.data.map(({ id }) => ({ type: "Inquiry" as const, id })), { type: "Inquiry", id: "LIST" }]
+          : [{ type: "Inquiry", id: "LIST" }],
     }),
-    
+
     // Get a single inquiry by ID
     getInquiryById: builder.query<Inquiry, number>({
       query: (id) => `/inquiry/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Inquiry', id }],
+      providesTags: (result, error, id) => [{ type: "Inquiry", id }],
     }),
-    
+
     // Add a new inquiry
     addInquiry: builder.mutation<AddInquiryResponse, AddInquiryRequest>({
       query: (body) => ({
-        url: '/inquiry',
-        method: 'POST',
+        url: "/inquiry",
+        method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: 'Inquiry', id: 'LIST' }],
+      invalidatesTags: [{ type: "Inquiry", id: "LIST" }],
     }),
-    
+
     // Update an existing inquiry
     updateInquiry: builder.mutation<UpdateInquiryResponse, UpdateInquiryRequest>({
       query: ({ id, ...body }) => ({
         url: `/inquiry/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
       invalidatesTags: (result, error, { id }) => [
-        { type: 'Inquiry', id },
-        { type: 'Inquiry', id: 'LIST' }
+        { type: "Inquiry", id },
+        { type: "Inquiry", id: "LIST" },
       ],
     }),
-    
+
     // Delete an inquiry
     deleteInquiry: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/inquiry/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: [{ type: 'Inquiry', id: 'LIST' }],
+      invalidatesTags: [{ type: "Inquiry", id: "LIST" }],
     }),
   }),
 })
 
 // Export hooks for usage in components
-export const { 
+export const {
   useGetInquiriesQuery,
   useLazyGetInquiriesQuery,
   useGetInquiryByIdQuery,
   useAddInquiryMutation,
   useUpdateInquiryMutation,
-  useDeleteInquiryMutation
+  useDeleteInquiryMutation,
 } = InquiryApi
+

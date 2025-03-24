@@ -1,4 +1,4 @@
-import { StaffType, TeachingStaff } from "./staff";
+import { StaffType } from "./staff";
 
 export enum UserStatus {
   ACTIVE = "ACTIVE",

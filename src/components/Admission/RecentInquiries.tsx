@@ -60,9 +60,11 @@ export function RecentInquiries() {
       <TableBody>
         {inquiriesData?.data.slice(0, 5).map((inquiry) => (
           <TableRow key={inquiry.id}>
-            <TableCell className="font-medium">{inquiry.student_name}</TableCell>
+            <TableCell className="font-medium">
+              {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
+            </TableCell>
             <TableCell>{inquiry.class_applying}</TableCell>
-            <TableCell>{new Date(inquiry.dob).toLocaleDateString()}</TableCell>
+            <TableCell>{new Date(inquiry.birth_date).toLocaleDateString()}</TableCell>
             <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
             <TableCell>
               <Button variant="outline" size="sm">

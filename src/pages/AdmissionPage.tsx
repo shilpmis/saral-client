@@ -6,11 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { AdmissionTrend, DashboardData } from "@/mock/admissionMockData"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
-import { InquiryList } from "@/components/Admission/InquiryList"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
 import { Link } from "react-router-dom"
 import AdmissionInquiryForm from "@/components/Admission/AdmissionInquiryForm"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import InquiryList from "@/components/Admission/InquiryList"
 
 export default function AdminAdmissonView() {
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false);
@@ -59,7 +59,7 @@ export default function AdminAdmissonView() {
 
         {/* Inquiry Modal */}
         {isInquiryOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 mt-0">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">{t("add_admission_inquiry")}</h2>
