@@ -33,18 +33,18 @@ interface NavSection {
 
 const navigationSections: NavSection[] = [
   {
-    title: "user_seetings",
+    title: "user_settings",
     items: [
       {
-        title: "general_seetings",
+        title: "general_settings",
         icon: Settings,
         href: "/d/settings/general",
       },
-      {
-        title: "notifications",
-        icon: Bell,
-        href: "notifications",
-      },
+      // {
+      //   title: "notifications",
+      //   icon: Bell,
+      //   href: "notifications",
+      // },
     ],
   },
   {
@@ -65,21 +65,21 @@ const navigationSections: NavSection[] = [
         icon: Aperture,
         href: "leave",
       },
-      {
-        title: "payroll_management",
-        icon: DollarSign,
-        href: "payroll",
-      },
-      {
-        title: "fees_management",
-        icon: CreditCard,
-        href: "fees",
-      },
-      {
-        title: "time_table_management",
-        icon: Clock,
-        href: "timeTable",
-      },
+      // {
+      //   title: "payroll_management",
+      //   icon: DollarSign,
+      //   href: "payroll",
+      // },
+      // {
+      //   title: "fees_management",
+      //   icon: CreditCard,
+      //   href: "fees",
+      // },
+      // {
+      //   title: "time_table_management",
+      //   icon: Clock,
+      //   href: "timeTable",
+      // },
       {
         title: "admission_management",
         icon: Building2,

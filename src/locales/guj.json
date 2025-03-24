@@ -140,7 +140,7 @@
   "add_fee-strucutre": "ફી સંરચના ઉમેરો",
   "manage": "મેનેજ કરો",
   "user_management": "વપરાશકર્તા મેનેજમેન્ટ",
-  "seetings": "સેટિંગ્સ",
+  "settings": "સેટિંગ્સ",
   "active": "સક્રિય",
   "inactive": "નિષ્ક્રિય",
   "all": "તમામ",
@@ -151,13 +151,13 @@
   "export": "નિકાસ",
   "management_users": "મેનેજમેન્ટ વપરાશકર્તા",
   "add_user": "વપરાશકર્તા ઉમેરો",
-  "user_seetings": "વપરાશકર્તા સેટિંગ્સ",
+  "user_settings": "વપરાશકર્તા સેટિંગ્સ",
   "general_management": "જનરલ મેનેજમેન્ટ",
   "notifications": "સૂચના",
   "school_settings": "શાળા સેટિંગ્સ",
   "academic_management": "શૈક્ષણિક મેનેજમેન્ટ",
   "payroll_management": "પે-રોલ મેનેજમેન્ટ",
-  "general_seetings": "જનરલ સેટિંગ્સ",
+  "general_settings": "જનરલ સેટિંગ્સ",
   "basic_school_data": "મૂળ શાળા માહિતી",
   "school_name": "શાળાનું નામ",
   "short_key/username": "શોર્ટ કી/વપરાશકર્તા નામ:",
@@ -733,5 +733,6 @@
   "available_seats_by_class": "વર્ગ દ્વારા ઉપલબ્ધ સીટો",
   "manage_the_total_number_of_seats_available_for_each_class": "દરેક વર્ગ માટે ઉપલબ્ધ કુલ સીટોનું વ્યવસ્થાપન કરો",
   "filter_by": "ફિલ્ટર કરો",
-  "edit_fee_plan": "ફી યોજના સંપાદિત કરો"
+  "edit_fee_plan": "ફી યોજના સંપાદિત કરો",
+  "manage_users_and_their_permissions_in_the_system": "સિસ્ટમમાં વપરાશકર્તાઓ અને તેમની પરવાનગીઓનું સંચાલન કરો"
 }

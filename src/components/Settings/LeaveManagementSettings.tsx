@@ -395,7 +395,7 @@ export function LeaveManagementSettings() {
                   <TableRow>
                     <TableHead>{t("name")}</TableHead>
                     {/* <TableHead>Description</TableHead> */}
-                    <TableHead>{t("paid")}</TableHead>
+                    {/* <TableHead>{t("paid")}</TableHead> */}
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -405,15 +405,15 @@ export function LeaveManagementSettings() {
                   currentlyDispalyedLeaveTypes?.leave_type.map((leaveType) => (
                     <TableRow key={leaveType.id}>
                       <TableCell>{leaveType.leave_type_name}</TableCell>
-                      <TableCell>{""}</TableCell>
-                      <TableCell>{leaveType.is_paid ? "Yes" : "No"}</TableCell>
+                      {/* <TableCell>{""}</TableCell>
+                      <TableCell>{leaveType.is_paid ? "Yes" : "No"}</TableCell> */}
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => openLeaveTypeDialog("edit", leaveType)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        {/* <Button variant="ghost" size="sm">
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -461,9 +461,9 @@ export function LeaveManagementSettings() {
                         <Button variant="ghost" size="sm" onClick={() => openLeavePolicyDialog('edit', policy)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        {/* <Button variant="ghost" size="sm">
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       </TableCell>
                     </TableRow>
                   ))}

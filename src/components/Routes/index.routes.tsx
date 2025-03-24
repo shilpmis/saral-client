@@ -274,17 +274,17 @@ export default function RootRoute() {
                   <LeaveManagementSettings />
                 </PrivateRoute>
               } />
-              <Route path="payroll" element={
+              {/* <Route path="payroll" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <PayrollSettings />
                 </PrivateRoute>
-              } />
-              <Route path="fees" element={
+              } /> */}
+              {/* <Route path="fees" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <FeeSettings />
                 </PrivateRoute>
-              } />
-              <Route path="leaves" element={
+              } /> */}
+              {/* <Route path="leaves" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <LeaveManagementSettings />
                 </PrivateRoute>
@@ -293,7 +293,7 @@ export default function RootRoute() {
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                   <TimeTableManager></TimeTableManager>
                 </PrivateRoute>
-              } />
+              } /> */}
                <Route path="admission" element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                  <AdmissionSetting/>
@@ -310,7 +310,6 @@ export default function RootRoute() {
                 </PrivateRoute>
               } />
             </Route>
-
 
           </Route>
           <Route path="*" element={<NotFound />}></Route>

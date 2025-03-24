@@ -80,7 +80,13 @@ export default function AdminAdmissonView() {
 
           <TabsContent value="overview" className="space-y-4">
             {/* Remove the data and trends props */}
-            <AdmissionDashboard />
+            <AdmissionDashboard data={dashboardData} trends={[
+               { grade: "Grade 1", inquiries: 30 },
+               { grade: "Grade 2", inquiries: 25 },
+               { grade: "Grade 3", inquiries: 35 },
+               { grade: "Grade 4", inquiries: 20 },
+               { grade: "Grade 5", inquiries: 40 },
+            ]} />
           </TabsContent>
 
           <TabsContent value="inquiries" className="space-y-4">

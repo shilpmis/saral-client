@@ -44,9 +44,9 @@ export const Fees: React.FC = () => {
           <StudentFeesManagement />
         </TabsContent>
 
-        <TabsContent value="reports">
+        {/* <TabsContent value="reports">
           <ReportGeneration />
-        </TabsContent>
+        </TabsContent>   */}
       </Tabs>
     </div>
   )
