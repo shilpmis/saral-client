@@ -29,7 +29,7 @@ import { UserPlus } from "lucide-react"
 import { type Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import { StudentFormData } from "@/utils/student.validation"
+import type { StudentFormData } from "@/utils/student.validation"
 import StudentForm from "../Students/StudentForm"
 
 export default function InquiryList() {
@@ -228,7 +228,9 @@ export default function InquiryList() {
                 <TableBody>
                   {filteredInquiries.map((inquiry) => (
                     <TableRow key={inquiry.id}>
-                      <TableCell className="font-medium">`{inquiry.first_name} + " " +{inquiry.middle_name} + " " +{inquiry.last_name}`</TableCell>
+                      <TableCell className="font-medium">
+                        {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
+                      </TableCell>
                       <TableCell>{inquiry.class_applying}</TableCell>
                       <TableCell>{inquiry.father_name}</TableCell>
                       <TableCell>{inquiry.primary_mobile}</TableCell>
@@ -301,7 +303,10 @@ export default function InquiryList() {
                     <h3 className="text-lg font-medium">{t("student_information")}</h3>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">{t("name")}:</div>
-                      <div className="text-sm">`{selectedInquiry.first_name} + {selectedInquiry.last_name}`</div>
+                      <div className="text-sm">
+                        {selectedInquiry.first_name} {selectedInquiry.middle_name ? selectedInquiry.middle_name : ""}{" "}
+                        {selectedInquiry.last_name}
+                      </div>
                       <div className="text-sm font-medium">{t("date_of_birth")}:</div>
                       <div className="text-sm">{new Date(selectedInquiry.birth_date).toLocaleDateString()}</div>
                       <div className="text-sm font-medium">{t("gender")}:</div>
@@ -430,28 +435,28 @@ export default function InquiryList() {
                 }}
                 form_type="create"
                 initial_data={{
-                  id: 0, // Provide a default or placeholder value
-                  school_id: 0, // Provide a default or placeholder value
+                  id: 0,
+                  school_id: 0,
                   first_name: currentInquiryForOnboarding.first_name,
-                  middle_name: "", // Provide a default or placeholder value
-                  last_name: "", // Provide a default or placeholder value
-                  first_name_in_guj: "", // Provide a default or placeholder value
-                  middle_name_in_guj: "", // Provide a default or placeholder value
-                  last_name_in_guj: "", // Provide a default or placeholder value
+                  middle_name: currentInquiryForOnboarding.middle_name || "",
+                  last_name: currentInquiryForOnboarding.last_name,
+                  first_name_in_guj: "",
+                  middle_name_in_guj: "",
+                  last_name_in_guj: "",
                   class_id: currentInquiryForOnboarding.class_applying,
-                  // gender: "", // Provide a default or placeholder value
-                  birth_date: "", // Provide a default or placeholder value
-                  father_name: "", // Provide a default or placeholder value
-                  // primary_mobile: "", // Provide a default or placeholder value
-                  // parent_email: "", // Provide a default or placeholder value
-                  address: "", // Provide a default or placeholder value
-                  // previous_school: "", // Provide a default or placeholder value
-                  // previous_class: "", // Provide a default or placeholder value
-                  // previous_percentage: "", // Provide a default or placeholder value
-                  // previous_year: "", // Provide a default or placeholder value
-                  // applying_for_quota: false, // Provide a default or placeholder value
-                  // quota_type: "", // Provide a default or placeholder value
-                  // enrollment_id: "", // Provide a default or placeholder value
+                  gender: currentInquiryForOnboarding.gender as "Male" | "Female",
+                  birth_date: currentInquiryForOnboarding.birth_date,
+                  father_name: currentInquiryForOnboarding.father_name,
+                  primary_mobile: Number(currentInquiryForOnboarding.primary_mobile),
+                  // parent_email: currentInquiryForOnboarding.parent_email || "",
+                  // address: currentInquiryForOnboarding.address,
+                  // privious_school: currentInquiryForOnboarding.previous_school || "",
+                  // privious_school_in_guj: "",
+                  // previous_class: currentInquiryForOnboarding.previous_class || "",
+                  // previous_percentage: currentInquiryForOnboarding.previous_percentage || "",
+                  // previous_year: currentInquiryForOnboarding.previous_year || "",
+                  // applying_for_quota: currentInquiryForOnboarding.applying_for_quota || false,
+                  // quota_type: currentInquiryForOnboarding.quota_type || "",
                 }}
                 onSubmitSuccess={(studentData: any, enrollmentId: any) => {
                   // Update the inquiry with the enrollment ID

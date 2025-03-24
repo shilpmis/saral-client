@@ -16,17 +16,18 @@ import { toast } from "@/hooks/use-toast"
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
-
 const formSchema = z.object({
-  student_name: z.string().min(2, { message: "Student name is required" }),
-  dob: z.string().min(1, { message: "Date of birth is required" }),
+  first_name: z.string().min(2, { message: "First name is required" }),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, { message: "Last name is required" }),
+  birth_date: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.string().min(1, { message: "Gender is required" }),
   class_applying: z.string().min(1, { message: "Class is required" }),
-  parent_name: z.string().min(2, { message: "Parent name is required" }),
-  parent_contact: z.string().min(10, { message: "Valid contact number is required" }),
+  father_name: z.string().min(2, { message: "Parent name is required" }),
+  primary_mobile: z.string().min(10, { message: "Valid contact number is required" }),
   parent_email: z.string().email({ message: "Valid email is required" }),
   address: z.string().min(5, { message: "Address is required" }),
-  previous_school: z.string().optional(),
+  privious_school: z.string().optional(),
   previous_class: z.string().optional(),
   previous_percentage: z.string().optional(),
   previous_year: z.string().optional(),
@@ -39,20 +40,22 @@ export default function AdmissionInquiryForm() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [addInquiry, { isLoading }] = useAddInquiryMutation()
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
- 
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      student_name: "",
-      dob: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      birth_date: "",
       gender: "",
       class_applying: "",
-      parent_name: "",
-      parent_contact: "",
+      father_name: "",
+      primary_mobile: "",
       parent_email: "",
       address: "",
-      previous_school: "",
+      privious_school: "",
       previous_class: "",
       previous_percentage: "",
       previous_year: "",
@@ -66,16 +69,18 @@ export default function AdmissionInquiryForm() {
     try {
       const response = await addInquiry({
         academic_session_id: currentAcademicSession?.id || 1,
-        student_name: values.student_name,
-        dob: values.dob,
+        first_name: values.first_name,
+        middle_name: values.middle_name,
+        last_name: values.last_name,
+        birth_date: values.birth_date,
         gender: values.gender,
         class_applying: Number.parseInt(values.class_applying),
-        parent_name: values.parent_name,
-        parent_contact: values.parent_contact,
+        father_name: values.father_name,
+        primary_mobile: values.primary_mobile,
         address: values.address,
         applying_for_quota: values.applying_for_quota === "yes",
         parent_email: values.parent_email,
-        previous_school: values.previous_school,
+        privious_school: values.privious_school,
         previous_class: values.previous_class,
         previous_percentage: values.previous_percentage,
         previous_year: values.previous_year,
@@ -101,20 +106,21 @@ export default function AdmissionInquiryForm() {
 
   const nextStep = () => {
     if (step === 1) {
-      form.trigger(["student_name", "dob", "gender", "class_applying"])
+      form.trigger(["first_name", "last_name", "birth_date", "gender", "class_applying"])
       if (
-        form.getFieldState("student_name").invalid ||
-        form.getFieldState("dob").invalid ||
+        form.getFieldState("first_name").invalid ||
+        form.getFieldState("last_name").invalid ||
+        form.getFieldState("birth_date").invalid ||
         form.getFieldState("gender").invalid ||
         form.getFieldState("class_applying").invalid
       ) {
         return
       }
     } else if (step === 2) {
-      form.trigger(["parent_name", "parent_contact", "parent_email", "address"])
+      form.trigger(["father_name", "primary_mobile", "parent_email", "address"])
       if (
-        form.getFieldState("parent_name").invalid ||
-        form.getFieldState("parent_contact").invalid ||
+        form.getFieldState("father_name").invalid ||
+        form.getFieldState("primary_mobile").invalid ||
         form.getFieldState("parent_email").invalid ||
         form.getFieldState("address").invalid
       ) {
@@ -182,13 +188,13 @@ export default function AdmissionInquiryForm() {
 
                 {step === 1 && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
-                        name="student_name"
+                        name="first_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Student Full Name</FormLabel>
+                            <FormLabel>First Name</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -198,18 +204,45 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="dob"
+                        name="middle_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Date of Birth</FormLabel>
+                            <FormLabel>Middle Name</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="birth_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
@@ -274,7 +307,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="parent_name"
+                        name="father_name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Parent/Guardian Name</FormLabel>
@@ -287,7 +320,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="parent_contact"
+                        name="primary_mobile"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Contact Number</FormLabel>
@@ -335,7 +368,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previous_school"
+                        name="privious_school"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Previous School</FormLabel>

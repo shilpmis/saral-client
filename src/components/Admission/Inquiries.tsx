@@ -29,7 +29,7 @@ import { SquareChevronLeft, UserPlus } from "lucide-react"
 import { type Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import { StudentFormData } from "@/utils/student.validation"
+import type { StudentFormData } from "@/utils/student.validation"
 import StudentForm from "../Students/StudentForm"
 
 export default function InquiriesManagement() {
@@ -246,7 +246,9 @@ export default function InquiriesManagement() {
                 <TableBody>
                   {filteredInquiries.map((inquiry) => (
                     <TableRow key={inquiry.id}>
-                      <TableCell className="font-medium">{inquiry.middle_name ? ` ${inquiry.middle_name}` : ""} {inquiry.last_name}</TableCell>
+                      <TableCell className="font-medium">
+                        {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
+                      </TableCell>
                       <TableCell>{inquiry.class_applying}</TableCell>
                       <TableCell>{inquiry.father_name}</TableCell>
                       <TableCell>{inquiry.primary_mobile}</TableCell>
@@ -290,6 +292,7 @@ export default function InquiriesManagement() {
                               <SelectItem value="ineligible">{t("ineligible")}</SelectItem>
                               <SelectItem value="approved">{t("approved")}</SelectItem>
                               <SelectItem value="rejected">{t("rejected")}</SelectItem>
+                              <SelectItem value="enrolled">{t("enrolled")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -319,8 +322,9 @@ export default function InquiriesManagement() {
                     <h3 className="text-lg font-medium">{t("student_information")}</h3>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">{t("name")}:</div>
-                      <div className="text-sm">`${selectedInquiry.first_name} + " " + 
-                        ${selectedInquiry.middle_name || ""} + " " + ${selectedInquiry.last_name}`</div>
+                      <div className="text-sm">
+                        {selectedInquiry.first_name} {selectedInquiry.middle_name || ""} {selectedInquiry.last_name}
+                      </div>
                       <div className="text-sm font-medium">{t("date_of_birth")}:</div>
                       <div className="text-sm">{new Date(selectedInquiry.birth_date).toLocaleDateString()}</div>
                       <div className="text-sm font-medium">{t("gender")}:</div>
@@ -468,7 +472,7 @@ export default function InquiriesManagement() {
                         mother_name_in_guj: "",
                         primary_mobile: currentInquiryForOnboarding.primary_mobile,
                         // secondary_mobile: "",
-                        // email: currentInquiryForOnboarding.parent_email || "",
+                        // parent_email: currentInquiryForOnboarding.parent_email || "",
                         address: currentInquiryForOnboarding.address,
                         school_id: "",
                         // privious_school: currentInquiryForOnboarding.previous_school || "",
