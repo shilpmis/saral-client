@@ -28,9 +28,9 @@ const formSchema = z.object({
   parent_email: z.string().email({ message: "Valid email is required" }),
   address: z.string().min(5, { message: "Address is required" }),
   privious_school: z.string().optional(),
-  previous_class: z.string().optional(),
-  previous_percentage: z.string().optional(),
-  previous_year: z.string().optional(),
+  privious_class: z.string().optional(),
+  privious_percentage: z.string().optional(),
+  privious_year: z.string().optional(),
   special_achievements: z.string().optional(),
   applying_for_quota: z.string().min(1, { message: "Please select an option" }),
   quota_type: z.string().optional(),
@@ -56,9 +56,9 @@ export default function AdmissionInquiryForm() {
       parent_email: "",
       address: "",
       privious_school: "",
-      previous_class: "",
-      previous_percentage: "",
-      previous_year: "",
+      privious_class: "",
+      privious_percentage: "",
+      privious_year: "",
       special_achievements: "",
       applying_for_quota: "no",
       quota_type: "",
@@ -81,9 +81,9 @@ export default function AdmissionInquiryForm() {
         applying_for_quota: values.applying_for_quota === "yes",
         parent_email: values.parent_email,
         privious_school: values.privious_school,
-        previous_class: values.previous_class,
-        previous_percentage: values.previous_percentage,
-        previous_year: values.previous_year,
+        // privious_class: values.privious_class,
+        // privious_percentage: values.privious_percentage,
+        // privious_year: values.privious_year,
         special_achievements: values.special_achievements,
         quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
       })
@@ -381,7 +381,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previous_class"
+                        name="privious_class"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Last Class Completed</FormLabel>
@@ -397,7 +397,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previous_percentage"
+                        name="privious_percentage"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Percentage/Grade</FormLabel>
@@ -410,7 +410,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previous_year"
+                        name="privious_year"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Year</FormLabel>

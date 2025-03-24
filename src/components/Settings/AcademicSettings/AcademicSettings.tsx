@@ -408,7 +408,7 @@ export default function AcademicSettings() {
   useEffect(() => {
     if (sessionsData && sessionsData.sessions && sessionsData.sessions.length > 0) {
       const session = sessionsData.sessions.find((session: any) => session.is_active)
-      if (session.is_active) {
+      if (session?.is_active) {
         setActiveSession(session)
         // If we have an active session and we're on the sessions tab, auto-switch to classes tab
         // if (activeTab === "sessions" && !isLoadingClasses) {
