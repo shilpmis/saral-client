@@ -28,17 +28,6 @@ import { useAuth } from "@/redux/hooks/useAuth";
 import { useTranslation } from "@/redux/hooks/useTranslation";
 
 const SideBarItems = [
-  // { title: "dashboard", url: "/d", icon: Home },
-  // { title: "student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
-  // { title: "staff", url: "/d/staff", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
-  // { title: "my_leaves", url: "/d/leave-applications", icon: Bed, requiredPermission: Permission.MARK_LEAVES },
-  // { title: "leave_management", url: "/d/leaves", icon: Bed, requiredPermission: Permission.MANAGE_LEAVES },
-  // { title: "attendance_management", url: "/d/attendance", icon: ClipboardList, requiredPermission: Permission.MANAGE_ATTENDANCE },
-  // { title: "attendance", url: "/d/mark-attendance", icon: ClipboardList, requiredPermission: Permission.MARK_ATTENDANCE },
-  // { title: "payments", url: "/d/payments", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
-  // { title: "manage_fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
-  // { title: "admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_ADMISSION },
-  // { title: "Dashboard", url: "/d", icon: Home },
   { title: "student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
   { title: "staff", url: "/d/staff", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
   { title: "my_leaves", url: "/d/leave-applications", icon: Bed, requiredPermission: Permission.MARK_LEAVES },
