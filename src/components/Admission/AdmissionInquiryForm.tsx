@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,8 +13,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "@/hooks/use-toast"
-import { useAddInquiryMutation } from "@/services/InquiryServices"
+import { useAddInquiryMutation, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z.object({
   first_name: z.string().min(2, { message: "First name is required" }),
@@ -36,15 +38,34 @@ const formSchema = z.object({
   quota_type: z.string().optional(),
 })
 
-export default function AdmissionInquiryForm() {
+interface AdmissionInquiryFormProps {
+  isEditing?: boolean
+  initialData?: z.infer<typeof formSchema>
+  inquiryId?: number
+  onSuccess?: () => void
+  onCancel?: () => void
+}
+
+export default function AdmissionInquiryForm({
+  isEditing = false,
+  initialData,
+  inquiryId,
+  onSuccess,
+  onCancel,
+}: AdmissionInquiryFormProps) {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
-  const [addInquiry, { isLoading }] = useAddInquiryMutation()
+  const [addInquiry, { isLoading: isAddLoading }] = useAddInquiryMutation()
+  const [updateInquiry, { isLoading: isUpdateLoading }] = useUpdateInquiryMutation()
   const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
+  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
+  const { t } = useTranslation()
+
+  const isLoading = isAddLoading || isUpdateLoading
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       first_name: "",
       middle_name: "",
       last_name: "",
@@ -67,33 +88,58 @@ export default function AdmissionInquiryForm() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await addInquiry({
-        academic_session_id: currentAcademicSession?.id || 1,
-        first_name: values.first_name,
-        middle_name: values.middle_name,
-        last_name: values.last_name,
-        birth_date: values.birth_date,
-        gender: values.gender,
-        class_applying: Number.parseInt(values.class_applying),
-        father_name: values.father_name,
-        primary_mobile: values.primary_mobile,
-        address: values.address,
-        applying_for_quota: values.applying_for_quota === "yes",
-        parent_email: values.parent_email,
-        privious_school: values.privious_school,
-        // privious_class: values.privious_class,
-        // privious_percentage: values.privious_percentage,
-        // privious_year: values.privious_year,
-        special_achievements: values.special_achievements,
-        quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
-      })
+      if (isEditing && inquiryId) {
+        // Update existing inquiry
+        const response = await updateInquiry({
+          id: inquiryId,
+          // academic_session_id is removed as it is not part of UpdateInquiryRequest
+          first_name: values.first_name,
+          middle_name: values.middle_name,
+          last_name: values.last_name,
+          birth_date: values.birth_date,
+          gender: values.gender,
+          class_applying: Number.parseInt(values.class_applying),
+          father_name: values.father_name,
+          primary_mobile: values.primary_mobile,
+          address: values.address,
+          applying_for_quota: values.applying_for_quota === "yes",
+          parent_email: values.parent_email,
+          // privious_school: values.privious_school,
+          // privious_class: values.privious_class,
+          // privious_percentage: values.privious_percentage,
+          // privious_year: values.privious_year,
+          // special_achievements: values.special_achievements,
+          // quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
+        }).unwrap()
 
-      console.log(response)
-      setSubmitted(true)
-      toast({
-        title: "Inquiry Submitted",
-        description: "Your inquiry has been successfully submitted.",
-      })
+        if (onSuccess) {
+          onSuccess()
+        }
+      } else {
+        // Add new inquiry
+        const response = await addInquiry({
+          academic_session_id: currentAcademicSession?.id || 1,
+          first_name: values.first_name,
+          middle_name: values.middle_name,
+          last_name: values.last_name,
+          birth_date: values.birth_date,
+          gender: values.gender,
+          class_applying: Number.parseInt(values.class_applying),
+          father_name: values.father_name,
+          primary_mobile: values.primary_mobile,
+          address: values.address,
+          applying_for_quota: values.applying_for_quota === "yes",
+          parent_email: values.parent_email,
+          special_achievements: values.special_achievements,
+          quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
+        }).unwrap()
+
+        setSubmitted(true)
+        toast({
+          title: "Inquiry Submitted",
+          description: "Your inquiry has been successfully submitted.",
+        })
+      }
     } catch (error) {
       console.error(error)
       toast({
@@ -132,8 +178,15 @@ export default function AdmissionInquiryForm() {
   }
 
   const prevStep = () => setStep(step - 1)
-  const handleClose = () => setSubmitted(true)
-  if (submitted) {
+  const handleClose = () => {
+    if (onCancel) {
+      onCancel()
+    } else {
+      setSubmitted(true)
+    }
+  }
+
+  if (submitted && !isEditing) {
     return (
       <div className="container mx-auto py-10 max-w-3xl mt-0">
         <Card>
@@ -164,12 +217,14 @@ export default function AdmissionInquiryForm() {
   }
 
   return (
-    <div className="container mx-auto py-10 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>Admission Inquiry Form</CardTitle>
-          <CardDescription>Please fill out this form to submit an admission inquiry for your child</CardDescription>
-        </CardHeader>
+    <div className={`container mx-auto py-10 ${isEditing ? "" : "max-w-3xl"}`}>
+      <Card className={isEditing ? "border-0 shadow-none" : ""}>
+        {!isEditing && (
+          <CardHeader>
+            <CardTitle>Admission Inquiry Form</CardTitle>
+            <CardDescription>Please fill out this form to submit an admission inquiry for your child</CardDescription>
+          </CardHeader>
+        )}
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -251,11 +306,7 @@ export default function AdmissionInquiryForm() {
                         <FormItem>
                           <FormLabel>Gender</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex space-x-4"
-                            >
+                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="male" id="male" />
                                 <Label htmlFor="male">Male</Label>
@@ -280,17 +331,17 @@ export default function AdmissionInquiryForm() {
                       name="class_applying"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Class Applying For</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>{t("class_applying_for")}</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select class" />
+                                <SelectValue placeholder={t("select_class")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((cls) => (
-                                <SelectItem key={cls} value={cls.toString()}>
-                                  Class {cls}
+                              {classSeats?.map((seat) => (
+                                <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                                  Class {seat.class.class} {seat.class.division}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -444,11 +495,7 @@ export default function AdmissionInquiryForm() {
                         <FormItem>
                           <FormLabel>Are you applying under any quota?</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex space-x-4"
-                            >
+                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id="quota-yes" />
                                 <Label htmlFor="quota-yes">Yes</Label>
@@ -471,7 +518,7 @@ export default function AdmissionInquiryForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Select Quota</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select quota" />
@@ -504,9 +551,16 @@ export default function AdmissionInquiryForm() {
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" className="ml-auto" disabled={isLoading}>
-                    {isLoading ? "Submitting..." : "Submit Inquiry"}
-                  </Button>
+                  <div className="flex gap-2 ml-auto">
+                    {isEditing && (
+                      <Button type="button" variant="outline" onClick={onCancel}>
+                        Cancel
+                      </Button>
+                    )}
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Submitting..." : isEditing ? "Update Inquiry" : "Submit Inquiry"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </form>

@@ -4,45 +4,20 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { AdmissionTrend, DashboardData } from "@/mock/admissionMockData"
+import type { AdmissionTrend, DashboardData } from "@/mock/admissionMockData"
 import { AdmissionDashboard } from "@/components/Admission/AdmissionDashboard"
 import { QuickInquiryForm } from "@/components/Admission/QuickInquiryForm"
 import { Link } from "react-router-dom"
 import AdmissionInquiryForm from "@/components/Admission/AdmissionInquiryForm"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import InquiryList from "@/components/Admission/InquiryList"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function AdminAdmissonView() {
-  const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false);
-  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false)
   const { t } = useTranslation()
-
-  // Mock dashboard data - not used with current AdmissionDashboard implementation
-  const dashboardData: DashboardData = {
-    totalInquiries: 145,
-    pendingApplications: 56,
-    acceptedAdmissions: 78,
-    rejectedApplications: 11,
-    upcomingInterviews: 23,
-  }
-
-  // Mock trends data - not used with current AdmissionDashboard implementation
-  const trendData: AdmissionTrend[] = [
-    { grade: "Grade 1", inquiries: 25 },
-    { grade: "Grade 2", inquiries: 18 },
-    { grade: "Grade 3", inquiries: 22 },
-    { grade: "Grade 4", inquiries: 15 },
-    { grade: "Grade 5", inquiries: 30 },
-    { grade: "Grade 6", inquiries: 12 },
-    { grade: "Grade 7", inquiries: 8 },
-    { grade: "Grade 8", inquiries: 10 },
-    { grade: "Grade 9", inquiries: 5 },
-    { grade: "Grade 10", inquiries: 0 },
-  ]
-  useEffect(()=> {
-    const translated = t("view_all_admission_inquiries");
-    console.log("translated", translated);
-  })
+  
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
@@ -57,18 +32,21 @@ export default function AdminAdmissonView() {
           </div>
         </div>
 
-        {/* Inquiry Modal */}
-        {isInquiryOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 mt-0">
-            <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">{t("add_admission_inquiry")}</h2>
-                <Button variant="ghost" onClick={() => setIsInquiryOpen(false)}>Close</Button>
-              </div>
-              <AdmissionInquiryForm />
+        {/* Inquiry Modal - Using Dialog component instead of custom modal */}
+        <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{t("add_admission_inquiry")}</DialogTitle>
+              <DialogDescription>{t("please_fill_out_this_form_to_submit_an_admission_inquiry")}</DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <AdmissionInquiryForm
+                onSuccess={() => setIsInquiryOpen(false)}
+                onCancel={() => setIsInquiryOpen(false)}
+              />
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {/* Tabs Section */}
         <Tabs defaultValue="overview" className="space-y-4">
@@ -80,13 +58,7 @@ export default function AdminAdmissonView() {
 
           <TabsContent value="overview" className="space-y-4">
             {/* Remove the data and trends props */}
-            <AdmissionDashboard data={dashboardData} trends={[
-               { grade: "Grade 1", inquiries: 30 },
-               { grade: "Grade 2", inquiries: 25 },
-               { grade: "Grade 3", inquiries: 35 },
-               { grade: "Grade 4", inquiries: 20 },
-               { grade: "Grade 5", inquiries: 40 },
-            ]} />
+            <AdmissionDashboard/>
           </TabsContent>
 
           <TabsContent value="inquiries" className="space-y-4">
@@ -109,7 +81,9 @@ export default function AdminAdmissonView() {
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] flex items-center justify-center">
-                  <p className="text-muted-foreground">{t("quota_distribution_visualization_will_be_displayed_here")}</p>
+                  <p className="text-muted-foreground">
+                    {t("quota_distribution_visualization_will_be_displayed_here")}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -121,3 +95,4 @@ export default function AdminAdmissonView() {
     </div>
   )
 }
+

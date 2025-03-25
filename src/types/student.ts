@@ -44,6 +44,7 @@ export interface StudentMeta {
 }
 
 export interface Student {
+  // enrollment_id: any;
   id: number;
   school_id: number;
   first_name: string;
