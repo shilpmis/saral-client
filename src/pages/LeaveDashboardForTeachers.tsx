@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { LeaveApplicationForm } from "@/components/Leave/LeaveApplicationFormData"
 import { useToast } from "@/hooks/use-toast"
-import type { LeaveApplicationForTeachingStaff } from "@/types/leave"
+import type { LeaveApplication } from "@/types/leave"
 import type { PageMeta } from "@/types/global"
-import { useLazyGetAllLeavePoliciesForUserQuery, useLazyGetTeachersLeaveAppicationQuery } from "@/services/LeaveService"
+import { useLazyGetAllLeavePoliciesForUserQuery, useLazyFetchLeaveApplicationOfTeachingStaffForAdminQuery, useLazyGetStaffsLeaveAppicationQuery } from "@/services/LeaveService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { selectLeavePolicyForUser } from "@/redux/slices/leaveSlice"
@@ -25,9 +25,10 @@ interface LeaveStatus {
 }
 
 const LeaveDashboardForTeachers: React.FC = () => {
-  const authState = useAppSelector(selectAuthState)
-  const [getTeacherLeaveApplcation, { data: leaveApplicationsData, isLoading: isTeacherLeaveApplicationLoading }] =
-    useLazyGetTeachersLeaveAppicationQuery()
+  const authState = useAppSelector(selectAuthState);
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool);
+  const [getStaffsLeaveApplications, { data: StaffsLeaveApplications, isLoading: isTeacherLeaveApplicationLoading }] =
+  useLazyGetStaffsLeaveAppicationQuery()
 
 
   const [leaveStatus, setLeaveStatus] = useState<LeaveStatus>({
@@ -38,14 +39,14 @@ const LeaveDashboardForTeachers: React.FC = () => {
   })
 
   const [leaveApplications, setLeaveApplications] = useState<{
-    applications: LeaveApplicationForTeachingStaff[]
+    applications: LeaveApplication[]
     page: PageMeta
   } | null>(null)
 
   const [DialogForLeaveApplication, setDialogForLeaveApplication] = useState<{
     isOpen: boolean
     type: "create" | "edit"
-    application: LeaveApplicationForTeachingStaff | null
+    application: LeaveApplication | null
   }>({ isOpen: false, application: null, type: "create" })
 
   const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected" | "cancelled">("pending")
@@ -62,7 +63,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
     })
   }
 
-  const handleDialog = (type: "create" | "edit", application: LeaveApplicationForTeachingStaff | null) => {
+  const handleDialog = (type: "create" | "edit", application: LeaveApplication | null) => {
     if (type === "create") {
       setDialogForLeaveApplication({
         application: null,
@@ -95,10 +96,15 @@ const LeaveDashboardForTeachers: React.FC = () => {
     })
   }
 
-  const onSucessesfullApplication = (application: LeaveApplicationForTeachingStaff) => {
+  const onSucessesfullApplication = (application: LeaveApplication) => {
 
-    if (DialogForLeaveApplication.type === "create" && authState.user?.teacher_id) {
-      getTeacherLeaveApplcation({ page: 1, status: 'pending', teacher_id: authState.user.teacher_id })
+    if (DialogForLeaveApplication.type === "create" && authState.user?.staff_id  ) {
+      getStaffsLeaveApplications({
+         page: 1, 
+         status: 'pending', 
+         staff_id: authState.user.staff_id ,
+         academic_session_id : CurrentAcademicSessionForSchool!.id //fix
+        })
     } else {
       setLeaveApplications({
         applications: leaveApplications!.applications.map((app) => {
@@ -115,37 +121,51 @@ const LeaveDashboardForTeachers: React.FC = () => {
 
   const handleStatusFilterChange = (value: "pending" | "approved" | "rejected" | "cancelled") => {
     setStatusFilter(value)
-    if (authState.user?.teacher_id) {
-      getTeacherLeaveApplcation({ page: 1, status: value, teacher_id: authState.user.teacher_id })
+    if (authState.user?.staff_id) {
+      getStaffsLeaveApplications({ 
+        page: 1,
+        status: value, 
+        staff_id: authState.user.staff_id,
+        academic_session_id : CurrentAcademicSessionForSchool!.id //fix
+      })
     }
   }
 
   const handlePageChange = (page: number) => {
-    if (authState.user!.teacher_id)
-      getTeacherLeaveApplcation({ page: page, status: statusFilter, teacher_id: authState.user!.teacher_id })
+    if (authState.user!.staff_id)
+      getStaffsLeaveApplications({
+      page: page,
+      status: statusFilter,
+      academic_session_id : CurrentAcademicSessionForSchool!.id, //fix 
+      staff_id: authState.user!.staff_id })
   }
 
   useEffect(() => {
     // Fetch leave status and applications from API
-    if (!leaveApplications && authState.user?.teacher_id) {
-      getTeacherLeaveApplcation({ page: 1, status: statusFilter, teacher_id: authState.user.teacher_id })
+    if (!leaveApplications && authState.user?.staff_id) {
+      getStaffsLeaveApplications({ 
+        page: 1,
+        status: statusFilter,
+        staff_id: authState.user.staff_id,
+        academic_session_id : CurrentAcademicSessionForSchool!.id //fix 
+      })
     }
-  }, [leaveApplications, authState.user?.teacher_id, getTeacherLeaveApplcation, statusFilter])
+  }, [leaveApplications, authState.user?.staff_id, getStaffsLeaveApplications, statusFilter])
 
   useEffect(() => {
-    if (leaveApplicationsData)
+    if (StaffsLeaveApplications)
       setLeaveApplications({
-        applications: leaveApplicationsData.data,
-        page: leaveApplicationsData.page,
+        applications: StaffsLeaveApplications.data,
+        page: StaffsLeaveApplications.page,
       })
-  }, [leaveApplicationsData])
+  }, [StaffsLeaveApplications])
 
   const {t} = useTranslation()
 
   return (
 
     <div className="space-y-6">
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{t("Leave Status")}</CardTitle>
         </CardHeader>
@@ -169,7 +189,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{t("Leave Applications")}</h2>

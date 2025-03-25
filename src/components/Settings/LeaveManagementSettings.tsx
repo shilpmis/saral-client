@@ -25,9 +25,10 @@ import { PageMeta } from "@/types/global"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
-import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { selectLeaveTypeForSchool, setLeave } from "@/redux/slices/leaveSlice"
 
 // Schema for leave type
 const leaveTypeSchema = z.object({
@@ -38,14 +39,42 @@ const leaveTypeSchema = z.object({
 })
 
 // Schema for leave policy
-const leavePolicySchema = z.object({
-  staff_role_id: z.string().min(1, "Staff role is required"),
-  leave_type_id: z.string().min(1, "Leave type is required"),
-  annual_quota: z.number().min(0, "Annual allowance must be 0 or greater"),
-  max_consecutive_days: z.number().min(1, "Max consecutive days must be at least 1"),
-  can_carry_forward: z.boolean(),
-  max_carry_forward_days: z.number().min(0, "Max carryforward days must be 0 or greater"),
-})
+export const leavePolicySchema = z
+  .object({
+    staff_role_id: z.string().min(1, { message: "Staff role is required" }),
+    leave_type_id: z.string().min(1, { message: "Leave type is required" }),
+    annual_quota: z
+      .number({ invalid_type_error: "Annual allowance must be a number" })
+      .min(0, { message: "Annual allowance must be 0 or greater" })
+      .max(50, { message: "Annual allowance cannot exceed 50" }),
+    max_consecutive_days: z
+      .number({ invalid_type_error: "Max consecutive days must be a number" })
+      .min(1, { message: "Max consecutive days must be at least 1" }),
+    can_carry_forward: z.boolean(),
+    max_carry_forward_days: z
+      .number({ invalid_type_error: "Max carryforward days must be a number" })
+      .min(0, { message: "Max carryforward days must be 0 or greater" }),
+    deduction_rules: z.record(z.string(), z.any()).optional(),
+    approval_hierarchy: z.record(z.string(), z.any()).optional(),
+    requires_approval: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.max_consecutive_days >= data.annual_quota) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Max consecutive days cannot be greater than or equal to the annual allowance",
+      });
+    }
+
+    if (data.max_carry_forward_days >= data.annual_quota) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_carry_forward_days"],
+        message: "Max carryforward days cannot be greater than or equal to the annual allowance",
+      });
+    }
+  });
 
 type LeaveTypeSchema = z.infer<typeof leaveTypeSchema>
 type LeavePolicySchema = z.infer<typeof leavePolicySchema>
@@ -54,6 +83,8 @@ type LeavePolicySchema = z.infer<typeof leavePolicySchema>
 export function LeaveManagementSettings() {
 
   const staffRole = useAppSelector(selectSchoolStaffRoles);
+  const AlleaveTypeForSchool = useAppSelector(selectLeaveTypeForSchool);
+
   const auth = useAppSelector(selectAuthState);
   const [getStaffForSchool, { isLoading, isError }] = useLazyGetSchoolStaffRoleQuery()
   const [getLeavePolicies, { isLoading: isLeavePoliciesLoading }] = useLazyGetLeavePolicyForSchoolPageWiseQuery()
@@ -67,13 +98,15 @@ export function LeaveManagementSettings() {
   const [createLeavePolicy, { isLoading: loadingForPolicyCreation, isError: ErrorWhilePolicyCreation }] = useCreateLeavePolicyMutation()
   const [updateLeavePolicy, { isLoading: loadingForPolicyUpdation, isError: ErrorWhilePolicyUpdation }] = useUpdateLeavePolicyMutation()
 
+    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool);
+
   const leaveTypeForm = useForm<LeaveTypeSchema>({
     resolver: zodResolver(leaveTypeSchema),
     defaultValues: {
       name: "",
       description: "",
-      is_paid: true,
-      affects_payroll: true,
+      is_paid: false,
+      affects_payroll: false,
     },
   })
 
@@ -124,17 +157,7 @@ export function LeaveManagementSettings() {
 
   const {t} = useTranslation()
 
-  /***
- * 
- * TODO : 
- *  -need to handle error here for both update nad create 
- *  -Need to add loader while api is executing 
- *  -Need to reflect data in UI as it get change  
- *  -close dialog and clear state after successfull submit
- */
   const onLeaveTypeSubmit: SubmitHandler<LeaveTypeSchema> = async (data) => {
-    console.log(data)
-    // Here you would typically save the data to your backend
 
     if (DialogForLeaveType.type === 'edit') {
       let updated_type = await updateLeaveType({
@@ -168,7 +191,8 @@ export function LeaveManagementSettings() {
         is_paid: data.is_paid,
         affects_payroll: data.affects_payroll,
         requires_proof: false,
-        is_active: true
+        is_active: true,
+        academic_session_id : CurrentAcademicSessionForSchool!.id
       })
       if (new_type.error) {
         toast({
@@ -194,24 +218,6 @@ export function LeaveManagementSettings() {
     })
     
   }
-  // for table dynamic render  
-  useEffect(()=>{
-    console.log(currentlyDispalyedLeaveTypes);
-
-  },[currentlyDispalyedLeaveTypes])
-
-
-
-  /***
-   * 
-   * TODO : 
-   *  -need to handle error here for both update nad create 
-   *  -Need to add loader while api is executing 
-   *  -Need to reflect data in UI as it get change  
-   *  - Resolve bug for Carry Forward filed while updating leave policy (it gives verification error)
-   *  -close dialog and clear state after successfull submit
-   * 
-   */
 
   const onLeavePolicySubmit: SubmitHandler<LeavePolicySchema> = async (data) => {
     // Here you would typically save the data to your backend
@@ -226,7 +232,8 @@ export function LeaveManagementSettings() {
         max_consecutive_days: data.max_consecutive_days,
         deduction_rules: {},
         approval_hierarchy: {},
-        requires_approval: 0
+        requires_approval: 0,
+        academic_session_id : CurrentAcademicSessionForSchool!.id
       })
       if (new_policy.data) {
         toast({
@@ -288,17 +295,30 @@ export function LeaveManagementSettings() {
   }
 
   const openLeaveTypeDialog = (type: 'add' | 'edit', leaveType: LeaveType | null) => {
+    
     setDialogForLeaveType({
       isOpen: true,
       type: type,
       leave_type: leaveType
     })
+    if(type === 'edit' && leaveType){
+      leaveTypeForm.reset({
+        name: leaveType?.leave_type_name,
+        description: leaveType?.leave_type_name,
+        is_paid: leaveType?.is_paid ,
+        affects_payroll: leaveType?.affects_payroll,
+      })
+    }else{
+      leaveTypeForm.reset({
+        name: "",
+        description: "",
+        is_paid: false,
+        affects_payroll: false,
+      })
+    }
 
-    leaveTypeForm.reset({
-      name: leaveType?.leave_type_name,
-      description: leaveType?.leave_type_name,
-      is_paid: leaveType!.is_paid,
-      affects_payroll: leaveType!.affects_payroll,
+    getAllLeaveType({
+      academic_session_id: CurrentAcademicSessionForSchool!.id
     })
 
   }
@@ -334,7 +354,7 @@ export function LeaveManagementSettings() {
 
     try {
       if (type === 'leave-policies') {
-        const leave_policy = await getLeavePolicies({ page: page });
+        const leave_policy = await getLeavePolicies({ page: page , academic_session_id : CurrentAcademicSessionForSchool!.id});
         if (leave_policy.data) {
           console.log(leave_policy.data.data)
           setCurrentlyDispalyedLeavePolicy({
@@ -345,7 +365,7 @@ export function LeaveManagementSettings() {
       }
 
       if (type === 'leave-types') {
-        const leave_type = await getLeaveType({ page: page });
+        const leave_type = await getLeaveType({ page: page , academic_session_id : CurrentAcademicSessionForSchool!.id });
         if (leave_type.data) {
           setCurrentlyDispalyedLeaveTypes({
             leave_type: leave_type.data.data,
@@ -363,8 +383,10 @@ export function LeaveManagementSettings() {
     if (!currentlyDispalyedLeavePolicy || !currentlyDispalyedLeaveTypes) {
       fetchDataForActiveTab(activeTab as 'leave-types' | 'leave-policies', 1);
     }
-    if (!dataForLeaveType) {
-      getAllLeaveType();
+    if (!dataForLeaveType || !AlleaveTypeForSchool) {
+      getAllLeaveType({
+        academic_session_id: CurrentAcademicSessionForSchool!.id
+      });
     }
 
   }, [activeTab])
@@ -526,7 +548,7 @@ export function LeaveManagementSettings() {
                       <FormDescription>{t("is_this_a_paid_leave_type?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch checked={field.value ?? false} onCheckedChange={(checked) => { field.onChange(checked) }} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -541,7 +563,7 @@ export function LeaveManagementSettings() {
                       <FormDescription>{t("is_this_a_paid_leave_type?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch checked={field.value ?? false} onCheckedChange={(checked) => { field.onChange(checked) }} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -613,7 +635,7 @@ export function LeaveManagementSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dataForLeaveType && dataForLeaveType.map((type) => (
+                        {AlleaveTypeForSchool && AlleaveTypeForSchool.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
                             {type.leave_type_name}
                           </SelectItem>
@@ -658,23 +680,6 @@ export function LeaveManagementSettings() {
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={leavePolicyForm.control}
-                name="noticePeriodDays"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notice Period (Days)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number.parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={leavePolicyForm.control}
                 name="can_carry_forward"
@@ -685,7 +690,7 @@ export function LeaveManagementSettings() {
                       <FormDescription>{t("can_unused_leaves_be_carried_forward_to_the_next_year?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch checked={field.value ?? false} onCheckedChange={(checked) => { field.onChange(checked) }} />
                     </FormControl>
                   </FormItem>
                 )}

@@ -10,15 +10,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { DateTime } from "luxon"
-import type { LeaveApplicationForTeachingStaff } from "@/types/leave"
+import type { LeaveApplication } from "@/types/leave"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectLeavePolicyForUser } from "@/redux/slices/leaveSlice"
 import {
-    useApplyLeaveForTeacherMutation,
+  useApplyLeaveForStaffMutation,
     useLazyGetAllLeavePoliciesForUserQuery,
-    useUpdateLeaveForTeacherMutation,
+    useUpdateLeaveForStaffMutation,
 } from "@/services/LeaveService"
-import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectCurrentUser } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
 
 const leaveApplicationSchema = z
@@ -30,50 +30,86 @@ const leaveApplicationSchema = z
         is_half_day: z.boolean(),
         half_day_type: z.enum(["first_half", "second_half", "none"]),
         is_hourly_leave: z.boolean(),
-        total_hours: z.number().nullable().optional(),
+        total_hours: z.number().nullable(),
     })
     .refine((data) => {
-        const startDate = DateTime.fromISO(data.from_date)
-        const endDate = DateTime.fromISO(data.to_date)
-        const today = DateTime.now().startOf("day")
-        const twoMonthsFromNow = today.plus({ months: 2 })
+        const startDate = DateTime.fromISO(data.from_date);
+        const endDate = DateTime.fromISO(data.to_date);
+        const today = DateTime.now().startOf("day");
+        const twoMonthsFromNow = today.plus({ months: 2 });
 
-        if (startDate < today) {
-            return { message: "Start date cannot be in the past", path: ["from_date"] }
-        }
-        if (startDate > endDate) {
-            return { message: "End date must be after start date", path: ["to_date"] }
-        }
-        if (endDate > twoMonthsFromNow) {
-            return { message: "End date cannot be more than 2 months in the future", path: ["to_date"] }
-        }
-        if (data.is_hourly_leave && !startDate.equals(endDate)) {
-            return { message: "Hourly leave must be for a single day", path: ["to_date"] }
-        }
-        if (data.is_hourly_leave && (data.is_half_day || data.half_day_type !== "none")) {
-            return { message: "Hourly leave cannot be combined with half-day leave", path: ["is_hourly_leave"] }
-        }
-        if (data.is_hourly_leave && (!data.total_hours || data.total_hours > 4)) {
-            return { message: "Hourly leave must be between 1 and 4 hours", path: ["total_hours"] }
-        }
-        if (data.is_half_day && !startDate.equals(endDate)) {
-            return { message: "Half-day leave must be for a single day", path: ["to_date"] }
-        }
-        if (data.is_half_day && data.half_day_type === "none") {
-            return { message: "Please select half-day type", path: ["half_day_type"] }
-        }
-        if (!data.is_hourly_leave && data.total_hours !== null) {
-            return { message: "Total hours should only be set for hourly leave", path: ["total_hours"] }
-        }
-
-        return true
+        return startDate >= today;
+    }, {
+        message: "Start date cannot be in the past",
+        path: ["from_date"],
     })
+    .refine((data) => {
+        const startDate = DateTime.fromISO(data.from_date);
+        const endDate = DateTime.fromISO(data.to_date);
+
+        return startDate <= endDate;
+    }, {
+        message: "End date must be after start date",
+        path: ["to_date"],
+    })
+    .refine((data) => {
+        const endDate = DateTime.fromISO(data.to_date);
+        const today = DateTime.now().startOf("day");
+        const twoMonthsFromNow = today.plus({ months: 2 });
+
+        return endDate <= twoMonthsFromNow;
+    }, {
+        message: "End date cannot be more than 2 months in the future",
+        path: ["to_date"],
+    })
+    .refine((data) => {
+        const startDate = DateTime.fromISO(data.from_date);
+        const endDate = DateTime.fromISO(data.to_date);
+
+        return !data.is_hourly_leave || startDate.equals(endDate);
+    }, {
+        message: "Hourly leave must be for a single day",
+        path: ["to_date"],
+    })
+    .refine((data) => {
+        return !(data.is_hourly_leave && (data.is_half_day || data.half_day_type !== "none"));
+    }, {
+        message: "Hourly leave cannot be combined with half-day leave",
+        path: ["is_hourly_leave"],
+    })
+    .refine((data) => {
+        return !data.is_hourly_leave || (data.total_hours && data.total_hours >= 1 && data.total_hours <= 4);
+    }, {
+        message: "Hourly leave must be between 1 and 4 hours",
+        path: ["total_hours"],
+    })
+    .refine((data) => {
+        const startDate = DateTime.fromISO(data.from_date);
+        const endDate = DateTime.fromISO(data.to_date);
+
+        return !data.is_half_day || startDate.equals(endDate);
+    }, {
+        message: "Half-day leave must be for a single day",
+        path: ["to_date"],
+    })
+    .refine((data) => {
+        return !data.is_half_day || data.half_day_type !== "none";
+    }, {
+        message: "Please select half-day type",
+        path: ["half_day_type"],
+    })
+    .refine((data) => {
+        return data.is_hourly_leave || data.total_hours === null;
+    }, {
+        message: "Total hours should only be set for hourly leave",
+        path: ["total_hours"],
+    });
 
 type LeaveApplicationFormData = z.infer<typeof leaveApplicationSchema>
 
 interface LeaveApplicationFormProps {
-    initialData?: LeaveApplicationForTeachingStaff | null
-    onSucessesfullApplication: (leave: LeaveApplicationForTeachingStaff) => void
+    initialData?: LeaveApplication | null
+    onSucessesfullApplication: (leave: LeaveApplication) => void
     type: "edit" | "create"
     onCancel: () => void 
 }
@@ -81,10 +117,10 @@ interface LeaveApplicationFormProps {
 export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ initialData, onSucessesfullApplication, type , onCancel }) => {
     const user = useAppSelector(selectCurrentUser)
     const leavePolicyForUser = useAppSelector(selectLeavePolicyForUser)
-
+      const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool);
     const [getAllLeavePoliciesForUser] = useLazyGetAllLeavePoliciesForUserQuery()
-    const [applyLeaveForTeacher] = useApplyLeaveForTeacherMutation()
-    const [updateLeaveForTeacher] = useUpdateLeaveForTeacherMutation()
+    const [applyLeaveForTeacher] = useApplyLeaveForStaffMutation()
+    const [updateLeaveForTeacher] = useUpdateLeaveForStaffMutation()
 
     const form = useForm<LeaveApplicationFormData>({
         resolver: zodResolver(leaveApplicationSchema),
@@ -96,15 +132,28 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
             is_half_day: false,
             half_day_type: "none",
             is_hourly_leave: false,
-            total_hours: undefined,
+            total_hours: null,
         },
     })
 
     const handleSubmit: SubmitHandler<LeaveApplicationFormData> = async (data) => {
         try {
-            if (type === "create" && user?.teacher_id) {
-                const response: any = await applyLeaveForTeacher({
-                    teacher_id: user.teacher_id,
+            if (type === "create" && user?.staff_id) {
+                // const response: any = await applyLeaveForTeacher({
+                //     staff_id: user.staff_id,
+                //     leave_type_id: Number(data.leave_type),
+                //     from_date: data.from_date,
+                //     to_date: data.to_date,
+                //     reason: data.reason,
+                //     is_half_day: data.is_half_day,
+                //     half_day_type: data.half_day_type,
+                //     is_hourly_leave: data.is_hourly_leave,
+                //     documents: {},
+                //     total_hour: data.total_hours ? data.total_hours : null,
+                // })
+                const response = await applyLeaveForTeacher({
+                    staff_id: user.staff_id,
+                    academic_session_id : CurrentAcademicSessionForSchool!.id,
                     leave_type_id: Number(data.leave_type),
                     from_date: data.from_date,
                     to_date: data.to_date,
@@ -113,13 +162,13 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                     half_day_type: data.half_day_type,
                     is_hourly_leave: data.is_hourly_leave,
                     documents: {},
-                    total_hour: data.total_hours ? data.total_hours : null,
-                })
+                    total_hour: data?.total_hours ? data?.total_hours : null,
+                }) // Fix this
 
                 if (response.error) {
                     toast({
                         variant: "destructive",
-                        title: response.error.data.message,
+                        title: 'Error submitting leave application',
                     })
                 }
 
@@ -190,9 +239,15 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
 
     useEffect(() => {
         if (!leavePolicyForUser) {
-            getAllLeavePoliciesForUser()
+            getAllLeavePoliciesForUser({
+              academic_session_id : CurrentAcademicSessionForSchool!.id // fix
+            })
         }
     }, [leavePolicyForUser, getAllLeavePoliciesForUser])
+
+    useEffect(()=>{
+      console.log("Chevk this " , form.formState.errors)
+    },[form.formState.errors])
 
     return (
         <Form {...form}>
@@ -277,7 +332,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                                         field.onChange(checked)
                                         if (checked) {
                                             form.setValue("is_hourly_leave", false)
-                                            form.setValue("total_hours", undefined)
+                                            form.setValue("total_hours", null)
                                         }
                                     }}
                                 />
@@ -328,7 +383,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                                             form.setValue("is_half_day", false)
                                             form.setValue("half_day_type", "none")
                                         } else {
-                                            form.setValue("total_hours", undefined)
+                                            form.setValue("total_hours", null)
                                         }
                                     }}
                                 />

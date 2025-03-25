@@ -10,35 +10,31 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
-import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from "@/types/leave"
+import { LeaveApplication } from "@/types/leave"
 import { PageMeta } from "@/types/global"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
-import { useApproveTeachingLeaveApplicationMutation, useApproveOtherStaffLeaveApplicationMutation, useLazyFetchOtherStaffLeaveApplicationForAdminQuery, useLazyFetchTeachersLeaveApplicationForAdminQuery } from "@/services/LeaveService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-
+import { useLazyFetchLeaveApplicationOfOtherStaffForAdminQuery, useLazyFetchLeaveApplicationOfTeachingStaffForAdminQuery, useUpdateStatusForStaffLeaveApplicationMutation } from "@/services/LeaveService"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 
 const AdminLeaveManagement: React.FC = () => {
 
   const { t } = useTranslation()
-  const [getApplicationForTeacher, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchTeachersLeaveApplicationForAdminQuery()
-  const [getApplicationForOther, { data: leaveRequestsForOther, isLoading: loadingForOtherLeave }] = useLazyFetchOtherStaffLeaveApplicationForAdminQuery()
-
-  const [approveTeachersApplication, { isLoading: loadingForApproveTeachersApplication }] = useApproveTeachingLeaveApplicationMutation()
-  const [approveOtherStaffsApplication, { isLoading: loadingForApproveStaffApplication }] = useApproveOtherStaffLeaveApplicationMutation()
-
+  const [getLeaveApplicationsForTeachingStaff, { data: leaveRequestsForTeacher, isLoading: loadingForTeachersLeave }] = useLazyFetchLeaveApplicationOfTeachingStaffForAdminQuery()
+  const [getLeaveApplicationsForOtherStaff, { data: leaveRequestsForOthers, isLoading: loadingForOtherStaffLeave }] = useLazyFetchLeaveApplicationOfOtherStaffForAdminQuery()
+  const [updateStatusForApplication, { isLoading: loadingForupdateStatusForApplication }] = useUpdateStatusForStaffLeaveApplicationMutation()
   const [activeTab, setActiveTab] = useState("teacher")
 
   const [LeaveRequestsForTeachingStaff, setLeaveRequestsForTeachingStaff] =
-    useState<{ applications: LeaveApplicationForTeachingStaff[], page: PageMeta } | null>(null)
-
+    useState<{ applications: LeaveApplication[], page: PageMeta } | null>(null)
   const [LeaveRequestsForOtherStaff, setLeaveRequestsForOtherStaff] =
-    useState<{ applications: LeaveApplicationForOtherStaff[], page: PageMeta } | null>(null)
-
+    useState<{ applications: LeaveApplication[], page: PageMeta } | null>(null)
 
   const [DialogForApplication, setDialogForApplication] = useState<{
     isOpen: boolean,
-    application: LeaveApplicationForTeachingStaff | LeaveApplicationForOtherStaff | null,
+    application: LeaveApplication |  null,
     dialog_type: "create" | "edit"
     // staff_type: "teacher" | "other",
   }>()
@@ -48,41 +44,29 @@ const AdminLeaveManagement: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'cancelled'>("pending")
 
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool);
+
   const { toast } = useToast()
 
   const loadLeaveRequests = useCallback(async () => {
 
   }, [])
 
-  // const handleStatusChange = async (requestId: number, newStatus: "approved" | "rejected") => {
-  //   // setSelectedRequest(leaveRequests.find((request) => request.id === requestId) || null)
-  //   // setIsDialogOpen(true)
-  // }
 
   const confirmStatusChange = async () => {
-    // if (DialogForApplication?.isOpen) {
 
-
-    //   toast({
-    //     title: "Leave request updated",
-    //     description: `The leave request has been ${selectedRequest.status}.`,
-    //   })
-    // }
   }
 
 
-  // const onPageChange = (page: number) => {
-  //   // setCurrentPage(updatedPage)
-  // }
-
   const handleStatusChange = useCallback(async (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => {
     if (staff_type === 'teacher') {
-      let status = await approveTeachersApplication({
+      let status = await updateStatusForApplication({
         application_id: requestId,
         status: newStatus,
+        academic_session_id : CurrentAcademicSessionForSchool!.id
       })
       if (status.data) {
-        fetchLeaveApplication('teacher', newStatus, 1)
+        fetchLeaveApplication('teacher', newStatus, 1);
         toast({
           title: "Leave request updated",
           description: `The leave request has been ${newStatus}.`,
@@ -93,9 +77,10 @@ const AdminLeaveManagement: React.FC = () => {
       }
     }
     if (staff_type === 'other') {
-      let status = await approveOtherStaffsApplication({
+      let status = await updateStatusForApplication({
         application_id: requestId,
         status: newStatus,
+        academic_session_id : CurrentAcademicSessionForSchool!.id
       })
       if (status.error) {
         console.log("Check this", status, {
@@ -117,14 +102,23 @@ const AdminLeaveManagement: React.FC = () => {
     status: 'pending' | 'approved' | 'rejected' | 'cancelled',
     page: number = 1,
     date?: string) {
-
-    if (type === 'teacher') {
-      const res = await getApplicationForTeacher({ page: page, status: status, date: undefined })
-    }
-
-    if (type === 'other') {
-      const res = await getApplicationForOther({ page: page, status: status })
-    }
+      if(type === 'teacher'){
+        getLeaveApplicationsForTeachingStaff({
+          status: status,
+          page: page,
+          date: date,
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+          role: 'teaching'
+        })
+      }else{
+        getLeaveApplicationsForOtherStaff({
+          status: status,
+          page: page,
+          date: date,
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+          role: 'non-teaching'
+        })
+      }
   }
 
   useEffect(() => {
@@ -135,13 +129,14 @@ const AdminLeaveManagement: React.FC = () => {
       })
     }
 
-    if (leaveRequestsForOther) {
+    if (leaveRequestsForOthers) {
       setLeaveRequestsForOtherStaff({
-        applications: leaveRequestsForOther.data,
-        page: leaveRequestsForOther.meta
+        applications: leaveRequestsForOthers.data,
+        page: leaveRequestsForOthers.meta
       })
     }
-  }, [leaveRequestsForOther, leaveRequestsForTeacher])
+    console.log("Check this=====>", leaveRequestsForTeacher, leaveRequestsForOthers)
+  }, [leaveRequestsForOthers, leaveRequestsForTeacher])
 
 
   useEffect(() => {

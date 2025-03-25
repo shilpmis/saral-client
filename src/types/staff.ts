@@ -1,4 +1,5 @@
 import { AcademicClasses, Division } from "./academic";
+import { AssignedClasses } from "./class";
 
 export enum StaffStatus {
   ACTIVE = "ACTIVE",
@@ -76,14 +77,7 @@ export interface StaffType {
   is_teching_staff: boolean;
   role: string;
   working_hours: number | null;
-  assigend_classes: {
-    id: number;
-    class_id: number;
-    staff_id: number;
-    academic_session_id: 2;
-    status: "Active" | "Inactive";
-    class: Division;
-  }[];
+  assigend_classes: AssignedClasses[];
 }
 
 // export interface TeachingStaff {
