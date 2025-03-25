@@ -2,6 +2,7 @@ import type React from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetInquiriesQuery } from "@/services/InquiryServices"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface DashboardData {
   totalInquiries: number
@@ -22,6 +23,7 @@ interface AdmissionDashboardProps {
 
 export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }) => {
   const { data: inquiriesData, isLoading } = useGetInquiriesQuery({ page: 1, limit: 100 })
+  const {t} = useTranslation()
 
   // Calculate dashboard data from API response
   const dashboardData: DashboardData = {
@@ -36,7 +38,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Inquiries</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("total_inquiries")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -59,7 +61,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("pending_applications")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -75,12 +77,12 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isLoading ? "..." : dashboardData.pendingApplications}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <p className="text-xs text-muted-foreground">{t("awaiting_review")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accepted Admissions</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("accepted_admissions")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -101,7 +103,7 @@ export const AdmissionDashboard: React.FC<AdmissionDashboardProps> = ({ trends }
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Interviews</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("upcoming_interviews")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"

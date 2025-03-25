@@ -407,7 +407,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     return (
       <div className="p-6">
         <Button variant="outline" onClick={handleBackToList} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
         </Button>
 
         <Card className="bg-red-50 border-red-200">

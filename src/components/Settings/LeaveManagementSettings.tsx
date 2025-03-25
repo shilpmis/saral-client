@@ -547,7 +547,7 @@ export function LeaveManagementSettings() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">{DialogForLeaveType.type === 'edit' ? t("update") : "Create"}</Button>
+                <Button type="submit">{DialogForLeaveType.type === 'edit' ? t("update") : t("create")}</Button>
               </DialogFooter>
             </form>
           </Form>

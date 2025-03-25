@@ -124,7 +124,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Fee Plan Details</DialogTitle>
+          <DialogTitle className="text-2xl">{t("fee_plan_details")}</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
@@ -139,9 +139,9 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
           </div>
         ) : isError ? (
           <div className="p-6 text-center">
-            <p className="text-red-500">Failed to load fee plan details. Please try again.</p>
+            <p className="text-red-500">{t("failed_to_load_fee_plan_details._please_try_again.")}</p>
             <Button onClick={() => fetchDetailFeePlan({ plan_id: planId!, academic_session : academic_sessions })} className="mt-4">
-              Retry
+              {t("retry")}
             </Button>
           </div>
         ) : feePlanDetails ? (
@@ -150,19 +150,19 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
               <h2 className="text-xl font-bold">{feePlanDetails.fees_plan.name}</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
-                  <Printer className="mr-2 h-4 w-4" /> Print
+                  <Printer className="mr-2 h-4 w-4" /> {t("print")}
                 </Button>
                 <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" /> Export
+                  <Download className="mr-2 h-4 w-4" /> {t("export")}
                 </Button>
               </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="installments">Installments</TabsTrigger>
-                <TabsTrigger value="concessions">Concessions</TabsTrigger>
+                <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
+                <TabsTrigger value="installments">{t("installments")}</TabsTrigger>
+                <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -171,13 +171,13 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
                         <CreditCard className="mr-2 h-5 w-5" />
-                        Total Amount
+                        {t("total_amount")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-bold">{formatCurrency(feePlanDetails.fees_plan.total_amount)}</p>
                       <p className="text-sm text-muted-foreground">
-                        For Academic Year {feePlanDetails.fees_plan.academic_session_id}
+                        {t("for_academic_year")} {feePlanDetails.fees_plan.academic_session_id}
                       </p>
                     </CardContent>
                   </Card>
@@ -186,7 +186,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
                         <Calendar className="mr-2 h-5 w-5" />
-                        Installments
+                        {t("installments")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -201,7 +201,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
                         <Tag className="mr-2 h-5 w-5" />
-                        Status
+                        {t("status")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -220,7 +220,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Fee Plan Summary</CardTitle>
+                    <CardTitle>{t("fee_plan_summary")}</CardTitle>
                     <CardDescription>
                       {feePlanDetails.fees_plan.description || "No description provided"}
                     </CardDescription>
@@ -228,7 +228,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Fee Types Breakdown</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">{t("fee_types_breakdown")}</h3>
                         <div className="mt-2">
                           {feePlanDetails.fees_types.map((feeType, index) => {
                             const feeTypeAmount = Number(feeType.fees_type.total_amount)
@@ -255,7 +255,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                       <Separator />
 
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Concessions Applied</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">{t("concessions_applied")}</h3>
                         {feePlanDetails.consession && feePlanDetails.consession.length > 0 ? (
                           <div className="mt-2 space-y-2">
                             {feePlanDetails.consession.map((concession, index) => (
@@ -272,7 +272,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm mt-2">No concessions applied to this fee plan</p>
+                          <p className="text-sm mt-2">{t("no_concessions_applied_to_this_fee_plan")}</p>
                         )}
                       </div>
                     </div>
@@ -283,8 +283,8 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
               <TabsContent value="installments">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Installment Details</CardTitle>
-                    <CardDescription>All installments across different fee types</CardDescription>
+                    <CardTitle>{t("installment_details")}</CardTitle>
+                    <CardDescription>{t("all_installments_across_different_fee_types")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {feePlanDetails.fees_types.map((feeType, index) => (
@@ -301,10 +301,10 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Installment #</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>{t("installment")} #</TableHead>
+                                <TableHead>{t("due_date")}</TableHead>
+                                <TableHead>{t("amount")}</TableHead>
+                                <TableHead>{t("status")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>

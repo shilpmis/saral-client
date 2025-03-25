@@ -905,17 +905,17 @@ export const Staff: React.FC = () => {
                     <span className="bg-green-50 px-2 py-1 rounded border border-green-200 text-green-500 mr-1">
                       ✓
                     </span>
-                    <span>Valid data</span>
+                    <span>{t("valid_data")}</span>
                   </div>
                   <div className="flex items-center">
                     <span className="bg-red-50 px-2 py-1 rounded border border-red-200 text-red-500 mr-1">i</span>
-                    <span>Invalid data with error message</span>
+                    <span>{t("invalid_data_with_error_message")}</span>
                   </div>
                 </div>
               </div>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Validation Summary</CardTitle>
+                  <CardTitle className="text-sm">{t("validation_summary")}</CardTitle>
                   <div className="text-xs text-muted-foreground mt-1">
                     Showing all {uploadResults.length} rows: {uploadResults.filter((r) => !r.hasErrors).length} valid,{" "}
                     <span className="font-bold text-red-500">
@@ -947,7 +947,7 @@ export const Staff: React.FC = () => {
                           scope="col"
                           className="px-3 py-2 text-center text-xs font-medium text-black uppercase tracking-wider w-16"
                         >
-                          Status
+                          {t("status")}
                         </th>
                       </tr>
                     </thead>
