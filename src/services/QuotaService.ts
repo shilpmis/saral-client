@@ -7,6 +7,7 @@ export interface Quota {
   name: string
   description: string
   eligibility_criteria: string
+  academic_session_id: number
 }
 
 export interface QuotaRequest {
@@ -82,37 +83,40 @@ export const QuotaApi = createApi({
   tagTypes: ["Quota", "Seats"],
   endpoints: (builder) => ({
     getQuotas: builder.query<Quota[], void>({
-      query: () => "quota/all",
+      query: (academic_session_id) => `quota/all?academic_session_id=${academic_session_id}`,
       providesTags: ["Quota"],
     }),
-    getQuotaAllocations: builder.query<QuotaAllocation[], void>({
-      query: () => "quota-allocation/all",
+    getQuotaAllocations: builder.query<any, void>({
+      query: () => `quota-allocation/all`,
       providesTags: ["Quota"],
     }),
-    addQuota: builder.mutation<Quota, QuotaRequest>({
-      query: (quota) => ({
-        url: "quota",
-        method: "POST",
-        body: quota,
-      }),
+    addQuota: builder.mutation<Quota, QuotaRequest & { academic_session_id: number }>({
+      query: (data) => {
+        const { academic_session_id, ...quota } = data
+        return {
+          url: `quota?academic_session_id=${academic_session_id}`,
+          method: "POST",
+          body: quota,
+        }
+      },
       invalidatesTags: ["Quota"],
     }),
-    updateQuota: builder.mutation<Quota, { id: number; quota: QuotaRequest }>({
-      query: ({ id, quota }) => ({
-        url: `quota/${id}`,
+    updateQuota: builder.mutation<Quota, { id: number; quota: QuotaRequest; academic_session_id: number }>({
+      query: ({ id, quota, academic_session_id }) => ({
+        url: `quota/${id}?academic_session_id=${academic_session_id}`,
         method: "PUT",
         body: quota,
       }),
       invalidatesTags: ["Quota"],
     }),
-    deleteQuota: builder.mutation<void, number>({
-      query: (id) => ({
-        url: `quota/${id}`,
+    deleteQuota: builder.mutation<void, { id: number; academic_session_id: number }>({
+      query: ({ id, academic_session_id }) => ({
+        url: `quota/${id}?academic_session_id=${academic_session_id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Quota"],
     }),
-    
+
     // New endpoints for seat management
     getClassSeatAvailability: builder.query<ClassSeatAvailability[], void>({
       query: () => "classes/seat-availability/all",

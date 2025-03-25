@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2 } from "lucide-react"
 import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotaAllocationsQuery, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 export default function QuotaManagement() {
   const { data: quotas, isLoading, isError, error } = useGetQuotasQuery()
@@ -35,7 +36,7 @@ export default function QuotaManagement() {
     description: "",
     eligibility_criteria: "",
   })
-
+  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
   useEffect(()=> {
     console.log("newQuota", newQuota);
   }, [newQuota])
@@ -51,7 +52,9 @@ export default function QuotaManagement() {
   const handleAddQuota = async () => {
     try {
       console.log("newQuota", newQuota)
-      await addQuota(newQuota).unwrap()
+      await addQuota(
+        {...newQuota, academic_session_id: currentAcademicSession.id}
+      ).unwrap()
       resetForm()
       setIsDialogOpen(false)
     } catch (err) {
@@ -66,6 +69,7 @@ export default function QuotaManagement() {
       await updateQuota({
         id: editingId,
         quota: newQuota,
+        academic_session_id: currentAcademicSession.id
       }).unwrap()
       resetForm()
       setIsDialogOpen(false)
@@ -78,7 +82,7 @@ export default function QuotaManagement() {
 
   const handleDeleteQuota = async (id: number) => {
     try {
-      await deleteQuota(id).unwrap()
+      await deleteQuota({ id, academic_session_id: currentAcademicSession.id }).unwrap()
     } catch (err) {
       console.error("Failed to delete quota:", err)
     }
@@ -264,7 +268,7 @@ export default function QuotaManagement() {
                 </TableHeader>
                 <TableBody>
                   {allocations && allocations.length > 0 ? (
-                    allocations.map((allocation) => (
+                    allocations.map((allocation:any) => (
                       <TableRow key={allocation.id}>
                         <TableCell className="font-medium">{allocation?.quota.name}</TableCell>
                         <TableCell>{allocation?.total_seats}</TableCell>
