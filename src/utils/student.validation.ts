@@ -6,7 +6,7 @@ import { z } from 'zod'
 // Define the schema for student data
 export const studentSchema = z.object({
 
-  enrollment_id : z.string().min(5, 'Enrollment ID is required').nullable(),
+  // enrollment_id : z.string().min(5, 'Enrollment ID is required').nullable(),
   // Personal Details
   first_name: z
     .string()
