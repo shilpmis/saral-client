@@ -140,7 +140,6 @@
   "add_fee-strucutre": "ફી સંરચના ઉમેરો",
   "manage": "મેનેજ કરો",
   "user_management": "વપરાશકર્તા મેનેજમેન્ટ",
-  "settings": "સેટિંગ્સ",
   "active": "સક્રિય",
   "inactive": "નિષ્ક્રિય",
   "all": "તમામ",
@@ -734,5 +733,9 @@
   "manage_the_total_number_of_seats_available_for_each_class": "દરેક વર્ગ માટે ઉપલબ્ધ કુલ સીટોનું વ્યવસ્થાપન કરો",
   "filter_by": "ફિલ્ટર કરો",
   "edit_fee_plan": "ફી યોજના સંપાદિત કરો",
-  "manage_users_and_their_permissions_in_the_system": "સિસ્ટમમાં વપરાશકર્તાઓ અને તેમની પરવાનગીઓનું સંચાલન કરો"
+  "manage_users_and_their_permissions_in_the_system": "સિસ્ટમમાં વપરાશકર્તાઓ અને તેમની પરવાનગીઓનું સંચાલન કરો",
+  "start_month" : "મહિનો શરૂ કરો",
+  "end_month" : "મહિનો અંત",
+  "start_year" : "વર્ષ શરૂ કરો",
+  "end_year" : "વર્ષ અંત"
 }

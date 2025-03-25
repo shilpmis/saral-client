@@ -154,7 +154,7 @@
   "general_management": "General Management",
   "notifications": "Notification",
   "school_settings": "School Settings",
-  "academic_management": "Acadamic Management",
+  "academic_management": "Academic Management",
   "payroll_management": "Payroll Management",
   "general_settings": "General Settings",
   "basic_school_data": "Basic School Data",
@@ -263,7 +263,6 @@
   "free": "Free",
   "basic": "Basic",
   "premium": "Premium",
-  "settings": "Settings",
   "no_staff_role_available": "No Staff Role Available",
   "please_create_role_for_your_school_staff!": "Please create role for your school staff!",
   "edit_class": "Edit Class",
@@ -734,5 +733,9 @@
   "available_seats_by_class": "Available Seats by Class",
   "manage_the_total_number_of_seats_available_for_each_class": "Manage the total number of seats available for each class",
   "filter_by": "Filter By",
-  "manage_users_and_their_permissions_in_the_system": "Manage users and their permissions in the system"
+  "manage_users_and_their_permissions_in_the_system": "Manage users and their permissions in the system",
+  "start_month": "Start Month",
+  "end_month": "End Month",
+  "start_year": "Start Year",
+  "end_year": "End Year"
 }
