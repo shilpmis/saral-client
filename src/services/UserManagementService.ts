@@ -59,10 +59,7 @@ export const UserManagementApi = createApi({
       }),
     }),
     fetchNonOnBoardedTeacher: builder.query<
-      Pick<
-        StaffType,
-        "first_name" | "last_name" | "middle_name" | "staff_role_id" | "id"
-      >[],
+      StaffType[],
       { page: number; school_id: number; academic_sessions: number }
     >({
       query: ({ page, academic_sessions }) => ({
@@ -98,7 +95,7 @@ export const UserManagementApi = createApi({
       }
     >({
       query: ({ user_id, payload }) => ({
-        url: `user/onboard/teacher/${user_id}`,
+        url: `user/onboard/staff/${user_id}`,
         method: "PUT",
         body: payload,
       }),

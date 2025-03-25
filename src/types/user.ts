@@ -45,13 +45,11 @@ export interface User {
   name: string;
   role: UserRole;
   role_id: number;
-  is_teacher: boolean;
   is_active: boolean;
-  teacher_id: number | null;
+  staff_id: number | null;
   permissions: string[];
-  teacher: StaffType | null;
   school: School;
-  staff: StaffType;
+  staff: StaffType | null;
 }
 
 export enum UserRole {

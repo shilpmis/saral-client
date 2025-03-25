@@ -1,4 +1,4 @@
-import { LeaveApplicationForOtherStaff, LeaveApplicationForTeachingStaff } from "@/types/leave"
+import { LeaveApplication } from "@/types/leave"
 // import { Badge, Table } from "lucide-react"
 import {
     Table,
@@ -16,7 +16,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation";
 
 interface LeaveRequestsTableProps {
     staff_type: "teacher" | "other",
-    leaveRequests: { applications: LeaveApplicationForTeachingStaff[], page: PageMeta } | { applications: LeaveApplicationForOtherStaff[], page: PageMeta } | null
+    leaveRequests: { applications: LeaveApplication[], page: PageMeta } |  null
     handleStatusChange: (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => void
     onPageChange: (page: number) => void
 }
@@ -42,8 +42,10 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     const handlePageChange = (page: number) => {
         onPageChange(page);
     }
+ 
+    const {t} = useTranslation();
 
-    const {t} = useTranslation()
+    console.log("Check this here", leaveRequests);
     return (
         <div>
             <Table>
@@ -68,21 +70,24 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                 <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
                             </TableCell>
                             <TableCell>
-                                {request.status === "pending" && (
                                     <>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleStatusChange(request.uuid, "approved" ,  staff_type)}
                                             className="mr-2"
+                                            disabled={request.status == "pending"}
                                         >
                                             {t("approve")}
                                         </Button>
-                                        <Button variant="outline" size="sm" onClick={() => handleStatusChange(request.uuid, "rejected" , staff_type)}>
+                                        <Button 
+                                        variant="outline"
+                                         size="sm"
+                                         disabled={request.status == "rejected"} 
+                                         onClick={() => handleStatusChange(request.uuid, "rejected" , staff_type)}>
                                             {t("reject")}
                                         </Button>
                                     </>
-                                )}
                             </TableCell>
                         </TableRow>
                     ))}

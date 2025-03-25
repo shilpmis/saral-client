@@ -1,9 +1,9 @@
-import { TeachingStaff } from "./staff";
+import { StaffType } from "./staff";
 import { School } from "./user";
 
 export interface LoginCredentials {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
@@ -14,12 +14,11 @@ export interface LoginResponse {
     saral_email: string;
     name: string;
     role_id: number;
-    is_teacher: boolean;
     is_active: boolean;
-    teacher_id: number | null;
+    staff_id: number | null;
     permissions: string[];
-    teacher: TeachingStaff;
-    school: School
-  },
-  token: string
+    staff: StaffType;
+    school: School;
+  };
+  token: string;
 }
