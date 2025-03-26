@@ -620,7 +620,6 @@
   "admission_inquiries_by_class_over_time": "સમય પર વર્ગ દ્વારા પ્રવેશ પૂછપરછ",
   "thank_you_for_submitting_your_admission_inquiry": "તમારી પ્રવેશ પૂછપરછ સબમિટ કરવા માટે આભાર",
   "please_fill_out_this_form_to_submit_an_admission_inquiry_for_your_child": "તમારા બાળક માટે પ્રવેશ પૂછપરછ સબમિટ કરવા માટે આ ફોર્મ ભરો",
-  "admission_inquiry_form": "પ્રવેશ પૂછપરછ ફોર્મ",
   "parent_information": "પેરન્ટ માહિતી",
   "previous_education": "પૂર્વ શિક્ષણ",
   "student_full_name": "વિદ્યાર્થી પૂરુ નામ",
@@ -746,5 +745,8 @@
   "onboard" : "ઓનબોર્ડ",
   "complete_the_student_details_to_enroll_them_in_the_school" : "વિદ્યાર્થીની વિગતો પૂરી કરો તેમને શાળામાં નોંધવા માટે",
   "please_fill_out_this_form_to_submit_an_admission_inquiry" : "પ્રવેશ પૂછપરછ સબમિટ કરવા માટે આ ફોર્મ ભરો",
-  "admission_inquiry_form" : "પ્રવેશ પૂછપરછ ફોર્મ"
+  "admission_inquiry_form" : "પ્રવેશ પૂછપરછ ફોર્મ",
+  "confirm_rejection" : "નકારવાની પુષ્ટિ કરો",
+  "update_inquiry_details" : "પૂછપરછ વિગતો અપડેટ કરો",
+  "edit_inquiry" : "પૂછપરછ સંપાદિત કરો"
 }

@@ -16,9 +16,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Loader2 } from "lucide-react"
-import { useAddQuotaMutation, useDeleteQuotaMutation, useGetQuotaAllocationsQuery, useGetQuotasQuery, useUpdateQuotaMutation } from "@/services/QuotaService"
+import { Loader2, ChevronLeft } from 'lucide-react'
+import {
+  useAddQuotaMutation,
+  useDeleteQuotaMutation,
+  useGetQuotaAllocationsQuery,
+  useGetQuotasQuery,
+  useUpdateQuotaMutation,
+} from "@/services/QuotaService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { toast } from "@/hooks/use-toast"
+import { Link } from "react-router-dom"
 
 export default function QuotaManagement() {
   const { data: quotas, isLoading, isError, error } = useGetQuotasQuery()
@@ -26,38 +34,89 @@ export default function QuotaManagement() {
     data: allocations,
     isLoading: isLoadingAllocations,
     isError: isErrorAllocations,
+    error: allocationsError,
   } = useGetQuotaAllocationsQuery()
-  const [addQuota] = useAddQuotaMutation()
-  const [updateQuota] = useUpdateQuotaMutation()
-  const [deleteQuota] = useDeleteQuotaMutation()
+  const [addQuota, { isLoading: isAddingQuota, isError: isAddError, error: addError }] = useAddQuotaMutation()
+  const [updateQuota, { isLoading: isUpdatingQuota, isError: isUpdateError, error: updateError }] =
+    useUpdateQuotaMutation()
+  const [deleteQuota, { isLoading: isDeletingQuota, isError: isDeleteError, error: deleteError }] =
+    useDeleteQuotaMutation()
 
   const [newQuota, setNewQuota] = useState({
     name: "",
     description: "",
     eligibility_criteria: "",
   })
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
-  useEffect(()=> {
-    console.log("newQuota", newQuota);
-  }, [newQuota])
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
 
+  // Display error toast when fetching quotas fails
   useEffect(() => {
-    console.log("allocations", allocations)
-  }, [allocations])
+    if (isError && error) {
+      const errorMessage = getErrorMessage(error)
+      toast({
+        title: "Error loading quotas",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [isError, error])
+
+  // Display error toast when fetching allocations fails
+  useEffect(() => {
+    if (isErrorAllocations && allocationsError) {
+      const errorMessage = getErrorMessage(allocationsError)
+      toast({
+        title: "Error loading quota allocations",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [isErrorAllocations, allocationsError])
+
+  // Helper function to extract error message from different error formats
+  const getErrorMessage = (error: any): string => {
+    if (error?.data?.errors?.messages) {
+      // Handle structured API errors
+      return error.data.errors.messages.map((msg: any) => msg.message).join(", ")
+    } else if (error?.data?.message) {
+      // Handle simple message format
+      return error.data.message
+    } else if (error?.message) {
+      // Handle JS error objects
+      return error.message
+    } else if (typeof error === "string") {
+      // Handle string errors
+      return error
+    } else {
+      // Fallback for unknown error formats
+      return "An unknown error occurred"
+    }
+  }
 
   const handleAddQuota = async () => {
     try {
-      console.log("newQuota", newQuota)
-      await addQuota(
-        {...newQuota, academic_session_id: currentAcademicSession.id}
-      ).unwrap()
+      await addQuota({ ...newQuota, academic_session_id: currentAcademicSession.id }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "Quota added successfully",
+      })
+
       resetForm()
       setIsDialogOpen(false)
-    } catch (err) {
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err)
+
+      toast({
+        title: "Failed to add quota",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
       console.error("Failed to add quota:", err)
     }
   }
@@ -69,13 +128,27 @@ export default function QuotaManagement() {
       await updateQuota({
         id: editingId,
         quota: newQuota,
-        academic_session_id: currentAcademicSession.id
+        academic_session_id: currentAcademicSession.id,
       }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "Quota updated successfully",
+      })
+
       resetForm()
       setIsDialogOpen(false)
       setIsEditing(false)
       setEditingId(null)
-    } catch (err) {
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err)
+
+      toast({
+        title: "Failed to update quota",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
       console.error("Failed to update quota:", err)
     }
   }
@@ -83,7 +156,20 @@ export default function QuotaManagement() {
   const handleDeleteQuota = async (id: number) => {
     try {
       await deleteQuota({ id, academic_session_id: currentAcademicSession.id }).unwrap()
-    } catch (err) {
+
+      toast({
+        title: "Success",
+        description: "Quota deleted successfully",
+      })
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err)
+
+      toast({
+        title: "Failed to delete quota",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
       console.error("Failed to delete quota:", err)
     }
   }
@@ -115,20 +201,18 @@ export default function QuotaManagement() {
     )
   }
 
-  // if (isError) {
-  //   return (
-  //     <div className="container mx-auto py-10">
-  //       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-  //         <p>Error loading quotas: {JSON.stringify(error)}</p>
-  //       </div>
-  //     </div>
-  //   )
-  // }
-
-
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
+        {/* Back button */}
+        <Link 
+          to="/d/settings/admission" 
+          className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4 w-fit"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back to Admission Settings
+        </Link>
+        
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Quota Management</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -187,8 +271,20 @@ export default function QuotaManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={isEditing ? handleUpdateQuota : handleAddQuota}>
-                  {isEditing ? "Update Quota" : "Save Quota"}
+                <Button
+                  onClick={isEditing ? handleUpdateQuota : handleAddQuota}
+                  disabled={isAddingQuota || isUpdatingQuota}
+                >
+                  {isAddingQuota || isUpdatingQuota ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditing ? "Updating..." : "Saving..."}
+                    </>
+                  ) : isEditing ? (
+                    "Update Quota"
+                  ) : (
+                    "Save Quota"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -222,8 +318,13 @@ export default function QuotaManagement() {
                           <Button variant="outline" size="sm" onClick={() => handleEditClick(quota)}>
                             Edit
                           </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteQuota(quota.id)}>
-                            Delete
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteQuota(quota.id)}
+                            disabled={isDeletingQuota}
+                          >
+                            {isDeletingQuota ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
                           </Button>
                         </div>
                       </TableCell>
@@ -251,10 +352,6 @@ export default function QuotaManagement() {
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : isErrorAllocations ? (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                <p>Error loading quota allocations</p>
-              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -268,13 +365,15 @@ export default function QuotaManagement() {
                 </TableHeader>
                 <TableBody>
                   {allocations && allocations.length > 0 ? (
-                    allocations.map((allocation:any) => (
+                    allocations.map((allocation: any) => (
                       <TableRow key={allocation.id}>
                         <TableCell className="font-medium">{allocation?.quota.name}</TableCell>
                         <TableCell>{allocation?.total_seats}</TableCell>
                         <TableCell>{allocation?.filled_seats}</TableCell>
                         <TableCell>{allocation?.total_seats - allocation?.filled_seats}</TableCell>
-                        <TableCell>{typeof allocation?.class === "object" ? allocation?.class?.class : "N/A"}</TableCell>
+                        <TableCell>
+                          {typeof allocation?.class === "object" ? allocation?.class?.class : "N/A"}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -293,4 +392,3 @@ export default function QuotaManagement() {
     </div>
   )
 }
-
