@@ -34,6 +34,7 @@ export interface StudentMeta {
   secondary_mobile: number | null;
   privious_school: string | null;
   privious_school_in_guj: string | null;
+  address: string | null;
   district: string | null;
   city: string | null;
   state: string | null;
@@ -65,7 +66,6 @@ export interface Student {
   roll_number: number | null;
   aadhar_no: number | null;
   is_active: boolean;
-  address: string | null;
   student_meta?: StudentMeta;
   acadamic_class: StudentEnrollment[];
 }

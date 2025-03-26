@@ -318,7 +318,6 @@ const StudentForm: React.FC<StudentFormProps> = ({
           mother_name_in_guj: values.mother_name_in_guj,
           roll_number: values.roll_number,
           aadhar_no: values.aadhar_no,
-          address: values.address,
           is_active: true,
         },
         student_meta_data: {
@@ -335,7 +334,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           secondary_mobile: values.secondary_mobile,
           privious_school: values.privious_school,
           privious_school_in_guj: values.privious_school_in_guj,
-          // address: values.address,
+          address: values.address,
           district: values.district,
           city: values.city,
           state: values.state,
@@ -570,128 +569,113 @@ const StudentForm: React.FC<StudentFormProps> = ({
   }, [activeTab])
 
   useEffect(() => {
-    if (initial_data) {
-      if (form_type === "update") {
-        const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
-        if (CurrentClass) handleClassChange(CurrentClass.class, "class")
-        if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
+    if (form_type === "update") {
+      const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      if (CurrentClass) handleClassChange(CurrentClass.class, "class")
+      if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
 
-        const CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      const CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
 
-        const AdmissionClass = available_classes?.filter(
-          (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
-        )[0]
+      const AdmissionClass = available_classes?.filter(
+        (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
+      )[0]
 
-        if (AdmissionClass) handleClassChange(AdmissionClass.class, "admission_Class")
-        if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
+      if (AdmissionClass) handleClassChange(AdmissionClass.class, "admission_Class")
+      if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
-        const AdmissionDivision = available_classes?.filter(
-          (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
-        )[0]
+      const AdmissionDivision = available_classes?.filter(
+        (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
+      )[0]
 
-        form.reset({
-          first_name: initial_data?.first_name,
-          last_name: initial_data?.last_name,
-          middle_name: initial_data?.middle_name ? initial_data?.middle_name : null,
-          first_name_in_guj: initial_data?.first_name_in_guj,
-          middle_name_in_guj: initial_data?.middle_name_in_guj,
-          gender: initial_data?.gender,
-          birth_date: initial_data?.birth_date ? formatData(initial_data.birth_date) : "",
-          gr_no: initial_data?.gr_no,
-          primary_mobile: initial_data?.primary_mobile,
-          father_name: initial_data?.father_name,
-          father_name_in_guj: initial_data?.father_name_in_guj,
-          mother_name: initial_data?.mother_name,
-          mother_name_in_guj: initial_data?.mother_name_in_guj,
-          roll_number: initial_data?.roll_number,
-          aadhar_no: initial_data?.aadhar_no ? Number(initial_data?.aadhar_no) : undefined,
-          aadhar_dise_no: initial_data?.student_meta?.aadhar_dise_no
-            ? Number(initial_data?.student_meta?.aadhar_dise_no)
-            : undefined,
-          birth_place: initial_data?.student_meta?.birth_place,
-          birth_place_in_guj: initial_data?.student_meta?.birth_place_in_guj,
-          religion: initial_data?.student_meta?.religion,
-          religion_in_guj: initial_data?.student_meta?.religion_in_guj,
-          caste: initial_data?.student_meta?.caste,
-          caste_in_guj: initial_data?.student_meta?.caste_in_guj,
-          category: initial_data?.student_meta?.category,
-          privious_school: initial_data?.student_meta?.privious_school,
-          privious_school_in_guj: initial_data?.student_meta?.privious_school_in_guj,
-          // address: initial_data?.student_meta?.address,
-          district: initial_data?.student_meta?.district,
-          city: initial_data?.student_meta?.city,
-          state: initial_data?.student_meta?.state,
-          postal_code: initial_data?.student_meta?.postal_code
-            ? initial_data.student_meta.postal_code.toString()
-            : null,
-          bank_name: initial_data?.student_meta?.bank_name,
-          account_no: initial_data?.student_meta?.account_no ? Number(initial_data?.student_meta?.account_no) : null,
-          admission_date: initial_data!.student_meta!.admission_date
-            ? formatData(initial_data!.student_meta!.admission_date)
-            : null,
-          IFSC_code: initial_data?.student_meta?.IFSC_code || null,
-          last_name_in_guj: initial_data?.last_name_in_guj,
-          secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-          admission_class: AdmissionDivision?.class ? AdmissionDivision?.class : null,
-          admission_division: AdmissionDivision?.division ? AdmissionDivision?.division : null,
-          class: CurrentDivision?.class,
-          division: CurrentDivision?.division,
-        })
-      } else if (form_type === "create") {
-        // For create mode with initial data (from inquiry)
-        console.log("Setting initial data for create mode:", initial_data)
+      form.reset({
+        first_name: initial_data?.first_name,
+        last_name: initial_data?.last_name,
+        middle_name: initial_data?.middle_name ? initial_data?.middle_name : null,
+        first_name_in_guj: initial_data?.first_name_in_guj,
+        middle_name_in_guj: initial_data?.middle_name_in_guj,
+        gender: initial_data?.gender,
+        birth_date: initial_data?.birth_date ? formatData(initial_data.birth_date) : "",
+        gr_no: initial_data?.gr_no,
+        primary_mobile: initial_data?.primary_mobile,
+        father_name: initial_data?.father_name,
+        father_name_in_guj: initial_data?.father_name_in_guj,
+        mother_name: initial_data?.mother_name,
+        mother_name_in_guj: initial_data?.mother_name_in_guj,
+        roll_number: initial_data?.roll_number,
+        aadhar_no: initial_data?.aadhar_no ? Number(initial_data?.aadhar_no) : undefined,
+        aadhar_dise_no: initial_data?.student_meta?.aadhar_dise_no
+          ? Number(initial_data?.student_meta?.aadhar_dise_no)
+          : undefined,
+        birth_place: initial_data?.student_meta?.birth_place,
+        birth_place_in_guj: initial_data?.student_meta?.birth_place_in_guj,
+        religion: initial_data?.student_meta?.religion,
+        religion_in_guj: initial_data?.student_meta?.religion_in_guj,
+        caste: initial_data?.student_meta?.caste,
+        caste_in_guj: initial_data?.student_meta?.caste_in_guj,
+        category: initial_data?.student_meta?.category,
+        privious_school: initial_data?.student_meta?.privious_school,
+        privious_school_in_guj: initial_data?.student_meta?.privious_school_in_guj,
+        // address: initial_data?.student_meta?.address,
+        district: initial_data?.student_meta?.district,
+        city: initial_data?.student_meta?.city,
+        state: initial_data?.student_meta?.state,
+        postal_code: initial_data?.student_meta?.postal_code ? initial_data.student_meta.postal_code.toString() : null,
+        bank_name: initial_data?.student_meta?.bank_name,
+        account_no: initial_data?.student_meta?.account_no ? Number(initial_data?.student_meta?.account_no) : null,
+        admission_date: initial_data!.student_meta!.admission_date
+          ? formatData(initial_data!.student_meta!.admission_date)
+          : null,
+        IFSC_code: initial_data?.student_meta?.IFSC_code || null,
+        last_name_in_guj: initial_data?.last_name_in_guj,
+        secondary_mobile: initial_data!.student_meta!.secondary_mobile,
+        admission_class: AdmissionDivision?.class ? AdmissionDivision?.class : null,
+        admission_division: AdmissionDivision?.division ? AdmissionDivision?.division : null,
+        class: CurrentDivision?.class,
+        division: CurrentDivision?.division,
+      })
+    } else if (form_type === "create" && initial_data) {
+      // For create mode when initial data is provided (student onboarding from inquiry)
+      const classApplying = initial_data.class_id ? initial_data.class_id.toString() : ""
 
-        // Find the class from the class_id in initial_data
-        if (initial_data.class_id && available_classes) {
-          const classObj = available_classes.find((cls) => cls.id === Number(initial_data.class_id))
-          if (classObj) {
-            handleClassChange(classObj.class.toString(), "class")
-            setSelectedClass(classObj.class.toString())
+      // Set selectedClass state based on initial data
+      if (classApplying && AcademicClasses) {
+        const matchingClass = AcademicClasses.find((cls) => cls.class.toString() === classApplying)
 
-            // // Find the division
-            // const divisionObj = classObj.division.find((div) => div.id === Number(initial_data.class_id))
-            // if (divisionObj) {
-            //   handleDivisionChange(divisionObj.id.toString(), "class")
-            //   setSelectedDivision(divisionObj)
-            // }
+        if (matchingClass) {
+          setSelectedClass(matchingClass.class.toString())
+
+          // Find first available division for this class
+          if (matchingClass.divisions.length > 0) {
+            setSelectedDivision(matchingClass.divisions[0])
+            form.setValue("division", matchingClass.divisions[0].division)
           }
         }
-
-        // Reset form with initial data
-        form.reset({
-          first_name: initial_data.first_name || "",
-          middle_name: initial_data.middle_name || null,
-          last_name: initial_data.last_name || "",
-          first_name_in_guj: initial_data.first_name_in_guj || null,
-          middle_name_in_guj: initial_data.middle_name_in_guj || null,
-          last_name_in_guj: initial_data.last_name_in_guj || null,
-          gender: initial_data.gender || "Male",
-          birth_date: initial_data.birth_date || "",
-          gr_no: initial_data.gr_no || undefined,
-          primary_mobile: initial_data.primary_mobile || undefined,
-          father_name: initial_data.father_name || null,
-          father_name_in_guj: initial_data.father_name_in_guj || null,
-          mother_name: initial_data.mother_name || null,
-          mother_name_in_guj: initial_data.mother_name_in_guj || null,
-          roll_number: initial_data.roll_number || null,
-          aadhar_no: initial_data.aadhar_no || null,
-          address: initial_data.address || null,
-          // district: initial_data.district || null,
-          // city: initial_data.city || null,
-          // state: initial_data.state || null,
-          // postal_code: initial_data.postal_code || null,
-          // class: initial_data.class_id ? initial_data.class_id.toString() : undefined,
-          // division: initial_data.division || undefined,
-          // privious_school: initial_data.previous_school || null,
-          // privious_school_in_guj: initial_data.previous_school_in_guj || null,
-          // admission_class: initial_data.admission_class || null,
-          // admission_division: initial_data.admission_division || null,
-          // admission_date: initial_data.admission_date || "",
-          // category: initial_data.category || "OPEN",
-        })
       }
+
+      // Set initial form values from the inquiry data
+      form.reset({
+        first_name: initial_data.first_name || "",
+        middle_name: initial_data.middle_name || null,
+        last_name: initial_data.last_name || "",
+        first_name_in_guj: initial_data.first_name_in_guj || null,
+        middle_name_in_guj: initial_data.middle_name_in_guj || null,
+        last_name_in_guj: initial_data.last_name_in_guj || null,
+        gender: initial_data.gender || "Male",
+        birth_date: initial_data.birth_date ? formatData(initial_data.birth_date) : "",
+        gr_no: initial_data.gr_no,
+        primary_mobile: initial_data.primary_mobile,
+        father_name: initial_data.father_name || null,
+        father_name_in_guj: initial_data.father_name_in_guj || null,
+        mother_name: initial_data.mother_name || null,
+        mother_name_in_guj: initial_data.mother_name_in_guj || null,
+        class: classApplying,
+        // Other fields should be populated here from initial_data
+        // Set default values for required fields that might be missing in inquiry
+        // category: initial_data.category || "OPEN",
+        // Additional fields...
+      })
     }
-  }, [AcademicClasses, form_type, initial_data, available_classes, handleClassChange, handleDivisionChange, form])
+  }, [AcademicClasses, initial_data, form_type, form.reset])
 
   useEffect(() => {
     if (!AcademicClasses && authState.user) {

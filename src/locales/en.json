@@ -734,8 +734,13 @@
   "manage_the_total_number_of_seats_available_for_each_class": "Manage the total number of seats available for each class",
   "filter_by": "Filter By",
   "manage_users_and_their_permissions_in_the_system": "Manage users and their permissions in the system",
-  "start_month": "Start Month",
-  "end_month": "End Month",
-  "start_year": "Start Year",
-  "end_year": "End Year"
+  "enter_first_name" : "Enter First Name",
+  "enter_middle_name" : "Enter Middle Name",
+  "enter_last_name" : "Enter Last Name",
+  "are_you_sure_you_want_to_reject_this_application_this_action_cannot_be_undone" : "Are you sure you want to reject this application? This action cannot be undone",
+  "onboard_student" : "Onboard Student",
+  "onboard" : "Onboard",
+  "complete_the_student_details_to_enroll_them_in_the_school" : "Complete the student details to enroll them in the school",
+  "please_fill_out_this_form_to_submit_an_admission_inquiry" : "Please fill out this form to submit an admission inquiry",
+  "admission_inquiry_form" : "Admission Inquiry Form"
 }
