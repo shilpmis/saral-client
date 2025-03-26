@@ -9,54 +9,11 @@ import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/
 import { Division } from "@/types/academic"
 
 
-/**
- * 
- *  Fetch allocated classes 
- *  Fetch student for classes
- *  Verify attendance for a perticular day 
- *  post attendance
- *  fetch attendance for pertcular day
- *  edit attendance
- *   - set today date at time of first time render of component , to feel attendance for today
- *  
- * 
- * admin can view class , and date wise attendance 
- *  
- *   
- *  
- */
-
-// Mock data (replace with actual API calls in a real application)
-const mockClasses = [
-  { id: "1", name: "Class 5A" },
-  { id: "2", name: "Class 6B" },
-  { id: "3", name: "Class 7C" },
-]
-
-const mockStudents = {
-  "1": [
-    { id: "1", rollNumber: "001", name: "John Doe" },
-    { id: "2", rollNumber: "002", name: "Jane Smith" },
-    // ... more students
-  ],
-  "2": [
-    { id: "3", rollNumber: "001", name: "Alice Johnson" },
-    { id: "4", rollNumber: "002", name: "Bob Williams" },
-    // ... more students
-  ],
-  "3": [
-    { id: "5", rollNumber: "001", name: "Charlie Brown" },
-    { id: "6", rollNumber: "002", name: "Diana Clark" },
-    // ... more students
-  ],
-}
-
 const Attendance: React.FC = () => {
 
   const user = useAppSelector((state) => state.auth.user)
   const allAcademicClasses = useAppSelector(selectAllAcademicClasses)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-
 
   const [allocatedClasses, setAllocatedClasses] = useState<Division[] | null>(null)
   const [selectedClass, setSelectedClass] = useState<string | null>(null)
@@ -76,8 +33,8 @@ const Attendance: React.FC = () => {
 
   useEffect(() => {
     if (allAcademicClasses) {
-      if (user?.teacher?.class_id) {
-        let allocatedClass = allAcademicClasses.filter((cls) => cls.id === user?.teacher?.class_id)
+      if (user?.staff?.assigend_classes) {
+        let allocatedClass = user?.staff?.assigend_classes.map((cls) => cls.class)
         setAllocatedClasses(allocatedClass)
       } else {
         setAllocatedClasses([]);
@@ -92,9 +49,6 @@ const Attendance: React.FC = () => {
   if (!selectedClass && allocatedClasses) {
     return <TeacherClassSelection classes={allocatedClasses} />
   }
-
-  const selectedClassName = mockClasses.find((cls) => cls.id === selectedClass)?.name || ""
-  const studentsForClass = mockStudents[selectedClass as keyof typeof mockStudents] || []
 
   if (selectedClass) {
     return (

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } from "@/services/AttendanceServices"
 import type { AttendanceDetails } from "@/types/attendance"
 import { Loader2 } from "lucide-react"
@@ -20,9 +20,11 @@ interface StudentAttendanceViewProps {
 }
 
 const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }) => {
-  const user = useAppSelector(selectCurrentUser)
+
+  const user = useAppSelector(selectCurrentUser);
   const [fetchAttendanceForDate, { data: attendanceData, isLoading }] = useLazyFetchAttendanceForDateQuery()
-  const [markAttendanceForDate, { isLoading: isMarkingAttendance }] = useMarkAttendanceMutation()
+  const [markAttendanceForDate, { isLoading: isMarkingAttendance }] = useMarkAttendanceMutation();
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [ClassValidation, setClassValidation] = useState<{
@@ -95,9 +97,10 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
     if (attendanceData && selectedDate) {
       setAttendanceRecords({
         ...attendanceData,
+        academic_session_id : CurrentAcademicSessionForSchool!.id,
         class_id: Number(classId),
         date: selectedDate.toISOString().split("T")[0],
-        marked_by: user!.teacher!.id,
+        marked_by: user!.staff!.id,
       })
     }
   }, [attendanceData, classId, selectedDate, user])
@@ -110,7 +113,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
 
   useEffect(() => {
     if (user) {
-      if (user.teacher?.class_id == Number(classId)) {
+      if (user.staff!.assigend_classes.find((cls)=> cls.class_id === Number(classId))) {
         setClassValidation({
           isLoading: false,
           isValid: true,
@@ -129,6 +132,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
       fetchAttendanceForDate({
         class_id: Number(classId),
         unix_date: Math.floor(selectedDate.getTime() / 1000),
+        academic_session: CurrentAcademicSessionForSchool!.id
       })
     }
   }, [selectedDate, classId, fetchAttendanceForDate, isSunday, isFutureDate])
@@ -238,7 +242,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                 </Table>
 
                 <div className="mt-4 flex justify-end">
-                  <Button onClick={handleSubmit} disabled={isMarkingAttendance}>
+                  <Button onClick={handleSubmit} disabled={isMarkingAttendance || attendanceData?.is_marked}>
                     {isMarkingAttendance ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
