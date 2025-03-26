@@ -157,7 +157,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="birth_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("birth_date")}</FormLabel>
+                  <FormLabel>{t("date_of_birth")}</FormLabel>
                   <FormControl>
                     <Input type="date" placeholder={t("enter_your_date_of_birth")} {...field} />
                   </FormControl>
