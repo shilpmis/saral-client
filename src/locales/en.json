@@ -624,7 +624,6 @@
   "admission_inquiries_by_class_over_time": "Admission inquiries by class over time",
   "thank_you_for_submitting_your_admission_inquiry": "Thank you for submitting your admission inquiry",
   "please_fill_out_this_form_to_submit_an_admission_inquiry_for_your_child": "Please fill out this form to submit an admission inquiry for your child",
-  "admission_inquiry_form": "Admission Inquiry Form",
   "parent_information": "Parent Information",
   "previous_education": "Previous Education",
   "student_full_name": "Student Full Name",
@@ -742,5 +741,8 @@
   "onboard" : "Onboard",
   "complete_the_student_details_to_enroll_them_in_the_school" : "Complete the student details to enroll them in the school",
   "please_fill_out_this_form_to_submit_an_admission_inquiry" : "Please fill out this form to submit an admission inquiry",
-  "admission_inquiry_form" : "Admission Inquiry Form"
+  "admission_inquiry_form" : "Admission Inquiry Form",
+  "confirm_rejection" : "Confirm Rejection",
+  "edit_inquiry" : "Edit Inquiry",
+  "update_inquiry_details" : "Update Inquiry Details"
 }
