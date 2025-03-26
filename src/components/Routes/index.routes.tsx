@@ -42,6 +42,7 @@ import QuotaManagement from "../Settings/AdmissionSettings/QuotaSetting";
 import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting";
 import AdmissionInquiryForm from "../Admission/AdmissionInquiryForm";
 import InquiriesManagement from "../Admission/Inquiries";
+import { WelcomeDashboard } from "@/pages/WelcomeDashBoard";
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -72,7 +73,8 @@ export default function RootRoute() {
             }
           >
             {/* Dashboard */}
-            <Route index element={<DashboardPage />} />
+            {/* <Route index element={<DashboardPage />} /> */}
+            <Route index element={<WelcomeDashboard />} />
 
             {/* Students */}
             <Route

@@ -43,6 +43,7 @@ import type { Concession } from "@/types/fees"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ApplyConcessionToPlanData, applyConcessionToPlanSchema, ApplyConcessionToStudentData, applyConcessionToStudentSchema } from "@/utils/fees.validation"
+import { useNavigate } from "react-router-dom"
 
 interface ApplyConcessionFormProps {
   concession: Concession
@@ -55,6 +56,26 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const navigate = useNavigate();
+
+  if (!CurrentAcademicSessionForSchool) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <h2 className="text-xl font-semibold mb-4">No Active Academic Session</h2>
+          <p className="text-gray-600 mb-6">
+            Please set an active academic session to proceed.
+          </p>
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={() => navigate("/academic-sessions")}
+          >
+            Go to Academic Sessions
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Queries and mutations
   const [getFilterFeePlans, { data: feePlans, isLoading: isLoadingFeePlans }] = useLazyGetFilteredFeesPlanQuery()
@@ -611,6 +632,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         </Form>
       ) : (
         // Student Concession Form
+        <>
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -960,16 +982,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                         </>
                       ) : (
                         "Apply Concession"
-                      )}
+                      )}                    
                     </Button>
                   </DialogFooter>
                 </form>
               </Form>
             </DialogContent>
           </Dialog>
+                    
         </div>
-      )}
+        </>  
+        )
+      }
     </div>
   )
 }
-

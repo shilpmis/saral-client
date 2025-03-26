@@ -83,6 +83,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
       const new_user: any = await createUser({
         name: data.name,
         role_id: Number(data.role_id),
+        is_active: true
       })
       if (new_user.data) onSucssesfullChange(new_user.data)
       if (new_user.error) {
