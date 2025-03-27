@@ -59,7 +59,7 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("fee_type_name")}</FormLabel>
+              <FormLabel required>{t("fee_type_name")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -73,7 +73,7 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("description")}</FormLabel>
+              <FormLabel required>{t("description")}</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder={t("enter_the_description_for_this_fee_type.")}

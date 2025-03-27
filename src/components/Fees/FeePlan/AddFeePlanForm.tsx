@@ -636,7 +636,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                     name="fees_plan.name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("plan_name")}</FormLabel>
+                        <FormLabel required>{t("plan_name")}</FormLabel>
                         <FormControl>
                           <Input placeholder={t("enter_fee_plan_name")} {...field} />
                         </FormControl>
@@ -664,7 +664,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                     name="fees_plan.class_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("class")}</FormLabel>
+                        <FormLabel required>{t("class")}</FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(Number.parseInt(value))}
                           value={field.value ? field.value.toString() : undefined}
@@ -792,7 +792,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                 name={`fees_types.${index}.fees_type_id`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("fee_type")}</FormLabel>
+                                    <FormLabel required>{t("fee_type")}</FormLabel>
                                     <Select
                                       onValueChange={(value) => field.onChange(Number.parseInt(value))}
                                       value={field.value ? field.value.toString() : undefined}
@@ -833,7 +833,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                   name={`fees_types.${index}.installment_type`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("installment_type")}</FormLabel>
+                                      <FormLabel required>{t("installment_type")}</FormLabel>
                                       <Select
                                         onValueChange={(value) => {
                                           field.onChange(value)
@@ -865,7 +865,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                   name={`fees_types.${index}.total_installment`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("total_installments")}</FormLabel>
+                                      <FormLabel required>{t("total_installments")}</FormLabel>
                                       <FormControl>
                                         <Input
                                           type="text"
@@ -910,7 +910,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                   name={`fees_types.${index}.total_amount`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("total_amount")}</FormLabel>
+                                      <FormLabel required>{t("total_amount")}</FormLabel>
                                       <FormControl>
                                         <Input
                                           {...field}

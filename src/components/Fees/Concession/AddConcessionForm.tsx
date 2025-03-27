@@ -61,7 +61,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("concession_name")}</FormLabel>
+              <FormLabel required>{t("concession_name")}</FormLabel>
               <FormControl>
                 <Input {...field} placeholder={t("enter_concession_name")} />
               </FormControl>
@@ -78,7 +78,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("description")}</FormLabel>
+              <FormLabel required>{t("description")}</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
@@ -98,7 +98,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             name="applicable_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("applicable_to")}</FormLabel>
+                <FormLabel required>{t("applicable_to")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!initialData}>
                   <FormControl>
                     <SelectTrigger>
@@ -121,7 +121,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             name="concessions_to"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("concession_type")}</FormLabel>
+                <FormLabel required>{t("concession_type")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!initialData}>
                   <FormControl>
                     <SelectTrigger>
@@ -167,7 +167,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("category")}</FormLabel>
+              <FormLabel required>{t("category")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>

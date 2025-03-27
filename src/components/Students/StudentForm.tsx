@@ -671,7 +671,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("first_name")}</FormLabel>
+                        <FormLabel required>{t("first_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -697,7 +697,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("last_name")}</FormLabel>
+                        <FormLabel required>{t("last_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -774,7 +774,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="birth_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("date_of_birth")}</FormLabel>
+                        <FormLabel required>{t("date_of_birth")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -915,7 +915,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="primary_mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("mobile_no")}</FormLabel>
+                        <FormLabel required>{t("mobile_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -961,7 +961,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="gr_no"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("gr_no")}</FormLabel>
+                        <FormLabel required>{t("gr_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -989,7 +989,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="admission_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("admission_date")}</FormLabel>
+                        <FormLabel required>{t("admission_date")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} />
                         </FormControl>
@@ -1077,7 +1077,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("current_class")}</FormLabel>
+                        <FormLabel required>{t("current_class")}</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
@@ -1114,7 +1114,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="division"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("current_division")}</FormLabel>
+                        <FormLabel required>{t("current_division")}</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
