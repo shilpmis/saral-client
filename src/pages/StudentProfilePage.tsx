@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useLazySearchStudentsQuery } from "@/services/StudentServices"
+import { useLazyFetchSingleStundetQuery } from "@/services/StudentServices"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import StudentProfileView from "@/components/Students/StudentProfileView"
@@ -15,7 +15,7 @@ export default function StudentProfilePage() {
   const [error, setError] = useState<string | null>(null)
 
   // Use RTK Query hook for fetching student details
-  const [fetchStudentDetails] = useLazySearchStudentsQuery()
+  const [fetchStudentDetails, { isLoading: isFetching }] = useLazyFetchSingleStundetQuery()
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -25,13 +25,12 @@ export default function StudentProfilePage() {
       try {
         // Fetch detailed student information by ID
         const response = await fetchStudentDetails({
-          academic_session_id: 2, // You might want to get this from context or state
-        //   student_id: Number(params.id),
-          detailed: true,
+          student_id: Number(params.id),
+          student_meta: true,
         }).unwrap()
 
-        if (response && response.length > 0) {
-          setStudent(response[0])
+        if (response) {
+          setStudent(response)
         } else {
           setError("Student not found")
         }
@@ -50,7 +49,7 @@ export default function StudentProfilePage() {
     navigate(-1)
   }
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div className="container mx-auto py-6 flex items-center justify-center h-screen">
         <div className="space-y-4 text-center">
