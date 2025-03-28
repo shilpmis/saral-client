@@ -24,14 +24,13 @@ import {
 import { useContext, useEffect, useMemo, useState } from "react"
 import type { SearchCategory } from "@/types/searchCategory"
 import { SearchContext } from "./searchContext"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 import type { Student } from "@/types/student"
 import { Button } from "@/components/ui/button"
 import { useLazySearchStudentsQuery } from "@/services/StudentServices"
 import { useDebounceThrottle } from "@/hooks/use-debounce-throttle"
 import { StudentSearchResults } from "../Students/StudentSearchResult"
-import StudentProfileView from "../../pages/StudentProfileView"
 
 export function Search() {
   // Original categories
@@ -75,12 +74,12 @@ export function Search() {
 
   // Original state
   const location = useLocation()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<SearchCategory | null>(null)
   const { activePage, setActivePage }: any = useContext(SearchContext)
 
-  // New state for student search
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  // State for student search
   const [showResults, setShowResults] = useState(false)
 
   // Use RTK Query hook for search
@@ -152,36 +151,18 @@ export function Search() {
     }
   }
 
-  // Handle student selection
-  const handleSelectStudent = async (student: Student) => {
-    try {
-      // Fetch detailed student information
-      const { data: detailedResults } = await searchStudents({
-        academic_session_id: academicSessionId,
-        name: student.first_name,
-        detailed: true,
-      })
-
-      if (detailedResults) {
-        const detailedStudent = detailedResults.find((s) => s.id === student.id)
-        if (detailedStudent) {
-          setSelectedStudent(detailedStudent)
-          setShowResults(false)
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching student details:", err)
-    }
-  }
-
-  const handleCloseStudentDetails = () => {
-    setSelectedStudent(null)
+  // Handle student selection - navigate to student profile page
+  const handleSelectStudent = (student: Student) => {
+    // Navigate to the student profile page with the student ID
+    navigate(`/d/student/${student.id}`)
+    // Clear search results and query
+    setShowResults(false)
+    setSearchQuery("")
   }
 
   const handleClearSearch = () => {
     setSearchQuery("")
     setShowResults(false)
-    setSelectedStudent(null)
   }
 
   // Effect for debounced search
@@ -206,7 +187,6 @@ export function Search() {
     setSearchQuery("")
     setSelectedCategory(null)
     setActivePage(pageTitles[location.pathname])
-    setSelectedStudent(null)
   }, [location.pathname, pageTitles, setActivePage])
 
   useEffect(() => {
@@ -383,9 +363,6 @@ export function Search() {
 
           {/* Show error message if any */}
           {searchError && <div className="text-sm text-red-500 mt-1">Failed to search. Please try again.</div>}
-
-          {/* Show selected student details */}
-          {selectedStudent && <StudentProfileView student={selectedStudent}  />}
         </div>
       ) : (
         ""
