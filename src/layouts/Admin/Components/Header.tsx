@@ -33,6 +33,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Search } from "@/components/Dashboard/Search"
 
 const shortFormForRole: any = {
   1: "AD",
@@ -146,7 +147,7 @@ export default function Header() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider> */}
-
+          <Search/>
           {/* Language Switcher */}
           <div className="border-l border-gray-200 dark:border-gray-700 pl-3">
             <LanguageSwitcher />

@@ -1,14 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { createAsyncThunk } from "@reduxjs/toolkit"
-import ApiService from "./ApiService"
-import type { RootState } from "../redux/store"
-import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
-import { AddStudentsRequest, Student, StudentEntry, StudentMeta, UpdateStudent } from "@/types/student"
+import type { AddStudentsRequest, Student, StudentEntry, UpdateStudent } from "@/types/student"
 import baseUrl from "@/utils/base-urls"
 
 /**
- * 
- * RTK Query for query which are simeple to execute and need to caching  
+ *
+ * RTK Query for query which are simple to execute and need caching
  */
 
 export const StudentApi = createApi({
@@ -16,20 +12,23 @@ export const StudentApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers) => {
-      headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`);
-      headers.set('Accept', '*/*');
-      return headers;
+      headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
+      headers.set("Accept", "*/*")
+      return headers
     },
   }),
   endpoints: (builder) => ({
-    fetchStudentForClass: builder.query<any, {academic_session : number, class_id: number, page?: number, student_meta?: boolean }>({
-      query: ({ academic_session , class_id, page = 1, student_meta = false }) => ({
+    fetchStudentForClass: builder.query<
+      any,
+      { academic_session: number; class_id: number; page?: number; student_meta?: boolean }
+    >({
+      query: ({ academic_session, class_id, page = 1, student_meta = false }) => ({
         url: `students/${academic_session}/${class_id}?page=${page}&student_meta=${student_meta}`,
         method: "GET",
       }),
     }),
-    fetchSingleStundet: builder.query<Student, { student_id: number, page?: number, student_meta?: boolean }>({
-      query: ({  student_id, page = 1, student_meta = true }) => ({
+    fetchSingleStundet: builder.query<Student, { student_id: number; page?: number; student_meta?: boolean }>({
+      query: ({ student_id, page = 1, student_meta = true }) => ({
         url: `student/${student_id}?student_meta=${student_meta}`,
         method: "GET",
       }),
@@ -41,8 +40,8 @@ export const StudentApi = createApi({
         body: students,
       }),
     }),
-    addSingleStudent: builder.mutation<any, { payload: StudentEntry , academic_session : number }>({
-      query: ({ payload , academic_session}) => ({
+    addSingleStudent: builder.mutation<any, { payload: StudentEntry; academic_session: number }>({
+      query: ({ payload, academic_session }) => ({
         url: `student?academic_session=${academic_session}`,
         method: "POST",
         body: payload,
@@ -56,8 +55,11 @@ export const StudentApi = createApi({
       }),
     }),
 
-    bulkUploadStudents: builder.mutation<{ message: string; totalInserted: number }, {academic_session : number, school_id: number; class_id: number; file: File }>({
-      query: ({ academic_session , school_id, class_id, file }) => {
+    bulkUploadStudents: builder.mutation<
+      { message: string; totalInserted: number },
+      { academic_session: number; school_id: number; class_id: number; file: File }
+    >({
+      query: ({ academic_session, school_id, class_id, file }) => {
         const formData = new FormData()
         formData.append("file", file)
         return {
@@ -68,19 +70,41 @@ export const StudentApi = createApi({
       },
     }),
 
-    downloadExcelTemplate: builder.mutation<any, { class_id: number, academic_session : number, payload: { students: string[], student_meta: string[] } }>({
-      query: ({ academic_session ,class_id, payload }) => ({
+    downloadExcelTemplate: builder.mutation<
+      any,
+      { class_id: number; academic_session: number; payload: { students: string[]; student_meta: string[] } }
+    >({
+      query: ({ academic_session, class_id, payload }) => ({
         url: `students/export/${academic_session}/${class_id}`,
         method: "POST",
         body: {
           class_id: class_id,
-          fields: payload
+          fields: payload,
         },
-        responseHandler: (response) => response.blob()
+        responseHandler: (response) => response.blob(),
       }),
     }),
+
+    searchStudents: builder.query<
+      Student[],
+      { academic_session_id: number; name?: string; gr_no?: number; class_id?: number; detailed?: boolean }
+    >({
+      query: ({ academic_session_id, name, gr_no, class_id, detailed = false }) => {
+        const params = new URLSearchParams()
+        params.append("academic_session_id", academic_session_id.toString())
+        if (name) params.append("name", name)
+        if (gr_no) params.append("gr_no", gr_no.toString())
+        if (class_id) params.append("class_id", class_id.toString())
+        params.append("detailed", detailed.toString())
+
+        return {
+          url: `student/search?${params.toString()}`,
+          method: "GET",
+        }
+      },
+    }),
   }),
-});
+})
 
 export const {
   useFetchStudentForClassQuery,
@@ -90,12 +114,14 @@ export const {
   useUpdateStudentMutation,
   useLazyFetchSingleStundetQuery,
   useBulkUploadStudentsMutation,
-  useDownloadExcelTemplateMutation
-} = StudentApi;
+  useDownloadExcelTemplateMutation,
+  useSearchStudentsQuery,
+  useLazySearchStudentsQuery,
+  usePrefetch,
+} = StudentApi
 
 /**
- *  
- *   Query using Thunk for complicated one , which need some operation after or before trigger query 
+ *
+ *   Query using Thunk for complicated one , which need some operation after or before trigger query
  */
-
 
