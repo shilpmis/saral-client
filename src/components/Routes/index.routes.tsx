@@ -33,6 +33,7 @@ import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting"
 import InquiriesManagement from "../Admission/Inquiries"
 import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
+import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -278,6 +279,14 @@ export default function RootRoute() {
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <AcademicSettings />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="student"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <StudentPromotionManagement />
                   </PrivateRoute>
                 }
               />

@@ -16,6 +16,7 @@ import {
   BookOpen,
   Aperture,
   Clock,
+  UsersIcon,
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
@@ -84,6 +85,12 @@ const navigationSections: NavSection[] = [
         title: "admission_management",
         icon: Building2,
         href: "admission",
+      },
+
+      {
+        title: "student_management",
+        icon: UsersIcon,
+        href: "student",
       }
     ],
   },
