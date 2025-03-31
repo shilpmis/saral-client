@@ -28,24 +28,307 @@ import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/compon
 import { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
+// Type for validation results
+type ValidationResult = {
+  row: number
+  hasErrors: boolean
+  errors: { field: string; message: string }[]
+  rawData: any
+}
+
 // Define Zod schema for student data validation
 const StudentSchemaForUploadData = z.object({
-  first_name: z.string().min(1, "First Name is required"),
-  middle_name: z.string().min(1, "Name is required").nullable().or(z.literal("")),
-  last_name: z.string().min(1, "Last Name is required"),
-  phone_number: z
+  "First Name": z.string().min(1, "First Name is required"),
+  "Middle Name": z.string().min(1, "Name is required").nullable().or(z.literal("")),
+  "Last Name": z.string().min(1, "Last Name is required"),
+  "Mobile No": z
     .string()
     .regex(/^\d{10}$/, "Phone number must be 10 digits")
     .optional()
     .or(z.literal("")),
-  gender: z
+  
+  "Gender": z
     .enum(["Male", "Female", "Other"], {
       errorMap: () => ({ message: "Gender must be Male, Female, or Other" }),
     })
     .optional()
     .or(z.literal("")),
-  gr_no: z.string().min(1, "GR Number is required"),
-})
+
+  "GR No": z.string().min(1, "GR Number is required"),
+
+  "First Name Gujarati": z
+      .string()
+      .min(2, "First name in Gujarati is required")
+      .optional(),
+
+  "Middle Name Gujarati": z
+      .string()
+      .min(2, "Middle name in Gujarati is required")
+      .optional(),
+
+  "Last Name Gujarati": z
+      .string()
+      .min(2, "Last name in Gujarati is required")
+      .optional(),
+  
+  "Date of Birth": z
+      .string()
+      .refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid date format",
+      })
+      .refine(
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
+          return parsedDate <= today;
+        },
+        {
+          message: "Birth date cannot be in the future",
+        }
+      )
+      .refine(
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
+          const age = today.getFullYear() - parsedDate.getFullYear();
+          const monthDiff = today.getMonth() - parsedDate.getMonth();
+          const dayDiff = today.getDate() - parsedDate.getDate();
+          if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+            return age - 1 >= 3; // Minimum age is 3 years
+          }
+          return age >= 3;
+        },
+        {
+          message: "Student must be at least 3 years old",
+        }
+      ).optional(),
+  
+  "Birth Place": z
+      .string()
+      .min(2, "Birth place is required")
+      .regex(
+        /^[A-Za-z\s]+$/,
+        "Birth place should contain only alphabets and spaces"
+      )
+      .optional(),
+  
+  "Birth Place In Gujarati": z
+      .string()
+      .min(2, "Birth place in Gujarati is required")
+      .optional(),
+  
+  "Aadhar No": z
+    .string()
+    .regex(/^\d{12}$/, "Aadhar Number must be of 12 digits")
+    .optional()
+    .or(z.literal("")),
+      // .number()
+      // .int("Aadhar number must be an integer")
+      // .positive("Aadhar number must be positive")
+      // .refine(
+      //   (val) => {
+      //     const strVal = val.toString();
+      //     return strVal.length === 12;
+      //   },
+      //   {
+      //     message: "Aadhar number must be exactly 12 digits",
+      //   }
+      // )
+      // .optional(),
+  
+  "DISE Number": z
+    .string()
+    .regex(/^\d{18}$/, "Adhar DISE number must be 18 digits")
+    .optional()
+    .or(z.literal("")),
+  
+    // Family Details
+  "Father Name": z
+      .string()
+      .min(2, "Father's name is required")
+      .regex(
+        /^[A-Za-z\s]+$/,
+        "Father's name should contain only alphabets and spaces"
+      )
+      .nullable(),
+  
+  "Father Name in Gujarati": z
+      .string()
+      .min(2, "Father's name in Gujarati is required")
+      .nullable(),
+  
+  "Mother Name": z
+      .string()
+      .min(2, "Mother's name is required")
+      .regex(
+        /^[A-Za-z\s]+$/,
+        "Mother's name should contain only alphabets and spaces"
+      )
+      .nullable(),
+  
+  "Mother Name in Gujarati": z
+      .string()
+      .min(2, "Mother's name in Gujarati is required")
+      .nullable(),
+  
+    // "Mobile No": z
+    //   .number()
+    //   .int("Mobile number must be an integer")
+    //   .positive("Mobile number must be positive")
+    //   .refine(
+    //     (val) => {
+    //       const strVal = val.toString();
+    //       return strVal.length === 10 && /^[6-9]/.test(strVal);
+    //     },
+    //     {
+    //       message: "Mobile number must be 10 digits and start with 6-9",
+    //     }
+    //   ),
+  
+  "Other Mobile No": z
+      // .number()
+      // .int("Secondary mobile number must be an integer")
+      // .positive("Secondary mobile number must be positive")
+      // .refine(
+      //   (val) => {
+      //     const strVal = val.toString();
+      //     return strVal.length === 10 && /^[6-9]/.test(strVal);
+      //   },
+      //   {
+      //     message: "Secondary mobile number must be 10 digits and start with 6-9",
+      //   }
+      // )
+      // .nullable(),
+    .string()
+    .regex(/^\d{10}$/, "Phone number must be 10 digits")
+    .optional()
+    .or(z.literal("")),
+  
+    "Roll Number": z
+      .number()
+      .int("Roll number must be an integer")
+      .positive("Roll number must be positive")
+      .optional(),
+  
+    "Admission Date": z
+      .string()
+      .refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid date format",
+      })
+      .refine(
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
+          return parsedDate <= today;
+        },
+        {
+          message: "Admission date cannot be in the future",
+        }
+      )
+      .optional(),
+  
+    // class: z.string().min(1, "Class is required"),
+    // division: z.string().min(1, "Division is required"),
+    // admission_class: z.string().min(1, "Admission Class is required").nullable(),
+    // admission_division: z
+    //   .string()
+    //   .min(1, "Admission Division is required")
+    //   .nullable(),
+  
+    "Previous School": z
+      .string()
+      .min(3, "Previous school name should be more than 3 characters")
+      .regex(
+        /^[A-Za-z0-9\s.,&-]+$/,
+        "Previous school name contains invalid characters"
+      )
+      .nullable(),
+  
+    "Previous School In Gujarati": z
+      .string()
+      .min(3, "Previous school name in Gujarati should be more than 3 characters")
+      .optional(),
+  
+    // Other Details
+    "Religion": z
+      .string()
+      .min(2, "Religion is required")
+      .regex(/^[A-Za-z\s]+$/, "Religion should contain only alphabets and spaces")
+      .optional(),
+  
+    "Religion In Gujarati": z
+      .string()
+      .min(2, "Religion in Gujarati is required")
+      .optional(),
+  
+    "Caste": z
+      .string()
+      .min(2, "Caste is required")
+      .regex(/^[A-Za-z\s]+$/, "Caste should contain only alphabets and spaces")
+      .optional(),
+  
+    "Caste In Gujarati": z.string().min(2, "Caste in Gujarati is required").optional(),
+  
+    "Category": z
+      .enum(["ST", "SC", "OBC", "OPEN"], {
+        errorMap: () => ({ message: "Category must be ST, SC, OBC, or OPEN" }),
+      })
+      .nullable(),
+  
+    // Address Details
+    "Address": z.string().min(5, "Address is required").optional(),
+  
+    "District": z
+      .string()
+      .min(2, "District is required")
+      .regex(/^[A-Za-z\s]+$/, "District should contain only alphabets and spaces")
+      .optional(),
+  
+    "City": z
+      .string()
+      .min(2, "City is required")
+      .regex(/^[A-Za-z\s]+$/, "City should contain only alphabets and spaces")
+      .optional(),
+  
+    "State": z
+      .string()
+      .min(2, "State is required")
+      .regex(/^[A-Za-z\s]+$/, "State should contain only alphabets and spaces")
+      .optional(),
+  
+    "Postal Code": z
+      .string()
+      .regex(/^\d{6}$/, "Postal code must be exactly 6 digits")
+      .optional(),
+  
+    // Bank Details
+    "Bank Name": z
+      .string()
+      .min(2, "Bank name is required")
+      .regex(
+        /^[A-Za-z\s]+$/,
+        "Bank name should contain only alphabets and spaces"
+      )
+      .optional(),
+  
+      "Account Number": z
+        .string()
+        .refine(
+          (val) => {
+            const strVal = val.toString();
+            return strVal.length >= 9 && strVal.length <= 18;
+          },
+          {
+            message: "Account number must be between 9 and 18 digits",
+          }
+        )
+        .optional(),
+
+    "IFSC Code": z
+      .string()
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "IFSC code must be in format ABCD0123456")
+      .optional(),
+});
 
 // Custom CSV parser function
 const parseCSV = (file: File): Promise<any[]> => {
@@ -94,18 +377,6 @@ const parseCSV = (file: File): Promise<any[]> => {
   })
 }
 
-// Type for validation results
-type ValidationResult = {
-  row: number
-  hasErrors: boolean
-  errors: { field: string; message: string }[]
-  rawData: any
-}
-
-interface Props {
-  serverValidationErrors: ValidationResult[];
-  parsedData: any[];
-}
 
 
 export const Students: React.FC = () => {
@@ -161,8 +432,8 @@ export const Students: React.FC = () => {
   const handleDivisionChange = async (value: string) => {
     if (AcademicClasses && SelectedSession) {
       const selectedDiv = AcademicClasses.filter(
-        (cls) => cls.class == Number.parseInt(selectedClass),
-      )[0].divisions.filter((div) => div.id == Number.parseInt(value))
+        (cls) => cls.id == Number.parseInt(selectedClass),
+      )[0]?.divisions.filter((div) => div.id == Number.parseInt(value))
       setSelectedDivision(selectedDiv[0])
       getStudentForClass({ class_id: Number.parseInt(value), academic_session: SelectedSession })
     }
@@ -192,7 +463,7 @@ export const Students: React.FC = () => {
 
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
-      return AcademicClasses.filter((cls) => cls.class.toString() === selectedClass)[0]
+      return AcademicClasses.filter((cls) => cls.id.toString() === selectedClass)[0]
     } else {
       return null
     }
@@ -332,7 +603,6 @@ export const Students: React.FC = () => {
   const handleDownloadDemo = useCallback(() => {
     downloadCSVTemplate()
   }, [])
-
 
   const handleFileUploadSubmit = async () => {
     
@@ -475,10 +745,9 @@ export const Students: React.FC = () => {
     if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass && SelectedSession) {
       // Find first class with divisions
       const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
-
       if (firstClassWithDivisions) {
         // Set the first class
-        setSelectedClass(firstClassWithDivisions.class.toString())
+        setSelectedClass(firstClassWithDivisions.id.toString())
 
         // Set the first division of that class
         if (firstClassWithDivisions.divisions.length > 0) {
@@ -486,7 +755,7 @@ export const Students: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
+          getStudentForClass({ class_id: firstDivision.id , academic_session: SelectedSession })
         }
       }
     }
@@ -526,6 +795,7 @@ export const Students: React.FC = () => {
       return a.row - b.row
     })
   }, [uploadResults])
+
 
   return (
 
@@ -933,7 +1203,7 @@ export const Students: React.FC = () => {
                     </SelectItem>
                     {AcademicClasses && AcademicClasses.map((cls, index) =>
                       cls.divisions.length > 0 ? (
-                        <SelectItem key={index} value={cls.class.toString()}>
+                        <SelectItem key={index} value={cls.id.toString()}>
                           Class {cls.class}
                         </SelectItem>
                       ) : null,

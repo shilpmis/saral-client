@@ -1,74 +1,74 @@
-import { Division } from "@/types/academic"
-import baseUrl from "@/utils/base-urls"
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
+import { Division } from "@/types/academic";
+import baseUrl from "@/utils/base-urls";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export interface Quota {
-  id: number
-  name: string
-  description: string
-  eligibility_criteria: string
-  academic_session_id: number
+  id: number;
+  name: string;
+  description: string;
+  eligibility_criteria: string;
+  academic_session_id: number;
+  is_active: boolean;
 }
 
 export interface QuotaRequest {
-  name: string
-  description: string
-  eligibility_criteria: string
+  name: string;
+  description: string;
+  eligibility_criteria: string;
 }
 
 export interface QuotaAllocation {
-  total_seats: number
-  quota: any
-  id: number
-  quota_name: string
-  total_allocated_seats: number
-  filled_seats: number
-  available_seats: number
-  class: Division
+  total_seats: number;
+  quota: any;
+  id: number;
+  quota_name: string;
+  total_allocated_seats: number;
+  filled_seats: number;
+  available_seats: number;
+  class: Division;
 }
-
 
 // New interfaces for seat management
 export interface ClassSeatAvailability {
-  id: number
-  academic_session_id: number
-  class_id: number
-  total_seats: number
-  quota_allocated_seats: number
-  general_available_seats: number
-  filled_seats: number
-  remaining_seats: number
-  quota_allocation: QuotaAllocationItem[]
-  class: ClassInfo
+  id: number;
+  academic_session_id: number;
+  class_id: number;
+  total_seats: number;
+  quota_allocated_seats: number;
+  general_available_seats: number;
+  filled_seats: number;
+  remaining_seats: number;
+  quota_allocation: QuotaAllocationItem[];
+  class: ClassInfo;
 }
 
 export interface QuotaAllocationItem {
-  id: number
-  quota_id: number
-  class_id: number
-  total_seats: number
-  filled_seats: number
+  id: number;
+  quota_id: number;
+  class_id: number;
+  total_seats: number;
+  filled_seats: number;
 }
 
 export interface ClassInfo {
-  id: number
-  school_id: number
-  class: string
-  division: string
-  aliases: string | null
-  academic_session_id: number
+  id: number;
+  school_id: number;
+  class: string;
+  division: string;
+  aliases: string | null;
+  academic_session_id: number;
 }
 
 export interface SeatAvailabilityRequest {
-  class_id: number
-  academic_session_id: number
-  total_seats: number
+  class_id: number;
+  academic_session_id: number;
+  total_seats: number;
 }
 
 export interface QuotaSeatAllocationRequest {
-  quota_id: number
-  class_id: number
-  total_seats: number
+  quota_id: number;
+  class_id: number;
+  total_seats: number;
 }
 
 export const QuotaApi = createApi({
@@ -76,32 +76,42 @@ export const QuotaApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
-        headers.set("Authorization", `Bearer ${localStorage.getItem('access_token')}`)
-        return headers
-      },
+      headers.set(
+        "Authorization",
+        `Bearer ${localStorage.getItem("access_token")}`
+      );
+      return headers;
+    },
   }),
   tagTypes: ["Quota", "Seats"],
   endpoints: (builder) => ({
     getQuotas: builder.query<Quota[], void>({
-      query: (academic_session_id) => `quota/all?academic_session_id=${academic_session_id}`,
+      query: (academic_session_id) =>
+        `quota/all?academic_session_id=${academic_session_id}`,
       providesTags: ["Quota"],
     }),
     getQuotaAllocations: builder.query<any, void>({
       query: () => `quota-allocation/all`,
       providesTags: ["Quota"],
     }),
-    addQuota: builder.mutation<Quota, QuotaRequest & { academic_session_id: number }>({
+    addQuota: builder.mutation<
+      Quota,
+      QuotaRequest & { academic_session_id: number }
+    >({
       query: (data) => {
-        const { academic_session_id, ...quota } = data
+        const { academic_session_id, ...quota } = data;
         return {
           url: `quota?academic_session_id=${academic_session_id}`,
           method: "POST",
           body: quota,
-        }
+        };
       },
       invalidatesTags: ["Quota"],
     }),
-    updateQuota: builder.mutation<Quota, { id: number; quota: QuotaRequest; academic_session_id: number }>({
+    updateQuota: builder.mutation<
+      Quota,
+      { id: number; quota: QuotaRequest; academic_session_id: number }
+    >({
       query: ({ id, quota, academic_session_id }) => ({
         url: `quota/${id}?academic_session_id=${academic_session_id}`,
         method: "PUT",
@@ -109,7 +119,10 @@ export const QuotaApi = createApi({
       }),
       invalidatesTags: ["Quota"],
     }),
-    deleteQuota: builder.mutation<void, { id: number; academic_session_id: number }>({
+    deleteQuota: builder.mutation<
+      void,
+      { id: number; academic_session_id: number }
+    >({
       query: ({ id, academic_session_id }) => ({
         url: `quota/${id}?academic_session_id=${academic_session_id}`,
         method: "DELETE",
@@ -138,9 +151,8 @@ export const QuotaApi = createApi({
       }),
       invalidatesTags: ["Seats", "Quota"],
     }),
-    
   }),
-})
+});
 
 // Add the new hook to the exports
 export const {
@@ -152,5 +164,4 @@ export const {
   useGetClassSeatAvailabilityQuery,
   useAddSeatAvailabilityMutation,
   useAddQuotaSeatAllocationMutation,
-} = QuotaApi
-
+} = QuotaApi;

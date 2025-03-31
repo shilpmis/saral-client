@@ -1,11 +1,89 @@
+const headers = [
+  "First Name",
+  "Middle Name",
+  "Last Name",
+  "First Name Gujarati",
+  "Middle Name Gujarati",
+  "Last Name Gujarati",
+  "Gender",
+  "Date of Birth",
+  "Birth Place",
+  "Birth Place In Gujarati",
+  "Aadhar No",
+  "DISE Number",
+  "Father Name",
+  "Father Name in Gujarati",
+  "Mother Name",
+  "Mother Name in Gujarati",
+  "Mobile No",
+  "Other Mobile No",
+  "GR No",
+  "Roll Number",
+  "Admission Date",
+  "Previous School",
+  "Previous School In Gujarati",
+  "Religion",
+  "Religion In Gujarati",
+  "Caste",
+  "Caste In Gujarati",
+  "Category",
+  "Address",
+  "District",
+  "City",
+  "State",
+  "Postal Code",
+  "Bank Name",
+  "Account Number",
+  "IFSC Code",
+].join(",");
+
+// Add a sample row with example data
+const sampleRow = [
+  "Rahul",
+  "Pravinbhai",
+  "Patel",
+  "રાહુલ",
+  "પ્રવિણભાઈ",
+  "પટેલ",
+  "Male",
+  "2000-01-01",
+  "Surat",
+  "Surat",
+  "'123456789012",
+  "'895645125689784523",
+  "Pravinbhai",
+  "પ્રવિણભાઈ",
+  "Sangitaben",
+  "સંગીતાબેન",
+  "'8956234582",
+  "'9974001772",
+  "8952",
+  "41",
+  "2023-08-01",
+  "Play High School",
+  "પ્લે હાઈ સ્કૂલ",
+  "Hindu",
+  "હિંદુ",
+  "Hindu Patel",
+  "હિંદુ પટેલ",
+  "SC",
+  "Plot No 123 Near School Surat",
+  "Surat",
+  "Surat",
+  "Gujarat",
+  "395001",
+  "Bank of Baroda",
+  "'1234567890123456",
+  "BARB0SURAT123",
+].join(",");
 export const downloadCSVTemplate = () => {
   try {
-    const csvContent = `first_name,middle_name,last_name,gender,gr_no,phone_number
-Melzo_Student_54,Kumar,Patel,Male,="6568",="9155636666"
-John,,Doe,Female,="9012",="9876543210"
-Jane,Marie,Smith,Female,="1098",="8765432109"`;
+    const BOM = "\uFEFF"; // UTF-8 BOM
+    const csvContent = `${headers}\n${sampleRow}`;
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([BOM + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
     const url = URL.createObjectURL(blob);
 

@@ -1,5 +1,3 @@
-"use client"
-
 import { DialogTrigger } from "@/components/ui/dialog"
 import { useEffect, useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -27,13 +25,14 @@ import {
 } from "@/components/ui/dialog"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import LanguageSwitcher from "@/components/traslater/languageSwitcher"
-import { AlertTriangle, LogOut, Moon, Sun, User, Zap, School } from "lucide-react"
+import { AlertTriangle, LogOut, Moon, Sun, User, Zap, School, Calendar, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Search } from "@/components/Dashboard/Search"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { AcademicSession } from "@/types/user"
 
 const shortFormForRole: any = {
   1: "AD",
@@ -47,11 +46,13 @@ const shortFormForRole: any = {
 export default function Header() {
   const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
+  const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool);
   const { t } = useTranslation()
 
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false)
   const [notifications, setNotifications] = useState([
     { id: 1, title: "New student enrolled", read: false, time: "10 min ago" },
     { id: 2, title: "Fee payment reminder", read: false, time: "1 hour ago" },
@@ -88,6 +89,15 @@ export default function Header() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  // Format academic year for display
+  const formatAcademicYear = (session: AcademicSession) => {
+    if (!session) return "No Session Selected"
+    console.log(session)
+    const startYear = new Date(session.start_year).getFullYear()
+    const endYear = new Date(session.end_year).getFullYear()
+    return `${startYear}-${endYear}`
+  }
+
   return (
     <>
       {/* Offline Status Indicator */}
@@ -117,14 +127,77 @@ export default function Header() {
           <SidebarTrigger className="text-primary hover:text-primary/80 transition-colors" />
           <div className="hidden md:flex items-center">
             {/* <School className="h-5 w-5 text-primary mr-2" /> */}
-            <h1 className="text-xl font-medium text-transparent">
+            <h1 className="text-xl font-medium bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               {users?.school.name || "Saral School Management"}
             </h1>
           </div>
         </div>
 
+        {/* Center - */}
+        {/* Center - */}
+
         {/* Right Side - Controls and User Profile */}
         <div className="flex items-center gap-3">
+        <div className="hidden md:flex">
+          <div className="relative">
+            <DropdownMenu open={isSessionDropdownOpen} onOpenChange={setIsSessionDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 flex items-center gap-2 px-4 py-2 rounded-full"
+                >
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-primary">
+                    {currentAcademicSession ? formatAcademicYear(currentAcademicSession) : "Select Session"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <div className="p-2">
+                  <h3 className="font-semibold text-sm text-muted-foreground mb-2">{t("academic_sessions")}</h3>
+                  <div className="space-y-1">
+                    {currentAcademicSession && (
+                      <div className="p-2 rounded-md bg-primary/10 border border-primary/20">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{formatAcademicYear(currentAcademicSession)}</span>
+                          <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30">
+                            {t("current")}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {currentAcademicSession.start_month} -{" "} {currentAcademicSession.end_month}
+                        </div>
+                      </div>
+                    )}
+                    {/* Placeholder for other sessions if needed */}
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+          {/* Mobile Academic Session */}
+          <div className="md:hidden">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10"
+                    onClick={() => setIsSessionDropdownOpen(true)}
+                  >
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{currentAcademicSession ? formatAcademicYear(currentAcademicSession) : t("select_session")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
           {/* Theme Toggle */}
           {/* <TooltipProvider>
             <Tooltip>
@@ -147,7 +220,7 @@ export default function Header() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider> */}
-          <Search/>
+
           {/* Language Switcher */}
           <div className="border-l border-gray-200 dark:border-gray-700 pl-3">
             <LanguageSwitcher />
@@ -194,11 +267,24 @@ export default function Header() {
                   <p className="text-xs text-muted-foreground">{users?.saral_email}</p>
                 </div>
                 <Badge variant="outline" className="mt-1 bg-primary/10 text-primary border-primary/20">
-                  {shortFormForRole[users!.role_id] || "User"}
+                  {shortFormForRole[users!.role] || "User"}
                 </Badge>
               </div>
 
               <div className="p-2">
+                {/* Academic Session in dropdown for mobile */}
+                <div className="md:hidden mb-2 p-2 rounded-md bg-primary/5 border border-dashed border-primary/30">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("current_session")}</p>
+                      <p className="text-sm font-medium">
+                        {currentAcademicSession ? formatAcademicYear(currentAcademicSession) : t("no_session_selected")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <DropdownMenuItem className="cursor-pointer flex items-center gap-2 p-2 rounded-md" asChild>
                   <Dialog>
                     <DialogTrigger className="w-full flex items-center gap-2">
@@ -285,7 +371,7 @@ export default function Header() {
       </div>
 
       {/* Logout Confirmation Dialog */}
-      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+      <Dialog open={isLogoutDialogOpen} onOpenChange={(open) => setIsLogoutDialogOpen(open)}>
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">
             <motion.div
