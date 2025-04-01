@@ -1,4 +1,3 @@
-"use client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -98,7 +97,7 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
         onSuccess()
       }
     } catch (error: any) {
-      console.error("Failed to create academic session:", error)
+      console.log("Failed to create academic session:", error)
 
       // Extract error message from different possible error formats
       let errorMessage = "Failed to create academic session"

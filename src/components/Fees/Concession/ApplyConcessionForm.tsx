@@ -548,7 +548,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                               />
                             </TableCell>
                             <TableCell className="font-medium">{plan.name}</TableCell>
-                            <TableCell>{plan.class_id}</TableCell>
+                            <TableCell>{plan.description}</TableCell>
                             <TableCell>{formatCurrency(plan.total_amount)}</TableCell>
                             <TableCell>
                               <Badge variant={plan.status === "Active" ? "default" : "destructive"}>

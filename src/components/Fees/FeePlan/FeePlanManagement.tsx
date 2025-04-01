@@ -19,6 +19,7 @@ import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchoo
 import FeePlanDetailsDialog from "./FeePlanDetailsDialog"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { AcademicSession } from "@/types/user"
 
 export const FeePlanManagement: React.FC = () => {
 
@@ -141,7 +142,7 @@ export const FeePlanManagement: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {AcademicSessionsForSchool && 
-                  AcademicSessionsForSchool.map((academic , index)=>{
+                  AcademicSessionsForSchool.map((academic : AcademicSession , index)=>{
                     return (<SelectItem key={index} value={academic.id.toString()}>{academic.session_name}</SelectItem>)}
                   )}
                 </SelectContent>
@@ -181,11 +182,11 @@ export const FeePlanManagement: React.FC = () => {
                         <TableCell className="font-medium">{feePlan.name}</TableCell>
                         <TableCell>
                             {AcademicDivision &&
-                            AcademicDivision.find((division) => division.id == feePlan.class_id)?.aliases}
+                            AcademicDivision.find((division) => division.id == feePlan.division_id)?.aliases}
                             {AcademicDivision &&
-                            AcademicDivision.find((division) => division.id == feePlan.class_id)?.class}
-                            {AcademicDivision &&
-                            AcademicDivision.find((division) => division.id == feePlan.class_id)?.division}
+                            // AcademicDivision.find((division) => division.id == feePlan.class_id)?.}
+                            // {AcademicDivision &&
+                            AcademicDivision.find((division) => division.id == feePlan.division_id)?.division}
                           {!AcademicDivision && "Loading..."}
                         </TableCell>
                         {/* <TableCell>{feePlan.academic_session_id}</TableCell> */}

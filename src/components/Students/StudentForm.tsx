@@ -212,7 +212,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedClass) {
       return AcademicClasses!.filter((cls) => {
-        if (cls.class.toString() === selectedClass) {
+        if (cls.id.toString() === selectedClass) {
           return cls
         }
       })[0]
@@ -238,7 +238,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const availableDivisionsForAdmissionClass = useMemo<AcademicClasses | null>(() => {
     if (AcademicClasses && selectedAdmissionClass) {
       return AcademicClasses!.filter((cls) => {
-        if (cls.class.toString() === selectedAdmissionClass) {
+        if (cls.id.toString() === selectedAdmissionClass) {
           return cls
         }
       })[0]
@@ -248,13 +248,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
   }, [AcademicClasses, selectedAdmissionClass])
 
   const handleClassChange = useCallback(
-    (value: string, type: "admission_Class" | "class") => {
+    (class_id: string, type: "admission_Class" | "class") => {
       if (type === "admission_Class") {
-        setselectedAdmissionClass(value)
+        setselectedAdmissionClass(class_id)
         setselectedAdmissionDivision(null)
         form.setValue("admission_division", "") // Reset division when class changes
       } else {
-        setSelectedClass(value)
+        setSelectedClass(class_id)
         setSelectedDivision(null)
         form.setValue("division", "") // Reset division when class changes
       }
@@ -292,12 +292,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
     }, 0)
 
     if (form_type === "create") {
+
+      console.log("CurrentClass" ,  values)
+
       const CurrentClass = available_classes?.filter(
-        (cls) => cls.class == values?.class && cls.division == values.division,
+        (division) => division.class_id == Number(values?.class) && division.id == Number(values.division),
       )[0]
       const AdmissionClass = available_classes?.filter(
-        (cls) => cls.class == values?.admission_class && cls.division == values.admission_division,
+        (division) => division.class_id == Number(values?.admission_class) && division.id == Number(values.admission_division),
       )[0]
+
 
       const payload: StudentEntry = {
         students_data: {
@@ -571,7 +575,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   useEffect(() => {
     if (form_type === "update") {
       const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
-      if (CurrentClass) handleClassChange(CurrentClass.class, "class")
+      if (CurrentClass) handleClassChange(CurrentClass.id.toString(), "class")
       if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
 
       const CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
@@ -580,12 +584,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0]
 
-      if (AdmissionClass) handleClassChange(AdmissionClass.class, "admission_Class")
       if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
+      // if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
       const AdmissionDivision = available_classes?.filter(
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
-      )[0]
+      )[0];
 
       form.reset({
         first_name: initial_data?.first_name,
@@ -615,7 +619,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         category: initial_data?.student_meta?.category,
         privious_school: initial_data?.student_meta?.privious_school,
         privious_school_in_guj: initial_data?.student_meta?.privious_school_in_guj,
-        // address: initial_data?.student_meta?.address,
+        address: initial_data?.student_meta?.address,
         district: initial_data?.student_meta?.district,
         city: initial_data?.student_meta?.city,
         state: initial_data?.student_meta?.state,
@@ -628,21 +632,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
         IFSC_code: initial_data?.student_meta?.IFSC_code || null,
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-        admission_class: AdmissionDivision?.class ? AdmissionDivision?.class : null,
-        admission_division: AdmissionDivision?.division ? AdmissionDivision?.division : null,
-        class: CurrentDivision?.class,
-        division: CurrentDivision?.division,
+        admission_class: AdmissionDivision?.class_id ? AdmissionDivision?.class_id.toString() : null,
+        admission_division: AdmissionDivision?.id ? AdmissionDivision?.id.toString() : null,
+        class: CurrentDivision?.class_id.toString(),
+        division: CurrentDivision?.id.toString(),
       })
+      console.log("Initial Data", initial_data)
     } else if (form_type === "create" && initial_data) {
       // For create mode when initial data is provided (student onboarding from inquiry)
       const classApplying = initial_data.class_id ? initial_data.class_id.toString() : ""
 
       // Set selectedClass state based on initial data
       if (classApplying && AcademicClasses) {
-        const matchingClass = AcademicClasses.find((cls) => cls.class.toString() === classApplying)
+        const matchingClass = AcademicClasses.find((cls) => cls.id.toString() === classApplying)
 
         if (matchingClass) {
-          setSelectedClass(matchingClass.class.toString())
+          setSelectedClass(matchingClass.id.toString())
 
           // Find first available division for this class
           if (matchingClass.divisions.length > 0) {
@@ -684,7 +689,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   }, [setSelectedClass, setSelectedDivision])
 
   useEffect(() => {
-    const errors = form.formState.errors
+    const errors = form.formState.errors;
     if (Object.keys(errors).length > 0) {
       const firstErrorField = Object.keys(errors)[0]
       const tabToActivate = tabMapping[firstErrorField]
@@ -696,6 +701,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       }, 0)
     }
   }, [form.formState.errors])
+
 
   if (isLoading) {
     return <div>Loading...</div>
@@ -1156,7 +1162,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             {AcademicClasses.map(
                               (cls, index) =>
                                 cls.divisions.length > 0 && (
-                                  <SelectItem key={index} value={cls.class.toString()}>
+                                  <SelectItem key={index} value={cls.id.toString()}>
                                     Class {cls.class}
                                   </SelectItem>
                                 ),
@@ -1192,7 +1198,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             </SelectItem>
                             {availableDivisionsForAdmissionClass &&
                               availableDivisionsForAdmissionClass.divisions.map((division, index) => (
-                                <SelectItem key={index} value={division.division}>
+                                <SelectItem key={index} value={division.id.toString()}>
                                   {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
                                 </SelectItem>
                               ))}
@@ -1230,7 +1236,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             {AcademicClasses.map(
                               (cls, index) =>
                                 cls.divisions.length > 0 && (
-                                  <SelectItem key={index} value={cls.class.toString()}>
+                                  <SelectItem key={index} value={cls.id.toString()}>
                                     Class {cls.class}
                                   </SelectItem>
                                 ),
@@ -1266,7 +1272,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             </SelectItem>
                             {availableDivisions &&
                               availableDivisions.divisions.map((division, index) => (
-                                <SelectItem key={index} value={division.division}>
+                                <SelectItem key={index} value={division.id.toString()}>
                                   {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
                                 </SelectItem>
                               ))}

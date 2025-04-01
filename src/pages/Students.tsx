@@ -27,72 +27,7 @@ import { z } from "zod"
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-
-// Define Zod schema for student data validation
-const StudentSchemaForUploadData = z.object({
-  first_name: z.string().min(1, "First Name is required"),
-  middle_name: z.string().min(1, "Name is required").nullable().or(z.literal("")),
-  last_name: z.string().min(1, "Last Name is required"),
-  phone_number: z
-    .string()
-    .regex(/^\d{10}$/, "Phone number must be 10 digits")
-    .optional()
-    .or(z.literal("")),
-  gender: z
-    .enum(["Male", "Female", "Other"], {
-      errorMap: () => ({ message: "Gender must be Male, Female, or Other" }),
-    })
-    .optional()
-    .or(z.literal("")),
-  gr_no: z.string().min(1, "GR Number is required"),
-})
-
-// Custom CSV parser function
-const parseCSV = (file: File): Promise<any[]> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = (event) => {
-      try {
-        const csvData = event.target?.result as string
-        const lines = csvData.split("\n")
-
-        // Extract headers (first line)
-        const headers = lines[0].split(",").map(
-          (header) => header.trim().replace(/^"(.*)"$/, "$1"), // Remove quotes if present
-        )
-
-        // Parse data rows
-        const results = []
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue // Skip empty lines
-
-          const values = lines[i].split(",").map(
-            (value) => value.trim().replace(/^"(.*)"$/, "$1"), // Remove quotes if present
-          )
-
-          // Create object with headers as keys
-          const row: any = {}
-          headers.forEach((header, index) => {
-            row[header] = values[index] || ""
-          })
-
-          results.push(row)
-        }
-
-        resolve(results)
-      } catch (error: any) {
-        reject(new Error(`Failed to parse CSV: ${error.message}`))
-      }
-    }
-
-    reader.onerror = () => {
-      reject(new Error("Error reading file"))
-    }
-
-    reader.readAsText(file)
-  })
-}
+import { StudentSchemaForUploadData } from "@/utils/student.validation"
 
 // Type for validation results
 type ValidationResult = {
@@ -102,11 +37,74 @@ type ValidationResult = {
   rawData: any
 }
 
-interface Props {
-  serverValidationErrors: ValidationResult[];
-  parsedData: any[];
-}
+// Custom CSV parser function
+const parseCSV = (file: File): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
+    reader.onload = (event) => {
+      try {
+        const csvData = event.target?.result as string;
+        const lines = csvData.split("\n");
+
+        // Extract headers (first line)
+        const headers = lines[0]
+          .split(",")
+          .map((header) => header.trim().replace(/^"(.*)"$/, "$1")); // Remove quotes if present
+
+        // Parse data rows
+        const results = [];
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue; // Skip empty lines
+
+          const values: string[] = [];
+          let current = "";
+          let insideQuotes = false;
+
+          for (const char of lines[i]) {
+            if (char === '"' && !insideQuotes) {
+              insideQuotes = true; // Start of quoted field
+            } else if (char === '"' && insideQuotes) {
+              insideQuotes = false; // End of quoted field
+            } else if (char === "," && !insideQuotes) {
+              values.push(current.trim());
+              current = ""; // Reset for the next value
+            } else {
+              current += char; // Append character to the current value
+            }
+          }
+          values.push(current.trim()); // Add the last value
+
+          // Create object with headers as keys
+          const row: any = {};
+          headers.forEach((header, index) => {
+            let value: any = values[index] || null; // Set null for empty fields
+
+            // Convert specific fields to their expected types
+            if (header === "Roll Number" && value !== null) {
+              value = Number(value); // Convert Roll Number to a number
+              if (isNaN(value)) value = null; // Handle invalid numbers
+            }
+
+            row[header] = value;
+          });
+
+          results.push(row);
+        }
+
+        resolve(results);
+      } catch (error: any) {
+        reject(new Error(`Failed to parse CSV: ${error.message}`));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Error reading file"));
+    };
+
+    reader.readAsText(file);
+  });
+};
 
 export const Students: React.FC = () => {
 
@@ -154,31 +152,50 @@ export const Students: React.FC = () => {
   const [serverValidationErrors, setServerValidationErrors] = useState<ValidationResult[]>([])
 
   const handleClassChange = useCallback((value: string) => {
-    setSelectedClass(value)
-    setSelectedDivision(null)
-  }, [])
+    setSelectedClass(value);
+    setSelectedDivision(null); // Reset division when class changes
+  }, []);
 
-  const handleDivisionChange = async (value: string) => {
+  const handleDivisionChange = useCallback(async (value: string) => {
+      
     if (AcademicClasses && SelectedSession) {
-      const selectedDiv = AcademicClasses.filter(
-        (cls) => cls.class == Number.parseInt(selectedClass),
-      )[0].divisions.filter((div) => div.id == Number.parseInt(value))
-      setSelectedDivision(selectedDiv[0])
-      getStudentForClass({ class_id: Number.parseInt(value), academic_session: SelectedSession })
-    }
-  }
+        const selectedClassObj = AcademicClasses.find(
+          (cls) => cls.id.toString() === selectedClass
+        );
+
+        if (selectedClassObj) {
+          const selectedDiv = selectedClassObj.divisions.find(
+            (div) => div.id.toString() === value
+          );
+
+          if (selectedDiv) {
+            setSelectedDivision(selectedDiv);
+
+            // Fetch students for the selected division and session
+            await getStudentForClass({
+              class_id: selectedDiv.id,
+              academic_session: SelectedSession,
+            });
+          }
+        }
+      }
+    },
+    [AcademicClasses, SelectedSession, selectedClass, getStudentForClass]
+  );
 
   const handleAcademicSessionChange = useCallback(
     async (value: number) => {
       setSelectedSession(value);
+
+      // Fetch students for the selected division and session if both are selected
       if (selectedDivision) {
         await getStudentForClass({
           class_id: selectedDivision.id,
-          academic_session: Number(value),
+          academic_session: value,
         });
       }
     },
-    [selectedDivision]
+    [selectedDivision, getStudentForClass]
   );
 
   const filteredStudents = useMemo(() => {
@@ -190,14 +207,15 @@ export const Students: React.FC = () => {
     return []
   }, [listedStudentForSelectedClass, searchValue])
 
-  const availableDivisions = useMemo<AcademicClasses | null>(() => {
+  const availableDivisions = useMemo(() => {
     if (AcademicClasses && selectedClass) {
-      return AcademicClasses.filter((cls) => cls.class.toString() === selectedClass)[0]
-    } else {
-      return null
+      const selectedClassObj = AcademicClasses.find(
+        (cls) => cls.id.toString() === selectedClass
+      );
+      return selectedClassObj ? selectedClassObj.divisions : [];
     }
-  }, [AcademicClasses, selectedClass])
-
+    return [];
+  }, [AcademicClasses, selectedClass]);
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
@@ -231,49 +249,59 @@ export const Students: React.FC = () => {
   }, [])
 
   // Function to validate CSV data with Zod
+  
   const validateCsvData = useCallback((data: any[]): ValidationResult[] => {
-    const results: ValidationResult[] = []
+    const results: ValidationResult[] = [];
 
     data.forEach((row, index) => {
+      // Set all optional fields to null if not provided
+      const sanitizedRow = Object.keys(StudentSchemaForUploadData.shape).reduce((acc, key) => {
+        acc[key] = row[key] !== undefined && row[key] !== "" ? row[key] : null;
+        return acc;
+      }, {} as Record<string, any>);
+
       try {
-        // Attempt to validate the row data against our schema
-        StudentSchemaForUploadData.parse(row)
+        // Attempt to validate the sanitized row data against the schema
+        StudentSchemaForUploadData.parse(sanitizedRow);
 
         // If validation passes, add a success result
         results.push({
-          row: index + 2, // +2 because index is 0-based and we skip header row
+          row: index + 2, // +2 because index is 0-based and we skip the header row
           hasErrors: false,
           errors: [],
-          rawData: row,
-        })
+          rawData: sanitizedRow,
+        });
       } catch (error) {
         if (error instanceof z.ZodError) {
           // Format Zod validation errors
           const formattedErrors = error.errors.map((err) => ({
             field: err.path.join("."),
             message: err.message,
-          }))
+          }));
 
           results.push({
             row: index + 2,
             hasErrors: true,
             errors: formattedErrors,
-            rawData: row,
-          })
-        } else {
-          // Handle unexpected errors
-          results.push({
-            row: index + 2,
-            hasErrors: true,
-            errors: [{ field: "unknown", message: "Unknown validation error" }],
-            rawData: row,
-          })
+            rawData: sanitizedRow,
+          });
         }
       }
-    })
 
-    return results
-  }, [])
+      // Add a warning for optional fields with null values (highlight in yellow)
+      Object.keys(sanitizedRow).forEach((key) => {
+        if (sanitizedRow[key] === null) {
+          results[results.length - 1].errors.push({
+            field: key,
+            message: "Optional field not provided (valid)",
+          });
+        }
+      });
+    });
+
+    return results;
+  }, []);
+
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,7 +332,6 @@ export const Students: React.FC = () => {
               return
             }
 
-
             // Validate the parsed data
             const validationResults = validateCsvData(parsedData)
             setUploadResults(validationResults)
@@ -332,7 +359,6 @@ export const Students: React.FC = () => {
   const handleDownloadDemo = useCallback(() => {
     downloadCSVTemplate()
   }, [])
-
 
   const handleFileUploadSubmit = async () => {
     
@@ -363,7 +389,7 @@ export const Students: React.FC = () => {
       const response: any = await bulkUploadStudents({
         academic_session: CurrentAcademicSessionForSchool!.id,
         school_id: authState.user!.school_id,
-        class_id: selectedDivision.id,
+        division_id: selectedDivision.id,
         file: selectedFile,
       })
 
@@ -475,10 +501,9 @@ export const Students: React.FC = () => {
     if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass && SelectedSession) {
       // Find first class with divisions
       const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
-
       if (firstClassWithDivisions) {
         // Set the first class
-        setSelectedClass(firstClassWithDivisions.class.toString())
+        setSelectedClass(firstClassWithDivisions.id.toString())
 
         // Set the first division of that class
         if (firstClassWithDivisions.divisions.length > 0) {
@@ -486,7 +511,7 @@ export const Students: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
+          getStudentForClass({ class_id: firstDivision.id , academic_session: SelectedSession })
         }
       }
     }
@@ -526,6 +551,7 @@ export const Students: React.FC = () => {
       return a.row - b.row
     })
   }, [uploadResults])
+
 
   return (
 
@@ -602,13 +628,11 @@ export const Students: React.FC = () => {
                           <SelectItem value=" " disabled>
                             {t("classes")}
                           </SelectItem>
-                          {AcademicClasses?.map((cls, index) =>
-                            cls.divisions.length > 0 ? (
-                              <SelectItem key={index} value={cls.class.toString()}>
-                                Class {cls.class}
-                              </SelectItem>
-                            ) : null,
-                          )}
+                          {AcademicClasses?.map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id.toString()}>
+                              Class {cls.class}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -619,6 +643,7 @@ export const Students: React.FC = () => {
                       <Select
                         value={selectedDivision ? selectedDivision.id.toString() : " "}
                         onValueChange={handleDivisionChange}
+                        disabled={!availableDivisions.length}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Division" />
@@ -627,12 +652,11 @@ export const Students: React.FC = () => {
                           <SelectItem value=" " disabled>
                             {t("divisions")}
                           </SelectItem>
-                          {availableDivisions &&
-                            availableDivisions.divisions.map((division, index) => (
-                              <SelectItem key={index} value={division.id.toString()}>
-                                {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
-                              </SelectItem>
-                            ))}
+                          {availableDivisions.map((division) => (
+                            <SelectItem key={division.id} value={division.id.toString()}>
+                              {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -695,7 +719,8 @@ export const Students: React.FC = () => {
                         {serverValidationErrors.map((error, index) => (
                           <li key={index}>
                             <strong>Row {error.row}:</strong>
-                            <ul className="list-disc list-inside ml-4">
+                            <ul className="list-disc list-inside ml-4"> 
+                            {/* </ul> */}
                               {error.errors.map((err, idx) => (
                                 <li key={idx}>
                                   <strong>{err.field}:</strong> {err.message}
@@ -761,6 +786,10 @@ export const Students: React.FC = () => {
                       <span className="bg-red-50 px-2 py-1 rounded border border-red-200 text-red-500 mr-1">i</span>
                       <span>Invalid data with error message</span>
                     </div>
+                    <div className="flex items-center">
+                      <span className="bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-500 mr-1">!</span>
+                      <span>Optional field not provided (valid)</span>
+                    </div>
                   </div>
                 </div>
                 <Card>
@@ -806,24 +835,42 @@ export const Students: React.FC = () => {
                           <tr key={index} className={result.hasErrors ? "bg-red-50" : ""}>
                             <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">{result.row - 1}</td>
                             {getUniqueFields.map((field) => {
-                              // Find if this field has an error
-                              const fieldError = result.hasErrors
-                                ? result.errors.find((err) => err.field === field)
-                                : null
+                              // Find if this field has an error or warning
+                              const fieldError = result.errors.find((err) => err.field === field);
 
                               return (
                                 <td
                                   key={field}
-                                  className={`px-3 py-2 text-sm border-r ${fieldError ? "bg-red-50" : "bg-green-50"}`}
+                                  className={`px-3 py-2 text-sm border-r ${
+                                    fieldError?.message.includes("Optional field not provided")
+                                      ? "bg-yellow-50" // Highlight warnings in yellow
+                                      : fieldError
+                                      ? "bg-red-50" // Highlight errors in red
+                                      : "bg-green-50" // Highlight valid fields in green
+                                  }`}
                                 >
                                   <div className="flex items-center justify-between">
-                                    <span className={fieldError ? "text-red-500 text-xs" : "sr-only"}>
+                                    <span
+                                      className={
+                                        fieldError?.message.includes("Optional field not provided")
+                                          ? "text-yellow-500 text-xs"
+                                          : fieldError
+                                          ? "text-red-500 text-xs"
+                                          : "sr-only"
+                                      }
+                                    >
                                       {fieldError ? fieldError.message : "Valid field"}
                                     </span>
                                     <span
-                                      className={`ml-2 ${fieldError ? "text-red-500 font-bold" : "text-green-500"}`}
+                                      className={`ml-2 ${
+                                        fieldError?.message.includes("Optional field not provided")
+                                          ? "text-yellow-500 font-bold"
+                                          : fieldError
+                                          ? "text-red-500 font-bold"
+                                          : "text-green-500"
+                                      }`}
                                     >
-                                      {fieldError ? "i" : "✓"}
+                                      {fieldError ? "!" : "✓"}
                                     </span>
                                   </div>
                                 </td>
@@ -840,25 +887,6 @@ export const Students: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
-                    {/* {serverValidationErrors.length > 0 && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-md mt-4">
-                        <h3 className="text-red-700 font-bold mb-2">Server Validation Errors</h3>
-                        <ul className="list-disc list-inside text-red-700">
-                          {serverValidationErrors.map((error, index) => (
-                            <li key={index}>
-                              <strong>Row {error.row}:</strong>
-                              <ul className="list-disc list-inside ml-4">
-                                {error.errors.map((err, idx) => (
-                                  <li key={idx}>
-                                    <strong>{err.field}:</strong> {err.message}
-                                  </li>
-                                ))}
-                              </ul>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )} */}
                   </CardContent>
 
                 </Card>
@@ -923,7 +951,7 @@ export const Students: React.FC = () => {
                       ))}
                   </SelectContent>
                 </Select>
-                <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}>
+                <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicClasses || AcademicClasses.length === 0}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
@@ -931,19 +959,17 @@ export const Students: React.FC = () => {
                     <SelectItem value=" " disabled>
                       {t("classes")}
                     </SelectItem>
-                    {AcademicClasses && AcademicClasses.map((cls, index) =>
-                      cls.divisions.length > 0 ? (
-                        <SelectItem key={index} value={cls.class.toString()}>
-                          Class {cls.class}
-                        </SelectItem>
-                      ) : null,
-                    )}
+                    {AcademicClasses?.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id.toString()}>
+                        Class {cls.class}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select
                   value={selectedDivision ? selectedDivision.id.toString() : " "}
                   onValueChange={handleDivisionChange}
-                  disabled={!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0}
+                  disabled={!availableDivisions.length}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Division" />
@@ -952,12 +978,11 @@ export const Students: React.FC = () => {
                     <SelectItem value=" " disabled>
                       {t("divisions")}
                     </SelectItem>
-                    {availableDivisions &&
-                      availableDivisions.divisions.map((division, index) => (
-                        <SelectItem key={index} value={division.id.toString()}>
-                          {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
-                        </SelectItem>
-                      ))}
+                    {availableDivisions.map((division) => (
+                      <SelectItem key={division.id} value={division.id.toString()}>
+                        {`${division.division} ${division.aliases ? "-" + division.aliases : ""}`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

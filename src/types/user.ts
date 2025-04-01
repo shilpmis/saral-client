@@ -9,10 +9,8 @@ export enum UserStatus {
 export interface AcademicSession {
   id: number;
   uuid: string;
-  school_id: 1;
+  school_id: number;
   session_name: string;
-  start_date: string;
-  end_date: string;
   start_month: string;
   end_month: string;
   start_year: string;

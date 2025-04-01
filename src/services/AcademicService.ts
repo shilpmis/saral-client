@@ -1,19 +1,19 @@
-import { createAsyncThunk } from "@reduxjs/toolkit"
-import ApiService from "./ApiService"
-import type { Class } from "@/types/class"
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import type { AcademicClasses, Division } from "@/types/academic"
-import { setAcademicClasses } from "@/redux/slices/academicSlice"
-import baseUrl from "@/utils/base-urls"
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import ApiService from "./ApiService";
+import type { Class } from "@/types/class";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { AcademicClasses, Division } from "@/types/academic";
+import { setAcademicClasses } from "@/redux/slices/academicSlice";
+import baseUrl from "@/utils/base-urls";
 
 interface AcademicSession {
-  id?: number
-  school_id: number
-  start_month: string
-  end_month: string
-  start_year: string
-  end_year: string
-  is_active?: boolean
+  id?: number;
+  school_id: number;
+  start_month: string;
+  end_month: string;
+  start_year: string;
+  end_year: string;
+  is_active?: boolean;
 }
 
 /**
@@ -26,8 +26,11 @@ export const AcademicApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
-      headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
-      return headers
+      headers.set(
+        "Authorization",
+        `Bearer ${localStorage.getItem("access_token")}`
+      );
+      return headers;
     },
   }),
   endpoints: (builder) => ({
@@ -38,14 +41,17 @@ export const AcademicApi = createApi({
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled
-          dispatch(setAcademicClasses([...data]))
+          const { data } = await queryFulfilled;
+          dispatch(setAcademicClasses([...data]));
         } catch (error) {
-          console.log("Error while fetching academic classes", error)
+          console.log("Error while fetching academic classes", error);
         }
       },
     }),
-    getAllClassesWithOuutFeesPlan: builder.query<Division[], { school_id: number }>({
+    getAllClassesWithOuutFeesPlan: builder.query<
+      Division[],
+      { school_id: number }
+    >({
       query: ({ school_id }) => ({
         url: `/classes/${school_id}?without_fees_plan=true`,
         method: "GET",
@@ -57,7 +63,10 @@ export const AcademicApi = createApi({
         method: "GET",
       }),
     }),
-    createAcademicSession: builder.mutation<AcademicSession, Omit<AcademicSession, "id">>({
+    createAcademicSession: builder.mutation<
+      AcademicSession,
+      Omit<AcademicSession, "id">
+    >({
       query: (session) => ({
         url: "/academic-session",
         method: "POST",
@@ -78,7 +87,7 @@ export const AcademicApi = createApi({
       }),
     }),
   }),
-})
+});
 
 export const {
   useGetAcademicClassesQuery,
@@ -88,73 +97,75 @@ export const {
   useSetActiveSessionMutation,
   useDeleteAcademicSessionMutation,
   useLazyGetAllClassesWithOuutFeesPlanQuery,
-} = AcademicApi
+} = AcademicApi;
 
 /**
  *
  *   Query using Thunk for complicated one , which need some operation after or before trigger query
  */
 
-export const createClasses = createAsyncThunk<Division, Omit<Class, "id" | "school_id">[]>(
-  "academic/createClass",
-  async (newClass, { rejectWithValue }) => {
-    try {
-      const response = await ApiService.post("/classes", newClass)
-      return response.data
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Failed to create class")
-    }
-  },
-)
+export const createClasses = createAsyncThunk<
+  Class,
+  Omit<Class, "id" | "school_id">[]
+>("academic/createClass", async (newClass, { rejectWithValue }) => {
+  try {
+    const response = await ApiService.post("/classes", newClass);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data || "Failed to create class");
+  }
+});
 
-export const createDivision = createAsyncThunk<Class, Omit<Class, "id" | "school_id">>(
+export const createDivision = createAsyncThunk<Division, Omit<Division, "id">>(
   "academic/createDivision",
   async (paylaod, { rejectWithValue }) => {
     try {
-      const res = await ApiService.post("class/division", paylaod)
-      return res.data
+      const res = await ApiService.post("class/division", paylaod);
+      return res.data;
     } catch (error: any) {
-      console.log(error)
-      return rejectWithValue(error.response?.data || "Failed to create class")
+      console.log(error);
+      return rejectWithValue(error.response?.data || "Failed to create class");
     }
-  },
-)
+  }
+);
 
-export const editDivision = createAsyncThunk<Class[], { aliases: string | null; class_id: number }>(
-  "academic/createDivision",
-  async (paylaod, { rejectWithValue }) => {
-    try {
-      const res = await ApiService.put(`class/${paylaod.class_id}`, paylaod)
-      return res.data
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Failed to create class")
-    }
-  },
-)
+export const editDivision = createAsyncThunk<
+  Class[],
+  { aliases: string | null; class_id: number }
+>("academic/createDivision", async (paylaod, { rejectWithValue }) => {
+  try {
+    const res = await ApiService.put(`class/${paylaod.class_id}`, paylaod);
+    return res.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data || "Failed to create class");
+  }
+});
 
 // Get all classes for a school
 export const getClasses = createAsyncThunk<Class[], number>(
   "academic/getClasses",
   async (school_id, { rejectWithValue }) => {
     try {
-      const response = await ApiService.get(`/classes/${school_id}`)
-      return response.data
+      const response = await ApiService.get(`/classes/${school_id}`);
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Failed to fetch classes")
+      return rejectWithValue(error.response?.data || "Failed to fetch classes");
     }
-  },
-)
+  }
+);
 
 // Update a class
 export const updateClass = createAsyncThunk<Class, Class>(
   "academic/updateClass",
   async (updatedClass, { rejectWithValue }) => {
     try {
-      const response = await ApiService.put(`/classes/${updatedClass.school_id}`, updatedClass)
-      return response.data
+      const response = await ApiService.put(
+        `/classes/${updatedClass.school_id}`,
+        updatedClass
+      );
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Failed to update class")
+      return rejectWithValue(error.response?.data || "Failed to update class");
     }
-  },
-)
-
+  }
+);

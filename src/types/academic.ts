@@ -1,8 +1,3 @@
-export interface Division {
-  name: string;
-  alias: string;
-}
-
 export interface ClassData {
   id: number;
   name: string;
@@ -12,14 +7,42 @@ export interface ClassData {
 
 export interface Division {
   id: number;
-  school_id: number;
-  class: string; // Ensure this matches the type used in your API response
+  class_id: number;
   division: string;
   aliases: string | null;
-  is_assigned: boolean;
+  academic_session_id: number;
 }
 
 export interface AcademicClasses {
-  class: number;
+  id: number;
+  school_id: number;
+  academic_session_id: number;
+  class: string;
+  is_active: boolean;
   divisions: Division[];
+}
+
+export type AvailableClasses =
+  | "Nursery"
+  | "LKG"
+  | "UKG"
+  | "1"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "10"
+  | "11"
+  | "12";
+export interface AssignedClasses {
+  id: number;
+  class_id: number;
+  staff_id: number;
+  academic_session_id: number;
+  status: "Active" | "Inactive";
+  class: Division;
 }
