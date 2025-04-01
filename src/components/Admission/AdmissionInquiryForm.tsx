@@ -266,7 +266,7 @@ export default function AdmissionInquiryForm({
                         name="middle_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Middle Name</FormLabel>
+                            <FormLabel>{t("middle_name")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -279,7 +279,7 @@ export default function AdmissionInquiryForm({
                         name="last_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Name</FormLabel>
+                            <FormLabel>{t("last_name")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -294,7 +294,7 @@ export default function AdmissionInquiryForm({
                       name="birth_date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Date of Birth</FormLabel>
+                          <FormLabel>{t("date_of_birth")}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -485,7 +485,7 @@ export default function AdmissionInquiryForm({
                         <FormItem>
                           <FormLabel>{t("special_achievements")} (Sports, Arts, etc.)</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="Please mention any special achievements or talents" />
+                            <Textarea {...field} placeholder={t("please_mention_any_special_achievements_or_talents")} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

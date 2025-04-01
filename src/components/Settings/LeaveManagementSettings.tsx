@@ -638,7 +638,7 @@ export function LeaveManagementSettings() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("name")}</FormLabel>
+                    <FormLabel required>{t("name")}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="e.g., Sick Leave, Casual Leave" />
                     </FormControl>
@@ -750,7 +750,7 @@ export function LeaveManagementSettings() {
                 name="staff_role_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("staff_role")}</FormLabel>
+                    <FormLabel required>{t("staff_role")}</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -788,7 +788,7 @@ export function LeaveManagementSettings() {
                 name="leave_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("leave_type")}</FormLabel>
+                    <FormLabel required>{t("leave_type")}</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -826,7 +826,7 @@ export function LeaveManagementSettings() {
                 name="annual_quota"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("annual_allowance")}</FormLabel>
+                    <FormLabel required>{t("annual_allowance")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -873,7 +873,7 @@ export function LeaveManagementSettings() {
                 name="max_consecutive_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("max_consecutive_days")}</FormLabel>
+                    <FormLabel required>{t("max_consecutive_days")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -897,7 +897,7 @@ export function LeaveManagementSettings() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">{t("allow_carry_forward")}</FormLabel>
+                      <FormLabel className="text-base" required>{t("allow_carry_forward")}</FormLabel>
                       <FormDescription>{t("can_unused_leaves_be_carried_forward_to_the_next_year?")}</FormDescription>
                     </div>
                     <FormControl>
@@ -924,7 +924,7 @@ export function LeaveManagementSettings() {
                 name="max_carry_forward_days"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("max_carry_forward")}</FormLabel>
+                    <FormLabel required>{t("max_carry_forward")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

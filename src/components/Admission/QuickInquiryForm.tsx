@@ -104,7 +104,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("first_name")}</FormLabel>
+                    <FormLabel required>{t("first_name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("enter_first_name")} {...field} />
                     </FormControl>
@@ -130,7 +130,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("last_name")}</FormLabel>
+                    <FormLabel required>{t("last_name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("enter_last_name")} {...field} />
                     </FormControl>
@@ -144,7 +144,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="father_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("parent_name")}</FormLabel>
+                  <FormLabel required>{t("parent_name")}</FormLabel>
                   <FormControl>
                     <Input placeholder={t("enter_parent_name")} {...field} />
                   </FormControl>
@@ -170,7 +170,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="primary_mobile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("contact_number")}</FormLabel>
+                  <FormLabel required>{t("contact_number")}</FormLabel>
                   <FormControl>
                     <Input placeholder={t("enter_contact_number")} {...field} />
                   </FormControl>
@@ -183,7 +183,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="parent_email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("email")}</FormLabel>
+                  <FormLabel required>{t("email")}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder={t("enter_email")} {...field} />
                   </FormControl>
@@ -196,7 +196,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="class_applying"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("class_applying_for")}</FormLabel>
+                  <FormLabel required>{t("class_applying_for")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>

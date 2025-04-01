@@ -780,11 +780,11 @@ export const Students: React.FC = () => {
                       <span className="bg-green-50 px-2 py-1 rounded border border-green-200 text-green-500 mr-1">
                         ✓
                       </span>
-                      <span>Valid data</span>
+                      <span>{t("valid_data")}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="bg-red-50 px-2 py-1 rounded border border-red-200 text-red-500 mr-1">i</span>
-                      <span>Invalid data with error message</span>
+                      <span>{t("invalid_data_with_error_message")}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-500 mr-1">!</span>
@@ -794,7 +794,7 @@ export const Students: React.FC = () => {
                 </div>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Validation Summary</CardTitle>
+                    <CardTitle className="text-sm">{t("validation_summary")}</CardTitle>
                     <div className="text-xs text-muted-foreground mt-1">
                       Showing all {uploadResults.length} rows: {uploadResults.filter((r) => !r.hasErrors).length} valid,{" "}
                       <span className="font-bold text-red-500">
@@ -826,7 +826,7 @@ export const Students: React.FC = () => {
                             scope="col"
                             className="px-3 py-2 text-center text-xs font-medium text-black uppercase tracking-wider w-16"
                           >
-                            Status
+                            {t("status")}
                           </th>
                         </tr>
                       </thead>
@@ -923,7 +923,7 @@ export const Students: React.FC = () => {
               <CardTitle>{t("search_students")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-yellow-600">Please create Academic Sessions for your school.</p>
+              <p className="text-yellow-600">{t("please_create_academic_sessions_for_your_school.")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -937,7 +937,7 @@ export const Students: React.FC = () => {
                   value={SelectedSession ? SelectedSession.toString() : " "}
                   onValueChange={(value) => handleAcademicSessionChange(Number(value))}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Academic Year" />
+                    <SelectValue placeholder={t("select_academic_year")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" " disabled>
@@ -953,7 +953,7 @@ export const Students: React.FC = () => {
                 </Select>
                 <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicClasses || AcademicClasses.length === 0}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Class" />
+                    <SelectValue placeholder={t("select_class")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" " disabled>

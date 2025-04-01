@@ -113,7 +113,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("name")}</FormLabel>
+              <FormLabel required>{t("name")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -127,7 +127,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, roles, isEditin
             name="role_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("role")}</FormLabel>
+                <FormLabel required>{t("role")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>

@@ -257,7 +257,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     name="staff_role_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("staff_role")}</FormLabel>
+                        <FormLabel required>{t("staff_role")}</FormLabel>
                         {teachingRoles && nonTeachingRoles && (<Select
                           onValueChange={(value) => field.onChange(Number.parseInt(value))}
                           defaultValue={field.value?.toString()}
@@ -308,7 +308,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("first_name")}</FormLabel>
+                        <FormLabel required>{t("first_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -334,7 +334,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("last_name")}</FormLabel>
+                        <FormLabel required>{t("last_name")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -390,7 +390,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("gender")}</FormLabel>
+                        <FormLabel required>{t("gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                           <FormControl>
                             <SelectTrigger>
@@ -457,7 +457,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     name="mobile_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("mobile_no")}</FormLabel>
+                        <FormLabel required>{t("mobile_no")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
                         </FormControl>
@@ -486,7 +486,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                       name="qualification"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("qualification")}</FormLabel>
+                          <FormLabel required>{t("qualification")}</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                             <FormControl>
                               <SelectTrigger>
@@ -830,7 +830,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                   name="employment_status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("employee_status")}</FormLabel>
+                      <FormLabel required>{t("employee_status")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>

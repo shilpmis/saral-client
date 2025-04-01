@@ -282,7 +282,7 @@ export default function StaffSettings() {
                   name="role_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("role")}</FormLabel>
+                      <FormLabel required>{t("role")}</FormLabel>
                       <FormControl>
                         <Input type="text" {...field} />
                       </FormControl>

@@ -290,6 +290,7 @@ export default function QuotaManagement() {
   }
 
   const handleEditClick = (quota: any) => {
+    
     setNewQuota({
       name: quota.name,
       description: quota.description || "",
