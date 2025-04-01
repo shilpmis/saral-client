@@ -39,43 +39,44 @@ const headers = [
 
 // Add a sample row with example data
 const sampleRow = [
-  "Rahul",
-  "Pravinbhai",
-  "Patel",
-  "રાહુલ",
-  "પ્રવિણભાઈ",
-  "પટેલ",
-  "Male",
-  "2000-01-01",
-  "Surat",
-  "Surat",
-  "'123456789012",
-  "'895645125689784523",
-  "Pravinbhai",
-  "પ્રવિણભાઈ",
-  "Sangitaben",
-  "સંગીતાબેન",
-  "'8956234582",
-  "'9974001772",
-  "8952",
-  "41",
-  "2023-08-01",
-  "Play High School",
-  "પ્લે હાઈ સ્કૂલ",
-  "Hindu",
-  "હિંદુ",
-  "Hindu Patel",
-  "હિંદુ પટેલ",
-  "SC",
-  "Plot No 123 Near School Surat",
-  "Surat",
-  "Surat",
-  "Gujarat",
-  "395001",
-  "Bank of Baroda",
-  "'1234567890123456",
-  "BARB0SURAT123",
+  "Rahul", // First Name
+  "", // Middle Name (optional)
+  "Patel", // Last Name
+  "", // First Name Gujarati (optional)
+  "", // Middle Name Gujarati (optional)
+  "", // Last Name Gujarati (optional)
+  "Male", // Gender
+  "", // Date of Birth (optional)
+  "", // Birth Place (optional)
+  "", // Birth Place In Gujarati (optional)
+  "", // Aadhar No (optional)
+  "", // DISE Number (optional)
+  "", // Father Name (optional)
+  "", // Father Name in Gujarati (optional)
+  "", // Mother Name (optional)
+  "", // Mother Name in Gujarati (optional)
+  "9876543210", // Mobile No
+  "", // Other Mobile No (optional)
+  "GR12345", // GR No
+  "", // Roll Number (optional)
+  "", // Admission Date (optional)
+  "", // Previous School (optional)
+  "", // Previous School In Gujarati (optional)
+  "", // Religion (optional)
+  "", // Religion In Gujarati (optional)
+  "", // Caste (optional)
+  "", // Caste In Gujarati (optional)
+  "", // Category (optional)
+  "", // Address (optional)
+  "", // District (optional)
+  "", // City (optional)
+  "", // State (optional)
+  "", // Postal Code (optional)
+  "", // Bank Name (optional)
+  "", // Account Number (optional)
+  "", // IFSC Code (optional)
 ].join(",");
+
 export const downloadCSVTemplate = () => {
   try {
     const BOM = "\uFEFF"; // UTF-8 BOM

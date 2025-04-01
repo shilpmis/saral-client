@@ -18,8 +18,8 @@ import { toast } from "@/hooks/use-toast"
 import { useCreateFeesPlanMutation, useLazyFetchDetailFeePlanQuery, useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery, useUpdateFeesPlanMutation } from "@/services/feesService"
 import { FeesPlanDetail, InstallmentBreakdowns } from "@/types/fees"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
-import {  useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState, selectCurrentUser } from "@/redux/slices/authSlice"
+import {  useGetAcademicClassesQuery, useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 
@@ -197,11 +197,21 @@ interface AddFeePlanFormProps {
 export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSuccessfulSubmit, type, plan_id }) => {
 
   const authState = useAppSelector(selectAuthState)
+  const user = useAppSelector(selectCurrentUser)
   // const [getFeesPlan, { data: FetchedFeePlans }] = useLazyGetFeesPlanQuery();
   const {t} = useTranslation()
   const [getAllFeesType, { data: FetchedFeesType, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery();
-  const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
-  
+  const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading , error : ErrorWhilwFetchingClassWithOutFeesPlan }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
+
+
+  console.log('isError :::', ErrorWhilwFetchingClassWithOutFeesPlan)
+
+  const {
+      data: classesData = [],
+      isLoading: isLoadingClasses,
+      refetch: refetchClasses,
+    } = useGetAcademicClassesQuery(user!.school_id)
+
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
@@ -381,7 +391,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
           fees_plan : {
             name: values.fees_plan.name,
             description: values.fees_plan.description ?? '',
-            class_id: values.fees_plan.class_id,    
+            division_id: values.fees_plan.class_id,    
           },
           plan_details: values.fees_types.map((detail) => ({
             fees_type_id: detail.fees_type_id,
@@ -510,7 +520,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
         fees_plan: {
           name: fees_plan.name,
           description: fees_plan.description,
-          class_id: fees_plan.class_id,
+          class_id: fees_plan.division_id,
         },
         fees_types: [], // Start with empty array, we'll populate it manually
       })
@@ -677,7 +687,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                           <SelectContent>
                             {ClassesWithOutFeesPlan && ClassesWithOutFeesPlan.map((cls) => (
                               <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
-                                {cls.class}-{cls.division}  {cls.aliases}
+                                {cls.class_id}-{cls.division}  {cls.aliases}
                               </SelectItem>
                             ))}
                             {(isClassWithOutFeesPlanLoading || !ClassesWithOutFeesPlan) && (
