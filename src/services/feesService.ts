@@ -87,6 +87,28 @@ export const FeesApi = createApi({
         }
       },
     }),
+    getFilteredFeesPlan: builder.query<
+      { data: FeesPlan[]; meta: PageMeta },
+      {
+        academic_session: number;
+        page?: number;
+        filter_by: "eligible_for_concession";
+        value: number | string;
+      }
+    >({
+      query: ({ academic_session, page = 1, filter_by, value }) => ({
+        url: `/feesplan?academic_session=${academic_session}&${filter_by}=${value}&page=${page}`,
+        method: "GET",
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setFeesPlan([...data.data]));
+        } catch (error) {
+          console.log("Error while fetching Fees Plan", error);
+        }
+      },
+    }),
     FetchDetailFeePlan: builder.query<
       DetailedFeesPlan,
       { academic_session: number; plan_id: number }
@@ -124,6 +146,22 @@ export const FeesApi = createApi({
     >({
       query: ({ class_id, page = 1, academic_session }) => ({
         url: `/fees/status/class/${class_id}?academic_session=${academic_session}&page=${page}`,
+        method: "GET",
+      }),
+    }),
+
+    getFilterdStudentFeesDetailsForClass: builder.query<
+      { data: StudentWithFeeStatus[]; meta: PageMeta },
+      {
+        class_id: number;
+        page?: number;
+        academic_session: number;
+        filter_by: "eligible_for_concession";
+        value: number | string;
+      }
+    >({
+      query: ({ class_id, page = 1, academic_session, filter_by, value }) => ({
+        url: `/fees/status/class/${class_id}?academic_session=${academic_session}&${filter_by}=${value}&page=${page}`,
         method: "GET",
       }),
     }),
@@ -231,6 +269,23 @@ export const FeesApi = createApi({
       }),
     }),
 
+    updateConcsessionAppliedToPlan: builder.mutation<
+      Concession,
+      {
+        concession_id: number;
+        plan_id: number;
+        payload: {
+          status: "Active" | "Inactive";
+        };
+      }
+    >({
+      query: ({ payload, concession_id, plan_id }) => ({
+        url: `/concession/paln/${concession_id}/${plan_id}`,
+        method: "PUT",
+        body: payload,
+      }),
+    }),
+
     applyConcessionsToStudent: builder.mutation<
       Concession,
       {
@@ -240,6 +295,24 @@ export const FeesApi = createApi({
       query: ({ payload }) => ({
         url: `/concession/apply/student`,
         method: "POST",
+        body: payload,
+      }),
+    }),
+
+    updateConcsessionAppliedToStudent: builder.mutation<
+      Concession,
+      {
+        concession_id: number;
+        student_id: number;
+        plan_id: number;
+        payload: {
+          status: "Active" | "Inactive";
+        };
+      }
+    >({
+      query: ({ payload, concession_id, plan_id, student_id }) => ({
+        url: `/concession/student/${concession_id}/${plan_id}/${student_id}`,
+        method: "PUT",
         body: payload,
       }),
     }),
@@ -254,12 +327,17 @@ export const {
   useCreateFeesPlanMutation,
   useUpdateFeesPlanMutation,
   useLazyGetFeesPlanQuery,
+  useLazyGetFilteredFeesPlanQuery,
   useLazyFetchDetailFeePlanQuery, // to fetch single fee plan
+
+  useUpdateConcsessionAppliedToPlanMutation,
+  useUpdateConcsessionAppliedToStudentMutation,
 
   useLazyGetStudentFeesDetailsQuery,
   useGetStudentFeesDetailsQuery,
 
   useLazyGetStudentFeesDetailsForClassQuery,
+  useLazyGetFilterdStudentFeesDetailsForClassQuery,
 
   usePayFeesMutation,
   usePayMultipleInstallmentsMutation,

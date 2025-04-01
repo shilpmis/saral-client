@@ -5,13 +5,15 @@ import { FeeDashboard } from "@/components/Fees/Dashboard/FeeDashboard"
 import { FeeTypeManagement } from "@/components/Fees/FeeType/FeeTypeManagement"
 import { FeePlanManagement } from "@/components/Fees/FeePlan/FeePlanManagement"
 import { ConcessionManagement } from "@/components/Fees/Concession/ConcessionManagement"
-import { StudentFeeManagement } from "@/components/Fees/StudentFee/StudentFeeManagement"
+import StudentFeesManagement from "@/components/Fees/StudentFee/StudentFeeManagement"
 import { ReportGeneration } from "@/components/Fees/Reports/ReportGeneration"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const Fees: React.FC = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
-  const {t} = useTranslation()
+  const {t} = useTranslation();
+
+
   return (
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -21,7 +23,7 @@ export const Fees: React.FC = () => {
           <TabsTrigger value="fee-plans">{t("fee_plans")}</TabsTrigger>
           <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
           <TabsTrigger value="student-fees">{t("student_fees")}</TabsTrigger>
-          <TabsTrigger value="reports">{t("reports")}</TabsTrigger>
+          {/* <TabsTrigger value="reports">{t("reports")}</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -41,12 +43,12 @@ export const Fees: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="student-fees">
-          <StudentFeeManagement />
+          <StudentFeesManagement />
         </TabsContent>
 
-        <TabsContent value="reports">
+        {/* <TabsContent value="reports">
           <ReportGeneration />
-        </TabsContent>
+        </TabsContent>   */}
       </Tabs>
     </div>
   )

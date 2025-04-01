@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,51 +13,77 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "@/hooks/use-toast"
-import { useAddInquiryMutation } from "@/services/InquiryServices"
+import { useAddInquiryMutation, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
-
 const formSchema = z.object({
-  student_name: z.string().min(2, { message: "Student name is required" }),
-  dob: z.string().min(1, { message: "Date of birth is required" }),
+  first_name: z.string().min(2, { message: "First name is required" }),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, { message: "Last name is required" }),
+  birth_date: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.string().min(1, { message: "Gender is required" }),
   class_applying: z.string().min(1, { message: "Class is required" }),
-  parent_name: z.string().min(2, { message: "Parent name is required" }),
-  parent_contact: z.string().min(10, { message: "Valid contact number is required" }),
+  father_name: z.string().min(2, { message: "Parent name is required" }),
+  primary_mobile: z.string().min(10, { message: "Valid contact number is required" }),
   parent_email: z.string().email({ message: "Valid email is required" }),
   address: z.string().min(5, { message: "Address is required" }),
-  previous_school: z.string().optional(),
-  previous_class: z.string().optional(),
-  previous_percentage: z.string().optional(),
-  previous_year: z.string().optional(),
+  privious_school: z.string().optional(),
+  privious_class: z.string().optional(),
+  privious_percentage: z.string().optional(),
+  privious_year: z.string().optional(),
   special_achievements: z.string().optional(),
   applying_for_quota: z.string().min(1, { message: "Please select an option" }),
   quota_type: z.string().optional(),
 })
 
-export default function AdmissionInquiryForm() {
+interface AdmissionInquiryFormProps {
+  isEditing?: boolean
+  initialData?: z.infer<typeof formSchema>
+  inquiryId?: number
+  onSuccess?: () => void
+  onCancel?: () => void
+}
+
+export default function AdmissionInquiryForm({
+  isEditing = false,
+  initialData,
+  inquiryId,
+  onSuccess,
+  onCancel,
+}: AdmissionInquiryFormProps) {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
-  const [addInquiry, { isLoading }] = useAddInquiryMutation()
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
-  const {t} = useTranslation();
+  // const [addInquiry, { isLoading }] = useAddInquiryMutation()
+  // const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  // const {t} = useTranslation();
  
+  const [addInquiry, { isLoading: isAddLoading }] = useAddInquiryMutation()
+  const [updateInquiry, { isLoading: isUpdateLoading }] = useUpdateInquiryMutation()
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
+  const { t } = useTranslation()
+  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
+
+  const isLoading = isAddLoading || isUpdateLoading
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      student_name: "",
-      dob: "",
+    defaultValues: initialData || {
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      birth_date: "",
       gender: "",
       class_applying: "",
-      parent_name: "",
-      parent_contact: "",
+      father_name: "",
+      primary_mobile: "",
       parent_email: "",
       address: "",
-      previous_school: "",
-      previous_class: "",
-      previous_percentage: "",
-      previous_year: "",
+      privious_school: "",
+      privious_class: "",
+      privious_percentage: "",
+      privious_year: "",
       special_achievements: "",
       applying_for_quota: "no",
       quota_type: "",
@@ -66,31 +92,58 @@ export default function AdmissionInquiryForm() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await addInquiry({
-        academic_session_id: currentAcademicSession?.id || 1,
-        student_name: values.student_name,
-        dob: values.dob,
-        gender: values.gender,
-        class_applying: Number.parseInt(values.class_applying),
-        parent_name: values.parent_name,
-        parent_contact: values.parent_contact,
-        address: values.address,
-        applying_for_quota: values.applying_for_quota === "yes",
-        parent_email: values.parent_email,
-        previous_school: values.previous_school,
-        previous_class: values.previous_class,
-        previous_percentage: values.previous_percentage,
-        previous_year: values.previous_year,
-        special_achievements: values.special_achievements,
-        quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
-      })
+      if (isEditing && inquiryId) {
+        // Update existing inquiry
+        const response = await updateInquiry({
+          id: inquiryId,
+          // academic_session_id is removed as it is not part of UpdateInquiryRequest
+          first_name: values.first_name,
+          middle_name: values.middle_name,
+          last_name: values.last_name,
+          birth_date: values.birth_date,
+          gender: values.gender,
+          class_applying: Number.parseInt(values.class_applying),
+          father_name: values.father_name,
+          primary_mobile: values.primary_mobile,
+          address: values.address,
+          applying_for_quota: values.applying_for_quota === "yes",
+          parent_email: values.parent_email,
+          // privious_school: values.privious_school,
+          // privious_class: values.privious_class,
+          // privious_percentage: values.privious_percentage,
+          // privious_year: values.privious_year,
+          // special_achievements: values.special_achievements,
+          // quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
+        }).unwrap()
 
-      console.log(response)
-      setSubmitted(true)
-      toast({
-        title: "Inquiry Submitted",
-        description: "Your inquiry has been successfully submitted.",
-      })
+        if (onSuccess) {
+          onSuccess()
+        }
+      } else {
+        // Add new inquiry
+        const response = await addInquiry({
+          academic_session_id: currentAcademicSession?.id || 1,
+          first_name: values.first_name,
+          middle_name: values.middle_name,
+          last_name: values.last_name,
+          birth_date: values.birth_date,
+          gender: values.gender,
+          class_applying: Number.parseInt(values.class_applying),
+          father_name: values.father_name,
+          primary_mobile: values.primary_mobile,
+          address: values.address,
+          applying_for_quota: values.applying_for_quota === "yes",
+          parent_email: values.parent_email,
+          special_achievements: values.special_achievements,
+          quota_type: values.applying_for_quota === "yes" ? values.quota_type : undefined,
+        }).unwrap()
+
+        setSubmitted(true)
+        toast({
+          title: "Inquiry Submitted",
+          description: "Your inquiry has been successfully submitted.",
+        })
+      }
     } catch (error) {
       console.error(error)
       toast({
@@ -103,20 +156,21 @@ export default function AdmissionInquiryForm() {
 
   const nextStep = () => {
     if (step === 1) {
-      form.trigger(["student_name", "dob", "gender", "class_applying"])
+      form.trigger(["first_name", "last_name", "birth_date", "gender", "class_applying"])
       if (
-        form.getFieldState("student_name").invalid ||
-        form.getFieldState("dob").invalid ||
+        form.getFieldState("first_name").invalid ||
+        form.getFieldState("last_name").invalid ||
+        form.getFieldState("birth_date").invalid ||
         form.getFieldState("gender").invalid ||
         form.getFieldState("class_applying").invalid
       ) {
         return
       }
     } else if (step === 2) {
-      form.trigger(["parent_name", "parent_contact", "parent_email", "address"])
+      form.trigger(["father_name", "primary_mobile", "parent_email", "address"])
       if (
-        form.getFieldState("parent_name").invalid ||
-        form.getFieldState("parent_contact").invalid ||
+        form.getFieldState("father_name").invalid ||
+        form.getFieldState("primary_mobile").invalid ||
         form.getFieldState("parent_email").invalid ||
         form.getFieldState("address").invalid
       ) {
@@ -128,10 +182,17 @@ export default function AdmissionInquiryForm() {
   }
 
   const prevStep = () => setStep(step - 1)
-  const handleClose = () => setSubmitted(true)
-  if (submitted) {
+  const handleClose = () => {
+    if (onCancel) {
+      onCancel()
+    } else {
+      setSubmitted(true)
+    }
+  }
+
+  if (submitted && !isEditing) {
     return (
-      <div className="container mx-auto py-10 max-w-3xl">
+      <div className="container mx-auto py-10 max-w-3xl mt-0">
         <Card>
           <CardHeader>
             <CardTitle className="text-center text-2xl">{t("admission_inquiry_submitted")}</CardTitle>
@@ -160,12 +221,14 @@ export default function AdmissionInquiryForm() {
   }
 
   return (
-    <div className="container mx-auto py-10 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("admission_inquiry_form")}</CardTitle>
-          <CardDescription>{t("please_fill_out_this_form_to_submit_an_admission_inquiry_for_your_child")}</CardDescription>
-        </CardHeader>
+    <div className={`container mx-auto py-10 ${isEditing ? "" : "max-w-3xl"}`}>
+      <Card className={isEditing ? "border-0 shadow-none" : ""}>
+        {!isEditing && (
+          <CardHeader>
+            <CardTitle>{t("admission_inquiry_form")}</CardTitle>
+            <CardDescription>{t("please_fill_out_this_form_to_submit_an_admission_inquiry_for_your_child")}</CardDescription>
+          </CardHeader>
+        )}
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -184,10 +247,10 @@ export default function AdmissionInquiryForm() {
 
                 {step === 1 && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
-                        name="student_name"
+                        name="first_name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("student_full_name")}</FormLabel>
@@ -200,12 +263,25 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="dob"
+                        name="middle_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("date_of_birth")}</FormLabel>
+                            <FormLabel>Middle Name</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -215,16 +291,26 @@ export default function AdmissionInquiryForm() {
 
                     <FormField
                       control={form.control}
+                      name="birth_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("gender")}</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex space-x-4"
-                            >
+                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="male" id="male" />
                                 <Label htmlFor="male">{t("male")}</Label>
@@ -250,16 +336,16 @@ export default function AdmissionInquiryForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("class_applying_for")}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder={t("select_class")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((cls) => (
-                                <SelectItem key={cls} value={cls.toString()}>
-                                  Class {cls}
+                              {classSeats?.map((seat) => (
+                                <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
+                                  Class {seat.class.class} {seat.class.division}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -276,7 +362,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="parent_name"
+                        name="father_name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("parent_name")}</FormLabel>
@@ -289,7 +375,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="parent_contact"
+                        name="primary_mobile"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("contact_number")}</FormLabel>
@@ -337,7 +423,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previous_school"
+                        name="privious_school"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("previous_school")}</FormLabel>
@@ -350,7 +436,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previous_class"
+                        name="privious_class"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("last_class_completed")}</FormLabel>
@@ -366,7 +452,7 @@ export default function AdmissionInquiryForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="previous_percentage"
+                        name="privious_percentage"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("percentage/_grade")}</FormLabel>
@@ -379,7 +465,7 @@ export default function AdmissionInquiryForm() {
                       />
                       <FormField
                         control={form.control}
-                        name="previous_year"
+                        name="privious_year"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("year")}</FormLabel>
@@ -413,11 +499,7 @@ export default function AdmissionInquiryForm() {
                         <FormItem>
                           <FormLabel>{t("are_you_applying_under_any_quota?")}</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex space-x-4"
-                            >
+                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id="quota-yes" />
                                 <Label htmlFor="quota-yes">{t("yes")}</Label>
@@ -440,7 +522,7 @@ export default function AdmissionInquiryForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("select_quota")}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder={t("select_quota")} />
@@ -473,9 +555,16 @@ export default function AdmissionInquiryForm() {
                     {t("next")}
                   </Button>
                 ) : (
-                  <Button type="submit" className="ml-auto" disabled={isLoading}>
-                    {isLoading ? "Submitting..." : "Submit Inquiry"}
-                  </Button>
+                  <div className="flex gap-2 ml-auto">
+                    {isEditing && (
+                      <Button type="button" variant="outline" onClick={onCancel}>
+                        Cancel
+                      </Button>
+                    )}
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Submitting..." : isEditing ? "Update Inquiry" : "Submit Inquiry"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </form>

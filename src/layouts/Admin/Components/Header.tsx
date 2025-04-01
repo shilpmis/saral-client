@@ -1,17 +1,13 @@
 "use client"
 
 import { DialogTrigger } from "@/components/ui/dialog"
-
 import { useEffect, useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { logout } from "@/services/AuthService"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Search } from "@/components/Dashboard/Search"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 import {
@@ -29,17 +25,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { useDispatch, useSelector } from "react-redux"
-import { RootState } from "@/redux/store"
-import { setLanguage } from "@/redux/slices/languageSlice"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import LanguageSwitcher from "@/components/traslater/languageSwitcher"
-import { AlertTriangle, Bell, LogOut, Moon, Settings, Sun, User, Zap } from "lucide-react"
+import { AlertTriangle, LogOut, Moon, Sun, User, Zap, School } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Search } from "@/components/Dashboard/Search"
 
 const shortFormForRole: any = {
   1: "AD",
@@ -50,11 +44,10 @@ const shortFormForRole: any = {
   6: "TE",
 }
 
-
 export default function Header() {
   const dispatch = useAppDispatch()
   const users = useAppSelector((state) => state.auth.user)
-  const {t} = useTranslation()
+  const { t } = useTranslation()
 
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
@@ -97,6 +90,7 @@ export default function Header() {
 
   return (
     <>
+      {/* Offline Status Indicator */}
       <AnimatePresence>
         {!isOnline && (
           <motion.div
@@ -112,22 +106,25 @@ export default function Header() {
         )}
       </AnimatePresence>
 
+      {/* Main Header */}
       <div
-        className={`w-full h-auto shadow-lg rounded-md flex justify-between items-center p-3 bg-white dark:bg-gray-900 transition-all duration-300 ${!isOnline ? "mt-10" : ""}`}
+        className={`w-full h-auto shadow-md rounded-md flex justify-between items-center px-4 py-3 bg-white dark:bg-gray-900 transition-all duration-300 ${
+          !isOnline ? "mt-10" : ""
+        }`}
       >
-        <div className="flex items-center gap-4">
-          <SidebarTrigger />
-          <div className="hidden md:flex">
-            <h1 className="text-xl underline">
-              {users?.school.name}
+        {/* Left Side - Logo and School Name */}
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="text-primary hover:text-primary/80 transition-colors" />
+          <div className="hidden md:flex items-center">
+            {/* <School className="h-5 w-5 text-primary mr-2" /> */}
+            <h1 className="text-xl font-medium text-transparent">
+              {users?.school.name || "Saral School Management"}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Search />
-          <LanguageSwitcher />
-
+        {/* Right Side - Controls and User Profile */}
+        <div className="flex items-center gap-3">
           {/* Theme Toggle */}
           {/* <TooltipProvider>
             <Tooltip>
@@ -146,17 +143,25 @@ export default function Header() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Toggle {isDarkMode ? "Light" : "Dark"} Mode</p>
+                <p>{isDarkMode ? t("light_mode") : t("dark_mode")}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider> */}
-
+          <Search/>
+          {/* Language Switcher */}
+          <div className="border-l border-gray-200 dark:border-gray-700 pl-3">
+            <LanguageSwitcher />
+          </div>
 
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer group">
-                <Avatar className="h-10 w-10 border-2 border-primary group-hover:border-primary/80 transition-colors">
+              <div className="flex items-center gap-2 cursor-pointer group ml-2">
+                <div className="hidden md:block text-right">
+                  <p className="text-sm font-medium line-clamp-1">{users?.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{users?.saral_email}</p>
+                </div>
+                <Avatar className="h-9 w-9 border-2 border-primary group-hover:border-primary/80 transition-colors">
                   <AvatarImage
                     src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg?t=st=1741157072~exp=1741160672~hmac=ed96e089fd628b2ab1f81ea8e2bb6ecdda05224e16db03ed8a1745e8b9787c4f&w=900"
                     alt="User"
@@ -168,10 +173,6 @@ export default function Header() {
                       .join("") || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium line-clamp-1">{users?.name}</p>
-                  <p className="text-xs text-gray-500 line-clamp-1">{users?.saral_email}</p>
-                </div>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64" align="end">
@@ -190,9 +191,9 @@ export default function Header() {
                 </Avatar>
                 <div className="text-center">
                   <p className="font-semibold">{users?.name}</p>
-                  <p className="text-xs text-gray-500">{users?.saral_email}</p>
+                  <p className="text-xs text-muted-foreground">{users?.saral_email}</p>
                 </div>
-                <Badge variant="outline" className="mt-1">
+                <Badge variant="outline" className="mt-1 bg-primary/10 text-primary border-primary/20">
                   {shortFormForRole[users!.role_id] || "User"}
                 </Badge>
               </div>
@@ -264,44 +265,6 @@ export default function Header() {
                           </div>
                         </div>
                       </div>
-                      {/* <DialogFooter>
-                        <Button>Edit Profile</Button>
-                      </DialogFooter> */}
-                    </DialogContent>
-                  </Dialog>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem className="cursor-pointer flex items-center gap-2 p-2 rounded-md" asChild>
-                  <Dialog>
-                    <DialogTrigger className="w-full flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      <span>{t("settings")}</span>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>{t("settings")}</DialogTitle>
-                        <DialogDescription>{t("adjust_your_account_settings_here.")}</DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                            <Label htmlFor="theme">{t("dark_mode")}</Label>
-                          </div>
-                          <Switch id="theme" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Bell className="h-4 w-4" />
-                            <Label htmlFor="notifications">{t("notifications")}</Label>
-                          </div>
-                          <Switch id="notifications" defaultChecked />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit">{t("save_settings")}</Button>
-                      </DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </DropdownMenuItem>
@@ -321,6 +284,7 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Logout Confirmation Dialog */}
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl shadow-lg">
           <DialogHeader className="text-center">

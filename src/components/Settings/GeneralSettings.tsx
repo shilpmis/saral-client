@@ -216,7 +216,7 @@ export default function GeneralSettings() {
     <>
       {isSuccess && (<div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">{t("general_seetings")}</h1>
+          <h1 className="text-2xl font-semibold">{t("general_settings")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
           {t("manage_your_school's_basic_information,_contact_details,_and_subscription")}
           </p>

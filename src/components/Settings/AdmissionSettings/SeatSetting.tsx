@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-import { Loader2 } from "lucide-react"
+import { Loader2, ChevronLeft } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -19,27 +19,47 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useAddQuotaSeatAllocationMutation, useAddSeatAvailabilityMutation, useGetClassSeatAvailabilityQuery, useGetQuotasQuery } from "@/services/QuotaService"
-import { useToast } from "@/hooks/use-toast"
+import {
+  useAddQuotaSeatAllocationMutation,
+  useAddSeatAvailabilityMutation,
+  useGetClassSeatAvailabilityQuery,
+  useGetQuotasQuery,
+} from "@/services/QuotaService"
+import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectCurrentUser } from "@/redux/slices/authSlice"
 import { useGetAcademicClassesQuery } from "@/services/AcademicService"
-import { AcademicClasses } from '@/types/academic';
+import type { AcademicClasses } from "@/types/academic"
+import { Link } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function SeatsManagement() {
-  const {t} = useTranslation()
-  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
-  const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery()
-  const [addSeatAvailability] = useAddSeatAvailabilityMutation()
-  const [addQuotaSeatAllocation] = useAddQuotaSeatAllocationMutation()  
+
+  const { t } = useTranslation()
+
+  const {
+    data: classSeats,
+    isLoading: isLoadingSeats,
+    isError: isErrorSeats,
+    error: seatsError,
+  } = useGetClassSeatAvailabilityQuery()
+  const { data: quotas, isLoading: isLoadingQuotas, isError: isErrorQuotas, error: quotasError } = useGetQuotasQuery()
+  const [addSeatAvailability, { isLoading: isAddingSeats, isError: isAddSeatsError, error: addSeatsError }] =
+    useAddSeatAvailabilityMutation()
+  const [
+    addQuotaSeatAllocation,
+    { isLoading: isAddingQuotaAllocation, isError: isAddQuotaError, error: addQuotaError },
+  ] = useAddQuotaSeatAllocationMutation()
   const user = useAppSelector(selectCurrentUser)
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
-  const{
-      isLoading: isLoadingClasses,
-      data: classesData,
-      refetch: refetchClasses,
-    } = useGetAcademicClassesQuery(user!.school_id)
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
+  const {
+    isLoading: isLoadingClasses,
+    data: classesData,
+    refetch: refetchClasses,
+    isError: isErrorClasses,
+    error: classesError,
+  } = useGetAcademicClassesQuery(user!.school_id)
+
   const [selectedClass, setSelectedClass] = useState("all")
   const [selectedClassForQuota, setSelectedClassForQuota] = useState<string | null>(null)
   const [newSeatData, setNewSeatData] = useState({
@@ -53,30 +73,143 @@ export default function SeatsManagement() {
     total_seats: 5,
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const { toast } = useToast()
+  const [isAddSeatDialogOpen, setIsAddSeatDialogOpen] = useState(false)
 
   const filteredSeats =
     selectedClass === "all" ? classSeats : classSeats?.filter((seat) => seat.class_id.toString() === selectedClass)
+
+  // Update the getErrorMessage function to handle the specific error format shown by the user
+
+  // Replace the existing getErrorMessage function with this improved version:
+  const getErrorMessage = (error: any): string => {
+    if (error?.data?.error) {
+      // Handle the specific error format shown by the user
+      return error.data.error
+    } else if (error?.data?.errors?.messages) {
+      // Handle structured API errors
+      return error.data.errors.messages.map((msg: any) => msg.message).join(", ")
+    } else if (error?.data?.message) {
+      // Handle simple message format
+      return error.data.message
+    } else if (error?.message) {
+      // Handle JS error objects
+      return error.message
+    } else if (typeof error === "string") {
+      // Handle string errors
+      return error
+    } else {
+      // Fallback for unknown error formats
+      return "An unknown error occurred"
+    }
+  }
+
+  // Display error toast when fetching seats data fails
+  useEffect(() => {
+    if (isErrorSeats && seatsError) {
+      const errorMessage = getErrorMessage(seatsError)
+      toast({
+        title: "Error loading seat availability data",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [isErrorSeats, seatsError])
+
+  // Display error toast when fetching quotas fails
+  useEffect(() => {
+    if (isErrorQuotas && quotasError) {
+      const errorMessage = getErrorMessage(quotasError)
+      toast({
+        title: "Error loading quotas",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [isErrorQuotas, quotasError])
+
+  // Display error toast when fetching classes fails
+  useEffect(() => {
+    if (isErrorClasses && classesError) {
+      const errorMessage = getErrorMessage(classesError)
+      toast({
+        title: "Error loading classes",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [isErrorClasses, classesError])
 
   const handleSeatUpdate = async (id: number, totalSeats: number) => {
     try {
       await addSeatAvailability({
         class_id: id,
-        academic_session_id: 1, // Default academic session
+        academic_session_id: currentAcademicSession?.id || 1,
         total_seats: totalSeats,
       }).unwrap()
 
       toast({
-        title: "Seats updated",
+        title: "Success",
         description: "The seat allocation has been updated successfully.",
       })
     } catch (error) {
+      const errorMessage = getErrorMessage(error)
+
       toast({
-        title: "Error",
-        description: "Failed to update seat allocation.",
+        title: "Error updating seats",
+        description: errorMessage,
         variant: "destructive",
       })
+
       console.error("Failed to update seats:", error)
+    }
+  }
+
+  // Also update the handleAddSeatAvailability function to provide a more user-friendly message for this specific error
+  // Replace the existing handleAddSeatAvailability function with this improved version:
+  const handleAddSeatAvailability = async () => {
+    if (!newSeatData.class_id) {
+      toast({
+        title: "Error",
+        description: "Please select a class.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await addSeatAvailability(newSeatData).unwrap()
+
+      toast({
+        title: "Success",
+        description: "The seat availability has been added successfully.",
+      })
+
+      setIsAddSeatDialogOpen(false)
+      // Reset form
+      setNewSeatData({
+        class_id: 0,
+        academic_session_id: currentAcademicSession?.id || 1,
+        total_seats: 40,
+      })
+    } catch (error) {
+      const errorMessage = getErrorMessage(error)
+
+      // Check for the specific error about seat availability already existing
+      if (errorMessage.includes("Seat availability already exists")) {
+        toast({
+          title: "Duplicate Entry",
+          description: "Seat availability already exists for this class. Please update the existing record instead.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error adding seat availability",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+
+      console.error("Failed to add seats:", error)
     }
   }
 
@@ -92,18 +225,54 @@ export default function SeatsManagement() {
 
     try {
       await addQuotaSeatAllocation(newQuotaAllocation).unwrap()
-      setIsDialogOpen(false)
+
       toast({
-        title: "Quota allocation added",
+        title: "Success",
         description: "The quota allocation has been added successfully.",
       })
+
+      setIsDialogOpen(false)
+      // Reset form
+      setNewQuotaAllocation({
+        quota_id: 0,
+        class_id: 0,
+        total_seats: 5,
+      })
     } catch (error) {
+      const errorMessage = getErrorMessage(error)
+
       toast({
-        title: "Error",
-        description: "Failed to add quota allocation.",
+        title: "Error adding quota allocation",
+        description: errorMessage,
         variant: "destructive",
       })
+
       console.error("Failed to add quota allocation:", error)
+    }
+  }
+
+  const handleUpdateQuotaAllocation = async (quotaId: number, classId: number, totalSeats: number) => {
+    try {
+      await addQuotaSeatAllocation({
+        quota_id: quotaId,
+        class_id: classId,
+        total_seats: totalSeats,
+      }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "The quota allocation has been updated successfully.",
+      })
+    } catch (error) {
+      const errorMessage = getErrorMessage(error)
+
+      toast({
+        title: "Error updating quota allocation",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
+      console.error("Failed to update quota allocation:", error)
     }
   }
 
@@ -120,22 +289,21 @@ export default function SeatsManagement() {
     )
   }
 
-    // if (isErrorSeats) {
-    //   return (
-    //     <div className="container mx-auto py-10">
-    //       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-    //         <p>Error loading seat availability data</p>
-    //       </div>
-    //     </div>
-    //   )
-    // }
-
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col space-y-6">
+        {/* Back button */}
+        <Link
+          to="/d/settings/admission"
+          className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4 w-fit"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back to Admission Settings
+        </Link>
+
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">{t("seat_management")}</h1>
-          <Dialog>
+          <Dialog open={isAddSeatDialogOpen} onOpenChange={setIsAddSeatDialogOpen}>
             <DialogTrigger asChild>
               <Button>{t("add_seat_availability")}</Button>
             </DialogTrigger>
@@ -150,22 +318,26 @@ export default function SeatsManagement() {
                     {t("class")}
                   </Label>
                   <Select
-                    onValueChange={(value) => setNewSeatData({ ...newSeatData, class_id: Number.parseInt(value) })}
+                    onValueChange={(value) => {
+                      const [classId, sessionId] = value.split("|")
+                      setNewSeatData({
+                        ...newSeatData,
+                        class_id: Number.parseInt(classId),
+                        academic_session_id: Number.parseInt(sessionId),
+                      })
+                    }}
                   >
                     <SelectTrigger id="class-id" className="col-span-3">
                       <SelectValue placeholder={t("select_class")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {classesData?.map((academicClass: AcademicClasses) => (
-                        academicClass.divisions.map(division => (
-                         <SelectItem 
-                            key={division.id} 
-                            value={`${division.id}|${currentAcademicSession?.id}`}
-                          >
-                          Class {division.class} {division.division}
-                         </SelectItem>
-                        ))
-                      ))}
+                      {classesData?.map((academicClass: AcademicClasses) =>
+                        academicClass.divisions.map((division) => (
+                          <SelectItem key={division.id} value={`${division.id}|${currentAcademicSession?.id}`}>
+                            Class {division.class} {division.division}
+                          </SelectItem>
+                        )),
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -183,25 +355,15 @@ export default function SeatsManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  onClick={async () => {
-                    try {
-                      await addSeatAvailability(newSeatData).unwrap()
-                      toast({
-                        title: "Seats added",
-                        description: "The seat availability has been added successfully.",
-                      })
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to add seat availability.",
-                        variant: "destructive",
-                      })
-                      console.error("Failed to add seats:", error)
-                    }
-                  }}
-                >
-                  {t("save")}
+                <Button onClick={handleAddSeatAvailability} disabled={isAddingSeats}>
+                  {isAddingSeats ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -288,8 +450,9 @@ export default function SeatsManagement() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleSeatUpdate(seat.class_id, seat.total_seats)}
+                              disabled={isAddingSeats}
                             >
-                              {t("update")}
+                              {isAddingSeats ? <Loader2 className="h-4 w-4 animate-spin" /> : t("update")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -359,6 +522,12 @@ export default function SeatsManagement() {
                                 onChange={(e) => {
                                   // Local UI update only
                                 }}
+                                onBlur={(e) => {
+                                  const newValue = Number.parseInt(e.target.value)
+                                  if (!isNaN(newValue) && newValue >= 0) {
+                                    handleUpdateQuotaAllocation(allocation.quota_id, allocation.class_id, newValue)
+                                  }
+                                }}
                                 className="w-20 h-8"
                               />
                             </TableCell>
@@ -369,14 +538,15 @@ export default function SeatsManagement() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  addQuotaSeatAllocation({
-                                    quota_id: allocation.quota_id,
-                                    class_id: allocation.class_id,
-                                    total_seats: allocation.total_seats,
-                                  })
+                                  handleUpdateQuotaAllocation(
+                                    allocation.quota_id,
+                                    allocation.class_id,
+                                    allocation.total_seats,
+                                  )
                                 }}
+                                disabled={isAddingQuotaAllocation}
                               >
-                                {t("update")}
+                                {isAddingQuotaAllocation ? <Loader2 className="h-4 w-4 animate-spin" /> : t("update")}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -438,7 +608,16 @@ export default function SeatsManagement() {
                                 </div>
                               </div>
                               <DialogFooter>
-                                <Button onClick={handleAddQuotaAllocation}>{t("save_allocation")}</Button>
+                                <Button onClick={handleAddQuotaAllocation} disabled={isAddingQuotaAllocation}>
+                                  {isAddingQuotaAllocation ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      ...
+                                    </>
+                                  ) : (
+                                    t("save_allocation")
+                                  )}
+                                </Button>
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>

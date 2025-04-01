@@ -55,9 +55,11 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 
 // Define the form schema for division
 const formSchemaForDivision = z.object({
-  class_id: z.number({
-    message: "Please enter a valid Class Id for division.",
-  }).nullable(),
+  class_id: z
+    .number({
+      message: "Please enter a valid Class Id for division.",
+    })
+    .nullable(),
   class: z.number({
     message: "Please enter a valid Class for division.",
   }),
@@ -66,12 +68,13 @@ const formSchemaForDivision = z.object({
   }),
   aliases: z
     .string()
-    .min(3, 'Alias should be at least 3 characters')
-    .max(15, 'Alias should not be more than 15 characters')
+    .min(3, "Alias should be at least 3 characters")
+    .max(15, "Alias should not be more than 15 characters")
     .regex(/^[a-zA-Z0-9]+(?: [a-zA-Z0-9]+)*$/, {
-      message: 'Alias should contain only letters, numbers, and single spaces',
-    }).optional(),
-  formType: z.enum(["create", "edit"])
+      message: "Alias should contain only letters, numbers, and single spaces",
+    })
+    .optional(),
+  formType: z.enum(["create", "edit"]),
 })
 
 const defaultStandards = [
@@ -92,9 +95,9 @@ const defaultStandards = [
 export default function AcademicSettings() {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
   const [activeTab, setActiveTab] = useState("sessions")
-  const {t} = useTranslation()
+  const { t } = useTranslation()
 
   // Fetch academic classes
   const {
@@ -134,16 +137,33 @@ export default function AcademicSettings() {
       class: newDivision?.class,
       division: newDivision?.division,
       aliases: newDivision?.aliases,
-      formType: "create" ,
+      formType: "create",
     },
   })
 
   const [setActiveSessionMutation] = useSetActiveSessionMutation()
 
+  // Add this function near the top of the component
+  const getMonthName = (monthNumber: string) => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ]
+    return months[Number.parseInt(monthNumber) - 1]
+  }
+
   // Format session name from dates
-  const formatSessionName = (startDate: string, endDate: string) => {
-    const startYear = new Date(startDate).getFullYear()
-    const endYear = new Date(endDate).getFullYear()
+  const formatSessionName = (startYear: string, endYear: string) => {
     return `${startYear}-${endYear}`
   }
 
@@ -176,7 +196,7 @@ export default function AcademicSettings() {
 
   const handleAddDivision = (classId: number) => {
     classId = Number.parseInt(classId.toString())
-    const cls = academicClasses.find((c) => c.class === classId);
+    const cls = academicClasses.find((c) => c.class === classId)
     console.log("classId", classId)
     console.log("cls", cls)
     if (cls) {
@@ -377,17 +397,38 @@ export default function AcademicSettings() {
 
   const handleActivateSession = async (sessionId: number) => {
     try {
-      await setActiveSessionMutation(sessionId).unwrap()
+      const result = await setActiveSessionMutation(sessionId).unwrap()
       toast({
         title: "Success",
         description: "Academic session activated successfully",
       })
       refetchSessions()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to activate session:", error)
+
+      // Extract error message from different possible error formats
+      let errorMessage = "Failed to activate academic session"
+
+      if (error.data?.message) {
+        // Handle standard API error format
+        errorMessage = error.data.message
+      } else if (error.data?.error) {
+        // Handle error object format
+        errorMessage = error.data.error
+      } else if (Array.isArray(error.data)) {
+        // Handle array of errors format
+        errorMessage = error.data.map((err: any) => err.message || err).join(", ")
+      } else if (typeof error.message === "string") {
+        // Handle plain error message
+        errorMessage = error.message
+      } else if (typeof error === "string") {
+        // Handle string error
+        errorMessage = error
+      }
+
       toast({
         title: "Error",
-        description: "Failed to activate academic session",
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -400,7 +441,7 @@ export default function AcademicSettings() {
     }
   }, [classesData])
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log("formForDivsion.formState.errors", formForDivsion.formState.errors)
   }, [formForDivsion.formState.errors])
 
@@ -408,7 +449,7 @@ export default function AcademicSettings() {
   useEffect(() => {
     if (sessionsData && sessionsData.sessions && sessionsData.sessions.length > 0) {
       const session = sessionsData.sessions.find((session: any) => session.is_active)
-      if (session.is_active) {
+      if (session?.is_active) {
         setActiveSession(session)
         // If we have an active session and we're on the sessions tab, auto-switch to classes tab
         // if (activeTab === "sessions" && !isLoadingClasses) {
@@ -446,7 +487,10 @@ export default function AcademicSettings() {
             </TabsList>
 
             <TabsContent value="sessions" className="space-y-6">
-              <SaralCard title={t("academic_session_management")} description={t("manage_academic_sessions_for_your_school")}>
+              <SaralCard
+                title={t("academic_session_management")}
+                description={t("manage_academic_sessions_for_your_school")}
+              >
                 <Dialog open={isNewSessionDialogOpen} onOpenChange={setIsNewSessionDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
@@ -457,7 +501,9 @@ export default function AcademicSettings() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>{t("create_new_academic_session")}</DialogTitle>
-                      <DialogDescription>{t("set_the_start_and_end_dates_for_the_new_academic_session.")}</DialogDescription>
+                      <DialogDescription>
+                        {t("set_the_start_and_end_dates_for_the_new_academic_session.")}
+                      </DialogDescription>
                     </DialogHeader>
                     <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
                   </DialogContent>
@@ -466,12 +512,10 @@ export default function AcademicSettings() {
                   <div className="mb-6 mt-6 p-4 border rounded-lg bg-muted/50">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-2xl font-bold">
-                          {formatSessionName(activeSession.start_date, activeSession.end_date)}
-                        </h3>
+                        <h3 className="text-2xl font-bold">{activeSession.session_name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {new Date(activeSession.start_date).toLocaleDateString()} -{" "}
-                          {new Date(activeSession.end_date).toLocaleDateString()}
+                          {getMonthName(activeSession.start_month.split("-")[1])} {activeSession.start_year} -{" "}
+                          {getMonthName(activeSession.end_month.split("-")[1])} {activeSession.end_year}
                         </p>
                       </div>
                       <Badge variant="secondary" className="text-lg">
@@ -498,11 +542,15 @@ export default function AcademicSettings() {
                           </Button>
                         </div>
                         <AlertDialogDescription className="text-yellow-600">
-                          {t("there_is_no_active_academic_session._please_create_a_new_session_or_activate_an_existing_one.")}
+                          {t(
+                            "there_is_no_active_academic_session._please_create_a_new_session_or_activate_an_existing_one.",
+                          )}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setShowNoActiveSessionAlert(false)}>{t("close")}</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setShowNoActiveSessionAlert(false)}>
+                          {t("close")}
+                        </AlertDialogCancel>
                         <AlertDialogAction onClick={() => setIsNewSessionDialogOpen(true)}>
                           {t("create_new_session")}
                         </AlertDialogAction>
@@ -532,7 +580,10 @@ export default function AcademicSettings() {
                 </div>
               ) : (
                 <>
-                  <SaralCard title={t("class_management")} description={t("manage_classes_for_the_current_academic_year")}>
+                  <SaralCard
+                    title={t("class_management")}
+                    description={t("manage_classes_for_the_current_academic_year")}
+                  >
                     <div className="grid gap-6">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {defaultStandards.map((cls) => (

@@ -118,7 +118,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
     else if (activeTab === "contact") setActiveTab("other")
     else if (activeTab === "other") setActiveTab("address")
     else if (activeTab === "address") setActiveTab("bank")
-    else if (activeTab === "bank") setActiveTab("employment")
+    else if (activeTab === "bank") setActiveTab("address")
   }, [activeTab])
 
   const handlePreviousTab = useCallback(() => {
@@ -212,7 +212,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
             <TabsTrigger value="other">{t("other")}</TabsTrigger>
             <TabsTrigger value="address">{t("address")}</TabsTrigger>
             <TabsTrigger value="bank">{t("bank")}</TabsTrigger>
-            <TabsTrigger value="employee">{t("employee")}</TabsTrigger>
+            <TabsTrigger value="employment">{t("employee")}</TabsTrigger>
           </TabsList>
 
           {formType != 'update' && (

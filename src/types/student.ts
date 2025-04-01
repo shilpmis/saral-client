@@ -45,6 +45,7 @@ export interface StudentMeta {
 }
 
 export interface Student {
+  // enrollment_id: any;
   id: number;
   school_id: number;
   first_name: string;
@@ -82,7 +83,10 @@ export interface PageDetailsForStudents {
 }
 
 export interface StudentEntry {
-  students_data: Omit<Student, "id" | "student_meta" | "school_id">;
+  students_data: Omit<
+    Student,
+    "id" | "student_meta" | "school_id" | "acadamic_class"
+  >;
   student_meta_data: StudentMeta;
 }
 

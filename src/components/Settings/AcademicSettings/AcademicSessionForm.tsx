@@ -2,15 +2,12 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format } from "date-fns"
-import { CalendarIcon, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
 import { useCreateAcademicSessionMutation } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectCurrentUser } from "@/redux/slices/authSlice"
@@ -18,30 +15,60 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z
   .object({
-    start_date: z.date({
-      required_error: "Start date is required",
+    start_month: z.string({
+      required_error: "Start month is required",
     }),
-    end_date: z.date({
-      required_error: "End date is required",
+    start_year: z.string({
+      required_error: "Start year is required",
+    }),
+    end_month: z.string({
+      required_error: "End month is required",
+    }),
+    end_year: z.string({
+      required_error: "End year is required",
     }),
   })
-  .refine((data) => data.end_date > data.start_date, {
-    message: "End date must be after start date",
-    path: ["end_date"],
-  })
+  .refine(
+    (data) => {
+      const startDate = new Date(`${data.start_year}-${data.start_month}`)
+      const endDate = new Date(`${data.end_year}-${data.end_month}`)
+      return endDate > startDate
+    },
+    {
+      message: "End date must be after start date",
+      path: ["end_month"],
+    },
+  )
 
 export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
   const user = useAppSelector(selectCurrentUser)
   const [createAcademicSession, { isLoading }] = useCreateAcademicSessionMutation()
-  const {t} = useTranslation()
+  const { t } = useTranslation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      start_date: new Date(),
-      end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      start_month: new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`,
+      start_year: `${new Date().getFullYear()}`,
+      end_month: new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`,
+      end_year: `${new Date().getFullYear() + 1}`,
     },
   })
+
+  const months = [
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+  ]
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user?.school_id) {
@@ -56,8 +83,10 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
     try {
       await createAcademicSession({
         school_id: user.school_id,
-        start_date: format(values.start_date, "yyyy-MM-dd"),
-        end_date: format(values.end_date, "yyyy-MM-dd"),
+        start_month: `${values.start_year}-${values.start_month}`,
+        end_month: `${values.end_year}-${values.end_month}`,
+        start_year: values.start_year,
+        end_year: values.end_year,
       }).unwrap()
 
       toast({
@@ -68,11 +97,32 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
       if (onSuccess) {
         onSuccess()
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create academic session:", error)
+
+      // Extract error message from different possible error formats
+      let errorMessage = "Failed to create academic session"
+
+      if (error.data?.message) {
+        // Handle standard API error format
+        errorMessage = error.data.message
+      } else if (error.data?.error) {
+        // Handle error object format
+        errorMessage = error.data.error
+      } else if (Array.isArray(error.data)) {
+        // Handle array of errors format
+        errorMessage = error.data.map((err: any) => err.message || err).join(", ")
+      } else if (typeof error.message === "string") {
+        // Handle plain error message
+        errorMessage = error.message
+      } else if (typeof error === "string") {
+        // Handle string error
+        errorMessage = error
+      }
+
       toast({
         title: "Error",
-        description: "Failed to create academic session",
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -82,75 +132,106 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="start_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t("start_date")}</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="start_month"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("start_month")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
                     </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date() || date > new Date(new Date().setFullYear(new Date().getFullYear() + 10))
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="end_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t("end_date")}</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="start_year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("start_year")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
                     </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date <= form.getValues("start_date") ||
-                        date > new Date(new Date().setFullYear(new Date().getFullYear() + 10))
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                    <SelectContent>
+                      {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="end_month"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("end_month")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="end_year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("end_year")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
         <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? (

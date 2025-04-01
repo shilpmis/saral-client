@@ -16,7 +16,6 @@ import {
   Legend,
 } from "recharts"
 import { DollarSign, Users, Clock, AlertTriangle } from "lucide-react"
-import { FeeCollectionTable } from "../Tables/FeeCollectionTable"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const feeCollectionData = [
@@ -160,7 +159,7 @@ export const FeeDashboard: React.FC = () => {
         </Card>
       </div>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>{t("recent_fee_collections")}</CardTitle>
           <CardDescription>{t("latest_fee_transactions")}</CardDescription>
@@ -168,7 +167,7 @@ export const FeeDashboard: React.FC = () => {
         <CardContent>
           <FeeCollectionTable />
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   )
 }

@@ -12,18 +12,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAddInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
-
 const formSchema = z.object({
-  student_name: z.string().min(2, { message: "Student name is required" }),
-  parent_name: z.string().min(2, { message: "Parent name is required" }),
-  parent_contact: z.string().min(10, { message: "Valid contact number is required" }),
+  first_name: z.string().min(2, { message: "First name is required" }),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(2, { message: "Last name is required" }),
+  father_name: z.string().min(2, { message: "Parent name is required" }),
+  primary_mobile: z.string().min(10, { message: "Valid contact number is required" }),
   parent_email: z.string().email({ message: "Valid email is required" }),
   class_applying: z.string().min(1, { message: "Class is required" }),
-  dob: z.string().optional(),
+  birth_date: z.string().optional(),
   gender: z.string().default("male"),
   address: z.string().default(""),
   applying_for_quota: z.boolean().default(false),
@@ -36,18 +36,20 @@ interface QuickInquiryFormProps {
 
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
   const [addInquiry, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
   const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
   const { t } = useTranslation()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      student_name: "",
-      parent_name: "",
-      parent_contact: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      father_name: "",
+      primary_mobile: "",
       parent_email: "",
       class_applying: "",
-      dob: new Date().toISOString().split("T")[0],
+      birth_date: new Date().toISOString().split("T")[0],
       gender: "male",
       address: "",
       applying_for_quota: false,
@@ -59,12 +61,14 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       // Handle form submission
       const response = await addInquiry({
         academic_session_id: currentAcademicSession?.id || 1,
-        student_name: values.student_name,
-        dob: values.dob || new Date().toISOString().split("T")[0],
+        first_name: values.first_name,
+        middle_name: values.middle_name,
+        last_name: values.last_name,
+        birth_date: values.birth_date || new Date().toISOString().split("T")[0],
         gender: values.gender,
         class_applying: Number.parseInt(values.class_applying),
-        parent_name: values.parent_name,
-        parent_contact: values.parent_contact,
+        father_name: values.father_name,
+        primary_mobile: values.primary_mobile,
         address: values.address || "Address not provided",
         applying_for_quota: values.applying_for_quota,
         parent_email: values.parent_email,
@@ -94,22 +98,50 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("first_name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("enter_first_name")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="middle_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("middle_name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("enter_middle_name")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("last_name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("enter_last_name")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="student_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("student_name")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("enter_student_name")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="parent_name"
+              name="father_name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("parent_name")}</FormLabel>
@@ -122,7 +154,20 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <FormField
               control={form.control}
-              name="parent_contact"
+              name="birth_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("date_of_birth")}</FormLabel>
+                  <FormControl>
+                    <Input type="date" placeholder={t("enter_your_date_of_birth")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="primary_mobile"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("contact_number")}</FormLabel>
@@ -159,7 +204,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {classSeats?.map((seat) => (
+                      {classSeats?.map((seat) => (
                         <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
                           Class {seat.class.class} {seat.class.division}
                         </SelectItem>

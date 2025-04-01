@@ -12,7 +12,6 @@ export const useTranslation = () => {
   const language = useSelector((state: RootState) => state.language.language);
 
   const t = (key: string): string => {
-    console.log(language , translations[language][key]);
     return translations[language][key] || key;
   };
 

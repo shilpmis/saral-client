@@ -1,4 +1,4 @@
-import { StaffType, TeachingStaff } from "./staff";
+import { StaffType } from "./staff";
 
 export enum UserStatus {
   ACTIVE = "ACTIVE",
@@ -7,36 +7,36 @@ export enum UserStatus {
 }
 
 export interface AcademicSession {
-  id: number,
-  uuid: string,
-  school_id: 1,
-  session_name: string,
-  start_date: string,
-  end_date: string,
-  start_month: string,
-  end_month: string,
-  start_year: string,
-  end_year: string,
-  is_active: boolean,
+  id: number;
+  uuid: string;
+  school_id: 1;
+  session_name: string;
+  start_date: string;
+  end_date: string;
+  start_month: string;
+  end_month: string;
+  start_year: string;
+  end_year: string;
+  is_active: boolean;
 }
 
-export interface School{
-  id: number,
-  name: string,
-  organization_id: number,
-  email: string,
-  branch_code: string,
-  contact_number: 9876543210,
-  status: string,
-  established_year: string,
-  school_type: string,
-  address: string,
-  district: string,
-  city: string,
-  state: string,
-  school_logo: string,
-  pincode: number,
-  academicSessions : AcademicSession[] 
+export interface School {
+  id: number;
+  name: string;
+  organization_id: number;
+  email: string;
+  branch_code: string;
+  contact_number: 9876543210;
+  status: string;
+  established_year: string;
+  school_type: string;
+  address: string;
+  district: string;
+  city: string;
+  state: string;
+  school_logo: string;
+  pincode: number;
+  academicSessions: AcademicSession[];
 }
 export interface User {
   id: number;
@@ -45,12 +45,11 @@ export interface User {
   name: string;
   role: UserRole;
   role_id: number;
-  is_teacher: boolean;
   is_active: boolean;
-  teacher_id: number | null;
+  staff_id: number | null;
   permissions: string[];
-  teacher: StaffType | null
-  school : School
+  school: School;
+  staff: StaffType | null;
 }
 
 export enum UserRole {
@@ -103,7 +102,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_FEES,
     Permission.MANAGE_CLASSES,
     Permission.VIEW_REPORTS,
-    Permission.MANAGE_ADMISSION
+    Permission.MANAGE_ADMISSION,
   ],
   [UserRole.HEAD_TEACHER]: [
     Permission.VIEW_DASHBOARD,
@@ -115,7 +114,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_FEES,
     Permission.MANAGE_ADMISSION,
     Permission.MANAGE_LEAVES,
-    Permission.PAY_FEES
+    Permission.PAY_FEES,
   ],
   [UserRole.IT_ADMIN]: [
     Permission.VIEW_DASHBOARD,
@@ -134,22 +133,19 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   ],
 };
 
-
 export interface ApiResponse<T> {
   meta: {
-    total: number
-    perPage: number
-    currentPage: number
-    lastPage: number
-    firstPage: number
-    firstPageUrl: string
-    lastPageUrl: string
-    nextPageUrl: string | null
-    previousPageUrl: string | null
-  }
-  data: T[]
+    total: number;
+    perPage: number;
+    currentPage: number;
+    lastPage: number;
+    firstPage: number;
+    firstPageUrl: string;
+    lastPageUrl: string;
+    nextPageUrl: string | null;
+    previousPageUrl: string | null;
+  };
+  data: T[];
 }
 
-export type UserApiResponse = ApiResponse<User>
-
-
+export type UserApiResponse = ApiResponse<User>;

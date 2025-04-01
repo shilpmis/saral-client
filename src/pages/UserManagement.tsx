@@ -1,241 +1,1087 @@
-/**
- * 
- * TODO : fix issue while opens up dialog box for update user , (screen became uninteractable)
- */
-
+import { DialogFooter } from "@/components/ui/dialog"
 import type React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { Plus, UserPlus, Users, Shield, BookOpen, RefreshCw, Edit, Trash2, AlertCircle, AlertTriangle } from "lucide-react"
 import type { User } from "@/types/user"
-import ManagementUserTable from "@/components/Users/ManagementUserTable"
-import TeacherAsUserTable from "@/components/Users/TeacherAsUserTable"
+import type { PageMeta } from "@/types/global"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { useLazyFetchManagementUsersQuery, useLazyFetchUserAsTeacherQuery } from "@/services/UserManagementService"
-import { DialogDescription } from "@radix-ui/react-dialog"
-import { PageMeta } from "@/types/global"
-import { UserForm } from "@/components/Users/UserForm"
+import {
+  useLazyFetchManagementUsersQuery,
+  useLazyFetchOnBoardedUserQuery,
+  useLazyFetchNonOnBoardedTeacherQuery,
+  useAddUserMutation,
+  useUpdateUserMutation,
+  useOnBoardTeacherAsUserMutation,
+  useUpdateOnBoardTeacherAsUserMutation,
+} from "@/services/UserManagementService"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { toast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+// Import zod at the top of the file
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { StaffType } from "@/types/staff"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { Switch } from "@/components/ui/switch"
+import { AssignedClasses } from "@/types/class"
+import { Division } from "@/types/academic"
 
 // Predefined management roles
 const managementRoles = [
-  { id: 1, role: "ADMIN", permissions: {} },
-  { id: 2, role: "PRINCIPAL", permissions: {} },
-  { id: 3, role: "HEAD TEACHER", permissions: {} },
-  { id: 4, role: "CLERCK", permissions: {} },
-  { id: 5, role: "IT ADMIN", permissions: {} },
+  { id: 1, role: "ADMIN", value : "Admin",   description: "Full access to all system features" },
+  { id: 2, role: "PRINCIPAL", value : "Principal", description: "School-wide access with limited administrative capabilities" },
+  { id: 3, role: "HEAD TEACHER", value : "Head Teacher", description: "Department-level access and teacher management" },
+  { id: 4, role: "CLERK", value : "Clerk", description: "Administrative tasks and record management" },
+  { id: 5, role: "IT ADMIN", value : "IT Admin", description: "Technical support and system configuration" },
 ]
 
+// Add the user form schema after the managementRoles constant
+const userFormSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  role_id: z.string().min(1, { message: "Role is required" }),
+  is_active: z.boolean().optional().default(true),
+})
+
+type UserFormValues = z.infer<typeof userFormSchema>
+
 export const UserManagement: React.FC = () => {
+  const { t } = useTranslation()
+  const currentUser = useAppSelector((state) => state.auth.user)
+  const academicClasses = useAppSelector(selectAcademicClasses)
+  const academicDivisions = useAppSelector(selectAllAcademicClasses)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
-  const users = useAppSelector((state) => state.auth.user)
-  const [fetchUsers, { isLoading, isError }] = useLazyFetchManagementUsersQuery();
-  const [fetchTeacherAsUser, { isLoading: loadingForFetchTeacherAsUser }] = useLazyFetchUserAsTeacherQuery()
+  // API hooks
+  const [fetchUsers, { isLoading: isLoadingManagementUsers }] = useLazyFetchManagementUsersQuery()
+  const [fetchOnBoardedUsers, { isLoading: isLoadingOnboardedUsers }] = useLazyFetchOnBoardedUserQuery()
+  const [fetchNonOnBoardedTeachers, { isLoading: isLoadingNonOnboardedTeachers, data: nonOnboardedTeachers }] =
+    useLazyFetchNonOnBoardedTeacherQuery()
+  const [getAcademicClasses, { isLoading: isLoadingClasses }] = useLazyGetAcademicClassesQuery()
+  const [addUser, { isLoading: isAddingUser }] = useAddUserMutation()
+  const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation()
+  const [onboardTeacher, { isLoading: isOnboardingTeacher }] = useOnBoardTeacherAsUserMutation()
+  const [updateOnBoardedStaff, { isLoading: isUpdatingTeacherClasses }] = useUpdateOnBoardTeacherAsUserMutation()
 
-  
+  // State
   const [activeTab, setActiveTab] = useState("management")
-  const [isDialogForManagmentUserOpen, setIsDialogForManagmentUserOpen]
-    = useState<{ isOpen: boolean, type: "create" | "edit", user: User | null }>({
-      isOpen: false,
-      type: "create",
-      user: null
-    })
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedRole, setSelectedRole] = useState<string>("")
+  const [selectedStatus, setSelectedStatus] = useState<string>("")
 
+  const [managementUsers, setManagementUsers] = useState<{ users: User[]; page_meta: PageMeta } | null>(null)
+  const [onboardedTeachers, setOnboardedTeachers] = useState<{ users: User[]; page_meta: PageMeta } | null>(null)
 
-  const [currentDisplayedManagementUser, setCurrentDisplayedManagementUser]
-    = useState<{ users: User[], page_meta: PageMeta } | null>(null)
+  // Dialog states
+  const [isManagementUserDialogOpen, setIsManagementUserDialogOpen] = useState(false)
+  const [isOnboardTeacherDialogOpen, setIsOnboardTeacherDialogOpen] = useState(false)
+  const [isClassAllocationDialogOpen, setIsClassAllocationDialogOpen] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
-  const [currentDisplayedOnBoardTeachera, setCurrentDisplayedOnBoardTeachera]
-    = useState<{ users: User[], page_meta: PageMeta } | null>(null)
+  // Selected items
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedTeacher, setSelectedTeacher] = useState<StaffType | null>(null)
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([])
+  const [unassignClasses, setUnassignClasses] = useState<number[]>([])
 
-  const {t} = useTranslation()
-
-  const handleEditUser = (user: User) => {
-    setIsDialogForManagmentUserOpen({
-      isOpen: true,
-      type: "edit",
-      user: { ...user }
-    })
-  }
-
-  const handleAddUser = () => {
-    setIsDialogForManagmentUserOpen({
-      isOpen: true,
-      type: "create",
-      user: null
-    })
-  }
-
-  const handleCloseDialogBox = useCallback(() => {
-    setIsDialogForManagmentUserOpen({
-      isOpen: false,
-      type: "create",
-      user: null
-    });
-  }, []);
-
-
-  async function fetchDataForActiveTab(tab: 'management' | 'staff', page: number) {
-
-    if (tab === 'management') {
-      try {
-        const response = await fetchUsers({ type: 'management', school_id: users!.school_id, page });
-        setCurrentDisplayedManagementUser({
-          users: response.data!.data,
-          page_meta: response.data!.meta
-        });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    } else {
-      try {
-        const response = await fetchTeacherAsUser({ page: 1 });
-        setCurrentDisplayedOnBoardTeachera({
-          users: response.data!.data,
-          page_meta: response.data!.meta
-        });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
-  }
-
-  const handelPageChange = (page: number) => {
-    fetchDataForActiveTab(activeTab as 'management' | 'staff', page);
-  }
-
-  function onSucssesfullChange(user: User | null) {
-    if(user === null){
-     setIsDialogForManagmentUserOpen({
-          isOpen: false,
-          type: "create",
-          user: null
-        })
-        return ;
-    }
-    else if (isDialogForManagmentUserOpen.type === 'create') {
-      // let new_displayedManagementUser = currentDisplayedManagementUser;
-      // if (new_displayedManagementUser) {
-      //   new_displayedManagementUser.users = [user!, ...new_displayedManagementUser.users];
-      //   setCurrentDisplayedManagementUser(new_displayedManagementUser); 
-      // }
-      fetchDataForActiveTab(activeTab as 'management' | 'staff', 1)
-      setIsDialogForManagmentUserOpen({
-        isOpen: false,
-        type: "create",
-        user: null
-      })
-    } else {
-      let new_displayedManagementUser = currentDisplayedManagementUser;
-      if (new_displayedManagementUser) {
-        new_displayedManagementUser.users = new_displayedManagementUser.users.map((u) => {
-          if (u.id === user!.id) {
-            return user!;
-          }
-          return u;
-        });
-        setCurrentDisplayedManagementUser(new_displayedManagementUser);
-      }
-      setIsDialogForManagmentUserOpen({
-        isOpen: false,
-        type: "edit",
-        user: null
-      })
-    }
-  }
-
-  function onSucssesfullOnBoardUpdateOfTeacher(user: User | null) {
-    let new_displayedOnBoardTeacher = currentDisplayedOnBoardTeachera;
-    if (new_displayedOnBoardTeacher) {
-      new_displayedOnBoardTeacher.users = new_displayedOnBoardTeacher.users.map((u) => {
-        if (u.id === user!.id) {
-          return user!;
-        }
-        return u;
-      });
-      setCurrentDisplayedOnBoardTeachera(new_displayedOnBoardTeacher);
-    }
-  }
-
+  // Fetch data on component mount
   useEffect(() => {
-    if (!currentDisplayedManagementUser || !currentDisplayedOnBoardTeachera) {
-      fetchDataForActiveTab(activeTab as 'management' | 'staff', 1);
-    }
-  }, [activeTab]);
+    if (currentUser?.school_id) {
+      fetchDataForActiveTab(activeTab, 1)
 
-  if (isError) {
-    return <div>There is something wrong</div>
+      if (!academicClasses) {
+        getAcademicClasses(currentUser.school_id)
+      }
+    }
+  }, [currentUser, activeTab, selectedRole, selectedStatus])
+
+  // Fetch data based on active tab
+  const fetchDataForActiveTab = async (tab: string, page: number) => {
+    if (!currentUser?.school_id) return
+
+    if (tab === "management") {
+      try {
+        const response = await fetchUsers({
+          type: "management",
+          school_id: currentUser.school_id,
+          page        
+        })
+
+        if (response.data) {
+          setManagementUsers({
+            users: response.data.data,
+            page_meta: response.data.meta,
+          })
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch management users",
+          variant: "destructive",
+        })
+      }
+    } else if (tab === "staff") {
+      try {
+        const response = await fetchOnBoardedUsers({
+          school_id: currentUser.school_id,
+          page
+        })
+
+        if (response.data) {
+          setOnboardedTeachers({
+            users: response.data.data,
+            page_meta: response.data.meta,
+          })
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch onboarded teachers",
+          variant: "destructive",
+        })
+      }
+    }
   }
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    fetchDataForActiveTab(activeTab, page)
+  }
+
+  // Handle filter change
+  const handleFilterChange = () => {
+    fetchDataForActiveTab(activeTab, 1)
+  }
+
+  // Reset filters
+  const [isResetting, setIsResetting] = useState(false)
+  
+  // Update the resetFilters function
+  const resetFilters = async () => {
+    setIsResetting(true)
+    setSearchTerm("")
+    setSelectedRole("")
+    setSelectedStatus("")
+    
+    try {
+      await fetchDataForActiveTab(activeTab, 1)
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  // Handle add management user
+  const handleAddManagementUser = () => {
+    setSelectedUser(null)
+    setIsManagementUserDialogOpen(true)
+  }
+
+  // Handle edit management user
+  const handleEditManagementUser = (user: User) => {
+    setSelectedUser(user)
+    setIsManagementUserDialogOpen(true)
+  }
+
+  // Handle onboard teacher dialog
+  const handleOnboardTeacher = () => {
+    setSelectedTeacher(null)
+    setSelectedClasses([])
+    setIsOnboardTeacherDialogOpen(true)
+    fetchNonOnBoardedTeachers({ 
+      page: 1,
+      school_id: currentUser!.school_id,
+      academic_sessions: CurrentAcademicSessionForSchool!.id,
+     })
+  }
+
+  // Handle class allocation dialog
+  const handleClassAllocation = (user: User) => {
+  setSelectedUser(user)    
+  setSelectedTeacher(user.staff)
+  
+  // Initialize selected classes from teacher's current classes
+  const currentClasses = user.staff && user.staff.assigend_classes.map((cls: AssignedClasses) => cls.class.id) || []
+  setSelectedClasses([...currentClasses])
+  setUnassignClasses([])
+  
+  setIsClassAllocationDialogOpen(true)
+}
+
+  // Handle deactivate user
+  const handleDeactivateUser = (user: User) => {
+    setSelectedUser(user)
+    setIsDeleteConfirmOpen(true)
+  }
+
+  // Submit management user form
+  const handleSubmitManagementUser = async (values: UserFormValues) => {
+    try {
+      if (selectedUser) {
+        // Update existing user
+        await updateUser({
+          user_id: selectedUser.id,
+          payload: {
+            name: values.name,
+            is_active: values.is_active,
+          },
+        }).unwrap()
+
+        toast({
+          title: "Success",
+          description: "User updated successfully",
+        })
+      } else {
+        // Create new user
+        await addUser({
+          name: values.name,
+          role_id: Number.parseInt(values.role_id),
+          is_active: values.is_active
+        }).unwrap()
+
+        toast({
+          title: "Success",
+          description: "User created successfully",
+        })
+      }
+
+      setIsManagementUserDialogOpen(false)
+      fetchDataForActiveTab("management", 1)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save user",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Submit onboard teacher form
+  const handleSubmitOnboardTeacher = async () => {
+    if (!selectedTeacher) {
+      toast({
+        title: "Error",
+        description: "Please select a teacher",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await onboardTeacher({
+        payload : {
+          staff_id: selectedTeacher.id,
+          assign_classes: selectedClasses,
+          is_active: true,
+      }}).unwrap()
+
+      toast({
+        title: "Success",
+        description: "Teacher onboarded successfully",
+      })
+
+      setIsOnboardTeacherDialogOpen(false)
+      fetchDataForActiveTab("staff", 1)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to onboard teacher",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Submit class allocation form
+  const handleSubmitClassAllocation = async () => {
+    if (!selectedTeacher || !selectedUser) return
+    console.log("manage_class_allocations" , selectedTeacher)
+    try {
+      await updateOnBoardedStaff({
+        user_id: selectedUser.id,
+        payload: {
+          assign_classes: selectedClasses,
+          unassign_classes: unassignClasses,
+        }
+      }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "Classes updated successfully",
+      })
+
+      setIsClassAllocationDialogOpen(false)
+      fetchDataForActiveTab("staff", 1)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update classes",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Confirm deactivate user
+  const confirmDeactivateUser = async () => {
+    if (!selectedUser) return
+
+    try {
+      await updateOnBoardedStaff({
+        user_id: selectedUser.id,
+        payload: {
+          is_active: !selectedUser.is_active,
+        }
+      }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "User deactivated successfully",
+      })
+
+      setIsDeleteConfirmOpen(false)
+      fetchDataForActiveTab(activeTab, 1)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to deactivate user",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Toggle class selection
+  const toggleClassSelection = (classId: number) => {
+    if (selectedClasses.includes(classId)) {
+      setSelectedClasses(selectedClasses.filter(id => id !== classId))
+      
+      // If this class was previously assigned to the teacher, add it to unassign list
+      const currentClasses = selectedTeacher && selectedTeacher.assigend_classes 
+          ? selectedTeacher.assigend_classes.map((assign_class: AssignedClasses) => assign_class.class.id) : []
+
+    if (currentClasses.includes(classId) && !unassignClasses.includes(classId)) {
+      setUnassignClasses([...unassignClasses, classId])
+    }
+  } else {
+    setSelectedClasses([...selectedClasses, classId])
+    
+    // If this class was in the unassign list, remove it
+    if (unassignClasses.includes(classId)) {
+      setUnassignClasses(unassignClasses.filter(id => id !== classId))
+    }
+  }
+}
+
+  // Get class name by ID
+  const getClassName = (classId: number) => {
+    if (!academicDivisions) return `Class ${classId}`
+
+    const classObj = academicDivisions.find((cls) => cls.id === classId)
+    if (!classObj) return `Class ${classId}`
+
+    return `Class ${classObj.class} ${classObj.division}`
+  }
+
+  // Get role name by ID
+  const getRoleName = (roleId: number) => {
+    const role = managementRoles.find((r) => r.id === roleId)
+    return role ? role.value : `Role ${roleId}`
+  }
+
+  // Loading state
+  const isLoading =
+    isLoadingManagementUsers ||
+    isLoadingOnboardedUsers ||
+    isLoadingClasses ||
+    isAddingUser ||
+    isUpdatingUser ||
+    isOnboardingTeacher ||
+    isUpdatingTeacherClasses
+
+  // Add form initialization in the component
+  // Add this near the top of the component
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: selectedUser?.name || "",
+      role_id: selectedUser?.role_id?.toString() || "",
+      is_active: selectedUser?.is_active || true,
+    },
+  })
+
+  // Update form when selectedUser changes
+  useEffect(() => {
+    if (selectedUser) {
+      form.reset({
+        name: selectedUser.name || "",
+        role_id: selectedUser.role_id?.toString() || "",
+        is_active: selectedUser.is_active || false,
+      })
+    } else {
+      form.reset({
+        name: "",
+        role_id: "",
+        is_active: true,
+      })
+    }
+  }, [selectedUser, form])
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-primary mb-4 sm:mb-0">{t("user_management")}</h2>
-
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("user_management")}</h1>
+          <p className="text-muted-foreground mt-1">{t("manage_users_and_their_permissions_in_the_system")}</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="management">{t("management_users")}</TabsTrigger>
-            <TabsTrigger value="staff">{t("staff")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="management">
-            {currentDisplayedManagementUser && <>
-              <div className="flex justify-between flex-row-reverse items-center m-4">
-                <Button onClick={handleAddUser}>
-                  <Plus className="mr-2 h-4 w-4" /> {t("add_user")}
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="management" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            {t("management_users")}
+          </TabsTrigger>
+          <TabsTrigger value="staff" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            {t("teaching_staff")}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Management Users Tab */}
+        <TabsContent value="management">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                {t("management_users")}
+              </CardTitle>
+              <CardDescription>{t("manage_administrative_users_with_different_roles_and_permissions")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex gap-2">
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t("role")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("all_roles")}</SelectItem>
+                      {managementRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id.toString()}>
+                          {role.value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t("status")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("all_statuses")}</SelectItem>
+                      <SelectItem value="active">{t("active")}</SelectItem>
+                      <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={resetFilters} 
+                    disabled={isResetting}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isResetting ? "animate-spin" : ""}`} />
+                    {isResetting ? t("refreshing") : t("refresh")}
+                  </Button>
+                </div>
+                <Button onClick={handleAddManagementUser} size="sm" className="flex items-center gap-1">
+                  <UserPlus className="h-4 w-4" />
+                  {t("add_user")}
                 </Button>
               </div>
-              <div className="overflow-x-auto">
-                <ManagementUserTable
-                  initalData={currentDisplayedManagementUser}
-                  roles={managementRoles}
-                  onEditUser={handleEditUser}
-                  onPageChange={handelPageChange}
-                />
-              </div>
-            </>}
-            {
-              isLoading && <div>Loading ....</div>
-            }
-          </TabsContent>
-          <TabsContent value="staff">
-            <div className="overflow-x-auto">
-              {currentDisplayedOnBoardTeachera && (
-                <TeacherAsUserTable
-                  initialData={{ users: currentDisplayedOnBoardTeachera.users, page: currentDisplayedOnBoardTeachera.page_meta }}
-                  onSucssesfullChange={onSucssesfullOnBoardUpdateOfTeacher}
-                />)}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
 
-      <Dialog open={isDialogForManagmentUserOpen.isOpen} onOpenChange={handleCloseDialogBox}>
-        <DialogContent className="sm:max-w-[400px]">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("name")}</TableHead>
+                      <TableHead>{t("email")}</TableHead>
+                      <TableHead>{t("role")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead className="text-right">{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingManagementUsers ? (
+                      Array(5)
+                        .fill(0)
+                        .map((_, index) => (
+                          <TableRow key={index}>
+                            <TableCell colSpan={5} className="h-16 text-center">
+                              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    ) : managementUsers?.users && managementUsers.users.length > 0 ? (
+                      managementUsers.users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell>{user.saral_email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-primary/10 text-primary">
+                              {getRoleName(user.role_id)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={ Boolean(Number(user.is_active)) ? "default" : "destructive"}>
+                              {Boolean(Number(user.is_active)) ? t("active") : t("inactive")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleEditManagementUser(user)}
+                                title={t("edit")}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">{t("edit")}</span>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleDeactivateUser(user)}
+                                className={Boolean(user.is_active) ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}
+                                title={Boolean(user.is_active) ? t("deactivate") : t("activate")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">{Boolean(user.is_active) ? t("deactivate") : t("activate")}</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                          {t("no_users_found")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {managementUsers?.page_meta && (
+                <div className="mt-4 flex justify-center">
+                  <SaralPagination
+                    currentPage={managementUsers.page_meta.current_page}
+                    totalPages={managementUsers.page_meta.last_page}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Teaching Staff Tab */}
+        <TabsContent value="staff">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                {t("teaching_staff")}
+              </CardTitle>
+              <CardDescription>
+                {t("manage_teaching_staff_access_and_class_allocations")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex gap-2">
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t("status")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("all_statuses")}</SelectItem>
+                      <SelectItem value="active">{t("active")}</SelectItem>
+                      <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={resetFilters} 
+                    disabled={isResetting}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isResetting ? "animate-spin" : ""}`} />
+                    {isResetting ? t("refreshing") : t("refresh")}
+                  </Button>
+                </div>
+                <Button 
+                  onClick={handleOnboardTeacher} 
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("onboard_teacher")}
+                </Button>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("name")}</TableHead>
+                      <TableHead>{t("email")}</TableHead>
+                      <TableHead>{t("assigned_classes")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead className="text-right">{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingOnboardedUsers ? (
+                      Array(5).fill(0).map((_, index) => (
+                        <TableRow key={index}>
+                          <TableCell colSpan={5} className="h-16 text-center">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : onboardedTeachers?.users && onboardedTeachers.users.length > 0 ? (
+                      onboardedTeachers.users.map((teacher) => (
+                        <TableRow key={teacher.id}>
+                          <TableCell className="font-medium">
+                            {teacher.staff?.first_name} {teacher.staff?.middle_name} {teacher.staff?.last_name}
+                          </TableCell>
+                          <TableCell>{teacher.saral_email}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {teacher.staff?.assigend_classes && teacher.staff.assigend_classes.length > 0 ? (
+                                teacher.staff.assigend_classes.map((cls) => (
+                                  <Badge key={cls.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    Class {cls.class?.class} {cls.class?.division}
+                                    {cls.class?.aliases && <span className="ml-1 text-xs">({cls.class.aliases})</span>}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground text-sm">{t("no_classes_assigned")}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={Boolean(Number(teacher.is_active)) ? "default" : "secondary"}>
+                              {Boolean(Number(teacher.is_active)) ? t("active") : t("inactive")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleClassAllocation(teacher)}
+                                title={t("manage_classes")}
+                              >
+                                <BookOpen className="h-4 w-4" />
+                                <span className="sr-only">{t("manage_classes")}</span>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleDeactivateUser(teacher)}
+                                className={Boolean(teacher.is_active) ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}
+                                title={Boolean(teacher.is_active) ? t("deactivate") : t("activate")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">{Boolean(teacher.is_active) ? t("deactivate") : t("activate")}</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                          {t("no_teachers_found")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {onboardedTeachers?.page_meta && (
+                <div className="mt-4 flex justify-center">
+                  <SaralPagination
+                    currentPage={onboardedTeachers.page_meta.current_page}
+                    totalPages={onboardedTeachers.page_meta.last_page}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Management User Dialog */}
+      <Dialog open={isManagementUserDialogOpen} onOpenChange={setIsManagementUserDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{isDialogForManagmentUserOpen.type === 'edit' ? t("edit_user") : t("add_new_user")}</DialogTitle>
+            <DialogTitle>{selectedUser ? t("edit_management_user") : t("add_management_user")}</DialogTitle>
             <DialogDescription>
-              {isDialogForManagmentUserOpen.type === 'edit'
-                ? t("make_changes_to_the_user_details_below.")
-                : t("fill_in_the_details_to_create_a_new_user.")}
+              {selectedUser
+                ? t("update_user_details_and_permissions")
+                : t("create_a_new_management_user_with_specific_role")}
             </DialogDescription>
           </DialogHeader>
-          <UserForm
-            initialData={isDialogForManagmentUserOpen.user}
-            roles={managementRoles}
-            isEditing={isDialogForManagmentUserOpen.type === 'edit'}
-            onSucssesfullChange={onSucssesfullChange}
-          />
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitManagementUser)} className="space-y-4">
+              <div className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("name")}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="role_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("role")}</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("select_role")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem key={0} value={" "}>Select Any Role</SelectItem>
+                          {managementRoles.map((role) => (
+                            <SelectItem className="cursor" key={role.id} value={role.id.toString()}>
+                              {role.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        {field.value
+                          ? managementRoles.find((r) => r.id.toString() === field.value)?.description
+                          : t("select_a_role_to_see_description")}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {selectedUser && (
+                  <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md p-1">
+                    <FormControl>
+                      <Switch
+                        checked={Boolean(Number(field.value))}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t("active_user")}</FormLabel>
+                    </div>
+                    </FormItem>
+                  )}
+                  />
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsManagementUserDialogOpen(false)}>
+                  {t("cancel")}
+                </Button>
+                <Button type="submit" disabled={isLoading || form.formState.isSubmitting}>
+                  {isLoading || form.formState.isSubmitting ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("saving")}
+                    </>
+                  ) : selectedUser ? (
+                    t("update_user")
+                  ) : (
+                    t("create_user")
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
-    </Card>
-  )
+
+      {/* Onboard Teacher Dialog */}
+      <Dialog open={isOnboardTeacherDialogOpen} onOpenChange={setIsOnboardTeacherDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("onboard_teacher")}</DialogTitle>
+            <DialogDescription>
+              {t("select_a_teacher_and_assign_classes_to_onboard_them_to_the_platform")}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t("select_teacher")}</Label>
+              <Select onValueChange={(value) => {
+                const teacher = nonOnboardedTeachers?.find(t => t.id.toString() === value)
+                teacher && setSelectedTeacher(teacher)
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("select_a_teacher")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingNonOnboardedTeachers ? (
+                    <SelectItem value="loading" disabled>{t("loading...")}</SelectItem>
+                  ) : nonOnboardedTeachers && nonOnboardedTeachers.length > 0 ? (
+                    nonOnboardedTeachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                        {teacher.first_name} {teacher.middle_name} {teacher.last_name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>{t("no_teachers_available")}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedTeacher && (
+              <>
+                <Separator />
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>{t("assign_classes")}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("selected")}: {selectedClasses.length}
+                    </p>
+                  </div>
+                  
+                  {isLoadingClasses ? (
+                    <div className="text-center py-4">
+                      <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
+                    </div>
+                  ) : academicDivisions && academicDivisions.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
+                      {academicDivisions.map((cls) => (
+                        <div key={cls.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`class-${cls.id}`}
+                            checked={selectedClasses.includes(cls.id)}
+                            onCheckedChange={() => toggleClassSelection(cls.id)}
+                          />
+                          <Label htmlFor={`class-${cls.id}`} className="text-sm">
+                            Class {cls.class} {cls.division}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground">
+                    {t("note_class_assignment_is_optional_and_can_be_updated_later")}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsOnboardTeacherDialogOpen(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleSubmitOnboardTeacher} 
+              disabled={!selectedTeacher || isLoading}
+            >
+              {isLoading ? (
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("onboarding")}</>
+              ) : (
+                t("onboard_teacher")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Class Allocation Dialog */}
+      <Dialog open={isClassAllocationDialogOpen} onOpenChange={setIsClassAllocationDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("manage_class_allocations")}</DialogTitle>
+            <DialogDescription>
+              {selectedTeacher && (
+                <>
+                  {t("update_class_allocations_for")} {selectedTeacher?.first_name} {selectedTeacher?.last_name}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>{t("assigned_classes")}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("selected")}: {selectedClasses.length}
+                </p>
+              </div>
+              
+              {isLoadingClasses ? (
+                <div className="text-center py-4">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+                  <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
+                </div>
+              ) : academicDivisions && academicDivisions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-1">
+                  {academicDivisions && academicDivisions.map((cls) => (
+                    <div key={cls.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`class-alloc-${cls.id}`}
+                        checked={selectedClasses.includes(cls.id)}
+                        onCheckedChange={() => toggleClassSelection(cls.id)}
+                      />
+                      <Label htmlFor={`class-alloc-${cls.id}`} className="text-sm">
+                        Class {cls.class} {cls.division}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
+                </div>
+              )}
+              
+              {selectedTeacher?.assigend_classes && selectedTeacher.assigend_classes.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-2">{t("current_assignments")}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTeacher.assigend_classes.map((cls) => (
+                      <Badge key={cls.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        Class {cls.class?.class} {cls.class?.division}
+                        {cls.class?.aliases && <span className="ml-1 text-xs">({cls.class.aliases})</span>}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsClassAllocationDialogOpen(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleSubmitClassAllocation} 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("updating")}</>
+              ) : (
+                t("update_classes")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deactivate User Confirmation */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="max-w-md rounded-2xl shadow-lg">
+          <DialogHeader className="text-center">
+            <AlertTriangle className="text-red-600 w-7 h-7" />
+            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
+            <DialogDescription className="text-gray-600">
+            {t("are_you_sure_you_want_to_deactive_this user ?")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex justify-center space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteConfirmOpen(false)}
+              className="sm:order-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={confirmDeactivateUser}
+              className={`px-5 py-2 rounded-md text-white font-semibold transition-all ${
+                selectedUser?.is_active
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {selectedUser?.is_active ? t("deactivate") : t("activate")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
 }
 
