@@ -760,7 +760,7 @@ export const Students: React.FC = () => {
                           Uploading...
                         </>
                       ) : (
-                        "Upload"
+                        t("upload")
                       )}
                     </Button>
                   </div>
@@ -1015,7 +1015,7 @@ export const Students: React.FC = () => {
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{openDialogForStudent.type === "edit" ? "Edit Student" : t("add_new_student")}</DialogTitle>
+            <DialogTitle>{openDialogForStudent.type === "edit" ? t("edit_student") : t("add_new_student")}</DialogTitle>
           </DialogHeader>
           <>
             <div className="w-full lg:h-[600px] overflow-auto">

@@ -55,11 +55,15 @@ export default function AdmissionInquiryForm({
 }: AdmissionInquiryFormProps) {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  // const [addInquiry, { isLoading }] = useAddInquiryMutation()
+  // const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  // const {t} = useTranslation();
+ 
   const [addInquiry, { isLoading: isAddLoading }] = useAddInquiryMutation()
   const [updateInquiry, { isLoading: isUpdateLoading }] = useUpdateInquiryMutation()
   const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
-  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
   const { t } = useTranslation()
+  const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
 
   const isLoading = isAddLoading || isUpdateLoading
 
@@ -191,8 +195,8 @@ export default function AdmissionInquiryForm({
       <div className="container mx-auto py-10 max-w-3xl mt-0">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center text-2xl">Admission Inquiry Submitted</CardTitle>
-            <CardDescription className="text-center">Thank you for submitting your admission inquiry</CardDescription>
+            <CardTitle className="text-center text-2xl">{t("admission_inquiry_submitted")}</CardTitle>
+            <CardDescription className="text-center">{t("thank_you_for_submitting_your_admission_inquiry")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 text-center">
             <div className="rounded-full bg-green-100 p-3 w-12 h-12 mx-auto">
@@ -209,7 +213,7 @@ export default function AdmissionInquiryForm({
             </div>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button onClick={handleClose}>Back to Home</Button>
+            <Button onClick={handleClose}>{t("back_to_home")}</Button>
           </CardFooter>
         </Card>
       </div>
@@ -221,8 +225,8 @@ export default function AdmissionInquiryForm({
       <Card className={isEditing ? "border-0 shadow-none" : ""}>
         {!isEditing && (
           <CardHeader>
-            <CardTitle>Admission Inquiry Form</CardTitle>
-            <CardDescription>Please fill out this form to submit an admission inquiry for your child</CardDescription>
+            <CardTitle>{t("admission_inquiry_form")}</CardTitle>
+            <CardDescription>{t("please_fill_out_this_form_to_submit_an_admission_inquiry_for_your_child")}</CardDescription>
           </CardHeader>
         )}
         <CardContent>
@@ -232,7 +236,7 @@ export default function AdmissionInquiryForm({
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-medium">
                     Step {step} of 3:{" "}
-                    {step === 1 ? "Student Information" : step === 2 ? "Parent Information" : "Previous Education"}
+                    {step === 1 ? t("student_information") : step === 2 ? t("parent_information") : t("previous_education")}
                   </h2>
                   <div className="flex space-x-1">
                     <div className={`h-2 w-10 rounded ${step >= 1 ? "bg-primary" : "bg-gray-200"}`}></div>
@@ -249,7 +253,7 @@ export default function AdmissionInquiryForm({
                         name="first_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>First Name</FormLabel>
+                            <FormLabel>{t("student_full_name")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -304,20 +308,20 @@ export default function AdmissionInquiryForm({
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Gender</FormLabel>
+                          <FormLabel>{t("gender")}</FormLabel>
                           <FormControl>
                             <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="male" id="male" />
-                                <Label htmlFor="male">Male</Label>
+                                <Label htmlFor="male">{t("male")}</Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="female" id="female" />
-                                <Label htmlFor="female">Female</Label>
+                                <Label htmlFor="female">{t("female")}</Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="other" id="other" />
-                                <Label htmlFor="other">Other</Label>
+                                <Label htmlFor="other">{t("other")}</Label>
                               </div>
                             </RadioGroup>
                           </FormControl>
@@ -361,7 +365,7 @@ export default function AdmissionInquiryForm({
                         name="father_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Parent/Guardian Name</FormLabel>
+                            <FormLabel>{t("parent_name")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -374,7 +378,7 @@ export default function AdmissionInquiryForm({
                         name="primary_mobile"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Contact Number</FormLabel>
+                            <FormLabel>{t("contact_number")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -389,7 +393,7 @@ export default function AdmissionInquiryForm({
                       name="parent_email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                          <FormLabel>{t("email_address")}</FormLabel>
                           <FormControl>
                             <Input type="email" {...field} />
                           </FormControl>
@@ -403,7 +407,7 @@ export default function AdmissionInquiryForm({
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Residential Address</FormLabel>
+                          <FormLabel>{t("residential_address")}</FormLabel>
                           <FormControl>
                             <Textarea {...field} />
                           </FormControl>
@@ -422,7 +426,7 @@ export default function AdmissionInquiryForm({
                         name="privious_school"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Previous School</FormLabel>
+                            <FormLabel>{t("previous_school")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -435,7 +439,7 @@ export default function AdmissionInquiryForm({
                         name="privious_class"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Class Completed</FormLabel>
+                            <FormLabel>{t("last_class_completed")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -451,7 +455,7 @@ export default function AdmissionInquiryForm({
                         name="privious_percentage"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Percentage/Grade</FormLabel>
+                            <FormLabel>{t("percentage/_grade")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -464,7 +468,7 @@ export default function AdmissionInquiryForm({
                         name="privious_year"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Year</FormLabel>
+                            <FormLabel>{t("year")}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -479,7 +483,7 @@ export default function AdmissionInquiryForm({
                       name="special_achievements"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Special Achievements (Sports, Arts, etc.)</FormLabel>
+                          <FormLabel>{t("special_achievements")} (Sports, Arts, etc.)</FormLabel>
                           <FormControl>
                             <Textarea {...field} placeholder="Please mention any special achievements or talents" />
                           </FormControl>
@@ -493,16 +497,16 @@ export default function AdmissionInquiryForm({
                       name="applying_for_quota"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Are you applying under any quota?</FormLabel>
+                          <FormLabel>{t("are_you_applying_under_any_quota?")}</FormLabel>
                           <FormControl>
                             <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id="quota-yes" />
-                                <Label htmlFor="quota-yes">Yes</Label>
+                                <Label htmlFor="quota-yes">{t("yes")}</Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id="quota-no" />
-                                <Label htmlFor="quota-no">No</Label>
+                                <Label htmlFor="quota-no">{t("no")}</Label>
                               </div>
                             </RadioGroup>
                           </FormControl>
@@ -517,18 +521,18 @@ export default function AdmissionInquiryForm({
                         name="quota_type"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Select Quota</FormLabel>
+                            <FormLabel>{t("select_quota")}</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select quota" />
+                                  <SelectValue placeholder={t("select_quota")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="rte">RTE Quota</SelectItem>
-                                <SelectItem value="staff">Staff Quota</SelectItem>
-                                <SelectItem value="sports">Sports Quota</SelectItem>
-                                <SelectItem value="management">Management Quota</SelectItem>
+                                <SelectItem value="rte">{t("rte_quota")}</SelectItem>
+                                <SelectItem value="staff">{t("staff_quota")}</SelectItem>
+                                <SelectItem value="sports">{t("sports_quota")}</SelectItem>
+                                <SelectItem value="management">{t("management_quota")}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -543,12 +547,12 @@ export default function AdmissionInquiryForm({
               <div className="flex justify-between mt-6">
                 {step > 1 && (
                   <Button type="button" variant="outline" onClick={prevStep}>
-                    Previous
+                    {t("previous")}
                   </Button>
                 )}
                 {step < 3 ? (
                   <Button type="button" onClick={nextStep} className="ml-auto">
-                    Next
+                    {t("next")}
                   </Button>
                 ) : (
                   <div className="flex gap-2 ml-auto">

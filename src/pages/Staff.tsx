@@ -883,7 +883,7 @@ export const Staff: React.FC = () => {
                             Uploading...
                           </>
                         ) : (
-                          "Upload"
+                          t("upload")
                         )}
                       </Button>
                     </div>

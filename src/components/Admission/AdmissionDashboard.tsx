@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2 } from "lucide-react"
 import { useGetAdmissionDashboardQuery, useGetAdmissionDetailedStatsQuery, useGetAdmissionTrendsQuery } from "@/services/dashboardServices"
 import { useEffect, useState } from "react"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface DashboardData {
   totalInquiries: number
@@ -31,6 +32,7 @@ interface StatusCounts {
 export const AdmissionDashboard: React.FC = () => {
   // State for trend period
   const [trendPeriod, setTrendPeriod] = useState<'day' | 'week' | 'month'>('week')
+  const {t} = useTranslation()
   
   // Fetch basic dashboard metrics
   const { 
@@ -78,7 +80,7 @@ export const AdmissionDashboard: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Inquiries</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("total_inquiries")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -98,13 +100,13 @@ export const AdmissionDashboard: React.FC = () => {
             <div className="text-2xl font-bold">
               {isLoadingDashboard ? "..." : dashboardData?.totalInquiries}
             </div>
-            <p className="text-xs text-muted-foreground">Total applications received</p>
+            <p className="text-xs text-muted-foreground">{t("total_applications_received")}</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("pending_applications")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -122,13 +124,13 @@ export const AdmissionDashboard: React.FC = () => {
             <div className="text-2xl font-bold">
               {isLoadingDashboard ? "..." : dashboardData?.pendingApplications}
             </div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <p className="text-xs text-muted-foreground">{t("awaiting_review")}</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accepted Admissions</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("accepted_admissions")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -146,13 +148,13 @@ export const AdmissionDashboard: React.FC = () => {
             <div className="text-2xl font-bold">
               {isLoadingDashboard ? "..." : dashboardData?.acceptedAdmissions}
             </div>
-            <p className="text-xs text-muted-foreground">Approved admissions</p>
+            <p className="text-xs text-muted-foreground">{t("approved_admissions")}</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Interviews</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("upcoming_interviews")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -171,43 +173,43 @@ export const AdmissionDashboard: React.FC = () => {
             <div className="text-2xl font-bold">
               {isLoadingDashboard ? "..." : dashboardData?.upcomingInterviews}
             </div>
-            <p className="text-xs text-muted-foreground">Scheduled interviews</p>
+            <p className="text-xs text-muted-foreground">{t("scheduled_interviews")}</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="trends">
         <TabsList className="mb-4">
-          <TabsTrigger value="trends">Admission Trends</TabsTrigger>
-          <TabsTrigger value="status">Status Breakdown</TabsTrigger>
-          <TabsTrigger value="class">Class-wise Trends</TabsTrigger>
+          <TabsTrigger value="trends">{t("admission_trends")}</TabsTrigger>
+          <TabsTrigger value="status">{t("status_breakdown")}</TabsTrigger>
+          <TabsTrigger value="class">{t("class_wise_trends")}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="trends">
           <Card>
             <CardHeader>
-              <CardTitle>Admission Trends Over Time</CardTitle>
+              <CardTitle>{t("admission_trends_over_time")}</CardTitle>
               <CardDescription>
                 <div className="flex items-center gap-4">
-                  <span>Number of inquiries received per time period</span>
+                  <span>{t("number_of_inquiries_received_per_time_period")}</span>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setTrendPeriod('day')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Daily
+                      {t("daily")}
                     </button>
                     <button 
                       onClick={() => setTrendPeriod('week')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Weekly
+                      {t("weekly")}
                     </button>
                     <button 
                       onClick={() => setTrendPeriod('month')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Monthly
+                      {t("monthly")}
                     </button>
                   </div>
                 </div>
@@ -238,8 +240,8 @@ export const AdmissionDashboard: React.FC = () => {
         <TabsContent value="status">
           <Card>
             <CardHeader>
-              <CardTitle>Applications by Status</CardTitle>
-              <CardDescription>Breakdown of applications by current status</CardDescription>
+              <CardTitle>{t("applications_by_status")}</CardTitle>
+              <CardDescription>{t("breakdown_of_applications_by_current_status")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
@@ -260,28 +262,28 @@ export const AdmissionDashboard: React.FC = () => {
         <TabsContent value="class">
           <Card>
             <CardHeader>
-              <CardTitle>Class-wise Admission Trends</CardTitle>
+              <CardTitle>{t("class_wise_admission_trends")}</CardTitle>
               <CardDescription>
                 <div className="flex items-center gap-4">
-                  <span>Admission inquiries by class over time</span>
+                  <span>{t("admission_inquiries_by_class_over_time")}</span>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setTrendPeriod('day')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Daily
+                      {t("daily")}
                     </button>
                     <button 
                       onClick={() => setTrendPeriod('week')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Weekly
+                    {t("weekly")}
                     </button>
                     <button 
                       onClick={() => setTrendPeriod('month')}
                       className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                     >
-                      Monthly
+                      {t("monthly")}
                     </button>
                   </div>
                 </div>
