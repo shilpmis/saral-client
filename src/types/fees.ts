@@ -56,7 +56,7 @@ export interface ConcessionDetailForPlan {
 export interface FeesPlan {
   id: number;
   name: string;
-  class_id: number;
+  division_id: number;
   academic_session_id: number;
   description: string;
   total_amount: number;
@@ -91,7 +91,7 @@ export interface InstallmentBreakdowns {
 export interface DetailFeesPlan {}
 
 export interface ReqObjectForCreateFeesPlan {
-  fees_plan: Pick<FeesPlan, "class_id" | "name" | "description">;
+  fees_plan: Pick<FeesPlan, "division_id" | "name" | "description">;
   plan_details: {
     fees_type_id: number;
     installment_type: string;

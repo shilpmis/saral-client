@@ -11,7 +11,9 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const Fees: React.FC = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
-  const {t} = useTranslation()
+  const {t} = useTranslation();
+
+
   return (
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -21,7 +23,7 @@ export const Fees: React.FC = () => {
           <TabsTrigger value="fee-plans">{t("fee_plans")}</TabsTrigger>
           <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
           <TabsTrigger value="student-fees">{t("student_fees")}</TabsTrigger>
-          <TabsTrigger value="reports">{t("reports")}</TabsTrigger>
+          {/* <TabsTrigger value="reports">{t("reports")}</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="dashboard">

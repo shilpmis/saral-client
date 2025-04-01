@@ -9,10 +9,8 @@ export enum UserStatus {
 export interface AcademicSession {
   id: number;
   uuid: string;
-  school_id: 1;
+  school_id: number;
   session_name: string;
-  start_date: string;
-  end_date: string;
   start_month: string;
   end_month: string;
   start_year: string;
@@ -45,13 +43,11 @@ export interface User {
   name: string;
   role: UserRole;
   role_id: number;
-  is_teacher: boolean;
   is_active: boolean;
-  teacher_id: number | null;
+  staff_id: number | null;
   permissions: string[];
-  teacher: StaffType | null;
   school: School;
-  staff: StaffType;
+  staff: StaffType | null;
 }
 
 export enum UserRole {

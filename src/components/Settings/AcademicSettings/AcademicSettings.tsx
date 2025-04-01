@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useCallback, useEffect, useMemo } from "react"
 import type { AcademicClasses, ClassData, Division } from "@/types/academic"
 import { Edit, PlusCircle, Save, Calendar, Plus, AlertCircle, X } from "lucide-react"
@@ -31,7 +29,7 @@ import {
   useSetActiveSessionMutation,
 } from "@/services/AcademicService"
 import { selectCurrentUser } from "@/redux/slices/authSlice"
-import type { Class } from "@/types/class"
+import type { AvailableClasses, Class } from "@/types/class"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -55,10 +53,12 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 
 // Define the form schema for division
 const formSchemaForDivision = z.object({
-  class_id: z.number({
-    message: "Please enter a valid Class Id for division.",
-  }).nullable(),
-  class: z.number({
+  class_id: z
+    .number({
+      message: "Please enter a valid Class Id for division.",
+    })
+    .nullable(),
+  class: z.string({
     message: "Please enter a valid Class for division.",
   }),
   division: z.string().min(1, {
@@ -66,40 +66,44 @@ const formSchemaForDivision = z.object({
   }),
   aliases: z
     .string()
-    .min(3, 'Alias should be at least 3 characters')
-    .max(15, 'Alias should not be more than 15 characters')
+    .min(3, "Alias should be at least 3 characters")
+    .max(15, "Alias should not be more than 15 characters")
     .regex(/^[a-zA-Z0-9]+(?: [a-zA-Z0-9]+)*$/, {
-      message: 'Alias should contain only letters, numbers, and single spaces',
-    }).optional(),
-  formType: z.enum(["create", "edit"])
+      message: "Alias should contain only letters, numbers, and single spaces",
+    })
+    .optional(),
+  formType: z.enum(["create", "edit"]),
 })
 
 const defaultStandards = [
-  { id: 1, class: 1 },
-  { id: 2, class: 2 },
-  { id: 3, class: 3 },
-  { id: 4, class: 4 },
-  { id: 5, class: 5 },
-  { id: 6, class: 6 },
-  { id: 7, class: 7 },
-  { id: 8, class: 8 },
-  { id: 9, class: 9 },
-  { id: 10, class: 10 },
-  { id: 11, class: 11 },
-  { id: 12, class: 12 },
+  { id: 1, class: 'Nursery' },
+  { id: 2, class: 'LKG' },
+  { id: 3, class: 'UKG' },
+  { id: 4, class: '1' },
+  { id: 5, class: '2' },
+  { id: 6, class: '3' },
+  { id: 7, class: '4' },
+  { id: 8, class: '5' },
+  { id: 9, class: '6' },
+  { id: 10, class: '7' },
+  { id: 11, class: '8' },
+  { id: 12, class: '9' },
+  { id: 13, class: '10' },
+  { id: 14, class: '11' },
+  { id: 15, class: '12' },
 ]
 
 export default function AcademicSettings() {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
-  const currentAcademicSession = useAppSelector((state :any) => state.auth.currentActiveAcademicSession);
+  const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
   const [activeTab, setActiveTab] = useState("sessions")
-  const {t} = useTranslation()
+  const { t } = useTranslation()
 
   // Fetch academic classes
   const {
     isLoading: isLoadingClasses,
-    data: classesData,
+    data: academicClassesForSchool,
     refetch: refetchClasses,
   } = useGetAcademicClassesQuery(user!.school_id)
 
@@ -116,7 +120,7 @@ export default function AcademicSettings() {
   const [showNoActiveSessionAlert, setShowNoActiveSessionAlert] = useState(false)
 
   // State for classes and divisions
-  const [selectedClasses, setSelectedClasses] = useState<{ id: number; class: number }[] | null>(null)
+  const [selectedClasses, setSelectedClasses] = useState<{ id: number; class: AvailableClasses }[] | null>(null)
   const [academicClasses, setAcademicClasses] = useState<AcademicClasses[]>([])
   const [editingClass, setEditingClass] = useState<ClassData | null>(null)
   const [newDivision, setNewDivision] = useState<{ class: number; aliases: string; division: string } | null>(null)
@@ -131,19 +135,36 @@ export default function AcademicSettings() {
     resolver: zodResolver(formSchemaForDivision),
     defaultValues: {
       class_id: null,
-      class: newDivision?.class,
+      class: newDivision?.class.toString(),
       division: newDivision?.division,
       aliases: newDivision?.aliases,
-      formType: "create" ,
+      formType: "create",
     },
   })
 
   const [setActiveSessionMutation] = useSetActiveSessionMutation()
 
+  // Add this function near the top of the component
+  const getMonthName = (monthNumber: string) => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ]
+    return months[Number.parseInt(monthNumber) - 1]
+  }
+
   // Format session name from dates
-  const formatSessionName = (startDate: string, endDate: string) => {
-    const startYear = new Date(startDate).getFullYear()
-    const endYear = new Date(endDate).getFullYear()
+  const formatSessionName = (startYear: string, endYear: string) => {
     return `${startYear}-${endYear}`
   }
 
@@ -157,7 +178,7 @@ export default function AcademicSettings() {
     return new Set([...checkedAcademicClasses, ...checkedClasses])
   }, [academicClasses, selectedClasses])
 
-  const handleClassToggle = useCallback((clasObj: { id: number; class: number }) => {
+  const handleClassToggle = useCallback((clasObj: { id: number; class: AvailableClasses }) => {
     setSelectedClasses((prevSelectedClasses) => {
       if (!prevSelectedClasses) {
         return [clasObj]
@@ -176,15 +197,13 @@ export default function AcademicSettings() {
 
   const handleAddDivision = (classId: number) => {
     classId = Number.parseInt(classId.toString())
-    const cls = academicClasses.find((c) => c.class === classId);
-    console.log("classId", classId)
-    console.log("cls", cls)
+    const cls = academicClasses.find((c) => c.id === classId)
     if (cls) {
       const lastDivision = cls.divisions[cls.divisions.length - 1]
       const nextLetter = String.fromCharCode(lastDivision.division.charCodeAt(0) + 1)
-      setNewDivision({ division: nextLetter, aliases: `${nextLetter}`, class: cls.class })
+      setNewDivision({ division: nextLetter, aliases: `${nextLetter}`, class: classId })
       formForDivsion.reset({
-        class_id: null,
+        class_id: cls.id,
         class: cls.class,
         aliases: nextLetter,
         division: nextLetter,
@@ -194,9 +213,9 @@ export default function AcademicSettings() {
     setIsDivisionForDialogOpen(true)
   }
 
-  const handleEditDivision = (division: Division) => {
+  const handleEditDivision = (division: Division , clas : AcademicClasses) => {
     formForDivsion.reset({
-      class: Number.parseInt(division.class), // need to change class type for creation of class ,(API demands number format for create class)
+      class: clas.class, // need to change class type for creation of class ,(API demands number format for create class)
       division: division.division,
       aliases: division.aliases || "",
       formType: "edit",
@@ -226,9 +245,7 @@ export default function AcademicSettings() {
       payload = selectedClasses.map((clas) => {
         return {
           class: clas.class,
-          division: "A",
-          aliases: null,
-          academic_session_id: currentAcademicSession?.id ?? 0,
+          academic_session_id: currentAcademicSession!.id,
         }
       })
 
@@ -244,8 +261,6 @@ export default function AcademicSettings() {
                 id: added_class.payload[0].id,
                 school_id: user!.school_id,
                 class: clas.class.toString(),
-                division: clas.division,
-                aliases: clas.aliases,
                 academic_session_id: currentAcademicSession?.id ?? 0,
               },
             ],
@@ -325,15 +340,22 @@ export default function AcademicSettings() {
     } else {
       // Create new division
       try {
+        if(!payload.class_id){
+          toast({
+            title: "Error",
+            description: `Please select a class to add division.`,
+            variant: "destructive",
+          })
+          return
+        }
         const new_division = await dispatch(
           createDivision({
-            class: payload.class ?? 0,
-            division: payload.division || "",
+            class_id: payload.class_id,
+            division: payload.division,
             aliases: payload.aliases || null,
             academic_session_id: currentAcademicSession?.id ?? 0,
           }),
         ).unwrap()
-        console.log("new_division", new_division)
         setAcademicClasses((prevClasses): any =>
           prevClasses.map((cls) =>
             cls.class === payload.class
@@ -377,17 +399,39 @@ export default function AcademicSettings() {
 
   const handleActivateSession = async (sessionId: number) => {
     try {
-      await setActiveSessionMutation(sessionId).unwrap()
+      const result = await setActiveSessionMutation(sessionId).unwrap()
       toast({
         title: "Success",
         description: "Academic session activated successfully",
       })
-      refetchSessions()
-    } catch (error) {
+      window.location.reload();
+      // refetchSessions()
+    } catch (error: any) {
       console.error("Failed to activate session:", error)
+
+      // Extract error message from different possible error formats
+      let errorMessage = "Failed to activate academic session"
+
+      if (error.data?.message) {
+        // Handle standard API error format
+        errorMessage = error.data.message
+      } else if (error.data?.error) {
+        // Handle error object format
+        errorMessage = error.data.error
+      } else if (Array.isArray(error.data)) {
+        // Handle array of errors format
+        errorMessage = error.data.map((err: any) => err.message || err).join(", ")
+      } else if (typeof error.message === "string") {
+        // Handle plain error message
+        errorMessage = error.message
+      } else if (typeof error === "string") {
+        // Handle string error
+        errorMessage = error
+      }
+
       toast({
         title: "Error",
-        description: "Failed to activate academic session",
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -395,12 +439,12 @@ export default function AcademicSettings() {
 
   // Update state when data is loaded
   useEffect(() => {
-    if (classesData && classesData.length > 0) {
-      setAcademicClasses(classesData)
+    if (academicClassesForSchool && academicClassesForSchool.length > 0) {
+      setAcademicClasses(academicClassesForSchool)
     }
-  }, [classesData])
+  }, [academicClassesForSchool])
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log("formForDivsion.formState.errors", formForDivsion.formState.errors)
   }, [formForDivsion.formState.errors])
 
@@ -446,7 +490,10 @@ export default function AcademicSettings() {
             </TabsList>
 
             <TabsContent value="sessions" className="space-y-6">
-              <SaralCard title={t("academic_session_management")} description={t("manage_academic_sessions_for_your_school")}>
+              <SaralCard
+                title={t("academic_session_management")}
+                description={t("manage_academic_sessions_for_your_school")}
+              >
                 <Dialog open={isNewSessionDialogOpen} onOpenChange={setIsNewSessionDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
@@ -457,7 +504,9 @@ export default function AcademicSettings() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>{t("create_new_academic_session")}</DialogTitle>
-                      <DialogDescription>{t("set_the_start_and_end_dates_for_the_new_academic_session.")}</DialogDescription>
+                      <DialogDescription>
+                        {t("set_the_start_and_end_dates_for_the_new_academic_session.")}
+                      </DialogDescription>
                     </DialogHeader>
                     <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
                   </DialogContent>
@@ -466,12 +515,10 @@ export default function AcademicSettings() {
                   <div className="mb-6 mt-6 p-4 border rounded-lg bg-muted/50">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-2xl font-bold">
-                          {formatSessionName(activeSession.start_date, activeSession.end_date)}
-                        </h3>
+                        <h3 className="text-2xl font-bold">{activeSession.session_name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {new Date(activeSession.start_date).toLocaleDateString()} -{" "}
-                          {new Date(activeSession.end_date).toLocaleDateString()}
+                          {getMonthName(activeSession.start_month.split("-")[1])} {activeSession.start_year} -{" "}
+                          {getMonthName(activeSession.end_month.split("-")[1])} {activeSession.end_year}
                         </p>
                       </div>
                       <Badge variant="secondary" className="text-lg">
@@ -498,11 +545,15 @@ export default function AcademicSettings() {
                           </Button>
                         </div>
                         <AlertDialogDescription className="text-yellow-600">
-                          {t("there_is_no_active_academic_session._please_create_a_new_session_or_activate_an_existing_one.")}
+                          {t(
+                            "there_is_no_active_academic_session._please_create_a_new_session_or_activate_an_existing_one.",
+                          )}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setShowNoActiveSessionAlert(false)}>{t("close")}</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setShowNoActiveSessionAlert(false)}>
+                          {t("close")}
+                        </AlertDialogCancel>
                         <AlertDialogAction onClick={() => setIsNewSessionDialogOpen(true)}>
                           {t("create_new_session")}
                         </AlertDialogAction>
@@ -532,7 +583,10 @@ export default function AcademicSettings() {
                 </div>
               ) : (
                 <>
-                  <SaralCard title={t("class_management")} description={t("manage_classes_for_the_current_academic_year")}>
+                  <SaralCard
+                    title={t("class_management")}
+                    description={t("manage_classes_for_the_current_academic_year")}
+                  >
                     <div className="grid gap-6">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {defaultStandards.map((cls) => (
@@ -545,7 +599,7 @@ export default function AcademicSettings() {
                                 id={`class-${cls.id}`}
                                 disabled={disabledClasses.includes(cls.class)}
                                 checked={checkedClasses.has(cls.class)}
-                                onCheckedChange={() => handleClassToggle(cls)}
+                                onCheckedChange={() => handleClassToggle({class: cls.class as AvailableClasses, id: cls.id})}
                               />
                               <label
                                 htmlFor={`class-${cls.id}`}
@@ -594,14 +648,14 @@ export default function AcademicSettings() {
                                           className="flex items-center gap-1 p-3"
                                         >
                                           <p>
-                                            ({division.class}- {division.division})
+                                            ({std.class}- {division.division})
                                           </p>
                                           <p>{division.aliases}</p>
                                           <Button
                                             variant="ghost"
                                             size="icon"
                                             className="h-4 w-4 p-0 ml-1"
-                                            onClick={() => handleEditDivision(division)}
+                                            onClick={() => handleEditDivision(division , std)}
                                           >
                                             <Edit className="h-3 w-3" />
                                           </Button>
@@ -610,7 +664,7 @@ export default function AcademicSettings() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <Button size="sm" variant="outline" onClick={() => handleAddDivision(std.class)}>
+                                    <Button size="sm" variant="outline" onClick={() => handleAddDivision(std.id)}>
                                       <PlusCircle className="mr-2 h-4 w-4" />
                                       {t("add_division")}
                                     </Button>
@@ -668,7 +722,7 @@ export default function AcademicSettings() {
                   </Label>
                   <Input
                     id="divisionName"
-                    value={editingDivision?.division.name || ""}
+                    value={editingDivision?.division.division || ""}
                     disabled
                     className="col-span-3"
                   />
@@ -679,7 +733,7 @@ export default function AcademicSettings() {
                   </Label>
                   <Input
                     id="divisionAlias"
-                    value={editingDivision?.division.alias || ""}
+                    value={editingDivision?.division.aliases || ""}
                     onChange={(e) =>
                       setEditingDivision((prev) =>
                         prev ? { ...prev, division: { ...prev.division, alias: e.target.value } } : null,

@@ -148,7 +148,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
             <AlertDescription>
               {applicableTo === "plan" &&
                 concessionsTo === "plan" &&
-                "This concession will be applied to entire fee plans. The deduction will apply to the total plan amount."}
+                t("this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.")}
               {applicableTo === "plan" &&
                 concessionsTo === "fees_type" &&
                 "This concession will be applied to specific fee types within fee plans. You'll be able to select which fee types when applying the concession."}

@@ -10,7 +10,7 @@ import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } from "@/services/AttendanceServices"
 import type { AttendanceDetails } from "@/types/attendance"
 import { Loader2, Search } from "lucide-react"
@@ -32,7 +32,7 @@ const AdminAttendanceView: React.FC = () => {
   const user = useAppSelector(selectCurrentUser)
   const [fetchAttendanceForDate, { data: attendanceData, isLoading }] = useLazyFetchAttendanceForDateQuery()
   const [markAttendanceForDate, { isLoading: isMarkingAttendance }] = useMarkAttendanceMutation()
-
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [selectedClass, setSelectedClass] = useState<string | undefined>(undefined)
   const [selectedDivision, setSelectedDivision] = useState<string | undefined>(undefined)
@@ -112,6 +112,7 @@ const AdminAttendanceView: React.FC = () => {
     if (attendanceData && selectedDate && selectedClass && selectedDivision) {
       setAttendanceRecords({
         ...attendanceData,
+        academic_session_id : CurrentAcademicSessionForSchool!.id,
         class_id: Number(selectedClass),
         date: selectedDate.toISOString().split("T")[0],
         marked_by: user!.id,
@@ -124,6 +125,7 @@ const AdminAttendanceView: React.FC = () => {
       fetchAttendanceForDate({
         class_id: Number(selectedClass),
         unix_date: Math.floor(selectedDate.getTime() / 1000),
+        academic_session: CurrentAcademicSessionForSchool!.id,
       })
     }
   }, [selectedDate, selectedClass, selectedDivision, fetchAttendanceForDate, isSunday, isFutureDate])
@@ -333,14 +335,14 @@ const AdminAttendanceView: React.FC = () => {
           <>
             <div className="flex justify-end space-x-2 mb-4">
               <Button
-                disabled={isMarkingAttendance}
+                disabled={isMarkingAttendance || attendanceRecords.is_marked}
                 onClick={() => handleMarkAll("present")}
                 className="bg-green-500 hover:bg-green-600"
               >
                 Mark All Present
               </Button>
               <Button
-                disabled={isMarkingAttendance}
+                disabled={isMarkingAttendance || attendanceRecords.is_marked}
                 onClick={() => handleMarkAll("absent")}
                 variant="outline"
                 className="border-red-500 text-red-500 hover:bg-red-50"
@@ -348,7 +350,7 @@ const AdminAttendanceView: React.FC = () => {
                 Mark All Absent
               </Button>
               <Button
-                disabled={isMarkingAttendance}
+                disabled={isMarkingAttendance || attendanceRecords.is_marked}
                 onClick={() => handleMarkAll("late")}
                 variant="secondary"
                 className="bg-yellow-500 hover:bg-yellow-600"
@@ -356,7 +358,7 @@ const AdminAttendanceView: React.FC = () => {
                 Mark All Late
               </Button>
               <Button
-                disabled={isMarkingAttendance}
+                disabled={isMarkingAttendance || attendanceRecords.is_marked}
                 onClick={() => handleMarkAll("half_day")}
                 variant="secondary"
                 className="bg-orange-500 hover:bg-orange-600"
@@ -407,7 +409,7 @@ const AdminAttendanceView: React.FC = () => {
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={isMarkingAttendance}
+                disabled={isMarkingAttendance || attendanceRecords.is_marked}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105"
               >
                 {isMarkingAttendance ? (

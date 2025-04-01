@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -25,14 +25,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { UserPlus } from "lucide-react"
+import { SquareChevronLeft, UserPlus } from "lucide-react"
 import { type Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import type { StudentFormData } from "@/utils/student.validation"
 import StudentForm from "../Students/StudentForm"
+import { transformInquiryToStudent } from "@/utils/transform-inquiry-to-student"
+import type { Student } from "@/types/student"
+import { useAuth } from "@/redux/hooks/useAuth"
+import { handleStudentOnboarding } from "@/utils/handle-student-onboarding"
+import AdmissionInquiryForm from "./AdmissionInquiryForm"
 
-export default function InquiryList() {
+export default function InquiriesManagement() {
   const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1 })
   const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
   const [filter, setFilter] = useState("all")
@@ -41,7 +46,10 @@ export default function InquiryList() {
   const [inquiryToReject, setInquiryToReject] = useState<number | null>(null)
   const [showStudentForm, setShowStudentForm] = useState(false)
   const [currentInquiryForOnboarding, setCurrentInquiryForOnboarding] = useState<Inquiry | null>(null)
+  const [editInquiryDialogOpen, setEditInquiryDialogOpen] = useState(false)
+  const [inquiryToEdit, setInquiryToEdit] = useState<Inquiry | null>(null)
   const { t } = useTranslation()
+  const authState = useAuth()
 
   const filteredInquiries =
     filter === "all" ? inquiriesData?.data : inquiriesData?.data.filter((inquiry) => inquiry.status === filter)
@@ -63,11 +71,7 @@ export default function InquiryList() {
       })
     }
   }
-
-  const handleGoBack = () => {
-    window.history.back()
-  }
-
+  
   const handleReject = (id: number) => {
     setInquiryToReject(id)
     setRejectDialogOpen(true)
@@ -98,6 +102,11 @@ export default function InquiryList() {
   const handleOnboardStudent = (inquiry: Inquiry) => {
     setCurrentInquiryForOnboarding(inquiry)
     setShowStudentForm(true)
+  }
+
+  const handleEditInquiry = (inquiry: Inquiry) => {
+    setInquiryToEdit(inquiry)
+    setEditInquiryDialogOpen(true)
   }
 
   const handleStudentSubmit = async (data: StudentFormData) => {
@@ -187,7 +196,7 @@ export default function InquiryList() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -210,7 +219,11 @@ export default function InquiryList() {
         </div>
 
         <Card>
-          <CardContent className="p-0">
+          <CardHeader>
+            <CardTitle>{t("admission_inquiries")}</CardTitle>
+            <CardDescription>{t("review_and_process_admission_inquiries")}</CardDescription>
+          </CardHeader>
+          <CardContent>
             {filteredInquiries && filteredInquiries.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -219,9 +232,9 @@ export default function InquiryList() {
                     <TableHead>{t("class")}</TableHead>
                     <TableHead>{t("parent_name")}</TableHead>
                     <TableHead>{t("contact")}</TableHead>
-                    <TableHead>{t("date")}</TableHead>
+                    <TableHead>{t("date_of_birth")}</TableHead>
                     <TableHead>{t("status")}</TableHead>
-                    <TableHead>{t("enrollment_id")}</TableHead>
+                    <TableHead>{t("Enrollement Id")}</TableHead>
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,6 +262,16 @@ export default function InquiryList() {
                             {t("view")}
                           </Button>
 
+                          {/* Edit button */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditInquiry(inquiry)}
+                            disabled={inquiry.status === "enrolled"}
+                          >
+                            {t("edit")}
+                          </Button>
+
                           {/* Onboard Student button - only enabled for approved applications */}
                           <Button
                             variant="outline"
@@ -274,6 +297,7 @@ export default function InquiryList() {
                               <SelectItem value="ineligible">{t("ineligible")}</SelectItem>
                               <SelectItem value="approved">{t("approved")}</SelectItem>
                               <SelectItem value="rejected">{t("rejected")}</SelectItem>
+                              <SelectItem value="enrolled">{t("enrolled")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -304,8 +328,7 @@ export default function InquiryList() {
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div className="text-sm font-medium">{t("name")}:</div>
                       <div className="text-sm">
-                        {selectedInquiry.first_name} {selectedInquiry.middle_name ? selectedInquiry.middle_name : ""}{" "}
-                        {selectedInquiry.last_name}
+                        {selectedInquiry.first_name} {selectedInquiry.middle_name || ""} {selectedInquiry.last_name}
                       </div>
                       <div className="text-sm font-medium">{t("date_of_birth")}:</div>
                       <div className="text-sm">{new Date(selectedInquiry.birth_date).toLocaleDateString()}</div>
@@ -434,55 +457,71 @@ export default function InquiryList() {
                   setCurrentInquiryForOnboarding(null)
                 }}
                 form_type="create"
-                initial_data={{
-                  id: 0,
-                  school_id: 0,
-                  first_name: currentInquiryForOnboarding.first_name,
-                  middle_name: currentInquiryForOnboarding.middle_name || "",
-                  last_name: currentInquiryForOnboarding.last_name,
-                  first_name_in_guj: "",
-                  middle_name_in_guj: "",
-                  last_name_in_guj: "",
-                  class_id: currentInquiryForOnboarding.class_applying,
-                  gender: currentInquiryForOnboarding.gender as "Male" | "Female",
-                  birth_date: currentInquiryForOnboarding.birth_date,
-                  father_name: currentInquiryForOnboarding.father_name,
-                  primary_mobile: Number(currentInquiryForOnboarding.primary_mobile),
-                  // parent_email: currentInquiryForOnboarding.parent_email || "",
-                  // address: currentInquiryForOnboarding.address,
-                  // privious_school: currentInquiryForOnboarding.previous_school || "",
-                  // privious_school_in_guj: "",
-                  // previous_class: currentInquiryForOnboarding.previous_class || "",
-                  // previous_percentage: currentInquiryForOnboarding.previous_percentage || "",
-                  // previous_year: currentInquiryForOnboarding.previous_year || "",
-                  // applying_for_quota: currentInquiryForOnboarding.applying_for_quota || false,
-                  // quota_type: currentInquiryForOnboarding.quota_type || "",
-                }}
-                onSubmitSuccess={(studentData: any, enrollmentId: any) => {
-                  // Update the inquiry with the enrollment ID
-                  if (currentInquiryForOnboarding && enrollmentId) {
-                    updateInquiry({
-                      id: currentInquiryForOnboarding.id,
-                      status: "enrolled",
-                      enrollment_id: enrollmentId,
-                    })
-                      .unwrap()
-                      .then(() => {
-                        toast({
-                          title: "Student Onboarded",
-                          description: `Student has been successfully onboarded with enrollment ID: ${enrollmentId}`,
-                        })
-                        refetch()
-                      })
-                      .catch((error) => {
-                        console.error(error)
-                        toast({
-                          title: "Error",
-                          description: "Failed to update inquiry status. Please try again.",
-                          variant: "destructive",
-                        })
-                      })
+                initial_data={
+                  transformInquiryToStudent(currentInquiryForOnboarding, authState.user?.school_id || 0) as Student
+                }
+                onSubmitSuccess={(studentData, enrollmentId) => {
+                  if (currentInquiryForOnboarding) {
+                    handleStudentOnboarding(
+                      studentData,
+                      enrollmentId,
+                      currentInquiryForOnboarding,
+                      updateInquiry,
+                      refetch,
+                      () => {
+                        setShowStudentForm(false)
+                        setCurrentInquiryForOnboarding(null)
+                      },
+                    )
                   }
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Edit Inquiry Dialog */}
+        {inquiryToEdit && (
+          <Dialog open={editInquiryDialogOpen} onOpenChange={setEditInquiryDialogOpen}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>{t("edit_inquiry")}</DialogTitle>
+                <DialogDescription>{t("update_inquiry_details")}</DialogDescription>
+              </DialogHeader>
+              <AdmissionInquiryForm
+                isEditing={true}
+                initialData={{
+                  first_name: inquiryToEdit.first_name,
+                  middle_name: inquiryToEdit.middle_name || "",
+                  last_name: inquiryToEdit.last_name,
+                  birth_date: inquiryToEdit.birth_date,
+                  gender: inquiryToEdit.gender.toLowerCase(),
+                  class_applying: inquiryToEdit.class_applying.toString(),
+                  father_name: inquiryToEdit.father_name,
+                  primary_mobile: inquiryToEdit.primary_mobile.toString(),
+                  parent_email: inquiryToEdit.parent_email || "",
+                  address: inquiryToEdit.address || "",
+                  privious_school: inquiryToEdit.previous_school || "",
+                  privious_class: inquiryToEdit.previous_class || "",
+                  privious_percentage: inquiryToEdit.previous_percentage || "",
+                  privious_year: inquiryToEdit.previous_year || "",
+                  special_achievements: inquiryToEdit.special_achievements || "",
+                  applying_for_quota: inquiryToEdit.applying_for_quota ? "yes" : "no",
+                  quota_type: inquiryToEdit.quota_type || "",
+                }}
+                inquiryId={inquiryToEdit.id}
+                onSuccess={() => {
+                  setEditInquiryDialogOpen(false)
+                  setInquiryToEdit(null)
+                  refetch()
+                  toast({
+                    title: "Inquiry Updated",
+                    description: "The inquiry has been updated successfully.",
+                  })
+                }}
+                onCancel={() => {
+                  setEditInquiryDialogOpen(false)
+                  setInquiryToEdit(null)
                 }}
               />
             </DialogContent>

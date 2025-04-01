@@ -154,6 +154,19 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <FormField
               control={form.control}
+              name="birth_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("date_of_birth")}</FormLabel>
+                  <FormControl>
+                    <Input type="date" placeholder={t("enter_your_date_of_birth")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="primary_mobile"
               render={({ field }) => (
                 <FormItem>

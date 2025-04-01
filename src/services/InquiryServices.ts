@@ -83,9 +83,9 @@ interface UpdateInquiryRequest {
   applying_for_quota?: boolean
   parent_email?: string
   privious_school?: string
-  previous_class?: string
-  previous_percentage?: string
-  previous_year?: string
+  privious_class?: string
+  privious_percentage?: string
+  privious_year?: string
   special_achievements?: string
   quota_type?: string
   status?: string

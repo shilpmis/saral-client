@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
-import { Plus, UserPlus, Users, Shield, BookOpen, RefreshCw, Edit, Trash2, AlertCircle } from "lucide-react"
+import { Plus, UserPlus, Users, Shield, BookOpen, RefreshCw, Edit, Trash2, AlertCircle, AlertTriangle } from "lucide-react"
 import type { User } from "@/types/user"
 import type { PageMeta } from "@/types/global"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -48,14 +48,17 @@ import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { StaffType } from "@/types/staff"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { Switch } from "@/components/ui/switch"
+import { AssignedClasses } from "@/types/class"
+import { Division } from "@/types/academic"
 
 // Predefined management roles
 const managementRoles = [
-  { id: 1, role: "ADMIN", description: "Full access to all system features" },
-  { id: 2, role: "PRINCIPAL", description: "School-wide access with limited administrative capabilities" },
-  { id: 3, role: "HEAD TEACHER", description: "Department-level access and teacher management" },
-  { id: 4, role: "CLERK", description: "Administrative tasks and record management" },
-  { id: 5, role: "IT ADMIN", description: "Technical support and system configuration" },
+  { id: 1, role: "ADMIN", value : "Admin",   description: "Full access to all system features" },
+  { id: 2, role: "PRINCIPAL", value : "Principal", description: "School-wide access with limited administrative capabilities" },
+  { id: 3, role: "HEAD TEACHER", value : "Head Teacher", description: "Department-level access and teacher management" },
+  { id: 4, role: "CLERK", value : "Clerk", description: "Administrative tasks and record management" },
+  { id: 5, role: "IT ADMIN", value : "IT Admin", description: "Technical support and system configuration" },
 ]
 
 // Add the user form schema after the managementRoles constant
@@ -83,8 +86,7 @@ export const UserManagement: React.FC = () => {
   const [addUser, { isLoading: isAddingUser }] = useAddUserMutation()
   const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation()
   const [onboardTeacher, { isLoading: isOnboardingTeacher }] = useOnBoardTeacherAsUserMutation()
-  const [updateTeacherClasses, { isLoading: isUpdatingTeacherClasses }] = useUpdateOnBoardTeacherAsUserMutation()
-  // const [deactivateUser, { xisLoading: isDeactivatingUser }] = useDeactivateUserMutation()
+  const [updateOnBoardedStaff, { isLoading: isUpdatingTeacherClasses }] = useUpdateOnBoardTeacherAsUserMutation()
 
   // State
   const [activeTab, setActiveTab] = useState("management")
@@ -218,11 +220,12 @@ export const UserManagement: React.FC = () => {
   }
 
   // Handle class allocation dialog
-  const handleClassAllocation = (teacher: any) => {
-  setSelectedTeacher(teacher)
+  const handleClassAllocation = (user: User) => {
+  setSelectedUser(user)    
+  setSelectedTeacher(user.staff)
   
   // Initialize selected classes from teacher's current classes
-  const currentClasses = teacher.staff?.assigend_classes?.map((cls: any) => cls.class_id) || []
+  const currentClasses = user.staff && user.staff.assigend_classes.map((cls: AssignedClasses) => cls.class.id) || []
   setSelectedClasses([...currentClasses])
   setUnassignClasses([])
   
@@ -314,11 +317,11 @@ export const UserManagement: React.FC = () => {
 
   // Submit class allocation form
   const handleSubmitClassAllocation = async () => {
-    if (!selectedTeacher) return
-
+    if (!selectedTeacher || !selectedUser) return
+    console.log("manage_class_allocations" , selectedTeacher)
     try {
-      await updateTeacherClasses({
-        user_id: selectedTeacher.id,
+      await updateOnBoardedStaff({
+        user_id: selectedUser.id,
         payload: {
           assign_classes: selectedClasses,
           unassign_classes: unassignClasses,
@@ -346,7 +349,7 @@ export const UserManagement: React.FC = () => {
     if (!selectedUser) return
 
     try {
-      await updateTeacherClasses({
+      await updateOnBoardedStaff({
         user_id: selectedUser.id,
         payload: {
           is_active: !selectedUser.is_active,
@@ -371,11 +374,13 @@ export const UserManagement: React.FC = () => {
 
   // Toggle class selection
   const toggleClassSelection = (classId: number) => {
-  if (selectedClasses.includes(classId)) {
-    setSelectedClasses(selectedClasses.filter(id => id !== classId))
-    
-    // If this class was previously assigned to the teacher, add it to unassign list
-    const currentClasses = selectedTeacher?.assigend_classes?.map((cls: any) => cls.class_id) || []
+    if (selectedClasses.includes(classId)) {
+      setSelectedClasses(selectedClasses.filter(id => id !== classId))
+      
+      // If this class was previously assigned to the teacher, add it to unassign list
+      const currentClasses = selectedTeacher && selectedTeacher.assigend_classes 
+          ? selectedTeacher.assigend_classes.map((assign_class: AssignedClasses) => assign_class.class.id) : []
+
     if (currentClasses.includes(classId) && !unassignClasses.includes(classId)) {
       setUnassignClasses([...unassignClasses, classId])
     }
@@ -402,7 +407,7 @@ export const UserManagement: React.FC = () => {
   // Get role name by ID
   const getRoleName = (roleId: number) => {
     const role = managementRoles.find((r) => r.id === roleId)
-    return role ? role.role : `Role ${roleId}`
+    return role ? role.value : `Role ${roleId}`
   }
 
   // Loading state
@@ -485,7 +490,7 @@ export const UserManagement: React.FC = () => {
                       <SelectItem value="all">{t("all_roles")}</SelectItem>
                       {managementRoles.map((role) => (
                         <SelectItem key={role.id} value={role.id.toString()}>
-                          {role.role}
+                          {role.value}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -550,8 +555,8 @@ export const UserManagement: React.FC = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={user.is_active ? "default" : "secondary"}>
-                              {user.is_active ? t("active") : t("inactive")}
+                            <Badge variant={ Boolean(Number(user.is_active)) ? "default" : "destructive"}>
+                              {Boolean(Number(user.is_active)) ? t("active") : t("inactive")}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -569,11 +574,11 @@ export const UserManagement: React.FC = () => {
                                 variant="ghost" 
                                 size="icon" 
                                 onClick={() => handleDeactivateUser(user)}
-                                className={user.is_active ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}
-                                title={user.is_active ? t("deactivate") : t("activate")}
+                                className={Boolean(user.is_active) ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}
+                                title={Boolean(user.is_active) ? t("deactivate") : t("activate")}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">{user.is_active ? t("deactivate") : t("activate")}</span>
+                                <span className="sr-only">{Boolean(user.is_active) ? t("deactivate") : t("activate")}</span>
                               </Button>
                             </div>
                           </TableCell>
@@ -691,8 +696,8 @@ export const UserManagement: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={Boolean(teacher.is_active) ? "default" : "secondary"}>
-                              {Boolean(teacher.is_active) ? t("active") : t("inactive")}
+                            <Badge variant={Boolean(Number(teacher.is_active)) ? "default" : "secondary"}>
+                              {Boolean(Number(teacher.is_active)) ? t("active") : t("inactive")}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -744,6 +749,7 @@ export const UserManagement: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
       {/* Management User Dialog */}
       <Dialog open={isManagementUserDialogOpen} onOpenChange={setIsManagementUserDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -789,9 +795,10 @@ export const UserManagement: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                        <SelectItem key={0} value={" "}>Select Any Role</SelectItem>
                           {managementRoles.map((role) => (
-                            <SelectItem key={role.id} value={role.id.toString()}>
-                              {role.role}
+                            <SelectItem className="cursor" key={role.id} value={role.id.toString()}>
+                              {role.value}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -808,21 +815,21 @@ export const UserManagement: React.FC = () => {
 
                 {selectedUser && (
                   <FormField
-                    control={form.control}
-                    name="is_active"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-1">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>{t("active_user")}</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md p-1">
+                    <FormControl>
+                      <Switch
+                        checked={Boolean(Number(field.value))}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t("active_user")}</FormLabel>
+                    </div>
+                    </FormItem>
+                  )}
                   />
                 )}
               </div>
@@ -849,220 +856,231 @@ export const UserManagement: React.FC = () => {
       </Dialog>
 
       {/* Onboard Teacher Dialog */}
-<Dialog open={isOnboardTeacherDialogOpen} onOpenChange={setIsOnboardTeacherDialogOpen}>
-  <DialogContent className="sm:max-w-[600px]">
-    <DialogHeader>
-      <DialogTitle>{t("onboard_teacher")}</DialogTitle>
-      <DialogDescription>
-        {t("select_a_teacher_and_assign_classes_to_onboard_them_to_the_platform")}
-      </DialogDescription>
-    </DialogHeader>
-    
-    <div className="space-y-4 py-2">
-      <div className="space-y-2">
-        <Label>{t("select_teacher")}</Label>
-        <Select onValueChange={(value) => {
-          const teacher = nonOnboardedTeachers?.find(t => t.id.toString() === value)
-          // setSelectedTeacher(teacher || null)
-        }}>
-          <SelectTrigger>
-            <SelectValue placeholder={t("select_a_teacher")} />
-          </SelectTrigger>
-          <SelectContent>
-            {isLoadingNonOnboardedTeachers ? (
-              <SelectItem value="loading" disabled>{t("loading...")}</SelectItem>
-            ) : nonOnboardedTeachers && nonOnboardedTeachers.length > 0 ? (
-              nonOnboardedTeachers.map((teacher) => (
-                <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                  {teacher.first_name} {teacher.middle_name} {teacher.last_name}
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="none" disabled>{t("no_teachers_available")}</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      {selectedTeacher && (
-        <>
-          <Separator />
+      <Dialog open={isOnboardTeacherDialogOpen} onOpenChange={setIsOnboardTeacherDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("onboard_teacher")}</DialogTitle>
+            <DialogDescription>
+              {t("select_a_teacher_and_assign_classes_to_onboard_them_to_the_platform")}
+            </DialogDescription>
+          </DialogHeader>
           
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label>{t("assign_classes")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("selected")}: {selectedClasses.length}
-              </p>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t("select_teacher")}</Label>
+              <Select onValueChange={(value) => {
+                const teacher = nonOnboardedTeachers?.find(t => t.id.toString() === value)
+                teacher && setSelectedTeacher(teacher)
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("select_a_teacher")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingNonOnboardedTeachers ? (
+                    <SelectItem value="loading" disabled>{t("loading...")}</SelectItem>
+                  ) : nonOnboardedTeachers && nonOnboardedTeachers.length > 0 ? (
+                    nonOnboardedTeachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                        {teacher.first_name} {teacher.middle_name} {teacher.last_name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>{t("no_teachers_available")}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             
-            {isLoadingClasses ? (
-              <div className="text-center py-4">
-                <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-                <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
-              </div>
-            ) : academicDivisions && academicDivisions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
-                {academicDivisions.map((cls) => (
-                  <div key={cls.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`class-${cls.id}`}
-                      checked={selectedClasses.includes(cls.id)}
-                      onCheckedChange={() => toggleClassSelection(cls.id)}
-                    />
-                    <Label htmlFor={`class-${cls.id}`} className="text-sm">
-                      Class {cls.class} {cls.division}
-                    </Label>
+            {selectedTeacher && (
+              <>
+                <Separator />
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>{t("assign_classes")}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("selected")}: {selectedClasses.length}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
-              </div>
+                  
+                  {isLoadingClasses ? (
+                    <div className="text-center py-4">
+                      <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
+                    </div>
+                  ) : academicDivisions && academicDivisions.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
+                      {academicDivisions.map((cls) => (
+                        <div key={cls.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`class-${cls.id}`}
+                            checked={selectedClasses.includes(cls.id)}
+                            onCheckedChange={() => toggleClassSelection(cls.id)}
+                          />
+                          <Label htmlFor={`class-${cls.id}`} className="text-sm">
+                            Class {cls.class} {cls.division}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground">
+                    {t("note_class_assignment_is_optional_and_can_be_updated_later")}
+                  </p>
+                </div>
+              </>
             )}
-            
-            <p className="text-sm text-muted-foreground">
-              {t("note_class_assignment_is_optional_and_can_be_updated_later")}
-            </p>
           </div>
-        </>
-      )}
-    </div>
-    
-    <DialogFooter>
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={() => setIsOnboardTeacherDialogOpen(false)}
-      >
-        {t("cancel")}
-      </Button>
-      <Button 
-        onClick={handleSubmitOnboardTeacher} 
-        disabled={!selectedTeacher || isLoading}
-      >
-        {isLoading ? (
-          <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("onboarding")}</>
-        ) : (
-          t("onboard_teacher")
-        )}
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsOnboardTeacherDialogOpen(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleSubmitOnboardTeacher} 
+              disabled={!selectedTeacher || isLoading}
+            >
+              {isLoading ? (
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("onboarding")}</>
+              ) : (
+                t("onboard_teacher")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Class Allocation Dialog */}
-<Dialog open={isClassAllocationDialogOpen} onOpenChange={setIsClassAllocationDialogOpen}>
-  <DialogContent className="sm:max-w-[600px]">
-    <DialogHeader>
-      <DialogTitle>{t("manage_class_allocations")}</DialogTitle>
-      <DialogDescription>
-        {selectedTeacher && (
-          <>
-            {t("update_class_allocations_for")} {selectedTeacher?.first_name} {selectedTeacher?.last_name}
-          </>
-        )}
-      </DialogDescription>
-    </DialogHeader>
-    
-    <div className="space-y-4 py-2">
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <Label>{t("assigned_classes")}</Label>
-          <p className="text-sm text-muted-foreground">
-            {t("selected")}: {selectedClasses.length}
-          </p>
-        </div>
-        
-        {isLoadingClasses ? (
-          <div className="text-center py-4">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-            <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
-          </div>
-        ) : academicDivisions && academicDivisions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-1">
-            {academicDivisions && academicDivisions.map((cls) => (
-              <div key={cls.id} className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`class-alloc-${cls.id}`}
-                  checked={selectedClasses.includes(cls.id)}
-                  onCheckedChange={() => toggleClassSelection(cls.id)}
-                />
-                <Label htmlFor={`class-alloc-${cls.id}`} className="text-sm">
-                  Class {cls.class} {cls.division}
-                </Label>
+      <Dialog open={isClassAllocationDialogOpen} onOpenChange={setIsClassAllocationDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("manage_class_allocations")}</DialogTitle>
+            <DialogDescription>
+              {selectedTeacher && (
+                <>
+                  {t("update_class_allocations_for")} {selectedTeacher?.first_name} {selectedTeacher?.last_name}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>{t("assigned_classes")}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("selected")}: {selectedClasses.length}
+                </p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
-          </div>
-        )}
-        
-        {selectedTeacher?.assigend_classes && selectedTeacher.assigend_classes.length > 0 && (
-          <div className="pt-2">
-            <p className="text-sm font-medium mb-2">{t("current_assignments")}:</p>
-            <div className="flex flex-wrap gap-2">
-              {selectedTeacher.assigend_classes.map((cls) => (
-                <Badge key={cls.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  Class {cls.class?.class} {cls.class?.division}
-                  {cls.class?.aliases && <span className="ml-1 text-xs">({cls.class.aliases})</span>}
-                </Badge>
-              ))}
+              
+              {isLoadingClasses ? (
+                <div className="text-center py-4">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+                  <p className="mt-2 text-sm text-muted-foreground">{t("loading_classes...")}</p>
+                </div>
+              ) : academicDivisions && academicDivisions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-1">
+                  {academicDivisions && academicDivisions.map((cls) => (
+                    <div key={cls.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`class-alloc-${cls.id}`}
+                        checked={selectedClasses.includes(cls.id)}
+                        onCheckedChange={() => toggleClassSelection(cls.id)}
+                      />
+                      <Label htmlFor={`class-alloc-${cls.id}`} className="text-sm">
+                        Class {cls.class} {cls.division}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">{t("no_classes_available")}</p>
+                </div>
+              )}
+              
+              {selectedTeacher?.assigend_classes && selectedTeacher.assigend_classes.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-2">{t("current_assignments")}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTeacher.assigend_classes.map((cls) => (
+                      <Badge key={cls.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        Class {cls.class?.class} {cls.class?.division}
+                        {cls.class?.aliases && <span className="ml-1 text-xs">({cls.class.aliases})</span>}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
-    </div>
-    
-    <DialogFooter>
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={() => setIsClassAllocationDialogOpen(false)}
-      >
-        {t("cancel")}
-      </Button>
-      <Button 
-        onClick={handleSubmitClassAllocation} 
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("updating")}</>
-        ) : (
-          t("update_classes")
-        )}
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsClassAllocationDialogOpen(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleSubmitClassAllocation} 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("updating")}</>
+              ) : (
+                t("update_classes")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Deactivate User Confirmation */}
-      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{selectedUser?.is_active ? t("deactivate_user") : t("activate_user")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedUser?.is_active
-                ? t("are_you_sure_you_want_to_deactivate_this_user_they_will_no_longer_be_able_to_access_the_system")
-                : t("are_you_sure_you_want_to_activate_this_user_they_will_be_able_to_access_the_system")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="max-w-md rounded-2xl shadow-lg">
+          <DialogHeader className="text-center">
+            <AlertTriangle className="text-red-600 w-7 h-7" />
+            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
+            <DialogDescription className="text-gray-600">
+            {t("are_you_sure_you_want_to_deactive_this user ?")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex justify-center space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteConfirmOpen(false)}
+              className="sm:order-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
               onClick={confirmDeactivateUser}
-              className={selectedUser?.is_active ? "bg-destructive hover:bg-destructive/90" : ""}
+              className={`px-5 py-2 rounded-md text-white font-semibold transition-all ${
+                selectedUser?.is_active
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
               {selectedUser?.is_active ? t("deactivate") : t("activate")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

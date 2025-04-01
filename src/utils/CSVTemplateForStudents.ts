@@ -1,11 +1,90 @@
+const headers = [
+  "First Name",
+  "Middle Name",
+  "Last Name",
+  "First Name Gujarati",
+  "Middle Name Gujarati",
+  "Last Name Gujarati",
+  "Gender",
+  "Date of Birth",
+  "Birth Place",
+  "Birth Place In Gujarati",
+  "Aadhar No",
+  "DISE Number",
+  "Father Name",
+  "Father Name in Gujarati",
+  "Mother Name",
+  "Mother Name in Gujarati",
+  "Mobile No",
+  "Other Mobile No",
+  "GR No",
+  "Roll Number",
+  "Admission Date",
+  "Previous School",
+  "Previous School In Gujarati",
+  "Religion",
+  "Religion In Gujarati",
+  "Caste",
+  "Caste In Gujarati",
+  "Category",
+  "Address",
+  "District",
+  "City",
+  "State",
+  "Postal Code",
+  "Bank Name",
+  "Account Number",
+  "IFSC Code",
+].join(",");
+
+// Add a sample row with example data
+const sampleRow = [
+  "Rahul", // First Name
+  "", // Middle Name (optional)
+  "Patel", // Last Name
+  "", // First Name Gujarati (optional)
+  "", // Middle Name Gujarati (optional)
+  "", // Last Name Gujarati (optional)
+  "Male", // Gender
+  "", // Date of Birth (optional)
+  "", // Birth Place (optional)
+  "", // Birth Place In Gujarati (optional)
+  "", // Aadhar No (optional)
+  "", // DISE Number (optional)
+  "", // Father Name (optional)
+  "", // Father Name in Gujarati (optional)
+  "", // Mother Name (optional)
+  "", // Mother Name in Gujarati (optional)
+  "9876543210", // Mobile No
+  "", // Other Mobile No (optional)
+  "GR12345", // GR No
+  "", // Roll Number (optional)
+  "", // Admission Date (optional)
+  "", // Previous School (optional)
+  "", // Previous School In Gujarati (optional)
+  "", // Religion (optional)
+  "", // Religion In Gujarati (optional)
+  "", // Caste (optional)
+  "", // Caste In Gujarati (optional)
+  "", // Category (optional)
+  "", // Address (optional)
+  "", // District (optional)
+  "", // City (optional)
+  "", // State (optional)
+  "", // Postal Code (optional)
+  "", // Bank Name (optional)
+  "", // Account Number (optional)
+  "", // IFSC Code (optional)
+].join(",");
+
 export const downloadCSVTemplate = () => {
   try {
-    const csvContent = `first_name,middle_name,last_name,gender,gr_no,phone_number
-Melzo_Student_54,Kumar,Patel,Male,="6568",="9155636666"
-John,,Doe,Female,="9012",="9876543210"
-Jane,Marie,Smith,Female,="1098",="8765432109"`;
+    const BOM = "\uFEFF"; // UTF-8 BOM
+    const csvContent = `${headers}\n${sampleRow}`;
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([BOM + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
     const url = URL.createObjectURL(blob);
 
