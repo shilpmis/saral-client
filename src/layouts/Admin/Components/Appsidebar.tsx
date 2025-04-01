@@ -68,16 +68,16 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
           ) : (
             <>
               <img
-                src="/school-logo.png"
-                alt="School Logo"
-                width={70}
-                height={60}
-                className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
-              />
+                  src="/melzo_logo.png"
+                  alt="Product logo"
+                  width={70}
+                  height={60}
+                  className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
+                />
               <div className="h-16 w-[2px] bg-black mx-2"></div>
               <img
-                src="/melzo_logo.png"
-                alt="Product logo"
+                src="https://firebasestorage.googleapis.com/v0/b/edumelzo.appspot.com/o/bardoli.png?alt=media&token=ee7cbb11-1038-4fcb-86b3-91830f7ebaaf"
+                alt="School Logo"
                 width={70}
                 height={60}
                 className="rounded-full border-2 border-black p-1 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:ring-2 hover:ring-orange-500"
