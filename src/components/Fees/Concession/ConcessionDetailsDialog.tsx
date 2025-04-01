@@ -112,8 +112,8 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
 
     const division = academicDivisions.find((div) => div.id === classId)
     if (!division) return `Class ID: ${classId}`
-
-    return `Class ${division.class}${division.aliases ? ` - ${division.aliases}` : ""}`
+    // TODO :: Need to fix   
+    return `Class ${division.class_id} ${division.aliases ? ` - ${division.aliases}` : ""}`
   }
 
   // Handle status toggle click
