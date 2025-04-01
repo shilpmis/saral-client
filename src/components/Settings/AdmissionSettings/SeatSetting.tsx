@@ -31,8 +31,12 @@ import { selectCurrentUser } from "@/redux/slices/authSlice"
 import { useGetAcademicClassesQuery } from "@/services/AcademicService"
 import type { AcademicClasses } from "@/types/academic"
 import { Link } from "react-router-dom"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function SeatsManagement() {
+
+  const { t } = useTranslation()
+
   const {
     data: classSeats,
     isLoading: isLoadingSeats,
@@ -298,20 +302,20 @@ export default function SeatsManagement() {
         </Link>
 
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Seat Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("seat_management")}</h1>
           <Dialog open={isAddSeatDialogOpen} onOpenChange={setIsAddSeatDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Add Seat Availability</Button>
+              <Button>{t("add_seat_availability")}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Seat Availability</DialogTitle>
-                <DialogDescription>Set the total number of seats for a class.</DialogDescription>
+                <DialogTitle>{t("add_seat_availability")}</DialogTitle>
+                <DialogDescription>{t("set_the_total_number_of_seats_for_a_class.")}</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="class-id" className="text-right">
-                    Class
+                    {t("class")}
                   </Label>
                   <Select
                     onValueChange={(value) => {
@@ -324,7 +328,7 @@ export default function SeatsManagement() {
                     }}
                   >
                     <SelectTrigger id="class-id" className="col-span-3">
-                      <SelectValue placeholder="Select class" />
+                      <SelectValue placeholder={t("select_class")} />
                     </SelectTrigger>
                     <SelectContent>
                       {classesData?.map((academicClass: AcademicClasses) =>
@@ -339,7 +343,7 @@ export default function SeatsManagement() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="total-seats" className="text-right">
-                    Total Seats
+                    {t("total_seats")}
                   </Label>
                   <Input
                     id="total-seats"
@@ -368,27 +372,27 @@ export default function SeatsManagement() {
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Seats Overview</TabsTrigger>
-            <TabsTrigger value="allocation">Quota Allocation</TabsTrigger>
+            <TabsTrigger value="overview">{t("seats_overview")}</TabsTrigger>
+            <TabsTrigger value="allocation">{t("quota_allocation")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Available Seats by Class</CardTitle>
-                <CardDescription>Manage the total number of seats available for each class</CardDescription>
+                <CardTitle>{t("available_seats_by_class")}</CardTitle>
+                <CardDescription>{t("manage_the_total_number_of_seats_available_for_each_class")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4 mb-4">
                   <Label htmlFor="filter-class" className="w-24">
-                    Filter by:
+                    {t("filter_by")}:
                   </Label>
                   <Select value={selectedClass} onValueChange={setSelectedClass}>
                     <SelectTrigger id="filter-class" className="w-[180px]">
-                      <SelectValue placeholder="Select class" />
+                      <SelectValue placeholder={t("select_class")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Classes</SelectItem>
+                      <SelectItem value="all">{t("all_classes")}</SelectItem>
                       {classSeats?.map((seat) => (
                         <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
                           Class {seat.class.class} {seat.class.division}
@@ -401,13 +405,13 @@ export default function SeatsManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Total Seats</TableHead>
-                      <TableHead>Allocated to Quotas</TableHead>
-                      <TableHead>General Seats</TableHead>
-                      <TableHead>Filled</TableHead>
-                      <TableHead>Available</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t("class")}</TableHead>
+                      <TableHead>{t("total_seats")}</TableHead>
+                      <TableHead>{t("allocated_to_quotas")}</TableHead>
+                      <TableHead>{t("general_seats")}</TableHead>
+                      <TableHead>{t("filled")}</TableHead>
+                      <TableHead>{t("available")}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -448,7 +452,7 @@ export default function SeatsManagement() {
                               onClick={() => handleSeatUpdate(seat.class_id, seat.total_seats)}
                               disabled={isAddingSeats}
                             >
-                              {isAddingSeats ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update"}
+                              {isAddingSeats ? <Loader2 className="h-4 w-4 animate-spin" /> : t("update")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -456,7 +460,7 @@ export default function SeatsManagement() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-4">
-                          No seat data available. Add seat availability to get started.
+                          {t("no_seat_data_available._add_seat_availability_to_get_started.")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -469,20 +473,20 @@ export default function SeatsManagement() {
           <TabsContent value="allocation" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Quota Seat Allocation</CardTitle>
-                <CardDescription>Allocate seats to different quotas for each class</CardDescription>
+                <CardTitle>{t("quota_seat_allocation")}</CardTitle>
+                <CardDescription>{t("allocate_seats_to_different_quotas_for_each_class")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4 mb-4">
                   <Label htmlFor="class-select" className="w-24">
-                    Class:
+                    {t("class")}:
                   </Label>
                   <Select
                     value={selectedClassForQuota || ""}
                     onValueChange={(value) => setSelectedClassForQuota(value)}
                   >
                     <SelectTrigger id="class-select" className="w-[180px]">
-                      <SelectValue placeholder="Select class" />
+                      <SelectValue placeholder={t("select_class")} />
                     </SelectTrigger>
                     <SelectContent>
                       {classSeats?.map((seat) => (
@@ -498,11 +502,11 @@ export default function SeatsManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Quota Name</TableHead>
-                        <TableHead>Allocated Seats</TableHead>
-                        <TableHead>Filled</TableHead>
-                        <TableHead>Available</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("quota_name")}</TableHead>
+                        <TableHead>{t("allocated_seats")}</TableHead>
+                        <TableHead>{t("filled")}</TableHead>
+                        <TableHead>{t("available")}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -542,7 +546,7 @@ export default function SeatsManagement() {
                                 }}
                                 disabled={isAddingQuotaAllocation}
                               >
-                                {isAddingQuotaAllocation ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update"}
+                                {isAddingQuotaAllocation ? <Loader2 className="h-4 w-4 animate-spin" /> : t("update")}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -552,17 +556,17 @@ export default function SeatsManagement() {
                         <TableCell>
                           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                              <Button size="sm">Add Quota</Button>
+                              <Button size="sm">{t("add_quota")}</Button>
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Add Quota Allocation</DialogTitle>
-                                <DialogDescription>Allocate seats from a quota to this class.</DialogDescription>
+                                <DialogTitle>{t("add_quota_allocation")}</DialogTitle>
+                                <DialogDescription>{t("allocate_seats_from_a_quota_to_this_class.")}</DialogDescription>
                               </DialogHeader>
                               <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                   <Label htmlFor="quota-id" className="text-right">
-                                    Quota
+                                    {t("quota")}
                                   </Label>
                                   <Select
                                     onValueChange={(value) =>
@@ -574,7 +578,7 @@ export default function SeatsManagement() {
                                     }
                                   >
                                     <SelectTrigger id="quota-id" className="col-span-3">
-                                      <SelectValue placeholder="Select quota" />
+                                      <SelectValue placeholder={t("select_quota")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {quotas?.map((quota) => (
@@ -587,7 +591,7 @@ export default function SeatsManagement() {
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                   <Label htmlFor="quota-seats" className="text-right">
-                                    Seats
+                                    {t("seats")}
                                   </Label>
                                   <Input
                                     id="quota-seats"
@@ -608,10 +612,10 @@ export default function SeatsManagement() {
                                   {isAddingQuotaAllocation ? (
                                     <>
                                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      Saving...
+                                      ...
                                     </>
                                   ) : (
-                                    "Save Allocation"
+                                    t("save_allocation")
                                   )}
                                 </Button>
                               </DialogFooter>
@@ -625,7 +629,7 @@ export default function SeatsManagement() {
 
                 {!selectedClassForQuota && (
                   <div className="text-center py-8 text-muted-foreground">
-                    Please select a class to view and manage quota allocations.
+                    {t("please_select_a_class_to_view_and_manage_quota_allocations.")}
                   </div>
                 )}
               </CardContent>
