@@ -26,32 +26,37 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { useToast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
-import { selectAuthState } from "@/redux/slices/authSlice"
-import {
-  ArrowUpRight,
-  AlertCircle,
-  Search,
-  Filter,
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
-  UserPlus,
-  GraduationCap,
-  ArrowRight,
-  FileDown,
-  FileUp,
-  Users,
-} from "lucide-react"
+import { selectAuthState, selectCurrentUser } from "@/redux/slices/authSlice"
+import { ArrowUpRight, AlertCircle, Search, Filter, RefreshCw, CheckCircle2, XCircle, UserPlus, GraduationCap, ArrowRight, FileDown, FileUp, Users } from 'lucide-react'
+import { useGetAcademicSessionsQuery } from "@/services/AcademicService"
+import { useExportStudentsListMutation, useGetPromotionHistoryQuery, useHoldBackStudentMutation, useLazyGetStudentsForPromotionQuery, usePromoteStudentsMutation, useTransferStudentMutation } from "@/services/PromotionService"
 
-// Mock types - replace with actual types from your API
+
 interface Student {
-  id: string
-  name: string
-  rollNumber: string
-  currentClass: string
-  currentDivision: string
-  academicYear: string
-  status: "active" | "inactive" | "transferred"
+  id: number
+  student: {
+    id: number
+    first_name: string
+    middle_name: string
+    last_name: string
+    gr_no: number
+    roll_number: number
+    gender: string
+    birth_date: string
+    primary_mobile: number
+    father_name: string
+    mother_name: string
+    is_active: number
+  }
+  class: {
+    id: number
+    class_id: number
+    division: string
+    aliases: string | null
+  }
+  academic_session_id: number
+  division_id: number
+  status: string
   promotionStatus?: "promoted" | "held" | "pending"
 }
 
@@ -59,37 +64,20 @@ interface AcademicSession {
   id: number
   name: string
   is_active: boolean
-  start_date: string
-  end_date: string
+  school_id: number
+  start_month: string
+  end_month: string
+  start_year: string
+  end_year: string
+  session_name: string;
 }
-
-// Mock data - replace with actual API calls
-const mockStudents: Student[] = Array(50)
-  .fill(null)
-  .map((_, i) => ({
-    id: `STU${1000 + i}`,
-    name: `Student ${i + 1}`,
-    rollNumber: `${2000 + i}`,
-    currentClass: `${Math.floor(i / 10) + 1}`,
-    currentDivision: String.fromCharCode(65 + (i % 3)),
-    academicYear: "2023-2024",
-    status: "active" as const,
-    promotionStatus: i % 5 === 0 ? "promoted" : i % 7 === 0 ? "held" : "pending",
-  }))
-
-const mockAcademicSessions: AcademicSession[] = [
-  { id: 1, name: "2022-2023", is_active: false, start_date: "2022-04-01", end_date: "2023-03-31" },
-  { id: 2, name: "2023-2024", is_active: true, start_date: "2023-04-01", end_date: "2024-03-31" },
-  { id: 3, name: "2024-2025", is_active: false, start_date: "2024-04-01", end_date: "2025-03-31" },
-]
 
 export function StudentPromotionManagement() {
   const { toast } = useToast()
   const academicClasses = useAppSelector(selectAcademicClasses)
-  const auth = useAppSelector(selectAuthState)
+  const user = useAppSelector(selectCurrentUser)
 
   // State for academic sessions
-  const [academicSessions, setAcademicSessions] = useState<AcademicSession[]>(mockAcademicSessions)
   const [sourceAcademicSession, setSourceAcademicSession] = useState<string>("")
   const [targetAcademicSession, setTargetAcademicSession] = useState<string>("")
 
@@ -100,10 +88,8 @@ export function StudentPromotionManagement() {
   const [targetDivision, setTargetDivision] = useState<string>("")
 
   // State for students
-  const [students, setStudents] = useState<Student[]>([])
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
+  const [selectedStudents, setSelectedStudents] = useState<number[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -126,61 +112,100 @@ export function StudentPromotionManagement() {
   const [transferDate, setTransferDate] = useState("")
   const [transferCertificate, setTransferCertificate] = useState<File | null>(null)
 
-  // Promotion history
-  const [promotionHistory, setPromotionHistory] = useState<any[]>([])
+  // RTK Query hooks
+  const { data: academicSessionsData, isLoading: isLoadingAcademicSessions } = useGetAcademicSessionsQuery(
+    user?.school_id || 0,
+  )
+  const [getStudentsForPromotion, { data: studentsData, isLoading: isLoadingStudents }] =
+    useLazyGetStudentsForPromotionQuery()
+  const [promoteStudents, { isLoading: isPromoting }] = usePromoteStudentsMutation()
+  const [holdBackStudent, { isLoading: isHoldingBack }] = useHoldBackStudentMutation()
+  const [transferStudent, { isLoading: isTransferring }] = useTransferStudentMutation()
+  const { data: promotionHistoryData, isLoading: isLoadingHistory } = useGetPromotionHistoryQuery(
+    Number.parseInt(sourceAcademicSession) || 0,
+    { skip: !sourceAcademicSession || activeTab !== "history" },
+  )
+  const [exportStudentsList, { isLoading: isExporting }] = useExportStudentsListMutation()
 
-  // Initialize with current academic year on component mount
+  // Derived state
+  const academicSessions = useMemo(() => {
+    if (!academicSessionsData) return []
+
+    // Check if the data is in the expected format
+    console.log("academicSessionsData", academicSessionsData);
+    
+    // Handle the specific response structure where sessions are under a "sessions" key
+    if (academicSessionsData && academicSessionsData.sessions && Array.isArray(academicSessionsData.sessions)) {
+      return academicSessionsData.sessions.filter((session: { id: any }) => session.id);
+    }
+    
+    // Handle other possible response structures
+    if (Array.isArray(academicSessionsData)) {
+      return academicSessionsData.filter((session) => session.id);
+    }
+
+    if (academicSessionsData.data && Array.isArray(academicSessionsData.data)) {
+      return academicSessionsData.data.filter((session: { id: any }) => session.id);
+    }
+
+    console.error("Unexpected academic sessions data format:", academicSessionsData);
+    return [];
+  }, [academicSessionsData])
+
+  const students = useMemo(() => {
+    if (!studentsData?.data?.students) return []
+    return studentsData.data.students.map((student: any) => ({
+      ...student,
+      promotionStatus: "pending", // Default status for all students
+    }))
+  }, [studentsData])
+  const totalPages = useMemo(() => studentsData?.data?.pagination?.last_page || 1, [studentsData])
+  const promotionHistory = useMemo(() => promotionHistoryData?.data || [], [promotionHistoryData])
+
+  // Fetch students when source academic session changes
   useEffect(() => {
-    const currentSession = academicSessions.find((session) => session.is_active)
-    if (currentSession) {
-      setSourceAcademicSession(currentSession.id.toString())
+    if (sourceAcademicSession) {
+      fetchStudents()
+    }
+  }, [sourceAcademicSession])
 
-      // Find next academic session
-      const nextSessionIndex = academicSessions.findIndex((session) => session.id === currentSession.id) + 1
-      if (nextSessionIndex < academicSessions.length) {
-        setTargetAcademicSession(academicSessions[nextSessionIndex].id.toString())
+  // Set default academic sessions when data is loaded
+  useEffect(() => {
+    if (academicSessions.length > 0) {
+      const currentSession = academicSessions.find((session: { is_active: any }) => session.is_active)
+      if (currentSession) {
+        setSourceAcademicSession(currentSession.id.toString())
+
+        // Find next academic session for target
+        const nextSessionIndex =
+          academicSessions.findIndex((session: { id: any }) => session.id === currentSession.id) + 1
+        if (nextSessionIndex < academicSessions.length) {
+          setTargetAcademicSession(academicSessions[nextSessionIndex].id.toString())
+        } else {
+          // If there's no next session, use the current one
+          setTargetAcademicSession(currentSession.id.toString())
+        }
       }
     }
+  }, [academicSessions]) // Add dependency array
 
-    // Fetch students for the current academic year
-    fetchStudents()
-  }, [])
+  // Debug academic sessions
+  useEffect(() => {
+    console.log("Academic Sessions Data:", academicSessionsData)
+    console.log("Processed Academic Sessions:", academicSessions)
+  }, [academicSessionsData, academicSessions])
 
   // Fetch students based on selected filters
-  const fetchStudents = async () => {
-    setIsLoading(true)
-    try {
-      // In a real implementation, this would be an API call
-      // For now, we'll filter the mock data based on the selected class and division
-      setTimeout(() => {
-        let filteredStudents = [...mockStudents]
+  const fetchStudents = () => {
+    if (!sourceAcademicSession) return
 
-        if (sourceClass) {
-          filteredStudents = filteredStudents.filter((student) => student.currentClass === sourceClass)
-        }
-
-        if (sourceDivision) {
-          filteredStudents = filteredStudents.filter((student) => student.currentDivision === sourceDivision)
-        }
-
-        if (searchTerm) {
-          filteredStudents = filteredStudents.filter(
-            (student) =>
-              student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.rollNumber.includes(searchTerm),
-          )
-        }
-
-        setStudents(filteredStudents)
-        setIsLoading(false)
-      }, 500)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch students. Please try again.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-    }
+    getStudentsForPromotion({
+      academic_session_id: Number.parseInt(sourceAcademicSession),
+      class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+      division_id: sourceDivision ? Number.parseInt(sourceDivision) : undefined,
+      page: currentPage,
+      limit: itemsPerPage,
+    })
   }
 
   // Handle source class change
@@ -214,59 +239,39 @@ export function StudentPromotionManagement() {
       return
     }
 
-    setIsLoading(true)
     try {
-      // In a real implementation, this would be an API call
-      setTimeout(() => {
-        // Update the promotion status for selected students
-        const updatedStudents = students.map((student) => {
-          if (selectedStudents.includes(student.id)) {
-            return {
-              ...student,
-              promotionStatus: "promoted" as const,
-              currentClass: targetClass,
-              currentDivision: targetDivision || student.currentDivision,
-              academicYear: academicSessions.find((s) => s.id.toString() === targetAcademicSession)?.name || "",
-            }
-          }
-          return student
-        })
+      const result = await promoteStudents({
+        source_academic_session_id: Number.parseInt(sourceAcademicSession),
+        target_academic_session_id: Number.parseInt(targetAcademicSession),
+        target_class_id: Number.parseInt(targetClass),
+        target_division_id: targetDivision ? Number.parseInt(targetDivision) : null,
+        student_ids: selectedStudents,
+      }).unwrap()
 
-        setStudents(updatedStudents)
-
-        // Add to promotion history
-        const historyEntry = {
-          id: Date.now().toString(),
-          date: new Date().toISOString(),
-          sourceClass,
-          sourceDivision,
-          targetClass,
-          targetDivision,
-          sourceAcademicSession: academicSessions.find((s) => s.id.toString() === sourceAcademicSession)?.name,
-          targetAcademicSession: academicSessions.find((s) => s.id.toString() === targetAcademicSession)?.name,
-          studentCount: selectedStudents.length,
-        }
-
-        setPromotionHistory([historyEntry, ...promotionHistory])
-
-        // Reset selection
-        setSelectedStudents([])
-
+      if (result.success) {
         toast({
           title: "Success",
           description: `${selectedStudents.length} students promoted successfully`,
         })
 
-        setIsLoading(false)
-        setIsPromoteDialogOpen(false)
-      }, 1000)
-    } catch (error) {
+        // Reset selection and refresh students
+        setSelectedStudents([])
+        fetchStudents()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to promote students",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to promote students. Please try again.",
+        description: error.message || "Failed to promote students. Please try again.",
         variant: "destructive",
       })
-      setIsLoading(false)
+    } finally {
+      setIsPromoteDialogOpen(false)
     }
   }
 
@@ -274,39 +279,37 @@ export function StudentPromotionManagement() {
   const handleHoldBackStudent = async () => {
     if (!selectedStudentForAction) return
 
-    setIsLoading(true)
     try {
-      // In a real implementation, this would be an API call
-      setTimeout(() => {
-        // Update the promotion status for the selected student
-        const updatedStudents = students.map((student) => {
-          if (student.id === selectedStudentForAction.id) {
-            return {
-              ...student,
-              promotionStatus: "held" as const,
-            }
-          }
-          return student
-        })
+      const result = await holdBackStudent({
+        student_id: selectedStudentForAction.id,
+        reason: holdBackReason,
+        academic_session_id: Number.parseInt(sourceAcademicSession),
+      }).unwrap()
 
-        setStudents(updatedStudents)
-
+      if (result.success) {
         toast({
           title: "Success",
-          description: `Student ${selectedStudentForAction.name} held back successfully`,
+          description: `Student ${selectedStudentForAction.student.first_name} held back successfully`,
         })
 
-        setIsLoading(false)
-        setIsHoldBackDialogOpen(false)
-        setHoldBackReason("")
-      }, 1000)
-    } catch (error) {
+        // Refresh students
+        fetchStudents()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to hold back student",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to hold back student. Please try again.",
+        description: error.message || "Failed to hold back student. Please try again.",
         variant: "destructive",
       })
-      setIsLoading(false)
+    } finally {
+      setIsHoldBackDialogOpen(false)
+      setHoldBackReason("")
     }
   }
 
@@ -323,41 +326,45 @@ export function StudentPromotionManagement() {
       return
     }
 
-    setIsLoading(true)
     try {
-      // In a real implementation, this would be an API call
-      setTimeout(() => {
-        // Update the status for the selected student
-        const updatedStudents = students.map((student) => {
-          if (student.id === selectedStudentForAction.id) {
-            return {
-              ...student,
-              status: "transferred" as const,
-            }
-          }
-          return student
-        })
+      const formData = new FormData()
+      formData.append("student_id", selectedStudentForAction.id.toString())
+      formData.append("transfer_school", transferSchool)
+      formData.append("transfer_date", transferDate)
+      formData.append("academic_session_id", sourceAcademicSession)
 
-        setStudents(updatedStudents)
+      if (transferCertificate) {
+        formData.append("certificate", transferCertificate)
+      }
 
+      const result = await transferStudent(formData).unwrap()
+
+      if (result.success) {
         toast({
           title: "Success",
-          description: `Student ${selectedStudentForAction.name} transferred successfully`,
+          description: `Student ${selectedStudentForAction.student.first_name} transferred successfully`,
         })
 
-        setIsLoading(false)
-        setIsTransferDialogOpen(false)
-        setTransferSchool("")
-        setTransferDate("")
-        setTransferCertificate(null)
-      }, 1000)
-    } catch (error) {
+        // Refresh students
+        fetchStudents()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to transfer student",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to transfer student. Please try again.",
+        description: error.message || "Failed to transfer student. Please try again.",
         variant: "destructive",
       })
-      setIsLoading(false)
+    } finally {
+      setIsTransferDialogOpen(false)
+      setTransferSchool("")
+      setTransferDate("")
+      setTransferCertificate(null)
     }
   }
 
@@ -378,7 +385,7 @@ export function StudentPromotionManagement() {
   }
 
   // Toggle select individual student
-  const toggleSelectStudent = (studentId: string) => {
+  const toggleSelectStudent = (studentId: number) => {
     if (selectedStudents.includes(studentId)) {
       setSelectedStudents(selectedStudents.filter((id) => id !== studentId))
     } else {
@@ -390,7 +397,9 @@ export function StudentPromotionManagement() {
   const filteredStudents = useMemo(() => {
     return students.filter(
       (student) =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.rollNumber.includes(searchTerm),
+        student.student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.student.gr_no.toString().includes(searchTerm) ||
+        student.student.roll_number.toString().includes(searchTerm),
     )
   }, [students, searchTerm])
 
@@ -403,7 +412,7 @@ export function StudentPromotionManagement() {
   const availableSourceDivisions = useMemo(() => {
     if (!sourceClass || !academicClasses) return []
 
-    const selectedClass = academicClasses.find((cls) => cls.class === Number(sourceClass))
+    const selectedClass = academicClasses.find((cls) => cls.class === sourceClass)
     return selectedClass ? selectedClass.divisions : []
   }, [sourceClass, academicClasses])
 
@@ -411,20 +420,50 @@ export function StudentPromotionManagement() {
   const availableTargetDivisions = useMemo(() => {
     if (!targetClass || !academicClasses) return []
 
-    const selectedClass = academicClasses.find((cls) => cls.class === Number(targetClass))
+    const selectedClass = academicClasses.find((cls) => cls.class === targetClass)
     return selectedClass ? selectedClass.divisions : []
   }, [targetClass, academicClasses])
 
-  // Get current academic session
-  const currentAcademicSession = useMemo(() => {
-    return academicSessions.find((session) => session.is_active)
-  }, [academicSessions])
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    fetchStudents()
+  }
 
-  // Get next academic session
-  const nextAcademicSession = useMemo(() => {
-    const currentIndex = academicSessions.findIndex((session) => session.is_active)
-    return currentIndex >= 0 && currentIndex < academicSessions.length - 1 ? academicSessions[currentIndex + 1] : null
-  }, [academicSessions])
+  // Export students list
+  const handleExportStudents = async () => {
+    try {
+      const blob = await exportStudentsList({
+        academic_session_id: Number.parseInt(sourceAcademicSession),
+        class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+        division_id: sourceDivision ? Number.parseInt(sourceDivision) : undefined,
+      }).unwrap()
+
+      // Create a download link for the blob
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", `students-list-${new Date().toISOString().split("T")[0]}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      toast({
+        title: "Success",
+        description: "Students list exported successfully",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to export students list",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Determine if any loading state is active
+  const isLoading =
+    isLoadingAcademicSessions || isLoadingStudents || isPromoting || isHoldingBack || isTransferring || isExporting
 
   return (
     <div className="space-y-6">
@@ -466,11 +505,22 @@ export function StudentPromotionManagement() {
                       <SelectValue placeholder="Select source academic year" />
                     </SelectTrigger>
                     <SelectContent>
-                      {academicSessions.map((session) => (
-                        <SelectItem key={session.id} value={session.id.toString()}>
-                          {session.name} {session.is_active && "(Current)"}
+                      {academicSessions && academicSessions.length > 0 ? (
+                        academicSessions.map((session: any) => (
+                          <SelectItem
+                            key={session.id}
+                            value={session.id.toString()}
+                            disabled={Number(session.id) >= Number(targetAcademicSession) && targetAcademicSession !== ""} 
+                          >
+                            {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
+                            {session.is_active ? "(Current)" : ""}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-sessions" disabled>
+                          No academic sessions available
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -482,15 +532,22 @@ export function StudentPromotionManagement() {
                       <SelectValue placeholder="Select target academic year" />
                     </SelectTrigger>
                     <SelectContent>
-                      {academicSessions.map((session) => (
-                        <SelectItem
-                          key={session.id}
-                          value={session.id.toString()}
-                          disabled={Number.parseInt(session.id.toString()) <= Number.parseInt(sourceAcademicSession)}
-                        >
-                          {session.name} {session.is_active && "(Current)"}
+                      {academicSessions && academicSessions.length > 0 ? (
+                        academicSessions.map((session: any) => (
+                          <SelectItem
+                            key={session.id}
+                            value={session.id.toString()}
+                            disabled={Number(session.id) <= Number(sourceAcademicSession) && sourceAcademicSession !== ""} 
+                          >
+                            {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
+                            {session.is_active ? "(Current)" : ""}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-sessions" disabled>
+                          No academic sessions available
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -509,7 +566,7 @@ export function StudentPromotionManagement() {
                         </SelectTrigger>
                         <SelectContent>
                           {academicClasses?.map((cls) => (
-                            <SelectItem  value={cls.class.toString()}>
+                            <SelectItem key={cls.id} value={cls.class}>
                               Class {cls.class}
                             </SelectItem>
                           ))}
@@ -526,8 +583,8 @@ export function StudentPromotionManagement() {
                         <SelectContent>
                           <SelectItem value="all">All Divisions</SelectItem>
                           {availableSourceDivisions.map((div) => (
-                            <SelectItem key={div.id} value={div.division}>
-                              {div.division} {div.aliases && `(${div.aliases})`}
+                            <SelectItem key={div.id} value={String(div.division || `division-${div.id}`)}>
+                              {div.division || "Unnamed"} {div.aliases && `(${div.aliases})`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -547,7 +604,7 @@ export function StudentPromotionManagement() {
                         </SelectTrigger>
                         <SelectContent>
                           {academicClasses?.map((cls) => (
-                            <SelectItem  value={cls.class.toString()}>
+                            <SelectItem key={cls.id} value={cls.class}>
                               Class {cls.class}
                             </SelectItem>
                           ))}
@@ -564,8 +621,8 @@ export function StudentPromotionManagement() {
                         <SelectContent>
                           <SelectItem value="auto">Auto Assign</SelectItem>
                           {availableTargetDivisions.map((div) => (
-                            <SelectItem key={div.id} value={div.division}>
-                              {div.division} {div.aliases && `(${div.aliases})`}
+                            <SelectItem key={div.id} value={String(div.division || `division-${div.id}`)}>
+                              {div.division || "Unnamed"} {div.aliases && `(${div.aliases})`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -615,17 +672,7 @@ export function StudentPromotionManagement() {
                     Promote Selected ({selectedStudents.length})
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Export student list
-                      toast({
-                        title: "Export Started",
-                        description: "Your export is being prepared and will download shortly.",
-                      })
-                    }}
-                  >
+                  <Button variant="outline" size="sm" onClick={handleExportStudents} disabled={isLoading}>
                     <FileDown className="mr-2 h-4 w-4" />
                     Export
                   </Button>
@@ -643,6 +690,7 @@ export function StudentPromotionManagement() {
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
+                      <TableHead>GR No.</TableHead>
                       <TableHead>Roll No.</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Current Class</TableHead>
@@ -652,12 +700,12 @@ export function StudentPromotionManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
+                    {isLoadingStudents ? (
                       Array(5)
                         .fill(0)
                         .map((_, index) => (
                           <TableRow key={index}>
-                            <TableCell colSpan={7} className="h-16 text-center">
+                            <TableCell colSpan={8} className="h-16 text-center">
                               <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
                             </TableCell>
                           </TableRow>
@@ -669,17 +717,20 @@ export function StudentPromotionManagement() {
                             <Checkbox
                               checked={selectedStudents.includes(student.id)}
                               onCheckedChange={() => toggleSelectStudent(student.id)}
-                              disabled={student.status !== "active" || student.promotionStatus === "promoted"}
+                              disabled={student.status !== "pursuing" || student.promotionStatus === "promoted"}
                             />
                           </TableCell>
-                          <TableCell>{student.rollNumber}</TableCell>
-                          <TableCell className="font-medium">{student.name}</TableCell>
-                          <TableCell>
-                            Class {student.currentClass} {student.currentDivision}
+                          <TableCell>{student.student.gr_no}</TableCell>
+                          <TableCell>{student.student.roll_number}</TableCell>
+                          <TableCell className="font-medium">
+                            {student.student.first_name} {student.student.middle_name} {student.student.last_name}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={student.status === "active" ? "default" : "secondary"}>
-                              {student.status === "active"
+                            Class {student.class.class_id} {student.class.division}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={student.status === "pursuing" ? "default" : "secondary"}>
+                              {student.status === "pursuing"
                                 ? "Active"
                                 : student.status === "transferred"
                                   ? "Transferred"
@@ -710,7 +761,7 @@ export function StudentPromotionManagement() {
                                   setSelectedStudentForAction(student)
                                   setIsHoldBackDialogOpen(true)
                                 }}
-                                disabled={student.status !== "active" || student.promotionStatus !== "pending"}
+                                disabled={student.status !== "pursuing" || student.promotionStatus !== "pending"}
                               >
                                 Hold Back
                               </Button>
@@ -721,7 +772,7 @@ export function StudentPromotionManagement() {
                                   setSelectedStudentForAction(student)
                                   setIsTransferDialogOpen(true)
                                 }}
-                                disabled={student.status !== "active"}
+                                disabled={student.status !== "pursuing"}
                               >
                                 Transfer
                               </Button>
@@ -731,7 +782,7 @@ export function StudentPromotionManagement() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={8} className="h-24 text-center">
                           No students found
                         </TableCell>
                       </TableRow>
@@ -743,11 +794,7 @@ export function StudentPromotionManagement() {
               {/* Pagination */}
               {filteredStudents.length > 0 && (
                 <div className="mt-4 flex justify-center">
-                  <SaralPagination
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(filteredStudents.length / itemsPerPage)}
-                    onPageChange={setCurrentPage}
-                  />
+                  <SaralPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
                 </div>
               )}
 
@@ -783,7 +830,11 @@ export function StudentPromotionManagement() {
               <CardDescription>View history of all student promotions across academic years</CardDescription>
             </CardHeader>
             <CardContent>
-              {promotionHistory.length > 0 ? (
+              {isLoadingHistory ? (
+                <div className="flex justify-center items-center h-40">
+                  <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : promotionHistory.length > 0 ? (
                 <div className="space-y-6">
                   {promotionHistory.map((history) => (
                     <Card key={history.id} className="border-l-4 border-l-primary">
@@ -868,7 +919,7 @@ export function StudentPromotionManagement() {
                   Class {sourceClass} {sourceDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {academicSessions.find((s) => s.id.toString() === sourceAcademicSession)?.name}
+                  {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
                 </p>
               </div>
               <ArrowRight className="mx-4 text-muted-foreground" />
@@ -877,7 +928,7 @@ export function StudentPromotionManagement() {
                   Class {targetClass} {targetDivision || "Auto Assign"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {academicSessions.find((s) => s.id.toString() === targetAcademicSession)?.name}
+                  {academicSessions.find((s: AcademicSession) => s.id.toString() === targetAcademicSession)?.session_name}
                 </p>
               </div>
             </div>
@@ -896,8 +947,8 @@ export function StudentPromotionManagement() {
             <Button variant="outline" onClick={() => setIsPromoteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handlePromoteStudents} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={handlePromoteStudents} disabled={isPromoting}>
+              {isPromoting ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Promoting...
                 </>
@@ -918,7 +969,7 @@ export function StudentPromotionManagement() {
             <DialogTitle>Hold Back Student</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>You are about to hold back {selectedStudentForAction.name} in the current class.</>
+                <>You are about to hold back {selectedStudentForAction.student.first_name} in the current class.</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -950,8 +1001,8 @@ export function StudentPromotionManagement() {
             <Button variant="outline" onClick={() => setIsHoldBackDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleHoldBackStudent} disabled={isLoading}>
-              {isLoading ? (
+            <Button variant="destructive" onClick={handleHoldBackStudent} disabled={isHoldingBack}>
+              {isHoldingBack ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Processing...
                 </>
@@ -971,7 +1022,9 @@ export function StudentPromotionManagement() {
           <DialogHeader>
             <DialogTitle>Transfer Student</DialogTitle>
             <DialogDescription>
-              {selectedStudentForAction && <>Enter transfer details for {selectedStudentForAction.name}.</>}
+              {selectedStudentForAction && (
+                <>Enter transfer details for {selectedStudentForAction.student.first_name}.</>
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -1012,8 +1065,9 @@ export function StudentPromotionManagement() {
                   <p className="text-sm font-medium">Student Details</p>
                   {selectedStudentForAction && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedStudentForAction.name} - Class {selectedStudentForAction.currentClass}{" "}
-                      {selectedStudentForAction.currentDivision}
+                      {selectedStudentForAction.student.first_name} {selectedStudentForAction.student.middle_name}{" "}
+                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class.class_id}{" "}
+                      {selectedStudentForAction.class.division}
                     </p>
                   )}
                 </div>
@@ -1025,8 +1079,8 @@ export function StudentPromotionManagement() {
             <Button variant="outline" onClick={() => setIsTransferDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleTransferStudent} disabled={isLoading || !transferSchool || !transferDate}>
-              {isLoading ? (
+            <Button onClick={handleTransferStudent} disabled={isTransferring || !transferSchool || !transferDate}>
+              {isTransferring ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Processing...
                 </>
