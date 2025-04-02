@@ -14,6 +14,7 @@ import { StaffFormData, staffSchema } from "@/utils/staff.validation";
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import { StaffRole, StaffType } from "@/types/staff"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import NumberInput from "@/components/ui/NumberInput"
 
 interface StaffFormProps {
   // initial_data?: Partial<StaffFormData>   
@@ -426,7 +427,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                       <FormItem>
                         <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                          <NumberInput
+                            {...field}
+                            value={field.value !== undefined ? String(field.value) : ""}
+                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -459,7 +464,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                       <FormItem>
                         <FormLabel required>{t("mobile_no")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(+e.target.value)} />
+                          <NumberInput
+                            {...field}
+                            value={field.value !== undefined ? String(field.value) : ""}
+                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -730,7 +739,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                       <FormItem>
                         <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} value={field.value ?? ""} />
+                          <NumberInput
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -775,7 +788,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     <FormItem>
                       <FormLabel>{t("account_number")}</FormLabel>
                       <FormControl>
-                        <Input type="number"{...field} value={field.value ?? ""} onChange={(e) => field.onChange(Number.parseInt(e.target.value))} />
+                        <NumberInput
+                          {...field}
+                          value={field.value ? String(field.value) : undefined}
+                          onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
