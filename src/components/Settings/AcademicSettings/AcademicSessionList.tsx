@@ -171,7 +171,7 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
                       t("set_active")
                     )}
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteClick(session)}
@@ -188,7 +188,7 @@ export function AcademicSessionsList({ onActivate }: AcademicSessionsListProps) 
                         {t("delete")}
                       </>
                     )}
-                  </Button>
+                  </Button> */}
                 </div>
               </TableCell>
             </TableRow>

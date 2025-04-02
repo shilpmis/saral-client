@@ -14,6 +14,10 @@ import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useEffect } from "react"
+import { selectAuthState } from "@/redux/slices/authSlice"
 
 const formSchema = z.object({
   first_name: z.string().min(2, { message: "First name is required" }),
@@ -35,9 +39,14 @@ interface QuickInquiryFormProps {
 }
 
 export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onClose }) => {
+
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const authState = useAppSelector(selectAuthState)
+
   const [addInquiry, { isLoading: isAddingInquiry }] = useAddInquiryMutation()
   const currentAcademicSession = useAppSelector((state: any) => state.auth.currentActiveAcademicSession)
   const { data: classSeats, isLoading: isLoadingSeats, isError: isErrorSeats } = useGetClassSeatAvailabilityQuery()
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const { t } = useTranslation()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,7 +58,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       primary_mobile: "",
       parent_email: "",
       class_applying: "",
-      birth_date: new Date().toISOString().split("T")[0],
+      birth_date: undefined,
       gender: "male",
       address: "",
       applying_for_quota: false,
@@ -89,6 +98,12 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       })
     }
   }
+
+    useEffect(() => {
+      if (!AcademicClasses && authState.user) {
+        getAcademicClasses(authState.user.school_id)
+      }
+    }, [AcademicClasses])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -158,9 +173,14 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("date_of_birth")}</FormLabel>
-                  <FormControl>
-                    <Input type="date" placeholder={t("enter_your_date_of_birth")} {...field} />
-                  </FormControl>
+                    <FormControl>
+                    <Input
+                      type="date"
+                      placeholder={t("enter_your_date_of_birth")}
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                    />
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

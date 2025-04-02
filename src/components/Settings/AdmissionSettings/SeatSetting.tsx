@@ -8,10 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
-import { Loader2, ChevronLeft, AlertCircle, RefreshCw, Info, Edit, Plus, Check, X, AlertTriangle } from 'lucide-react'
+import { Loader2, ChevronLeft, AlertCircle, RefreshCw, Edit, Plus, AlertTriangle } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -19,46 +18,362 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  QuotaAllocationItem,
+  Quota,
+  type QuotaAllocationItem,
   useAddQuotaSeatAllocationMutation,
   useAddSeatAvailabilityMutation,
   useGetClassSeatAvailabilityQuery,
   useGetQuotasQuery,
+  useUpdateQuotaSeatAllocationMutation,
+  useUpdateSeatAvailabilityMutation,
 } from "@/services/QuotaService"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectCurrentUser, selectActiveAccademicSessionsForSchool, selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectCurrentUser, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { useGetAcademicClassesQuery } from "@/services/AcademicService"
 import type { AcademicClasses } from "@/types/academic"
 import { Link } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+const seatAvailabilitySchema = z.object({
+  class_id: z
+    .number({
+      required_error: "Class is required",
+      invalid_type_error: "Class must be selected",
+    })
+    .min(1, "Class is required"),
+  total_seats: z
+    .number({
+      required_error: "Total seats is required",
+      invalid_type_error: "Total seats must be a number",
+    })
+    .min(2, "Seat count must be at least 2")
+    .max(100, "Seat count cannot exceed 100"),
+})
+
+type SeatAvailabilityFormValues = z.infer<typeof seatAvailabilitySchema>
+
+// Validation schema for quota allocation
+const quotaAllocationSchema = z.object({
+  class_id: z
+    .number({
+      required_error: "Class is required",
+      invalid_type_error: "Class must be selected",
+    })
+    .min(1, "Class is required"),
+  quota_id: z
+    .number({
+      required_error: "Quota is required",
+      invalid_type_error: "Quota must be selected",
+    })
+    .min(1, "Quota is required"),
+  total_seats: z
+    .number({
+      required_error: "Total seats is required",
+      invalid_type_error: "Total seats must be a number",
+    })
+    .min(1, "Seat count must be at least 1")
+    .max(100, "Seat count cannot exceed 100"),
+})
+
+type QuotaAllocationFormValues = z.infer<typeof quotaAllocationSchema>
+
+// Seat Availability Form Component
+function SeatAvailabilityForm({
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+  isEditing,
+  availableClasses,
+  allClasses,
+  classSeats,
+}: {
+  defaultValues: SeatAvailabilityFormValues
+  onSubmit: (data: SeatAvailabilityFormValues) => void
+  isSubmitting: boolean
+  isEditing: boolean
+  availableClasses: AcademicClasses[]
+  allClasses: AcademicClasses[]
+  classSeats: any[] | undefined
+}) {
+  const { t } = useTranslation()
+
+  const form = useForm<SeatAvailabilityFormValues>({
+    resolver: zodResolver(seatAvailabilitySchema),
+    defaultValues,
+    context: { classSeats }, // Pass classSeats as context for validation
+  })
+
+  // Update form values when defaultValues change (for editing)
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues)
+    }
+  }, [defaultValues, form])
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="class_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("class")}</FormLabel>
+              <Select
+                disabled={isEditing}
+                value={field.value ? field.value.toString() : ""}
+                onValueChange={(value) => field.onChange(Number.parseInt(value))}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("select_class")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(isEditing ? allClasses : availableClasses)?.map((cls) => (
+                    <SelectItem key={cls.id} value={cls.id.toString()}>
+                      {t("class")} {cls.class}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                {isEditing
+                  ? t("class_cannot_be_changed_once_set")
+                  : t("select_the_class_for_which_you_want_to_set_seat_availability")}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="total_seats"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder={t("enter_total_seats")}
+                  {...field}
+                  onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                />
+              </FormControl>
+              <FormDescription>
+                {t("seat_count_must_be_between_2_and_100")}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <DialogFooter>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isEditing ? t("updating") : t("saving")}...
+              </>
+            ) : isEditing ? (
+              t("update_seats")
+            ) : (
+              t("save_seats")
+            )}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  )
+}
+
+// Quota Allocation Form Component
+function QuotaAllocationForm({
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+  isEditing,
+  quotas,
+  classId,
+  getClassName,
+  classSeats,
+  currentQuotaId,
+}: {
+  defaultValues: QuotaAllocationFormValues
+  onSubmit: (data: QuotaAllocationFormValues) => void
+  isSubmitting: boolean
+  isEditing: boolean
+  quotas: Quota[]
+  classId: number | null
+  getClassName: (classId: number) => string
+  classSeats: any[] | undefined
+  currentQuotaId: number | null
+}) {
+  const { t } = useTranslation()
+
+  const form = useForm<QuotaAllocationFormValues>({
+    resolver: zodResolver(quotaAllocationSchema),
+    defaultValues,
+    context: { classSeats }, // Pass classSeats as context for validation
+  })
+
+  const [isQuotaDisabled, setIsQuotaDisabled] = useState(false)
+
+  // Update form values when defaultValues change (for editing)
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues)
+    }
+  }, [defaultValues, form])
+
+  // Watch for changes in the selected quota and check if it is disabled
+  useEffect(() => {
+    const selectedQuota = quotas.find((quota) => quota.id === form.getValues("quota_id"))
+    setIsQuotaDisabled(selectedQuota ? !Boolean(selectedQuota.is_active) : false)
+  }, [form.watch("quota_id"), quotas])
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="class_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("class")}</FormLabel>
+              <FormControl>
+                <Input value={classId ? getClassName(classId) : ""} disabled className="bg-muted/50" />
+              </FormControl>
+              <FormDescription>{t("class_for_quota_allocation")}</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="quota_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("quota")}</FormLabel>
+              <Select
+                disabled={isEditing}
+                value={field.value ? field.value.toString() : ""}
+                onValueChange={(value) => field.onChange(Number.parseInt(value))}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("select_quota")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {quotas?.map((quota) => {
+                    const isQuotaAllocated = classSeats?.some(
+                      (seat) =>
+                        seat.class_id === classId &&
+                        seat.quota_allocation.some((allocation: QuotaAllocationItem) => allocation.quota_id === quota.id)
+                    )
+
+                    return (
+                      <SelectItem
+                        key={quota.id}
+                        value={quota.id.toString()}
+                        disabled={isQuotaAllocated}
+                      >
+                        {quota.name}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                {isEditing
+                  ? t("quota_cannot_be_changed_once_set")
+                  : t("select_the_quota_for_which_you_want_to_allocate_seats")}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {isQuotaDisabled && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {t("the_selected_quota_is_disabled_by_admin_and_cannot_be_assigned")}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <FormField
+          control={form.control}
+          name="total_seats"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder={t("enter_total_seats")}
+                  {...field}
+                  onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                />
+              </FormControl>
+              <FormDescription>
+                {t("ensure_allocation_does_not_exceed_available_seats")}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <DialogFooter>
+          <Button type="submit" disabled={isSubmitting || isQuotaDisabled}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isEditing ? t("updating") : t("saving")}...
+              </>
+            ) : isEditing ? (
+              t("update_allocation")
+            ) : (
+              t("save_allocation")
+            )}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  )
+}
 
 export default function SeatsManagement() {
   const { t } = useTranslation()
-  
+
   const user = useAppSelector(selectCurrentUser)
   const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool)
-  
+
   const {
     data: classSeats,
     isLoading: isLoadingSeats,
     isError: isErrorSeats,
     error: seatsError,
-    refetch: refetchSeats
+    refetch: refetchSeats,
   } = useGetClassSeatAvailabilityQuery()
-  
-  const { 
-    data: quotas, 
-    isLoading: isLoadingQuotas, 
-    refetch: refetchQuotas 
-  } = useGetQuotasQuery()
-  
+
+  const { data: quotas, isLoading: isLoadingQuotas, refetch: refetchQuotas } = useGetQuotasQuery()
+
   const [addSeatAvailability, { isLoading: isAddingSeats }] = useAddSeatAvailabilityMutation()
+  const [updateSeatAvailability, { isLoading: isSeatsAreUpdating }] = useUpdateSeatAvailabilityMutation()
   const [addQuotaSeatAllocation, { isLoading: isAddingQuotaAllocation }] = useAddQuotaSeatAllocationMutation()
-  
+  const [updateQuotaSeatAllocation, { isLoading: isUpdatingQuotaAllocation }] = useUpdateQuotaSeatAllocationMutation()
+
   const {
     isLoading: isLoadingClasses,
     data: classesData,
@@ -67,55 +382,55 @@ export default function SeatsManagement() {
 
   const [selectedClass, setSelectedClass] = useState("all")
   const [isRefreshing, setIsRefreshing] = useState(false)
-  
+
   const [seatDialogData, setSeatDialogData] = useState<{
-    isOpen: boolean;
-    isEdit: boolean;
-    class_id: number | null;
-    total_seats: number;
+    isOpen: boolean
+    isEdit: boolean
+    class_id: number | null
+    total_seats: number
   }>({
     isOpen: false,
     isEdit: false,
     class_id: null,
-    total_seats: 0,
+    total_seats: 40,
   })
 
   const [quotaDialogData, setQuotaDialogData] = useState<{
-    isOpen: boolean;
-    isEdit: boolean;
-    quota: QuotaAllocationItem | null;
-    class_id: number | null;
+    isOpen: boolean
+    isEdit: boolean
+    quota_id: number | null
+    class_id: number | null
+    total_seats: number
   }>({
     isOpen: false,
     isEdit: false,
-    quota: null,
+    quota_id: null,
     class_id: null,
+    total_seats: 10,
   })
 
-  const [isValidationError, setIsValidationError] = useState(false)
-  const [validationMessage, setValidationMessage] = useState("")
-
   const defaultStandards = [
-    { id: 1, class: 'Nursery' },
-    { id: 2, class: 'LKG' },
-    { id: 3, class: 'UKG' },
-    { id: 4, class: '1' },
-    { id: 5, class: '2' },
-    { id: 6, class: '3' },
-    { id: 7, class: '4' },
-    { id: 8, class: '5' },
-    { id: 9, class: '6' },
-    { id: 10, class: '7' },
-    { id: 11, class: '8' },
-    { id: 12, class: '9' },
-    { id: 13, class: '10' },
-    { id: 14, class: '11' },
-    { id: 15, class: '12' },
+    { id: 1, class: "Nursery" },
+    { id: 2, class: "LKG" },
+    { id: 3, class: "UKG" },
+    { id: 4, class: "1" },
+    { id: 5, class: "2" },
+    { id: 6, class: "3" },
+    { id: 7, class: "4" },
+    { id: 8, class: "5" },
+    { id: 9, class: "6" },
+    { id: 10, class: "7" },
+    { id: 11, class: "8" },
+    { id: 12, class: "9" },
+    { id: 13, class: "10" },
+    { id: 14, class: "11" },
+    { id: 15, class: "12" },
   ]
 
   const sortClasses = (classes: AcademicClasses[] | undefined) => {
     if (!classes) return []
-    return [...classes].sort((a, b) => { // Create a shallow copy using spread operator
+    return [...classes].sort((a, b) => {
+      // Create a shallow copy using spread operator
       const indexA = defaultStandards.findIndex((std) => std.id === a.id)
       const indexB = defaultStandards.findIndex((std) => std.id === b.id)
       return indexA - indexB
@@ -128,11 +443,7 @@ export default function SeatsManagement() {
   const refreshData = async () => {
     setIsRefreshing(true)
     try {
-      await Promise.all([
-        refetchSeats(),
-        refetchQuotas(),
-        refetchClasses()
-      ])
+      await Promise.all([refetchSeats(), refetchQuotas(), refetchClasses()])
       toast({
         title: t("data_refreshed"),
         description: t("the_latest_data_has_been_loaded"),
@@ -141,7 +452,7 @@ export default function SeatsManagement() {
       toast({
         title: t("refresh_failed"),
         description: t("could_not_refresh_data"),
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setIsRefreshing(false)
@@ -164,26 +475,7 @@ export default function SeatsManagement() {
     }
   }
 
-  const validateSeatCount = (totalSeats: number): boolean => {
-    if (totalSeats < 2) {
-      setIsValidationError(true)
-      setValidationMessage(t("seat_count_must_be_at_least_2"))
-      return false
-    }
-    
-    if (totalSeats > 100) {
-      setIsValidationError(true)
-      setValidationMessage(t("seat_count_cannot_exceed_100"))
-      return false
-    }
-    
-    setIsValidationError(false)
-    setValidationMessage("")
-    return true
-  }
-
-  const handleSeatDialogOpen = (isEdit: boolean, classId: number | null = null, totalSeats: number = 0) => {
-    console.log("classId" , classId)
+  const handleSeatDialogOpen = (isEdit: boolean, classId: number | null = null, totalSeats = 40) => {
     setSeatDialogData({
       isOpen: true,
       isEdit,
@@ -193,54 +485,79 @@ export default function SeatsManagement() {
   }
 
   const handleSeatDialogClose = () => {
-    setSeatDialogData({ isOpen: false, isEdit: false, class_id: 0, total_seats: 40 })
+    setSeatDialogData({ isOpen: false, isEdit: false, class_id: null, total_seats: 40 })
   }
 
-  const handleSaveSeat = async () => {
-    const { isEdit, class_id, total_seats } = seatDialogData
-
-    if (!validateSeatCount(total_seats)) return
-
-    if(!class_id) {
-      toast({
-        title: t("error"),
-        description: t("please_select_a_class"),
-        variant: "destructive",
-      })
-      return
-    }
-
+  const handleSaveSeat = async (data: SeatAvailabilityFormValues) => {
+    
     try {
-      await addSeatAvailability({
-        class_id,
-        academic_session_id: currentAcademicSession!.id,
-        total_seats,
-      }).unwrap()
+      if (seatDialogData.isEdit) {
+        const currentClassSeat = classSeats?.find((seat) => seat.class_id === data.class_id);
+        if (currentClassSeat) {
+          if (data.total_seats < currentClassSeat.quota_allocated_seats) {
+            toast({
+              title: "Error",
+              description: `Total seats cannot be less than allocated quota seats (${currentClassSeat.quota_allocated_seats})`,
+              variant: "destructive",
+            });
+            return;
+          }
+    
+          if (data.total_seats < currentClassSeat.filled_seats) {
+            toast({
+              title: "Error",
+              description: `Total seats cannot be less than filled seats (${currentClassSeat.filled_seats})`,
+              variant: "destructive",
+            });
+            return;
+          }
+          console.log("Editing seat availability for class ID:", data.class_id, "with total seats:", data.total_seats , currentClassSeat.quota_allocated_seats);
+        }
+
+        // Placeholder for API call for editing seat availability
+
+        await updateSeatAvailability({
+          class_id: data.class_id,
+          total_seats: data.total_seats,
+        }).unwrap();
+        // await editSeatAvailability({ ...data }).unwrap();
+      } else {
+        await addSeatAvailability({
+          class_id: data.class_id,
+          academic_session_id: currentAcademicSession!.id,
+          total_seats: data.total_seats,
+        }).unwrap();
+      }
 
       toast({
         title: t("success"),
-        description: isEdit
+        description: seatDialogData.isEdit
           ? t("the_seat_allocation_has_been_updated_successfully")
           : t("the_seat_availability_has_been_added_successfully"),
-      })
+      });
 
-      handleSeatDialogClose()
-      refetchSeats()
+      handleSeatDialogClose();
+      refetchSeats();
     } catch (error) {
       toast({
         title: t("error"),
         description: getErrorMessage(error),
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const handleQuotaDialogOpen = (isEdit: boolean, quota: QuotaAllocationItem | null = null, classId: number | null = null) => {
+  const handleQuotaDialogOpen = (
+    isEdit: boolean,
+    quota: QuotaAllocationItem | null = null,
+    classId: number | null = null,
+  ) => {
     setQuotaDialogData({
       isOpen: true,
       isEdit,
-      quota,
+      quota_id: quota?.quota_id || null,
       class_id: classId,
+      total_seats: quota?.total_seats || 10,
     })
   }
 
@@ -248,50 +565,85 @@ export default function SeatsManagement() {
     setQuotaDialogData({
       isOpen: false,
       isEdit: false,
-      quota: null,
+      quota_id: null,
       class_id: null,
+      total_seats: 10,
     })
   }
 
-  const handleSaveQuota = async () => {
-    const { isEdit, quota, class_id } = quotaDialogData
+  const handleSaveQuota = async (data: QuotaAllocationFormValues) => {
 
-    if (!quota?.quota_id || !class_id) {
-      toast({
-        title: t("error"),
-        description: t("please_select_both_a_quota_and_a_class"),
-        variant: "destructive",
-      })
-      return
+    const currentClassSeat = classSeats?.find((seat) => seat.class_id === data.class_id);
+    if (currentClassSeat) {
+      const currentQuota = currentClassSeat.quota_allocation.find(
+        (quota) => quota.quota_id === data.quota_id
+      );
+      const currentQuotaAllocation = currentQuota ? currentQuota.total_seats : 0;
+
+      const availableSeats =
+        currentClassSeat.total_seats -
+        (currentClassSeat.quota_allocated_seats - currentQuotaAllocation);
+
+      if (data.total_seats > availableSeats) {
+        toast({
+          title: "Error",
+          description: `Quota allocation exceeds available seats (${availableSeats})`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {
-      await addQuotaSeatAllocation({
-        quota_id: quota.quota_id,
-        class_id,
-        total_seats: quota.total_seats,
-      }).unwrap()
+      if (quotaDialogData.isEdit) {
+        const quotaAllocationId = currentClassSeat?.quota_allocation.find(
+          (quota) => quota.quota_id === data.quota_id
+        )?.id;
+
+        if (!quotaAllocationId) {
+          toast({
+            title: "Error",
+            description: "Quota allocation ID not found for update.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        await updateQuotaSeatAllocation({
+          quota_allocation_id: quotaAllocationId,
+          payload: {
+            total_seats: data.total_seats,
+          },
+        }).unwrap();
+      } else {
+        await addQuotaSeatAllocation({
+          quota_id: data.quota_id,
+          class_id: data.class_id,
+          total_seats: data.total_seats,
+          academic_session_id: currentAcademicSession!.id,
+        }).unwrap();
+      }
 
       toast({
         title: t("success"),
-        description: isEdit
+        description: quotaDialogData.isEdit
           ? t("the_quota_allocation_has_been_updated_successfully")
           : t("the_quota_allocation_has_been_added_successfully"),
-      })
+      });
 
-      handleQuotaDialogClose()
-      refetchSeats()
+      handleQuotaDialogClose();
+      refetchSeats();
     } catch (error) {
       toast({
         title: t("error"),
         description: getErrorMessage(error),
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const getClassName = (classId: number) => {
-    const classSeat = classSeats?.find(seat => seat.class_id === classId)
+    const classSeat = classSeats?.find((seat) => seat.class_id === classId)
     return classSeat ? `${t("class")} ${classSeat.class.class}` : `${t("class")} ${classId}`
   }
 
@@ -309,11 +661,11 @@ export default function SeatsManagement() {
     if (!classSeat || !classSeat.total_seats) return 0
     return Math.round((classSeat.filled_seats / classSeat.total_seats) * 100)
   }
-  
+
   const availableClassesForSeats = sortClasses(
     classesData?.filter((cls: AcademicClasses) => {
       return !classSeats?.some((seat) => seat.class_id === cls.id)
-    })
+    }),
   )
 
   const sortedClassesData = sortClasses(classesData)
@@ -366,26 +718,21 @@ export default function SeatsManagement() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight">{t("seat_management")}</h1>
-          
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={refreshData} 
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <Button variant="outline" size="icon" onClick={refreshData} disabled={isRefreshing}>
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             </Button>
-            
+
             <Button onClick={() => handleSeatDialogOpen(false)}>{t("add_seat_availability")}</Button>
           </div>
         </div>
 
-        {isValidationError && (
+        {isErrorSeats && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t("validation_error")}</AlertTitle>
-            <AlertDescription>{validationMessage}</AlertDescription>
+            <AlertTitle>{t("error")}</AlertTitle>
+            <AlertDescription>{getErrorMessage(seatsError)}</AlertDescription>
           </Alert>
         )}
 
@@ -448,10 +795,7 @@ export default function SeatsManagement() {
                           <TableCell>{seat.remaining_seats}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Progress 
-                                value={getFilledSeatsPercentage(seat)} 
-                                className="h-2 w-20" 
-                              />
+                              <Progress value={getFilledSeatsPercentage(seat)} className="h-2 w-20" />
                               <span className="text-xs">{getFilledSeatsPercentage(seat)}%</span>
                             </div>
                           </TableCell>
@@ -492,22 +836,22 @@ export default function SeatsManagement() {
                     <div key={classSeat.id} className="mb-8 border rounded-lg overflow-hidden">
                       <div className="bg-muted p-3 flex justify-between items-center">
                         <div>
-                          <h3 className="font-medium">{t("class")} {classSeat.class.class}</h3>
+                          <h3 className="font-medium">
+                            {t("class")} {classSeat.class.class}
+                          </h3>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {t("total_seats")}: {classSeat.total_seats} | 
-                            {t("quota_allocated")}: {classSeat.quota_allocated_seats} | 
-                            {t("general_seats")}: {classSeat.general_available_seats}
+                            {t("total_seats")}: {classSeat.total_seats} |{t("quota_allocated")}:{" "}
+                            {classSeat.quota_allocated_seats} |{t("general_seats")}: {classSeat.general_available_seats}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Progress 
-                            value={getQuotaAllocationPercentage(classSeat)} 
-                            className="h-2 w-24" 
-                          />
-                          <span className="text-xs">{getQuotaAllocationPercentage(classSeat)}% {t("allocated")}</span>
+                          <Progress value={getQuotaAllocationPercentage(classSeat)} className="h-2 w-24" />
+                          <span className="text-xs">
+                            {getQuotaAllocationPercentage(classSeat)}% {t("allocated")}
+                          </span>
                         </div>
                       </div>
-                      
+
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -522,9 +866,7 @@ export default function SeatsManagement() {
                           {classSeat.quota_allocation.length > 0 ? (
                             classSeat.quota_allocation.map((allocation) => (
                               <TableRow key={allocation.id}>
-                                <TableCell className="font-medium">
-                                  {getQuotaName(allocation.quota_id)}
-                                </TableCell>
+                                <TableCell className="font-medium">{getQuotaName(allocation.quota_id)}</TableCell>
                                 <TableCell>{allocation.total_seats}</TableCell>
                                 <TableCell>{allocation.filled_seats}</TableCell>
                                 <TableCell>{allocation.total_seats - allocation.filled_seats}</TableCell>
@@ -572,10 +914,10 @@ export default function SeatsManagement() {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       {/* Seat Dialog */}
       <Dialog open={seatDialogData.isOpen} onOpenChange={handleSeatDialogClose}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>
               {seatDialogData.isEdit ? t("edit_seat_availability") : t("add_seat_availability")}
@@ -587,185 +929,53 @@ export default function SeatsManagement() {
                 : t("set_the_total_number_of_seats_for_a_class")}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="class-id" className="text-right">
-                {t("class")}
-              </Label>
-              <Select
-                value={(seatDialogData.class_id ?? "").toString()}
-                onValueChange={(value) =>
-                  setSeatDialogData({ ...seatDialogData, class_id: Number.parseInt(value) })
-                }
-                disabled={seatDialogData.isEdit} // Disable dropdown in edit mode
-              >
-                <SelectTrigger id="class-id" className="col-span-3">
-                  <SelectValue
-                    placeholder={t("select_class")}
-                    defaultValue={
-                      seatDialogData.isEdit && seatDialogData.class_id !== null
-                        ? seatDialogData.class_id.toString()
-                        : undefined
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {!seatDialogData.isEdit && availableClassesForSeats?.map((cls: AcademicClasses) => (
-                    <SelectItem key={cls.id} value={cls.id.toString()}>
-                      {t("class")} {cls.class}
-                    </SelectItem>
-                  ))}
-                  {seatDialogData.isEdit && sortedClassesData?.map((cls: AcademicClasses) => (
-                    <SelectItem key={cls.id} value={cls.id.toString()}>
-                      {t("class")} {cls.class}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="total-seats" className="text-right">
-                {t("total_seats")}
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="total-seats"
-                  type="number"
-                  value={seatDialogData.total_seats}
-                  onChange={(e) =>
-                    setSeatDialogData({ ...seatDialogData, total_seats: Number.parseInt(e.target.value) })
-                  }
-                />
-                {isValidationError && (
-                  <p className="text-xs text-destructive mt-1">{validationMessage}</p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("seat_count_must_be_between_2_and_100")}
-                </p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleSaveSeat} disabled={isAddingSeats || isValidationError}>
-              {isAddingSeats ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("saving")}...
-                </>
-              ) : (
-                t("save")
-              )}
-            </Button>
-          </DialogFooter>
+          <SeatAvailabilityForm
+            defaultValues={{
+              class_id: seatDialogData.class_id || 0,
+              total_seats: seatDialogData.total_seats,
+            }}
+            onSubmit={handleSaveSeat}
+            isSubmitting={isAddingSeats}
+            isEditing={seatDialogData.isEdit}
+            availableClasses={availableClassesForSeats}
+            allClasses={sortedClassesData}
+            classSeats={classSeats}
+          />
         </DialogContent>
       </Dialog>
 
       {/* Quota Dialog */}
       <Dialog open={quotaDialogData.isOpen} onOpenChange={handleQuotaDialogClose}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>
-              {quotaDialogData.isEdit ? t("edit_quota_allocation") : t("add_quota_allocation")}
-            </DialogTitle>
+            <DialogTitle>{quotaDialogData.isEdit ? t("edit_quota_allocation") : t("add_quota_allocation")}</DialogTitle>
             <DialogDescription>
               {quotaDialogData.isEdit
                 ? t("update_seats_for") +
-                  ` ${getQuotaName(quotaDialogData.quota?.quota_id || 0)} ${t("in")} ${getClassName(
-                    quotaDialogData.class_id || 0
+                  ` ${getQuotaName(quotaDialogData.quota_id || 0)} ${t("in")} ${getClassName(
+                    quotaDialogData.class_id || 0,
                   )}`
-                : t("allocate_seats_from_a_quota_to") +
-                  ` ${t("class")} ${getClassName(quotaDialogData.class_id || 0)}`}
+                : t("allocate_seats_from_a_quota_to") + ` ${t("class")} ${getClassName(quotaDialogData.class_id || 0)}`}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="class-id" className="text-right">
-                {t("class")}
-              </Label>
-              <Select
-                value={(quotaDialogData.class_id ?? "").toString()}
-                disabled // Always disable class selection
-              >
-                <SelectTrigger id="class-id" className="col-span-3">
-                  <SelectValue
-                    placeholder={t("select_class")}
-                    defaultValue={
-                      quotaDialogData.class_id !== null
-                        ? getClassName(quotaDialogData.class_id)
-                        : undefined
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortedClassesData?.map((cls: AcademicClasses) => (
-                    <SelectItem key={cls.id} value={cls.id.toString()}>
-                      {t("class")} {cls.class}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="quota-id" className="text-right">
-                {t("quota")}
-              </Label>
-              <Select
-                value={(quotaDialogData.quota?.quota_id ?? "").toString()}
-                onValueChange={(value) =>
-                  setQuotaDialogData({
-                    ...quotaDialogData,
-                    quota: { ...quotaDialogData.quota, quota_id: Number.parseInt(value) } as QuotaAllocationItem,
-                  })
-                }
-              >
-                <SelectTrigger id="quota-id" className="col-span-3">
-                  <SelectValue placeholder={t("select_quota")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {quotas?.map((quota) => (
-                    <SelectItem key={quota.id} value={quota.id.toString()}>
-                      {quota.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="quota-seats" className="text-right">
-                {t("seats")}
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="quota-seats"
-                  type="number"
-                  value={quotaDialogData.quota?.total_seats || ""}
-                  onChange={(e) =>
-                    setQuotaDialogData({
-                      ...quotaDialogData,
-                      quota: { ...quotaDialogData.quota, total_seats: Number.parseInt(e.target.value) } as QuotaAllocationItem,
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("ensure_allocation_does_not_exceed_available_seats")}
-                </p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleSaveQuota} disabled={isAddingQuotaAllocation || isValidationError}>
-              {isAddingQuotaAllocation ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("saving")}...
-                </>
-              ) : (
-                t("save_allocation")
-              )}
-            </Button>
-          </DialogFooter>
+          <QuotaAllocationForm
+            defaultValues={{
+              class_id: quotaDialogData.class_id || 0,
+              quota_id: quotaDialogData.quota_id || 0,
+              total_seats: quotaDialogData.total_seats,
+            }}
+            onSubmit={handleSaveQuota}
+            isSubmitting={isAddingQuotaAllocation}
+            isEditing={quotaDialogData.isEdit}
+            quotas={quotas || []}
+            classId={quotaDialogData.class_id}
+            getClassName={getClassName}
+            classSeats={classSeats}
+            currentQuotaId={quotaDialogData.quota_id}
+          />
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+
