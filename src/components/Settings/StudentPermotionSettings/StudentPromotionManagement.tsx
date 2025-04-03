@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -26,11 +27,32 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { useToast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
-import { selectAuthState, selectCurrentUser } from "@/redux/slices/authSlice"
-import { ArrowUpRight, AlertCircle, Search, Filter, RefreshCw, CheckCircle2, XCircle, UserPlus, GraduationCap, ArrowRight, FileDown, FileUp, Users } from 'lucide-react'
-import { useGetAcademicSessionsQuery } from "@/services/AcademicService"
-import { useExportStudentsListMutation, useGetPromotionHistoryQuery, useHoldBackStudentMutation, useLazyGetStudentsForPromotionQuery, usePromoteStudentsMutation, useTransferStudentMutation } from "@/services/PromotionService"
-
+import { selectCurrentUser } from "@/redux/slices/authSlice"
+import {
+  ArrowUpRight,
+  AlertCircle,
+  Search,
+  Filter,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  UserPlus,
+  GraduationCap,
+  ArrowRight,
+  FileDown,
+  FileUp,
+  Users,
+} from "lucide-react"
+import { useGetAcademicClassesQuery, useGetAcademicSessionsQuery } from "@/services/AcademicService"
+import {
+  useExportStudentsListMutation,
+  useGetPromotionHistoryQuery,
+  useHoldBackStudentMutation,
+  useLazyGetStudentsForPromotionQuery,
+  usePromoteStudentsMutation,
+  usePromoteSingleStudentMutation,
+  useTransferStudentMutation,
+} from "@/services/PromotionService"
 
 interface Student {
   id: number
@@ -69,12 +91,12 @@ interface AcademicSession {
   end_month: string
   start_year: string
   end_year: string
-  session_name: string;
+  session_name: string
 }
 
 export function StudentPromotionManagement() {
   const { toast } = useToast()
-  const academicClasses = useAppSelector(selectAcademicClasses)
+  const academicClassesFromStore = useAppSelector(selectAcademicClasses)
   const user = useAppSelector(selectCurrentUser)
 
   // State for academic sessions
@@ -97,9 +119,13 @@ export function StudentPromotionManagement() {
 
   // Dialog states
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false)
+  const [isPromoteSingleDialogOpen, setIsPromoteSingleDialogOpen] = useState(false)
   const [isHoldBackDialogOpen, setIsHoldBackDialogOpen] = useState(false)
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
   const [selectedStudentForAction, setSelectedStudentForAction] = useState<Student | null>(null)
+
+  // Promotion remarks
+  const [promotionRemarks, setPromotionRemarks] = useState("")
 
   // Tabs
   const [activeTab, setActiveTab] = useState("current")
@@ -116,9 +142,16 @@ export function StudentPromotionManagement() {
   const { data: academicSessionsData, isLoading: isLoadingAcademicSessions } = useGetAcademicSessionsQuery(
     user?.school_id || 0,
   )
+
+  // Fetch academic classes directly from the API
+  const { data: academicClassesData, isLoading: isLoadingAcademicClasses } = useGetAcademicClassesQuery(
+    user?.school_id || 0,
+  )
+
   const [getStudentsForPromotion, { data: studentsData, isLoading: isLoadingStudents }] =
     useLazyGetStudentsForPromotionQuery()
   const [promoteStudents, { isLoading: isPromoting }] = usePromoteStudentsMutation()
+  const [promoteSingleStudent, { isLoading: isPromotingSingle }] = usePromoteSingleStudentMutation()
   const [holdBackStudent, { isLoading: isHoldingBack }] = useHoldBackStudentMutation()
   const [transferStudent, { isLoading: isTransferring }] = useTransferStudentMutation()
   const { data: promotionHistoryData, isLoading: isLoadingHistory } = useGetPromotionHistoryQuery(
@@ -132,25 +165,42 @@ export function StudentPromotionManagement() {
     if (!academicSessionsData) return []
 
     // Check if the data is in the expected format
-    console.log("academicSessionsData", academicSessionsData);
-    
+    console.log("academicSessionsData", academicSessionsData)
+
+    // Extract sessions from the response
+    let sessions = []
+
     // Handle the specific response structure where sessions are under a "sessions" key
     if (academicSessionsData && academicSessionsData.sessions && Array.isArray(academicSessionsData.sessions)) {
-      return academicSessionsData.sessions.filter((session: { id: any }) => session.id);
+      sessions = academicSessionsData.sessions.filter((session: { id: any }) => session.id)
     }
-    
     // Handle other possible response structures
-    if (Array.isArray(academicSessionsData)) {
-      return academicSessionsData.filter((session) => session.id);
+    else if (Array.isArray(academicSessionsData)) {
+      sessions = academicSessionsData.filter((session) => session.id)
+    } else if (academicSessionsData.data && Array.isArray(academicSessionsData.data)) {
+      sessions = academicSessionsData.data.filter((session: { id: any }) => session.id)
+    } else {
+      console.error("Unexpected academic sessions data format:", academicSessionsData)
+      return []
     }
 
-    if (academicSessionsData.data && Array.isArray(academicSessionsData.data)) {
-      return academicSessionsData.data.filter((session: { id: any }) => session.id);
-    }
+    // Sort sessions by year (descending)
+    sessions.sort((a: any, b: any) => {
+      const yearA = Number.parseInt(a.start_year || a.session_name?.split("-")[0] || "0")
+      const yearB = Number.parseInt(b.start_year || b.session_name?.split("-")[0] || "0")
+      return yearB - yearA
+    })
 
-    console.error("Unexpected academic sessions data format:", academicSessionsData);
-    return [];
+    return sessions
   }, [academicSessionsData])
+
+  // Use academicClassesData from API if available, otherwise fall back to store
+  const academicClasses = useMemo(() => {
+    if (academicClassesData && academicClassesData.length > 0) {
+      return academicClassesData
+    }
+    return academicClassesFromStore || []
+  }, [academicClassesData, academicClassesFromStore])
 
   const students = useMemo(() => {
     if (!studentsData?.data?.students) return []
@@ -159,52 +209,92 @@ export function StudentPromotionManagement() {
       promotionStatus: "pending", // Default status for all students
     }))
   }, [studentsData])
+
   const totalPages = useMemo(() => studentsData?.data?.pagination?.last_page || 1, [studentsData])
   const promotionHistory = useMemo(() => promotionHistoryData?.data || [], [promotionHistoryData])
 
-  // Fetch students when source academic session changes
+  // Load all students by default when source academic session is set
   useEffect(() => {
     if (sourceAcademicSession) {
       fetchStudents()
     }
-  }, [sourceAcademicSession])
+  }, [sourceAcademicSession, currentPage])
+
+  // Fetch students when source class or division changes
+  useEffect(() => {
+    if (sourceAcademicSession && (sourceClass || sourceDivision)) {
+      fetchStudents()
+    }
+  }, [sourceClass, sourceDivision])
 
   // Set default academic sessions when data is loaded
   useEffect(() => {
     if (academicSessions.length > 0) {
+      // Find current active session
       const currentSession = academicSessions.find((session: { is_active: any }) => session.is_active)
+
       if (currentSession) {
         setSourceAcademicSession(currentSession.id.toString())
 
-        // Find next academic session for target
-        const nextSessionIndex =
-          academicSessions.findIndex((session: { id: any }) => session.id === currentSession.id) + 1
-        if (nextSessionIndex < academicSessions.length) {
-          setTargetAcademicSession(academicSessions[nextSessionIndex].id.toString())
+        // Find next academic session for target (if exists)
+        const currentYear = Number.parseInt(
+          currentSession.start_year || currentSession.session_name?.split("-")[0] || "0",
+        )
+
+        const nextSession = academicSessions.find((session: any) => {
+          const sessionYear = Number.parseInt(session.start_year || session.session_name?.split("-")[0] || "0")
+          return sessionYear === currentYear + 1
+        })
+
+        if (nextSession) {
+          setTargetAcademicSession(nextSession.id.toString())
         } else {
           // If there's no next session, use the current one
           setTargetAcademicSession(currentSession.id.toString())
         }
       }
     }
-  }, [academicSessions]) // Add dependency array
+  }, [academicSessions])
 
-  // Debug academic sessions
+  // Debug academic sessions and classes
   useEffect(() => {
     console.log("Academic Sessions Data:", academicSessionsData)
     console.log("Processed Academic Sessions:", academicSessions)
-  }, [academicSessionsData, academicSessions])
+    console.log("Academic Classes Data:", academicClassesData)
+    console.log("Academic Classes:", academicClasses)
+  }, [academicSessionsData, academicSessions, academicClassesData, academicClasses])
 
   // Fetch students based on selected filters
   const fetchStudents = () => {
     if (!sourceAcademicSession) return
 
+    console.log("Fetching students with params:", {
+      academic_session_id: Number.parseInt(sourceAcademicSession),
+      class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+      division_id: sourceDivision && sourceDivision !== "all" ? Number.parseInt(sourceDivision) : undefined,
+    })
+
+    // Create query parameters object
+    const queryParams = {
+      page: currentPage,
+      limit: itemsPerPage,
+    }
+
+    // Add division_id as a query parameter if selected
+    if (sourceDivision && sourceDivision !== "all") {
+      // Extract the numeric ID from the division value if needed
+      const divisionId = sourceDivision.startsWith("division-")
+        ? sourceDivision.replace("division-", "")
+        : sourceDivision
+
+      // @ts-ignore - Adding division_id to query params
+      queryParams.division_id = Number.parseInt(divisionId)
+    }
+
     getStudentsForPromotion({
       academic_session_id: Number.parseInt(sourceAcademicSession),
       class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
-      division_id: sourceDivision ? Number.parseInt(sourceDivision) : undefined,
-      page: currentPage,
-      limit: itemsPerPage,
+      ...queryParams,
     })
   }
 
@@ -213,13 +303,35 @@ export function StudentPromotionManagement() {
     setSourceClass(value)
     setSourceDivision("")
 
-    // Auto-select target class (next class)
-    const nextClass = (Number.parseInt(value) + 1).toString()
-    setTargetClass(nextClass)
+    // Auto-select target class (same or next class)
+    const currentClassNumber = Number.parseInt(value)
+    const nextClassNumber = currentClassNumber + 1
+    const nextClass = nextClassNumber.toString()
+
+    // Check if the next class exists in academicClasses
+    const nextClassExists = academicClasses.some((cls) => cls.class === nextClass)
+
+    if (nextClassExists) {
+      setTargetClass(nextClass)
+    } else {
+      // If next class doesn't exist, use the current class
+      setTargetClass(value)
+    }
+
     setTargetDivision("")
   }
 
-  // Handle promotion of selected students
+  // Handle source division change
+  const handleSourceDivisionChange = (value: string) => {
+    setSourceDivision(value)
+
+    // If target class is the same as source class, auto-select the same division
+    if (targetClass === sourceClass && value !== "all") {
+      setTargetDivision(value)
+    }
+  }
+
+  // Handle promotion of selected students (bulk)
   const handlePromoteStudents = async () => {
     if (!targetClass || !targetAcademicSession) {
       toast({
@@ -244,7 +356,7 @@ export function StudentPromotionManagement() {
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
         target_academic_session_id: Number.parseInt(targetAcademicSession),
         target_class_id: Number.parseInt(targetClass),
-        target_division_id: targetDivision ? Number.parseInt(targetDivision) : null,
+        target_division_id: targetDivision && targetDivision !== "auto" ? Number.parseInt(targetDivision) : null,
         student_ids: selectedStudents,
       }).unwrap()
 
@@ -272,6 +384,62 @@ export function StudentPromotionManagement() {
       })
     } finally {
       setIsPromoteDialogOpen(false)
+    }
+  }
+
+  // Handle promotion of a single student
+  const handlePromoteSingleStudent = async () => {
+    if (
+      !selectedStudentForAction ||
+      !targetClass ||
+      !targetAcademicSession ||
+      !targetDivision ||
+      targetDivision === "auto"
+    ) {
+      toast({
+        title: "Validation Error",
+        description: "Please select target class, division, and academic session",
+        variant: "destructive",
+      })
+      return
+    }
+
+    console.log("selectedStudentForAction", selectedStudentForAction)
+    try {
+      const result = await promoteSingleStudent({
+        source_academic_session_id: Number.parseInt(sourceAcademicSession),
+        target_academic_session_id: Number.parseInt(targetAcademicSession),
+        source_division_id: selectedStudentForAction.division_id,
+        target_division_id: Number.parseInt(targetDivision),
+        student_id: selectedStudentForAction?.student?.id,
+        status: "promoted",
+        remarks: promotionRemarks || "Promoted to next class",
+      }).unwrap()
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Student ${selectedStudentForAction.student.first_name} promoted successfully`,
+        })
+
+        // Refresh students
+        fetchStudents()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to promote student",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to promote student. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPromoteSingleDialogOpen(false)
+      setPromotionRemarks("")
     }
   }
 
@@ -403,10 +571,8 @@ export function StudentPromotionManagement() {
     )
   }, [students, searchTerm])
 
-  // Paginate students
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const paginatedStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem)
+  // Use server-side pagination
+  const paginatedStudents = students
 
   // Get available divisions for source class
   const availableSourceDivisions = useMemo(() => {
@@ -427,7 +593,6 @@ export function StudentPromotionManagement() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    fetchStudents()
   }
 
   // Export students list
@@ -436,7 +601,7 @@ export function StudentPromotionManagement() {
       const blob = await exportStudentsList({
         academic_session_id: Number.parseInt(sourceAcademicSession),
         class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
-        division_id: sourceDivision ? Number.parseInt(sourceDivision) : undefined,
+        division_id: sourceDivision && sourceDivision !== "all" ? Number.parseInt(sourceDivision) : undefined,
       }).unwrap()
 
       // Create a download link for the blob
@@ -461,9 +626,21 @@ export function StudentPromotionManagement() {
     }
   }
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [sourceClass, sourceDivision])
+
   // Determine if any loading state is active
   const isLoading =
-    isLoadingAcademicSessions || isLoadingStudents || isPromoting || isHoldingBack || isTransferring || isExporting
+    isLoadingAcademicSessions ||
+    isLoadingStudents ||
+    isPromoting ||
+    isPromotingSingle ||
+    isHoldingBack ||
+    isTransferring ||
+    isExporting ||
+    isLoadingAcademicClasses
 
   return (
     <div className="space-y-6">
@@ -506,16 +683,19 @@ export function StudentPromotionManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       {academicSessions && academicSessions.length > 0 ? (
-                        academicSessions.map((session: any) => (
-                          <SelectItem
-                            key={session.id}
-                            value={session.id.toString()}
-                            disabled={Number(session.id) >= Number(targetAcademicSession) && targetAcademicSession !== ""} 
-                          >
-                            {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
-                            {session.is_active ? "(Current)" : ""}
-                          </SelectItem>
-                        ))
+                        academicSessions
+                          .filter((session: any, index: number) => {
+                            // Show only current active session and one previous session
+                            const isActive = session.is_active === true || session.is_active === 1
+                            const isFirstOrSecond = index < 2 // First two sessions after sorting
+                            return isActive || isFirstOrSecond
+                          })
+                          .map((session: any) => (
+                            <SelectItem key={session.id} value={session.id.toString()}>
+                              {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
+                              {session.is_active ? "(Current)" : ""}
+                            </SelectItem>
+                          ))
                       ) : (
                         <SelectItem value="no-sessions" disabled>
                           No academic sessions available
@@ -533,16 +713,39 @@ export function StudentPromotionManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       {academicSessions && academicSessions.length > 0 ? (
-                        academicSessions.map((session: any) => (
-                          <SelectItem
-                            key={session.id}
-                            value={session.id.toString()}
-                            disabled={Number(session.id) <= Number(sourceAcademicSession) && sourceAcademicSession !== ""} 
-                          >
-                            {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
-                            {session.is_active ? "(Current)" : ""}
-                          </SelectItem>
-                        ))
+                        academicSessions
+                          .filter((session: any) => {
+                            if (!sourceAcademicSession) return false
+
+                            // Find the source session
+                            const sourceSession = academicSessions.find(
+                              (s: any) => s.id.toString() === sourceAcademicSession,
+                            )
+                            if (!sourceSession) return false
+
+                            // Get the source session year
+                            const sourceYear = Number.parseInt(
+                              sourceSession.start_year || sourceSession.session_name?.split("-")[0] || "0",
+                            )
+
+                            // Get current session's year
+                            const sessionYear = Number.parseInt(
+                              session.start_year || session.session_name?.split("-")[0] || "0",
+                            )
+
+                            // Show only current or next academic year relative to source
+                            return sessionYear >= sourceYear && sessionYear <= sourceYear + 1
+                          })
+                          .map((session: any) => (
+                            <SelectItem
+                              key={session.id}
+                              value={session.id.toString()}
+                              disabled={Number(session.id) === Number(sourceAcademicSession)}
+                            >
+                              {session.session_name || `${session.start_year}-${session.end_year}`}{" "}
+                              {session.is_active ? "(Current)" : ""}
+                            </SelectItem>
+                          ))
                       ) : (
                         <SelectItem value="no-sessions" disabled>
                           No academic sessions available
@@ -576,14 +779,14 @@ export function StudentPromotionManagement() {
 
                     <div className="space-y-2">
                       <Label>Division</Label>
-                      <Select value={sourceDivision} onValueChange={setSourceDivision} disabled={!sourceClass}>
+                      <Select value={sourceDivision} onValueChange={handleSourceDivisionChange} disabled={!sourceClass}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select division" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Divisions</SelectItem>
                           {availableSourceDivisions.map((div) => (
-                            <SelectItem key={div.id} value={String(div.division || `division-${div.id}`)}>
+                            <SelectItem key={div.id} value={div.id.toString()}>
                               {div.division || "Unnamed"} {div.aliases && `(${div.aliases})`}
                             </SelectItem>
                           ))}
@@ -621,7 +824,7 @@ export function StudentPromotionManagement() {
                         <SelectContent>
                           <SelectItem value="auto">Auto Assign</SelectItem>
                           {availableTargetDivisions.map((div) => (
-                            <SelectItem key={div.id} value={String(div.division || `division-${div.id}`)}>
+                            <SelectItem key={div.id} value={div.id.toString()}>
                               {div.division || "Unnamed"} {div.aliases && `(${div.aliases})`}
                             </SelectItem>
                           ))}
@@ -754,6 +957,17 @@ export function StudentPromotionManagement() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedStudentForAction(student)
+                                  setIsPromoteSingleDialogOpen(true)
+                                }}
+                                disabled={student.status !== "pursuing" || student.promotionStatus !== "pending"}
+                              >
+                                Promote
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -902,7 +1116,7 @@ export function StudentPromotionManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* Promote Students Dialog */}
+      {/* Promote Students Dialog (Bulk) */}
       <Dialog open={isPromoteDialogOpen} onOpenChange={setIsPromoteDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -928,7 +1142,10 @@ export function StudentPromotionManagement() {
                   Class {targetClass} {targetDivision || "Auto Assign"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {academicSessions.find((s: AcademicSession) => s.id.toString() === targetAcademicSession)?.session_name}
+                  {
+                    academicSessions.find((s: AcademicSession) => s.id.toString() === targetAcademicSession)
+                      ?.session_name
+                  }
                 </p>
               </div>
             </div>
@@ -955,6 +1172,83 @@ export function StudentPromotionManagement() {
               ) : (
                 <>
                   <CheckCircle2 className="mr-2 h-4 w-4" /> Confirm Promotion
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Promote Single Student Dialog */}
+      <Dialog open={isPromoteSingleDialogOpen} onOpenChange={setIsPromoteSingleDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Promote Student</DialogTitle>
+            <DialogDescription>
+              {selectedStudentForAction && (
+                <>You are about to promote {selectedStudentForAction.student.first_name} to the next class.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="flex items-center justify-center my-4">
+              <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
+                <p className="text-sm font-medium">
+                  Class {selectedStudentForAction?.class.class_id} {selectedStudentForAction?.class.division}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
+                </p>
+              </div>
+              <ArrowRight className="mx-4 text-muted-foreground" />
+              <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
+                <p className="text-sm font-medium">
+                  Class {targetClass} {targetDivision || "Auto Assign"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {
+                    academicSessions.find((s: AcademicSession) => s.id.toString() === targetAcademicSession)
+                      ?.session_name
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="promotionRemarks">Remarks</Label>
+                <Textarea
+                  id="promotionRemarks"
+                  value={promotionRemarks}
+                  onChange={(e) => setPromotionRemarks(e.target.value)}
+                  placeholder="Enter remarks about this promotion"
+                  className="mt-1"
+                />
+              </div>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Note</AlertTitle>
+                <AlertDescription>
+                  Make sure you have selected the correct target class and division for this student.
+                </AlertDescription>
+              </Alert>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPromoteSingleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handlePromoteSingleStudent} disabled={isPromotingSingle}>
+              {isPromotingSingle ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Promoting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> Promote Student
                 </>
               )}
             </Button>

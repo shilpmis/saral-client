@@ -56,6 +56,17 @@ interface PromoteStudentsRequest {
   student_ids: number[]
 }
 
+// New interface for single student promotion
+interface PromoteSingleStudentRequest {
+  source_academic_session_id: number
+  target_academic_session_id: number
+  source_division_id: number
+  target_division_id: number
+  student_id: number
+  status: string
+  remarks: string
+}
+
 interface HoldBackStudentRequest {
   student_id: number
   reason: string
@@ -98,8 +109,17 @@ export const PromotionApi = createApi({
       },
     }),
 
-    // Promote students
+    // Promote multiple students
     promoteStudents: builder.mutation<{ success: boolean; message: string }, PromoteStudentsRequest>({
+      query: (payload) => ({
+        url: "promote-students",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
+    // Promote single student
+    promoteSingleStudent: builder.mutation<{ success: boolean; message: string }, PromoteSingleStudentRequest>({
       query: (payload) => ({
         url: "promote-students",
         method: "POST",
@@ -162,6 +182,7 @@ export const {
   useGetStudentsForPromotionQuery,
   useLazyGetStudentsForPromotionQuery,
   usePromoteStudentsMutation,
+  usePromoteSingleStudentMutation,
   useHoldBackStudentMutation,
   useTransferStudentMutation,
   useGetPromotionHistoryQuery,
