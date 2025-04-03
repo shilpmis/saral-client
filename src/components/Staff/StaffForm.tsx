@@ -15,6 +15,9 @@ import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import { StaffRole, StaffType } from "@/types/staff"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import NumberInput from "@/components/ui/NumberInput"
+import { selectAuthState } from "@/redux/slices/authSlice"
+import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 interface StaffFormProps {
   // initial_data?: Partial<StaffFormData>   
@@ -37,6 +40,9 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<StaffRole[] | null>(null)
   const [nonTeachingRoles, setNonTeachingRoles] = useState<StaffRole[] | null>(null)
+
+  const authState = useAppSelector(selectAuthState);
+  const StaffRolesForSchool = useAppSelector(selectSchoolStaffRoles);
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
@@ -70,9 +76,9 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
       account_no: null,
       IFSC_code: null,
       joining_date: null,
+      employment_status: undefined,
     }
   });
-
 
   const tabMapping: { [key: string]: string } = {
     is_teaching_role: "role",
@@ -108,7 +114,6 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
     employment_status: "employment",
   };
 
-
   const handleSubmit: SubmitHandler<StaffFormData> = (data) => {
     onSubmit(data)
   }
@@ -119,7 +124,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
     else if (activeTab === "contact") setActiveTab("other")
     else if (activeTab === "other") setActiveTab("address")
     else if (activeTab === "address") setActiveTab("bank")
-    else if (activeTab === "bank") setActiveTab("address")
+    else if (activeTab === "bank") setActiveTab("employment")
   }, [activeTab])
 
   const handlePreviousTab = useCallback(() => {
@@ -148,21 +153,22 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
 
   useEffect(() => {
     if (!teachingRoles || !nonTeachingRoles) {
-      getStaffRoles(1)
+      getStaffRoles(authState.user!.school_id)
     }
   }, [])
 
+    useEffect(() => {
+      if(!StaffRolesForSchool){
+        getStaffRoles(authState.user!.school_id);
+      }
+  }, [StaffRolesForSchool]);
+
   useEffect(() => {
-    if (schoolStaff) {
+    if (schoolStaff && StaffRolesForSchool ) {
       setTeachingRoles(schoolStaff.filter((role: StaffRole) => role?.is_teaching_role))
       setNonTeachingRoles(schoolStaff?.filter((role: StaffRole) => !role?.is_teaching_role))
-      // if(formType === 'update' && initial_data?.staff_role_id){
-      //   form.setValue('is_teaching_role', initial_data?.staff_role_id === 1)
-      //   form.setValue('staff_role_id', initial_data?.staff_role_id)
-      // }
-
     }
-  }, [schoolStaff])
+  }, [schoolStaff , StaffRolesForSchool])
 
   useEffect(() => {
     console.log(formType, initial_data)
@@ -858,7 +864,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                           <SelectItem value="Permanent">{t("permanent")}</SelectItem>
                           <SelectItem value="Trial_Period">{t("trial_period")}</SelectItem>
                           <SelectItem value="Resigned">{t("resigned")}</SelectItem>
-                          <SelectItem value="Contract_Based">{t("contract_base")}</SelectItem>
+                          <SelectItem value="Contact_base">{t("contract_base")}</SelectItem>
                           <SelectItem value="Notice_Period">{t("notice_period")}</SelectItem>
                         </SelectContent>
                       </Select>
