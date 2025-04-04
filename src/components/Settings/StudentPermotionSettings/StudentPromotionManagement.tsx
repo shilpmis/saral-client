@@ -42,6 +42,7 @@ import {
   FileDown,
   FileUp,
   Users,
+  Info,
 } from "lucide-react"
 import { useGetAcademicClassesQuery, useGetAcademicSessionsQuery } from "@/services/AcademicService"
 import {
@@ -112,6 +113,7 @@ export function StudentPromotionManagement() {
   // State for students
   const [selectedStudents, setSelectedStudents] = useState<number[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [hasSearched, setHasSearched] = useState(false)
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -213,13 +215,6 @@ export function StudentPromotionManagement() {
   const totalPages = useMemo(() => studentsData?.data?.pagination?.last_page || 1, [studentsData])
   const promotionHistory = useMemo(() => promotionHistoryData?.data || [], [promotionHistoryData])
 
-  // Load all students by default when source academic session is set
-  useEffect(() => {
-    if (sourceAcademicSession) {
-      fetchStudents()
-    }
-  }, [sourceAcademicSession, currentPage])
-
   // Fetch students when source class or division changes
   useEffect(() => {
     if (sourceAcademicSession && (sourceClass || sourceDivision)) {
@@ -256,23 +251,16 @@ export function StudentPromotionManagement() {
     }
   }, [academicSessions])
 
-  // Debug academic sessions and classes
-  useEffect(() => {
-    console.log("Academic Sessions Data:", academicSessionsData)
-    console.log("Processed Academic Sessions:", academicSessions)
-    console.log("Academic Classes Data:", academicClassesData)
-    console.log("Academic Classes:", academicClasses)
-  }, [academicSessionsData, academicSessions, academicClassesData, academicClasses])
-
   // Fetch students based on selected filters
   const fetchStudents = () => {
-    if (!sourceAcademicSession) return
-
-    console.log("Fetching students with params:", {
-      academic_session_id: Number.parseInt(sourceAcademicSession),
-      class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
-      division_id: sourceDivision && sourceDivision !== "all" ? Number.parseInt(sourceDivision) : undefined,
-    })
+    if (!sourceAcademicSession) {
+      toast({
+        title: "Missing Selection",
+        description: "Please select a source academic year",
+        variant: "destructive",
+      })
+      return
+    }
 
     // Create query parameters object
     const queryParams = {
@@ -296,12 +284,14 @@ export function StudentPromotionManagement() {
       class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
       ...queryParams,
     })
+    setHasSearched(true)
   }
 
   // Handle source class change
   const handleSourceClassChange = (value: string) => {
     setSourceClass(value)
     setSourceDivision("")
+    setHasSearched(false)
 
     // Auto-select target class (same or next class)
     const currentClassNumber = Number.parseInt(value)
@@ -324,6 +314,7 @@ export function StudentPromotionManagement() {
   // Handle source division change
   const handleSourceDivisionChange = (value: string) => {
     setSourceDivision(value)
+    setHasSearched(false)
 
     // If target class is the same as source class, auto-select the same division
     if (targetClass === sourceClass && value !== "all") {
@@ -404,7 +395,6 @@ export function StudentPromotionManagement() {
       return
     }
 
-    console.log("selectedStudentForAction", selectedStudentForAction)
     try {
       const result = await promoteSingleStudent({
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -492,7 +482,7 @@ export function StudentPromotionManagement() {
         variant: "destructive",
       })
       return
-    }
+    } 
 
     try {
       const formData = new FormData()
@@ -545,10 +535,10 @@ export function StudentPromotionManagement() {
 
   // Toggle select all students
   const toggleSelectAll = () => {
-    if (selectedStudents.length === paginatedStudents.length) {
+    if (selectedStudents.length === filteredStudents.length) {
       setSelectedStudents([])
     } else {
-      setSelectedStudents(paginatedStudents.map((student) => student.id))
+      setSelectedStudents(filteredStudents.map((student) => student.id))
     }
   }
 
@@ -563,16 +553,23 @@ export function StudentPromotionManagement() {
 
   // Filter students based on search term
   const filteredStudents = useMemo(() => {
-    return students.filter(
-      (student) =>
-        student.student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.student.gr_no.toString().includes(searchTerm) ||
-        student.student.roll_number.toString().includes(searchTerm),
-    )
+    if (!searchTerm.trim()) return students
+
+    return students.filter((student) => {
+      const fullName =
+        `${student.student.first_name} ${student.student.middle_name || ""} ${student.student.last_name || ""}`.toLowerCase()
+      const searchLower = searchTerm.toLowerCase()
+
+      return (
+        fullName.includes(searchLower) ||
+        (student.student.gr_no && student.student.gr_no.toString().includes(searchTerm)) ||
+        (student.student.roll_number && student.student.roll_number.toString().includes(searchTerm))
+      )
+    })
   }, [students, searchTerm])
 
-  // Use server-side pagination
-  const paginatedStudents = students
+  // // Use server-side pagination
+  // const paginatedStudents = students
 
   // Get available divisions for source class
   const availableSourceDivisions = useMemo(() => {
@@ -593,10 +590,22 @@ export function StudentPromotionManagement() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+    // Fetch students with the new page number
+    if (hasSearched) {
+      fetchStudents()
+    }
   }
 
   // Export students list
   const handleExportStudents = async () => {
+    if (!sourceAcademicSession) {
+      toast({
+        title: "Missing Selection",
+        description: "Please select a source academic year",
+        variant: "destructive",
+      })
+      return
+    }
     try {
       const blob = await exportStudentsList({
         academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -630,6 +639,12 @@ export function StudentPromotionManagement() {
   useEffect(() => {
     setCurrentPage(1)
   }, [sourceClass, sourceDivision])
+
+  
+  // Reset search when filters change
+  useEffect(() => {
+    setSearchTerm("")
+  }, [sourceAcademicSession, sourceClass, sourceDivision])
 
   // Determine if any loading state is active
   const isLoading =
@@ -889,7 +904,7 @@ export function StudentPromotionManagement() {
                     <TableRow>
                       <TableHead className="w-[50px]">
                         <Checkbox
-                          checked={selectedStudents.length === paginatedStudents.length && paginatedStudents.length > 0}
+                          checked={selectedStudents.length === filteredStudents.length && filteredStudents.length > 0}
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
@@ -913,8 +928,20 @@ export function StudentPromotionManagement() {
                             </TableCell>
                           </TableRow>
                         ))
-                    ) : paginatedStudents.length > 0 ? (
-                      paginatedStudents.map((student) => (
+                    ) : !hasSearched ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <Info className="h-10 w-10 text-muted-foreground mb-2" />
+                            <p className="text-muted-foreground">
+                              Please select academic session, class, and division, then click "Apply Filters" to view
+                              students
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredStudents.length > 0 ? (
+                      filteredStudents.map((student) => (
                         <TableRow key={student.id}>
                           <TableCell>
                             <Checkbox
