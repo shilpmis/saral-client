@@ -21,7 +21,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState, selectCurrentUser } from "@/redux/slices/authSlice"
 import {  useGetAcademicClassesQuery, useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-
+import NumberInput from "@/components/ui/NumberInput"
 
 // Define the installment types
 const installmentTypes = [
@@ -204,7 +204,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
   const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading , error : ErrorWhilwFetchingClassWithOutFeesPlan }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
 
 
-  console.log('isError :::', ErrorWhilwFetchingClassWithOutFeesPlan)
+  // console.log('isError :::', ErrorWhilwFetchingClassWithOutFeesPlan)
 
   const {
       data: classesData = [],
@@ -443,7 +443,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       })
       onSuccessfulSubmit();
     } else {
-      console.log(response?.error)
+      // console.log(response?.error)
       toast({
         variant: "destructive",
         title: "Error",
@@ -750,7 +750,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                 >
                   <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {planDetailsFields.map((field, index) => {
-                      console.log("FetchedFeesType" , field)
                       const feeTypeId = form.watch(`fees_types.${index}.fees_type_id`)
                       const feeTypeName = FetchedFeesType && FetchedFeesType.find((ft) => ft.id === feeTypeId)?.name || `Fee Type ${index + 1}`;
                       return (
@@ -792,7 +791,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                     }
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" /> Remove
+                                  <Trash2 className="h-4 w-4 mr-2" />{t("remove")}  
                                 </Button>
                               )}
                             </CardHeader>
@@ -922,38 +921,30 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                     <FormItem>
                                       <FormLabel required>{t("total_amount")}</FormLabel>
                                       <FormControl>
-                                        <Input
+                                        <NumberInput
                                           {...field}
-                                          type="text"
-                                          inputMode="numeric"
-                                          value={field.value || ""}
-                                          disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]}
-                                          onChange={(e) => {
-                                            // Only allow numeric input
-                                            const numericValue = e.target.value.replace(/[^0-9]/g, "")
-                                            const value = numericValue
-                                              ? Math.min(Number.parseInt(numericValue, 10), 1000000)
-                                              : ""
-                                            field.onChange(value)
+                                          decimal={true}
+                                          value={field.value.toString() ?? undefined}
+                                          onChange={(value) => {
+                                            field.onChange(value);
 
                                             // Reset all breakdown amounts when total amount changes
                                             if (installmentBreakdowns.length > 0) {
-                                              const currentPlanDetail = form.getValues(`fees_types.${index}`)
+                                              const currentPlanDetail = form.getValues(`fees_types.${index}`);
                                               const resetBreakdowns = currentPlanDetail.installment_breakDowns.map(
                                                 (breakdown) => ({
                                                   ...breakdown,
                                                   installment_amount: 0,
                                                 }),
-                                              )
+                                              );
 
                                               form.setValue(`fees_types.${index}.installment_breakDowns`, resetBreakdowns, {
                                                 shouldDirty: true,
                                                 shouldValidate: true,
                                                 shouldTouch: true,
-                                              })
+                                              });
                                             }
                                           }}
-                                          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -1046,24 +1037,25 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                                 control={form.control}
                                                 name={`fees_types.${index}.installment_breakDowns.${installmentIndex}.installment_amount`}
                                                 render={({ field }) => (
-                                                  <Input
-                                                    type="text"
-                                                    inputMode="numeric"
-                                                    {...field}
-                                                    value={field.value || ""}
+                                                  <NumberInput
+                                                    decimal={true}
+                                                    {...field} 
+                                                    value={field.value.toString() || undefined}
                                                     disabled={type === 'update' && !!fetchedDetialFeePlan?.fees_types[index]?.installment_breakDowns[installmentIndex]}
                                                     onChange={(e) => {
-                                                      // Only allow numeric input
-                                                      const numericValue = e.target.value.replace(/[^0-9]/g, "")
-                                                      const value = numericValue
-                                                        ? Math.min(Number.parseInt(numericValue, 10), 1000000)
-                                                        : ""
-                                                      field.onChange(value)
+                                                      // // Only allow numeric input
+                                                      // const numericValue = e.target.value.replace(/[^0-9]/g, "")
+                                                      // const value = numericValue
+                                                      //   ? Math.min(Number.parseInt(numericValue, 10), 1000000)
+                                                      //   : ""
+                                                      console.log("Installment Amount", field.value)
+                                                      field
+                                                      .onChange(field.value)
 
                                                       // Update the installment with the new amount
                                                       updateInstallment(index, installmentIndex, {
                                                         ...installment,
-                                                        installment_amount: value,
+                                                        installment_amount: field.value,
                                                       })
                                                     }}
                                                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -1094,7 +1086,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                       <div>
                                         <p className="font-bold">{t("no_installments_defined")}</p>
                                         <p className="text-sm">
-                                          Set the installment type, count, and total amount to generate installments.
+                                          {t("set_the_installment_type,_count,_and_total_amount_to_generate_installments.")}
                                         </p>
                                       </div>
                                     </div>
@@ -1130,7 +1122,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       {
         isErrorInFetchFessPlanInDetail && !fetchedDetialFeePlan && (
           <div className="text-red-500">
-            There is some error in fetching fee plan details. Please try again later.
+            {t("there_is_some_error_in_fetching_fee_plan_details._please_try_again_later.")}
           </div>
         )
 
