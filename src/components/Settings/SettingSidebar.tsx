@@ -87,11 +87,11 @@ const navigationSections: NavSection[] = [
         href: "admission",
       },
 
-      // {
-      //   title: "student_management",
-      //   icon: UsersIcon,
-      //   href: "student",
-      // }
+      {
+        title: "student_management",
+        icon: UsersIcon,
+        href: "student",
+      }
     ],
   },
 ]
