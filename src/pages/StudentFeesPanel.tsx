@@ -412,9 +412,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
         <Card className="bg-red-50 border-red-200">
           <CardHeader>
-            <CardTitle className="text-red-600">Error Loading Student Fees</CardTitle>
+            <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              There was a problem loading the fee details for this student. Please try again later.
+             {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -422,7 +422,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               variant="outline"
               onClick={() => params.student_id && getStudentFeesDetails(Number.parseInt(params.student_id))}
             >
-              Retry
+              {t("retry")}
             </Button>
           </CardFooter>
         </Card>
@@ -434,17 +434,17 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     return (
       <div className="p-6">
         <Button variant="outline" onClick={handleBackToList} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
         </Button>
 
         <Card>
           <CardHeader>
-            <CardTitle>No Data Available</CardTitle>
-            <CardDescription>No fee details found for this student.</CardDescription>
+            <CardTitle>{t("no_data_available")}</CardTitle>
+            <CardDescription>{t("no_fee_details_found_for_this_student.")}</CardDescription>
           </CardHeader>
           <CardFooter>
             <Button variant="outline" onClick={handleBackToList}>
-              Return to Fee List
+              {t("return_to_fee_list")}
             </Button>
           </CardFooter>
         </Card>
@@ -464,15 +464,15 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <Button variant="outline" onClick={handleBackToList} className="flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
         </Button>
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
-            <Printer className="mr-2 h-4 w-4" /> Print Details
+            <Printer className="mr-2 h-4 w-4" /> {t("print_details")}
           </Button>
           <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" /> Download Report
+            <Download className="mr-2 h-4 w-4" /> {t("download_report")}
           </Button>
         </div>
       </div>
@@ -484,25 +484,25 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             {student.first_name} {student.middle_name} {student.last_name}
           </CardTitle>
           <CardDescription>
-            Student Fee Details for Academic Year {studentFeeDetails.detail.fees_plan.academic_session_id}
+            {t("student_fee_details_for_academic_year")} {studentFeeDetails.detail.fees_plan.academic_session_id}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">GR Number</p>
+              <p className="text-sm text-muted-foreground">{t("gr_number")}</p>
               <p className="text-lg font-semibold">{student.gr_no}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Roll Number</p>
+              <p className="text-sm text-muted-foreground">{t("roll_number")}</p>
               <p className="text-lg font-semibold">{student.roll_number}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Fee Plan</p>
+              <p className="text-sm text-muted-foreground">{t("fee_plan")}</p>
               <p className="text-lg font-semibold">{studentFeeDetails.detail.fees_plan.name}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Payment Status</p>
+              <p className="text-sm text-muted-foreground">{t("payment_status")}</p>
               <Badge variant={getStatusBadgeVariant(feesStatus.status)} className="text-sm">
                 {feesStatus.status}
               </Badge>
@@ -516,7 +516,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-blue-700 text-lg flex items-center">
                   <CreditCard className="mr-2 h-5 w-5" />
-                  Total Fees
+                  {t("total_fees")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -528,7 +528,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-green-700 text-lg flex items-center">
                   <Receipt className="mr-2 h-5 w-5" />
-                  Paid Amount
+                  {t("paid_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -540,7 +540,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-amber-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  Concession
+                  {t("concession")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -555,7 +555,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-red-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  Due Amount
+                  {t("due_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -566,7 +566,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
           <div className="mt-6">
             <div className="flex justify-between mb-2">
-              <span className="text-sm font-medium">Payment Progress</span>
+              <span className="text-sm font-medium">{t("payment_progress")}</span>
               <span className="text-sm font-medium">{paymentProgress}%</span>
             </div>
             <Progress value={paymentProgress} className="h-2" />
@@ -577,44 +577,44 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="due-fees" className="flex items-center">
-            <Calendar className="mr-2 h-4 w-4" /> Due Fees
+            <Calendar className="mr-2 h-4 w-4" /> {t("due_fees")}
           </TabsTrigger>
           <TabsTrigger value="paid-fees" className="flex items-center">
-            <Receipt className="mr-2 h-4 w-4" /> Paid Fees
+            <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
           </TabsTrigger>
           <TabsTrigger value="concessions" className="flex items-center">
-            <Tag className="mr-2 h-4 w-4" /> Concessions
+            <Tag className="mr-2 h-4 w-4" />{t("concessions")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="due-fees">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Due Installments</CardTitle>
+              <CardTitle>{t("due_installments")}</CardTitle>
               <div className="flex gap-2">
                 <Button
                   onClick={handlePayFees}
                   disabled={selectedInstallments.length === 0}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  Pay Selected ({selectedInstallments.length})
+                  {t("pay_selected")} ({selectedInstallments.length})
                 </Button>
                 <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                  Apply Concession
+                  {t("apply_concession")}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {dueInstallments.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No due installments found.</p>
+                  <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
                 </div>
               ) : (
                 <>
                   {selectedInstallments.length > 0 && (
                     <div className="p-4 bg-blue-50 border-b border-blue-100">
                       <p className="text-sm text-blue-700">
-                        Selected Amount:{" "}
+                        {t("selected_amount")}:{" "}
                         <span className="font-bold">{formatCurrency(calculateTotalSelectedAmount())}</span>
                       </p>
                     </div>
@@ -623,15 +623,15 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                   {totalConcessionBalance > 0 && (
                     <Alert className="m-4 bg-amber-50 border-amber-200">
                       <Info className="h-4 w-4 text-amber-600" />
-                      <AlertTitle className="text-amber-700">Available Concession Balance</AlertTitle>
+                      <AlertTitle className="text-amber-700">{t("available_concession_balance")}</AlertTitle>
                       <AlertDescription className="text-amber-600">
                         <div className="flex flex-col gap-1">
-                          <span>Total Available: {formatCurrency(totalConcessionBalance)}</span>
+                          <span>{t("total_available")}: {formatCurrency(totalConcessionBalance)}</span>
                           {concessionBalance.student_concession > 0 && (
-                            <span>Student Concession: {formatCurrency(concessionBalance.student_concession)}</span>
+                            <span>{t("student_concession")}: {formatCurrency(concessionBalance.student_concession)}</span>
                           )}
                           {concessionBalance.plan_concession > 0 && (
-                            <span>Plan Concession: {formatCurrency(concessionBalance.plan_concession)}</span>
+                            <span>{t("plan_concession")}: {formatCurrency(concessionBalance.plan_concession)}</span>
                           )}
                         </div>
                       </AlertDescription>
@@ -642,7 +642,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <div className="p-4 bg-green-50 border-b border-green-100">
                       <div className="flex items-center mb-2">
                         <Tag className="h-4 w-4 mr-2 text-green-600" />
-                        <p className="text-sm font-medium text-green-700">Student Concessions Applied</p>
+                        <p className="text-sm font-medium text-green-700">{t("student_concessions_applied")}</p>
                       </div>
                       <ul className="text-xs text-green-700 space-y-1 ml-6">
                         {student.provided_concession.map((concession) => (
@@ -667,7 +667,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       <div className="p-4 bg-blue-50 border-b border-blue-100">
                         <div className="flex items-center mb-2">
                           <Tag className="h-4 w-4 mr-2 text-blue-600" />
-                          <p className="text-sm font-medium text-blue-700">Plan Concessions Applied</p>
+                          <p className="text-sm font-medium text-blue-700">{t("plan_concessions_applied")}</p>
                         </div>
                         <ul className="text-xs text-blue-700 space-y-1 ml-6">
                           {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
@@ -690,13 +690,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px]">Select</TableHead>
-                        <TableHead>Fee Type</TableHead>
-                        <TableHead>Installment</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Original Amount</TableHead>
-                        <TableHead>Discounted Amount</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[50px]">{t("select")}</TableHead>
+                        <TableHead>{t("fee_type")}</TableHead>
+                        <TableHead>{t("installment")}</TableHead>
+                        <TableHead>{t("due_date")}</TableHead>
+                        <TableHead>{t("original_amount")}</TableHead>
+                        <TableHead>{t("discounted_amount")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -830,20 +830,20 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             <CardContent className="p-0">
               {!studentFeeDetails.detail.paid_fees || studentFeeDetails.detail.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No payment history found.</p>
+                  <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Payment ID</TableHead>
-                      <TableHead>Installment</TableHead>
-                      <TableHead>Payment Date</TableHead>
-                      <TableHead>Paid Amount</TableHead>
-                      <TableHead>Discounted</TableHead>
-                      <TableHead>Payment Mode</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t("payment_id")}</TableHead>
+                      <TableHead>{t("installment")}</TableHead>
+                      <TableHead>{t("payment_date")}</TableHead>
+                      <TableHead>{t("paid_amount")}</TableHead>
+                      <TableHead>{t("discounted")}</TableHead>
+                      <TableHead>{t("payment_mode")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -894,13 +894,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
-                                <FileText className="mr-1 h-3 w-3" /> Receipt
+                                <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(payment)}>
-                                <Tag className="mr-1 h-3 w-3" /> Status
+                                <Tag className="mr-1 h-3 w-3" /> {t("status")}
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
-                                <User className="mr-1 h-3 w-3" /> View
+                                <User className="mr-1 h-3 w-3" /> {t("view")}
                               </Button>
                             </div>
                           </TableCell>
@@ -917,9 +917,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         <TabsContent value="concessions">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Applied Concessions</CardTitle>
+              <CardTitle>{t("applied_concessions")}</CardTitle>
               <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                Apply New Concession
+                {t("apply_new_concession")}
               </Button>
             </CardHeader>
             <CardContent className="p-0">
@@ -928,17 +928,17 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
                 <>
                   <div className="p-4 bg-blue-50">
-                    <h3 className="text-sm font-medium text-blue-700 mb-2">Concession Summary</h3>
+                    <h3 className="text-sm font-medium text-blue-700 mb-2">{t("concession_summary")}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-sm text-blue-600">Total Concession Applied:</span>
+                          <span className="text-sm text-blue-600">{t("total_concession_applied")}:</span>
                           <span className="text-sm font-medium text-blue-700">
                             {formatCurrency(feesStatus.discounted_amount)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-blue-600">Available Balance:</span>
+                          <span className="text-sm text-blue-600">{t("available_balance")}:</span>
                           <span className="text-sm font-medium text-blue-700">
                             {formatCurrency(totalConcessionBalance)}
                           </span>
@@ -946,13 +946,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-sm text-blue-600">Student Concessions:</span>
+                          <span className="text-sm text-blue-600">{t("student_concessions")}:</span>
                           <span className="text-sm font-medium text-blue-700">
                             {formatCurrency(concessionBalance.student_concession)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-blue-600">Plan Concessions:</span>
+                          <span className="text-sm text-blue-600">{t("plan_concessions")}:</span>
                           <span className="text-sm font-medium text-blue-700">
                             {formatCurrency(concessionBalance.plan_concession)}
                           </span>
@@ -963,16 +963,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
                   {student.provided_concession && student.provided_concession.length > 0 && (
                     <div className="mt-4">
-                      <h3 className="px-4 text-base font-medium mb-2">Student Concessions</h3>
+                      <h3 className="px-4 text-base font-medium mb-2">{t("student_concessions")}</h3>
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Concession Name</TableHead>
-                            <TableHead>Applied To</TableHead>
-                            <TableHead>Deduction Type</TableHead>
-                            <TableHead>Value</TableHead>
-                            <TableHead>Estimated Savings</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>{t("concession_name")}</TableHead>
+                            <TableHead>{t("applied_to")}</TableHead>
+                            <TableHead>{t("deduction_type")}</TableHead>
+                            <TableHead>{t("value")}</TableHead>
+                            <TableHead>{t("estimated_savings")}</TableHead>
+                            <TableHead>{t("status")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1036,16 +1036,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                   {studentFeeDetails.detail.fees_plan.concession_for_plan &&
                     studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0 && (
                       <div className="mt-4">
-                        <h3 className="px-4 text-base font-medium mb-2">Plan Concessions</h3>
+                        <h3 className="px-4 text-base font-medium mb-2">{t("plan_concessions")}</h3>
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Concession Name</TableHead>
-                              <TableHead>Applied To</TableHead>
-                              <TableHead>Deduction Type</TableHead>
-                              <TableHead>Value</TableHead>
-                              <TableHead>Estimated Savings</TableHead>
-                              <TableHead>Status</TableHead>
+                              <TableHead>{t("concession_name")}</TableHead>
+                              <TableHead>{t("applied_to")}</TableHead>
+                              <TableHead>{t("deduction_type")}</TableHead>
+                              <TableHead>{t("value")}</TableHead>
+                              <TableHead>{t("estimated_savings")}</TableHead>
+                              <TableHead>{t("status")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -1108,14 +1108,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </>
               ) : (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No concessions have been applied yet.</p>
+                  <p className="text-muted-foreground">{t("no_concessions_have_been_applied_yet.")}</p>
                 </div>
               )}
 
               {feesStatus.discounted_amount > 0 && (
                 <div className="p-4 bg-green-50 border-t border-green-100">
                   <div className="flex justify-between items-center">
-                    <p className="text-green-700 font-medium">Total Discount Applied:</p>
+                    <p className="text-green-700 font-medium">{t("total_discount_applied")}:</p>
                     <p className="text-green-700 font-bold">{formatCurrency(feesStatus.discounted_amount)}</p>
                   </div>
                 </div>
@@ -1159,29 +1159,29 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Payment Status</DialogTitle>
-            <DialogDescription>Change the status of payment #{selectedPayment?.id}</DialogDescription>
+            <DialogTitle>{t("update_payment_status")}</DialogTitle>
+            <DialogDescription>{t("change_the_status_of_payment")} #{selectedPayment?.id}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">
-                Status
+                {t("status")}
               </Label>
               <Select defaultValue={selectedPayment?.status}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder={t("select_status")} />
                 </SelectTrigger>
                 <SelectContent className="col-span-3">
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Overdue">Overdue</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Paid">{t("paid")}</SelectItem>
+                  <SelectItem value="Pending">{t("pending")}</SelectItem>
+                  <SelectItem value="Overdue">{t("overdue")}</SelectItem>
+                  <SelectItem value="Cancelled">{t("cancelled")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="remarks" className="text-right">
-                Remarks
+                {t("remarks")}
               </Label>
               <Input
                 id="remarks"
@@ -1193,7 +1193,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -1206,7 +1206,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 // Implement actual status update logic here
               }}
             >
-              Update Status
+              {t("update_status")}
             </Button>
           </DialogFooter>
         </DialogContent>

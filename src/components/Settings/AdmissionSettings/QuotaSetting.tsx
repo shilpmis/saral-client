@@ -473,8 +473,8 @@ export default function QuotaManagement() {
                 <DialogHeader>
                   <DialogTitle>{isEditing ? t("edit_quota") : t("create_new_quota")}</DialogTitle>
                   <DialogDescription>
-                    {isEditing ? t("update_quota_details") : t("add_a_new_quota_category_for_admission")}.{" "}
-                    {t("click_save_when_youre_done")}
+                    {isEditing ? t("update_quota_details") : t("add_a_new_quota_category_for_admission.")}.{" "}
+                    {t("click_save_when_you_are_done.")}
                   </DialogDescription>
                 </DialogHeader>
                 <QuotaForm

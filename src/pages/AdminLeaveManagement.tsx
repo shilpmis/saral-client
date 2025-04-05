@@ -276,7 +276,7 @@ const AdminLeaveManagement: React.FC = () => {
       return (
         <Alert className="my-6">
           <AlertCircle className="h-5 w-5" />
-          <AlertTitle>No leave applications found</AlertTitle>
+          <AlertTitle>{t("no_leave_applications_found")}</AlertTitle>
           <AlertDescription>
             There are no {statusFilter} leave applications for {activeTab === "teacher" ? "teaching" : "non-teaching"}{" "}
             staff
@@ -317,7 +317,7 @@ const AdminLeaveManagement: React.FC = () => {
             disabled={isRefreshing || loadingForTeachersLeave || loadingForOtherStaffLeave}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh
+            {t("refresh")}
           </Button>
         </CardHeader>
         <CardContent>

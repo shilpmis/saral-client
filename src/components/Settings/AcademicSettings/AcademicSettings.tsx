@@ -508,7 +508,7 @@ export default function AcademicSettings() {
                         {t("set_the_start_and_end_dates_for_the_new_academic_session.")}
                       </DialogDescription>
                     </DialogHeader>
-                    <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
+                    // <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
                   </DialogContent>
                 </Dialog>
                 {activeSession ? (
@@ -526,8 +526,8 @@ export default function AcademicSettings() {
                       </Badge>
                     </div>
                   </div>
-                ) : (
-                  <AlertDialog open={showNoActiveSessionAlert} onOpenChange={setShowNoActiveSessionAlert}>
+                ) : ( 
+                   <AlertDialog open={showNoActiveSessionAlert} onOpenChange={setShowNoActiveSessionAlert}>
                     <AlertDialogContent className="bg-yellow-50 border-yellow-200">
                       <AlertDialogHeader>
                         <div className="flex justify-between items-center">
@@ -567,7 +567,7 @@ export default function AcademicSettings() {
                   <AcademicSessionsList onActivate={handleActivateSession} />
                 </div>
               </SaralCard>
-            </TabsContent>
+            </TabsContent> 
 
             <TabsContent value="classes" className="space-y-6">
               {!hasActiveSession ? (
