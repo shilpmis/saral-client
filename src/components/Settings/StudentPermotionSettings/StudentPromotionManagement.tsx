@@ -342,6 +342,7 @@ export function StudentPromotionManagement() {
       return
     }
 
+    console.log("Selected students for promotion:", selectedStudents)
     try {
       const result = await promoteStudents({
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -349,6 +350,7 @@ export function StudentPromotionManagement() {
         target_class_id: Number.parseInt(targetClass),
         target_division_id: targetDivision && targetDivision !== "auto" ? Number.parseInt(targetDivision) : null,
         student_ids: selectedStudents,
+        status: "promoted",
       }).unwrap()
 
       if (result.success) {
@@ -363,7 +365,7 @@ export function StudentPromotionManagement() {
       } else {
         toast({
           title: "Error",
-          description: result.message || "Failed to promote students",
+          description: JSON.stringify(result.data) || "Failed to promote students",
           variant: "destructive",
         })
       }
@@ -538,7 +540,8 @@ export function StudentPromotionManagement() {
     if (selectedStudents.length === filteredStudents.length) {
       setSelectedStudents([])
     } else {
-      setSelectedStudents(filteredStudents.map((student) => student.id))
+      setSelectedStudents(filteredStudents.map((item) => 
+        item.student.student_id))
     }
   }
 

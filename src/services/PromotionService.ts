@@ -48,12 +48,14 @@ interface StudentsResponse {
   }
 }
 
+// Update the PromoteStudentsRequest interface to include the status field
 interface PromoteStudentsRequest {
   source_academic_session_id: number
   target_academic_session_id: number
   target_class_id: number
   target_division_id: number | null
   student_ids: number[]
+  status?: string
 }
 
 // New interface for single student promotion
@@ -109,10 +111,13 @@ export const PromotionApi = createApi({
       },
     }),
 
-    // Promote multiple students
-    promoteStudents: builder.mutation<{ success: boolean; message: string }, PromoteStudentsRequest>({
+    // Update the promoteStudents mutation to use the bulk-promote endpoint
+    promoteStudents: builder.mutation<
+      { success: boolean; data: { success: number[]; failed: number[] } },
+      PromoteStudentsRequest
+    >({
       query: (payload) => ({
-        url: "promote-students",
+        url: "bulk-promote",
         method: "POST",
         body: payload,
       }),
@@ -145,14 +150,14 @@ export const PromotionApi = createApi({
         formData: true,
         // For FormData, we need to remove the Content-Type header
         // as the browser will set it with the correct boundary
-        prepareHeaders: (headers: { set: (arg0: string, arg1: string) => void; delete: (arg0: string) => void }) => {
+        prepareHeaders: (headers: Headers): Headers => {
           headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
           headers.set("Accept", "*/*")
           headers.delete("Content-Type")
           return headers
         },
+        }),
       }),
-    }),
 
     // Get promotion history
     getPromotionHistory: builder.query<PromotionHistoryResponse, number>({
