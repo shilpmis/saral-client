@@ -372,7 +372,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           onClose()
         }
       } catch (error: any) {
-        if (error.data.errors.code === "E_VALIDATION_ERROR") {
+        if (error.data.errors) {
           error.data.errors.messages.map((msg: any) => {
             toast({
               variant: "destructive",

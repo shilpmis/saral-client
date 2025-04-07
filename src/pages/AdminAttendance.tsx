@@ -339,7 +339,7 @@ const AdminAttendanceView: React.FC = () => {
                 onClick={() => handleMarkAll("present")}
                 className="bg-green-500 hover:bg-green-600"
               >
-                Mark All Present
+                {t("mark_all_present")}
               </Button>
               <Button
                 disabled={isMarkingAttendance || attendanceRecords.is_marked}
@@ -347,7 +347,7 @@ const AdminAttendanceView: React.FC = () => {
                 variant="outline"
                 className="border-red-500 text-red-500 hover:bg-red-50"
               >
-                Mark All Absent
+                {t("mark_all_absent")}
               </Button>
               <Button
                 disabled={isMarkingAttendance || attendanceRecords.is_marked}
@@ -355,7 +355,7 @@ const AdminAttendanceView: React.FC = () => {
                 variant="secondary"
                 className="bg-yellow-500 hover:bg-yellow-600"
               >
-                Mark All Late
+                {t("mark_all_late")}
               </Button>
               <Button
                 disabled={isMarkingAttendance || attendanceRecords.is_marked}
@@ -363,7 +363,7 @@ const AdminAttendanceView: React.FC = () => {
                 variant="secondary"
                 className="bg-orange-500 hover:bg-orange-600"
               >
-                Mark All Half Day
+                {t("mark_all_half_day")}
               </Button>
             </div>
 
@@ -371,9 +371,9 @@ const AdminAttendanceView: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="bg-indigo-100 text-indigo-800">Roll Number</TableHead>
-                    <TableHead className="bg-indigo-100 text-indigo-800">Name</TableHead>
-                    <TableHead className="bg-indigo-100 text-indigo-800">Attendance</TableHead>
+                    <TableHead className="bg-indigo-100 text-indigo-800">{t("roll_number")}</TableHead>
+                    <TableHead className="bg-indigo-100 text-indigo-800">{t("name")}</TableHead>
+                    <TableHead className="bg-indigo-100 text-indigo-800">{t("attendance")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -393,10 +393,10 @@ const AdminAttendanceView: React.FC = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="present">Present</SelectItem>
-                            <SelectItem value="absent">Absent</SelectItem>
-                            <SelectItem value="late">Late</SelectItem>
-                            <SelectItem value="half_day">Half Day</SelectItem>
+                            <SelectItem value="present">{t("present")}</SelectItem>
+                            <SelectItem value="absent">{t("absent")}</SelectItem>
+                            <SelectItem value="late">{t("late")}</SelectItem>
+                            <SelectItem value="half_day">{t("half_day")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -441,8 +441,8 @@ const AdminAttendanceView: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-bold">No Students</p>
-                <p className="text-sm">There are no students in this class for the selected date.</p>
+                <p className="font-bold">{t("no_students")}</p>
+                <p className="text-sm">{t("there_are_no_students_in_this_class_for_the_selected_date.")}</p>
               </div>
             </div>
           </div>

@@ -288,12 +288,12 @@ const AdminLeaveManagement: React.FC = () => {
                   pending
                 </Button>{" "}
                 applications instead.
-              </div>
+              </div>    
             )}
             {selectedDate && (
               <div className="mt-2">
                 <Button variant="outline" size="sm" className="mt-2" onClick={clearDateFilter}>
-                  Clear date filter
+                  {t("clear_date_filter")}
                 </Button>
               </div>
             )}
@@ -479,7 +479,7 @@ const AdminLeaveManagement: React.FC = () => {
                 className="min-h-[100px]"
               />
               {DialogForApplication.action === "reject" && !actionReason.trim() && (
-                <p className="text-sm text-destructive">A reason is required when rejecting a leave request</p>
+                <p className="text-sm text-destructive">{t("a_reason_is_required_when_rejecting_a_leave_request")}</p>
               )}
             </div>
           </div>
