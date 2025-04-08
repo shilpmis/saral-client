@@ -1,100 +1,49 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import type { PageMeta } from "@/types/global"
-import baseUrl from "@/utils/base-urls"
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { PageMeta } from "@/types/global";
+import baseUrl from "@/utils/base-urls";
+import { StudentEntry } from "@/types/student";
 
 // Define the Inquiry type based on the API response
 export interface Inquiry {
-  id: number
-  school_id: number
-  academic_id: number
-  enrollment_id: string
-  first_name: string
-  middle_name: string | null
-  last_name: string
-  birth_date: string
-  gender: string
-  class_applying: number
-  father_name: string
-  primary_mobile: string
-  parent_email: string | null
-  address: string
-  previous_school: string | null
-  previous_class: string | null
-  previous_percentage: string | null
-  previous_year: string | null
-  special_achievements: string | null
-  applying_for_quota: number
-  quota_type: string | null
-  status: string
-  admin_notes: string | null
-  created_by: number
-  is_converted_to_student: number
+  id: number;
+  school_id: number;
+  academic_session_id: number;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  birth_date: string;
+  gender: "male" | "female";
+  primary_mobile: number;
+  parent_email: string | null;
+  address: string;
+  previous_school: string | null;
+  previous_class: string | null;
+  inquiry_for_class: number;
+  father_name: string;
+  previous_percentage: string | null;
+  previous_year: string | null;
+  special_achievements: string | null;
+  applying_for_quota: boolean;
+  quota_type: number | null;
+  status: string;
+  admin_notes: string | null;
+  created_by: number;
+  is_converted_to_student: number;
 }
 
 interface GetInquiriesResponse {
-  data: Inquiry[]
-  page: PageMeta
-}
-
-interface GetInquiryResponse {
-  message?: string
-  inquiry: Inquiry
-}
-
-interface AddInquiryRequest {
-  academic_session_id: number
-  first_name: string
-  middle_name?: string | null
-  last_name: string
-  birth_date?: string
-  gender?: string
-  class_applying: number
-  father_name: string
-  primary_mobile: string
-  address?: string
-  applying_for_quota?: boolean
-  parent_email?: string
-  privious_school?: string
-  previous_class?: string
-  previous_percentage?: string
-  previous_year?: string
-  special_achievements?: string
-  quota_type?: string
+  data: Inquiry[];
+  meta: PageMeta;
 }
 
 interface AddInquiryResponse {
-  message: string
-  inquiry: Inquiry
-}
-
-interface UpdateInquiryRequest {
-  id: number
-  academic_id?: number
-  enrollment_id?: string
-  first_name?: string
-  middle_name?: string | null
-  last_name?: string
-  birth_date?: string
-  gender?: string
-  class_applying?: number
-  father_name?: string
-  primary_mobile?: string
-  address?: string
-  applying_for_quota?: boolean
-  parent_email?: string
-  privious_school?: string
-  privious_class?: string
-  privious_percentage?: string
-  privious_year?: string
-  special_achievements?: string
-  quota_type?: string
-  status?: string
-  admin_notes?: string
+  message: string;
+  inquiry: Inquiry;
 }
 
 interface UpdateInquiryResponse {
-  message: string
-  inquiry: Inquiry
+  message: string;
+  inquiry: Inquiry;
 }
 
 // Create the API service
@@ -103,21 +52,33 @@ export const InquiryApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers, { getState }) => {
-      headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
-      return headers
+      headers.set(
+        "Authorization",
+        `Bearer ${localStorage.getItem("access_token")}`
+      );
+      return headers;
     },
   }),
   tagTypes: ["Inquiry"],
   endpoints: (builder) => ({
     // Get all inquiries with pagination
-    getInquiries: builder.query<GetInquiriesResponse, { page?: number; limit?: number }>({
-      query: ({ page = 1, limit = 10 }) => ({
-        url: `/inquiries`,
+    getInquiries: builder.query<
+      GetInquiriesResponse,
+      { page?: number; limit?: number; academic_session_id: number }
+    >({
+      query: ({ page = 1, academic_session_id }) => ({
+        url: `/inquiries?page=${page}&academic_session=${academic_session_id}`,
         // params: { page, limit },
       }),
       providesTags: (result) =>
         result
-          ? [...result.data.map(({ id }) => ({ type: "Inquiry" as const, id })), { type: "Inquiry", id: "LIST" }]
+          ? [
+              ...result.data.map(({ id }) => ({
+                type: "Inquiry" as const,
+                id,
+              })),
+              { type: "Inquiry", id: "LIST" },
+            ]
           : [{ type: "Inquiry", id: "LIST" }],
     }),
 
@@ -128,7 +89,18 @@ export const InquiryApi = createApi({
     }),
 
     // Add a new inquiry
-    addInquiry: builder.mutation<AddInquiryResponse, AddInquiryRequest>({
+    addInquiry: builder.mutation<
+      AddInquiryResponse,
+      Omit<
+        Inquiry,
+        | "id"
+        | "school_id"
+        | "created_by"
+        | "is_converted_to_student"
+        | "is_converted_to_student"
+        | "created_by"
+      >
+    >({
       query: (body) => ({
         url: "/inquiry",
         method: "POST",
@@ -138,14 +110,45 @@ export const InquiryApi = createApi({
     }),
 
     // Update an existing inquiry
-    updateInquiry: builder.mutation<UpdateInquiryResponse, UpdateInquiryRequest>({
-      query: ({ id, ...body }) => ({
-        url: `/inquiry/${id}`,
+    updateInquiry: builder.mutation<
+      UpdateInquiryResponse,
+      {
+        inquiry_id: number;
+        payload: Partial<
+          Omit<
+            Inquiry,
+            | "id"
+            | "school_id"
+            | "created_by"
+            | "is_converted_to_student"
+            | "is_converted_to_student"
+            | "created_by"
+          >
+        >;
+      }
+    >({
+      query: ({ inquiry_id, payload }) => ({
+        url: `/inquiry/${inquiry_id}`,
         method: "PUT",
-        body,
+        body: payload,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Inquiry", id },
+      invalidatesTags: (result, error, { inquiry_id }) => [
+        { type: "Inquiry", inquiry_id },
+        { type: "Inquiry", id: "LIST" },
+      ],
+    }),
+
+    convertQueryToStudent: builder.mutation<
+      any,
+      { inquiry_id: number; payload: StudentEntry }
+    >({
+      query: ({ inquiry_id, payload }) => ({
+        url: `/inquiry/convert/${inquiry_id}`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: (result, error, { inquiry_id }) => [
+        { type: "Inquiry", inquiry_id },
         { type: "Inquiry", id: "LIST" },
       ],
     }),
@@ -159,7 +162,7 @@ export const InquiryApi = createApi({
       invalidatesTags: [{ type: "Inquiry", id: "LIST" }],
     }),
   }),
-})
+});
 
 // Export hooks for usage in components
 export const {
@@ -169,5 +172,5 @@ export const {
   useAddInquiryMutation,
   useUpdateInquiryMutation,
   useDeleteInquiryMutation,
-} = InquiryApi
-
+  useConvertQueryToStudentMutation,
+} = InquiryApi;
