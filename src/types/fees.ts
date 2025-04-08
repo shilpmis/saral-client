@@ -138,6 +138,7 @@ export interface FeeStatus {
   total_amount: string;
   due_amount: string;
   status: "Pending" | "Partially Paid" | "Paid" | "Overdue";
+  paid_fees: StudentFeesInstallment[];
 }
 
 export interface StudentWithFeeStatus {
