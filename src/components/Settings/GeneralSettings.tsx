@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/redux/hooks/useAppDispatch'
 import { toast } from '@/hooks/use-toast'
 import { useTranslation } from '@/redux/hooks/useTranslation'
 import { sub } from 'date-fns'
+import NumberInput from '../ui/NumberInput'
 // import { useToast } from "@/components/hooks/use-toast"
 
 
@@ -362,7 +363,7 @@ export default function GeneralSettings() {
                   name="branch_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Branch Code</FormLabel>
+                      <FormLabel>{t("branch_code")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter short-key/username for school" {...field} disabled/>
                       </FormControl>
@@ -451,7 +452,12 @@ export default function GeneralSettings() {
                     <FormItem>
                       <FormLabel>{t("phone_number")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter contact number for school" type='number' {...field} />
+                         <NumberInput
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                               />
+                        {/* <Input placeholder="Enter contact number for school" type='number' {...field} /> */}
                       </FormControl>
                       <FormMessage />
                     </FormItem>
