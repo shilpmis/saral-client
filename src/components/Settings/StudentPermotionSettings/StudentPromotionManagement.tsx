@@ -1184,7 +1184,11 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {sourceClass} {sourceDivision}
+                  Class {sourceClass}{" "}
+                  {sourceDivision === "all"
+                    ? "All Divisions"
+                    : availableSourceDivisions.find((div) => div.id.toString() === sourceDivision)?.division ||
+                      sourceDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1193,7 +1197,11 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision === "auto" ? "Auto Assign" : targetDivision}
+                  Class {targetClass}{" "}
+                  {targetDivision === "auto"
+                    ? "Auto Assign"
+                    : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
+                      targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
@@ -1248,7 +1256,7 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {selectedStudentForAction?.class.class_id} {selectedStudentForAction?.class.division}
+                  Class {selectedStudentForAction?.class.class} {selectedStudentForAction?.class.division}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1257,7 +1265,11 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision || "Auto Assign"}
+                  Class {targetClass}{" "}
+                  {targetDivision === "auto"
+                    ? "Auto Assign"
+                    : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
+                      targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
