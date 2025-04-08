@@ -1,5 +1,5 @@
 import type React from "react"
-import { useEffect } from "react"
+import { use, useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -20,6 +20,8 @@ import {
 } from "@/services/LeaveService"
 import { selectActiveAccademicSessionsForSchool, selectCurrentUser } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
+import { useTransform } from "framer-motion"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const leaveApplicationSchema = z
     .object({
@@ -121,6 +123,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
     const [getAllLeavePoliciesForUser] = useLazyGetAllLeavePoliciesForUserQuery()
     const [applyLeaveForTeacher] = useApplyLeaveForStaffMutation()
     const [updateLeaveForTeacher] = useUpdateLeaveForStaffMutation()
+    const {t} = useTranslation()
 
     const form = useForm<LeaveApplicationFormData>({
         resolver: zodResolver(leaveApplicationSchema),
@@ -257,11 +260,11 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                     name="leave_type"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Leave Type</FormLabel>
+                            <FormLabel>{t("leave_type")}</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select leave type" />
+                                        <SelectValue placeholder={t("select_leave_type")}/>
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -283,7 +286,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                     name="from_date"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>From Date</FormLabel>
+                            <FormLabel>{t("from_date")}</FormLabel>
                             <FormControl>
                                 <Input type="date" {...field} />
                             </FormControl>
@@ -297,7 +300,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                     name="to_date"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>To Date</FormLabel>
+                            <FormLabel>{t("to_date")}</FormLabel>
                             <FormControl>
                                 <Input type="date" {...field} />
                             </FormControl>
@@ -311,7 +314,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                     name="reason"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Reason</FormLabel>
+                            <FormLabel>{t("reason")}</FormLabel>
                             <FormControl>
                                 <Textarea {...field} />
                             </FormControl>
@@ -338,8 +341,8 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                                 />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                                <FormLabel>Half Day</FormLabel>
-                                <FormDescription>Check if this is a half-day leave</FormDescription>
+                                <FormLabel>{t("half_day")}</FormLabel>
+                                <FormDescription>{t("check_if_this_is_a_half-day_leave")}</FormDescription>
                             </div>
                         </FormItem>
                     )}
@@ -351,16 +354,16 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                         name="half_day_type"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Half Day Type</FormLabel>
+                                <FormLabel>{t("half_day_type")}</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select half day type" />
+                                            <SelectValue placeholder={t("select_half_day_type")} />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="first_half">First Half</SelectItem>
-                                        <SelectItem value="second_half">Second Half</SelectItem>
+                                        <SelectItem value="first_half">{t("first_half")}</SelectItem>
+                                        <SelectItem value="second_half">{t("second_half")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -389,8 +392,8 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                                 />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                                <FormLabel>Hourly Leave</FormLabel>
-                                <FormDescription>Check if this is an hourly leave</FormDescription>
+                                <FormLabel>{t("hourly_leave")}</FormLabel>
+                                <FormDescription>{t("check_if_this_is_an_hourly_leave")}</FormDescription>
                             </div>
                         </FormItem>
                     )}
@@ -402,7 +405,7 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
                         name="total_hours"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Total Hours</FormLabel>
+                                <FormLabel>{t("total_hours")}</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
@@ -427,9 +430,9 @@ export const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({ init
 
                 <div className="flex justify-end space-x-2">
                     <Button type="button" variant="outline" onClick={onCancel}>
-                        Cancel
+                        {t("cancel")}
                     </Button>
-                    <Button type="submit">Submit</Button>
+                    <Button type="submit">{t("submit")}</Button>
                 </div>
             </form>
         </Form>

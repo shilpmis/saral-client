@@ -173,7 +173,7 @@ export const FeePlanManagement: React.FC = () => {
                   ) : filteredFeePlans.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                        {searchTerm ? "No fee plans match your search" : "No fee plans found"}
+                        {searchTerm ? t("no_fee_plans_match_your_search") : t("no_fee_plans_found")}
                       </TableCell>
                     </TableRow>
                   ) : (

@@ -503,9 +503,9 @@ export function LeaveManagementSettings() {
               {hasNoLeaveTypes ? (
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No leave types found</AlertTitle>
+                  <AlertTitle>{t("no_leave_types_found")}</AlertTitle>
                   <AlertDescription>
-                    You haven't created any leave types yet. Click the "Add Leave Type" button to create your first leave type.
+                    {t("you_haven't_created_any_leave_types_yet._click_the_add_leave_type_button_to_create_your_first_leave_type.")}
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -557,10 +557,9 @@ export function LeaveManagementSettings() {
               {hasNoLeaveTypesForPolicy && (
                 <Alert className="mb-4" variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No leave types available</AlertTitle>
+                  <AlertTitle>{t("no_leave_types_available")}</AlertTitle>
                   <AlertDescription>
-                    You need to create at least one leave type before you can create a leave policy.
-                    Go to the "Leave Types" tab to create a leave type first.
+                    {t("you_need_to_create_at_one_leave_type_before_you_can_creat_a_leave_policy._go_to_the_leave_types_tab_to_create_a_leave_type_first.")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -568,9 +567,9 @@ export function LeaveManagementSettings() {
               {!hasNoLeaveTypesForPolicy && hasNoLeavePolicies && (
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No leave policies found</AlertTitle>
+                  <AlertTitle>{t("no_leave_policies_found")}</AlertTitle>
                   <AlertDescription>
-                    You haven't created any leave policies yet. Click the "Add Leave Policy" button to create your first policy.
+                    {t("you_haven't_created_any_leave_policies_yet._click_the_Aadd_leave_policy_button_to_create_your_first_policy.")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -643,7 +642,7 @@ export function LeaveManagementSettings() {
                       <Input {...field} placeholder="e.g., Sick Leave, Casual Leave" />
                     </FormControl>
                     <FormDescription>
-                      Enter a descriptive name for this leave type
+                      {t("enter_a_descriptive_name_for_this_leave_type")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -659,7 +658,7 @@ export function LeaveManagementSettings() {
                       <Input {...field} placeholder="Brief description of this leave type" />
                     </FormControl>
                     <FormDescription>
-                      Optional: Provide additional details about this leave type
+                      {t("optional:_provide_additional_details_about_this_leave_type")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -690,7 +689,7 @@ export function LeaveManagementSettings() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">{t("affect_role")}</FormLabel>
-                      <FormDescription>Does this leave type affect payroll calculations?</FormDescription>
+                      <FormDescription>{t("does_this_leave_type_affect_payroll_calculations?")}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch 
@@ -758,7 +757,7 @@ export function LeaveManagementSettings() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select staff role" />
+                          <SelectValue placeholder={t("select_staff_role")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -770,13 +769,13 @@ export function LeaveManagementSettings() {
                           ))
                         ) : (
                           <SelectItem value="no-roles" disabled>
-                            No staff roles available
+                            {t("no_staff_roles_available")}
                           </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Select the staff role this policy applies to
+                      {t("select_the_staff_role_this_policy_applies_to")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -796,7 +795,7 @@ export function LeaveManagementSettings() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select leave type" />
+                          <SelectValue placeholder={t("select_leave_types")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -808,13 +807,13 @@ export function LeaveManagementSettings() {
                           ))
                         ) : (
                           <SelectItem value="no-types" disabled>
-                            No leave types available
+                            {t("no_leave_types_available")}
                           </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Select the type of leave for this policy
+                      {t("select_the_type_of_leave_for_this_policy")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -861,7 +860,7 @@ export function LeaveManagementSettings() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Enter a value between 1 and 100 days
+                      {t("enter_a_value_between_1_and_100_days")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
