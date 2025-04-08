@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type {
   AddStudentsRequest,
   Student,
+  StudentEnrollment,
   StudentEntry,
   UpdateStudent,
 } from "@/types/student";
@@ -45,15 +46,27 @@ export const StudentApi = createApi({
         method: "GET",
       }),
     }),
+
     fetchSingleStundet: builder.query<
       Student,
-      { student_id: number; page?: number; student_meta?: boolean }
+      { student_id: number; student_meta?: boolean }
     >({
-      query: ({ student_id, page = 1, student_meta = true }) => ({
+      query: ({ student_id, student_meta = true }) => ({
         url: `student/${student_id}?student_meta=${student_meta}`,
         method: "GET",
       }),
     }),
+
+    fetchSingleStudentDataInDetail: builder.query<
+      StudentEnrollment,
+      { student_id: number; academic_session_id: number }
+    >({
+      query: ({ student_id, academic_session_id }) => ({
+        url: `student/detail/${student_id}?academic_session=${academic_session_id}`,
+        method: "GET",
+      }),
+    }),
+
     addMultipleStudents: builder.mutation<any, AddStudentsRequest>({
       query: ({ class_id, students }) => ({
         url: `students/${class_id}`,
@@ -158,6 +171,7 @@ export const {
   useFetchStudentForClassQuery,
   useLazyFetchStudentForClassQuery,
   useAddMultipleStudentsMutation,
+  useLazyFetchSingleStudentDataInDetailQuery,
   useAddSingleStudentMutation,
   useUpdateStudentMutation,
   useLazyFetchSingleStundetQuery,
