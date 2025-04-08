@@ -508,7 +508,7 @@ export default function AcademicSettings() {
                         {t("set_the_start_and_end_dates_for_the_new_academic_session.")}
                       </DialogDescription>
                     </DialogHeader>
-                    // <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
+                    <AcademicSessionForm onSuccess={handleSessionFormSuccess} />
                   </DialogContent>
                 </Dialog>
                 {activeSession ? (
