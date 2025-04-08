@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { SquareChevronLeft, UserPlus } from "lucide-react"
-import { type Inquiry, useGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
+import { type Inquiry, useGetInquiriesQuery, useLazyGetInquiriesQuery, useUpdateInquiryMutation } from "@/services/InquiryServices"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import type { StudentFormData } from "@/utils/student.validation"
@@ -36,9 +36,20 @@ import type { Student } from "@/types/student"
 import { useAuth } from "@/redux/hooks/useAuth"
 import { handleStudentOnboarding } from "@/utils/handle-student-onboarding"
 import AdmissionInquiryForm from "./AdmissionInquiryForm"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import { SaralPagination } from "../ui/common/SaralPagination"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 
 export default function InquiriesManagement() {
-  const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1 })
+  const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+
+  const [ GetInquiries , { data: inquiriesData, isLoading} ] = useLazyGetInquiriesQuery();
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+  const authState = useAppSelector(selectAuthState)
+
   const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
   const [filter, setFilter] = useState("all")
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
@@ -49,19 +60,28 @@ export default function InquiriesManagement() {
   const [editInquiryDialogOpen, setEditInquiryDialogOpen] = useState(false)
   const [inquiryToEdit, setInquiryToEdit] = useState<Inquiry | null>(null)
   const { t } = useTranslation()
-  const authState = useAuth()
+  // const authState = useAuth()
 
-  const filteredInquiries =
-    filter === "all" ? inquiriesData?.data : inquiriesData?.data.filter((inquiry) => inquiry.status === filter)
+  const filteredInquiries = useCallback((): Inquiry[] => {
+    if (!inquiriesData || !inquiriesData.data) {
+      return [];
+    }
+    return filter === "all"
+      ? inquiriesData.data
+      : inquiriesData.data.filter((inquiry) => inquiry.status === filter);
+  }, [filter, inquiriesData]);
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await updateInquiry({ id, status }).unwrap()
+      await updateInquiry({ inquiry_id : id, payload : {status} }).unwrap()
       toast({
         title: "Status Updated",
         description: "The inquiry status has been updated successfully.",
       })
-      refetch()
+      GetInquiries({
+        page: inquiriesData?.meta.currentPage,
+        academic_session_id : CurrentacademicSessions!.id, 
+      })
     } catch (error) {
       console.error(error)
       toast({
@@ -80,14 +100,17 @@ export default function InquiriesManagement() {
   const confirmReject = async () => {
     if (inquiryToReject) {
       try {
-        await updateInquiry({ id: inquiryToReject, status: "rejected" }).unwrap()
+        await updateInquiry({ inquiry_id: inquiryToReject, payload : { status: "rejected"} }).unwrap()
         toast({
           title: "Application Rejected",
           description: "The application has been rejected successfully.",
         })
         setRejectDialogOpen(false)
         setInquiryToReject(null)
-        refetch()
+        GetInquiries({
+          page: inquiriesData?.meta.currentPage,
+          academic_session_id : CurrentacademicSessions!.id, 
+        })
       } catch (error) {
         console.error(error)
         toast({
@@ -100,7 +123,18 @@ export default function InquiriesManagement() {
   }
 
   const handleOnboardStudent = (inquiry: Inquiry) => {
-    setCurrentInquiryForOnboarding(inquiry)
+    console.log("AcademicClasses" , AcademicClasses)
+    if(!AcademicClasses){
+      toast({
+        title: "Error",
+        description: "Academic classes not found.",
+        variant: "destructive",
+      })
+      return
+    }
+    setCurrentInquiryForOnboarding({...inquiry , 
+      inquiry_for_class :  AcademicClasses.find((item => item.class == String(inquiry.inquiry_for_class)))!.id,
+    })
     setShowStudentForm(true)
   }
 
@@ -109,40 +143,41 @@ export default function InquiriesManagement() {
     setEditInquiryDialogOpen(true)
   }
 
-  const handleStudentSubmit = async (data: StudentFormData) => {
-    try {
-      // Here you would normally send the data to your API to create the student
-      // and associate it with the inquiry
+  // const handleStudentSubmit = async (data: StudentFormData) => {
+  //   try {
+  //     // Here you would normally send the data to your API to create the student
+  //     // and associate it with the inquiry
 
-      // For demonstration, we'll simulate a successful response with an enrollment ID
-      const enrollmentId = `ENR-${Math.floor(Math.random() * 10000)}-${new Date().getFullYear()}`
+  //     // For demonstration, we'll simulate a successful response with an enrollment ID
+  //     const enrollmentId = `ENR-${Math.floor(Math.random() * 10000)}-${new Date().getFullYear()}`
 
-      // Update the inquiry with the enrollment ID
-      if (currentInquiryForOnboarding) {
-        await updateInquiry({
-          id: currentInquiryForOnboarding.id,
-          status: "enrolled",
-          enrollment_id: enrollmentId,
-        }).unwrap()
-      }
+  //     // Update the inquiry with the enrollment ID
+  //     if (currentInquiryForOnboarding) {
+  //       await updateInquiry({
+  //         inquiry_id: currentInquiryForOnboarding.id,
+  //         payload : {
+  //           status: "enrolled",
+  //         }
+  //       }).unwrap()
+  //     }
 
-      toast({
-        title: "Student Onboarded",
-        description: `Student has been successfully onboarded with enrollment ID: ${enrollmentId}`,
-      })
+  //     toast({
+  //       title: "Student Onboarded",
+  //       description: `Student has been successfully onboarded with enrollment ID: ${enrollmentId}`,
+  //     })
 
-      setShowStudentForm(false)
-      setCurrentInquiryForOnboarding(null)
-      refetch()
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "Error",
-        description: "Failed to onboard student. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
+  //     setShowStudentForm(false)
+  //     setCurrentInquiryForOnboarding(null)
+  //     refetch()
+  //   } catch (error) {
+  //     console.error(error)
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to onboard student. Please try again.",
+  //       variant: "destructive",
+  //     })
+  //   }
+  // }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -176,16 +211,32 @@ export default function InquiriesManagement() {
             {t("rejected")}
           </Badge>
         )
-      case "enrolled":
+      case "withdrawn":
         return (
           <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-            {t("enrolled")}
+            {t("withdrawn")}
           </Badge>
         )
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
+
+  useEffect(()=>{
+    if(!inquiriesData) {
+      GetInquiries({
+        page: 1 ,
+        academic_session_id : CurrentacademicSessions!.id, 
+     })
+    }
+  },[inquiriesData])
+
+  useEffect(() => {
+    if (!AcademicClasses) {
+      getAcademicClasses(authState.user!.school_id)
+    }
+  }, [AcademicClasses]) 
+
 
   if (isLoading) {
     return (
@@ -212,6 +263,7 @@ export default function InquiriesManagement() {
                 <SelectItem value="ineligible">{t("ineligible")}</SelectItem>
                 <SelectItem value="approved">{t("approved")}</SelectItem>
                 <SelectItem value="rejected">{t("rejected")}</SelectItem>
+                <SelectItem value="withdrawn">{t("withdrawn")}</SelectItem>
                 <SelectItem value="enrolled">{t("enrolled")}</SelectItem>
               </SelectContent>
             </Select>
@@ -224,7 +276,8 @@ export default function InquiriesManagement() {
             <CardDescription>{t("review_and_process_admission_inquiries")}</CardDescription>
           </CardHeader>
           <CardContent>
-            {filteredInquiries && filteredInquiries.length > 0 ? (
+            {filteredInquiries() !== undefined && filteredInquiries().length > 0 ? (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -234,28 +287,28 @@ export default function InquiriesManagement() {
                     <TableHead>{t("contact")}</TableHead>
                     <TableHead>{t("date_of_birth")}</TableHead>
                     <TableHead>{t("status")}</TableHead>
-                    <TableHead>{t("Enrollement Id")}</TableHead>
+                    {/* <TableHead>{t("Enrollement Id")}</TableHead> */}
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredInquiries.map((inquiry) => (
+                  {filteredInquiries().map((inquiry) => (
                     <TableRow key={inquiry.id}>
                       <TableCell className="font-medium">
                         {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
                       </TableCell>
-                      <TableCell>{inquiry.class_applying}</TableCell>
+                      <TableCell>{inquiry.inquiry_for_class}</TableCell>
                       <TableCell>{inquiry.father_name}</TableCell>
                       <TableCell>{inquiry.primary_mobile}</TableCell>
                       <TableCell>{new Date(inquiry.birth_date).toLocaleDateString()}</TableCell>
                       <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         {inquiry.enrollment_id ? (
                           <span className="font-medium text-blue-600">{inquiry.enrollment_id}</span>
                         ) : (
                           "-"
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" onClick={() => setSelectedInquiry(inquiry)}>
@@ -277,7 +330,8 @@ export default function InquiriesManagement() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOnboardStudent(inquiry)}
-                            disabled={inquiry.status !== "approved" || !!inquiry.enrollment_id}
+                            // disabled={inquiry.status !== "approved" || !Boolean(Number(inquiry.is_converted_to_student))}
+                            disabled={inquiry.status !== 'approved' || Boolean(Number(inquiry.is_converted_to_student))}
                           >
                             <UserPlus className="h-4 w-4 mr-1" />
                             {t("onboard")}
@@ -286,7 +340,9 @@ export default function InquiriesManagement() {
                           <Select
                             defaultValue={inquiry.status}
                             onValueChange={(value) => handleStatusChange(inquiry.id, value)}
-                            disabled={inquiry.status === "enrolled"}
+                            // disabled={inquiry.status === "enrolled"}
+                            disabled={Boolean(Number(inquiry.is_converted_to_student)) || inquiry.status === "enrolled"}
+
                           >
                             <SelectTrigger className="h-8 w-[130px]">
                               <SelectValue placeholder={t("change_status")} />
@@ -297,7 +353,7 @@ export default function InquiriesManagement() {
                               <SelectItem value="ineligible">{t("ineligible")}</SelectItem>
                               <SelectItem value="approved">{t("approved")}</SelectItem>
                               <SelectItem value="rejected">{t("rejected")}</SelectItem>
-                              <SelectItem value="enrolled">{t("enrolled")}</SelectItem>
+                              <SelectItem value="enrolled" disabled>{t("enrolled")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -306,6 +362,17 @@ export default function InquiriesManagement() {
                   ))}
                 </TableBody>
               </Table>
+              <SaralPagination
+                currentPage={inquiriesData!.meta.current_page || inquiriesData!.meta.currentPage }
+                totalPages={inquiriesData!.meta.last_page || inquiriesData!.meta.lastPage}
+                onPageChange={(page) => {
+                  GetInquiries({
+                    page: page,
+                    academic_session_id : CurrentacademicSessions!.id, 
+                  })
+                }}
+              ></SaralPagination>
+              </>
             ) : (
               <div className="text-center p-8 border rounded-lg bg-muted/50">
                 {t("no_inquiries_found_matching_the_selected_filter.")}
@@ -335,7 +402,7 @@ export default function InquiriesManagement() {
                       <div className="text-sm font-medium">{t("gender")}:</div>
                       <div className="text-sm">{selectedInquiry.gender}</div>
                       <div className="text-sm font-medium">{t("applied_for_class")}:</div>
-                      <div className="text-sm">{selectedInquiry.class_applying}</div>
+                      <div className="text-sm">{selectedInquiry.inquiry_for_class}</div>
                     </div>
                   </div>
 
@@ -382,7 +449,7 @@ export default function InquiriesManagement() {
                     </div>
                   </div>
 
-                  {selectedInquiry.enrollment_id && (
+                  {/* {selectedInquiry.enrollment_id && (
                     <div>
                       <h3 className="text-lg font-medium">{t("enrollment_details")}</h3>
                       <div className="grid grid-cols-2 gap-2 mt-2">
@@ -390,7 +457,7 @@ export default function InquiriesManagement() {
                         <div className="text-sm font-bold text-blue-600">{selectedInquiry.enrollment_id}</div>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
               <DialogFooter className="flex justify-between">
@@ -446,7 +513,7 @@ export default function InquiriesManagement() {
         {/* Student Onboarding Form Dialog */}
         {showStudentForm && currentInquiryForOnboarding && (
           <Dialog open={showStudentForm} onOpenChange={setShowStudentForm}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-4xl h-[80vh] overflow-auto">
               <DialogHeader>
                 <DialogTitle>{t("onboard_student")}</DialogTitle>
                 <DialogDescription>{t("complete_the_student_details_to_enroll_them_in_the_school")}</DialogDescription>
@@ -457,23 +524,35 @@ export default function InquiriesManagement() {
                   setCurrentInquiryForOnboarding(null)
                 }}
                 form_type="create"
+                is_use_for_onBoarding={true}
+                inquiry_id={currentInquiryForOnboarding.id}
                 initial_data={
-                  transformInquiryToStudent(currentInquiryForOnboarding, authState.user?.school_id || 0) as Student
+                  transformInquiryToStudent(currentInquiryForOnboarding, authState.user!.school_id) as Student
                 }
-                onSubmitSuccess={(studentData, enrollmentId) => {
-                  if (currentInquiryForOnboarding) {
-                    handleStudentOnboarding(
-                      studentData,
-                      enrollmentId,
-                      currentInquiryForOnboarding,
-                      updateInquiry,
-                      refetch,
-                      () => {
-                        setShowStudentForm(false)
-                        setCurrentInquiryForOnboarding(null)
-                      },
-                    )
-                  }
+                onSubmitSuccess={() => {
+                  // if (currentInquiryForOnboarding) {
+                  //   handleStudentOnboarding(
+                  //     studentData,
+                  //     currentInquiryForOnboarding,
+                  //     updateInquiry,
+                  //     ()=>{
+                  //       GetInquiries({
+                  //         page: inquiriesData?.meta.currentPage,
+                  //         academic_session_id : CurrentacademicSessions!.id, 
+                  //       })
+                  //     },
+                  //     () => {
+                  //       setShowStudentForm(false)
+                  //       setCurrentInquiryForOnboarding(null)
+                  //     },
+                  //   )
+                  // }
+                  GetInquiries({
+                    page: inquiriesData?.meta.currentPage,
+                    academic_session_id : CurrentacademicSessions!.id, 
+                  })
+                  setShowStudentForm(false)
+                  setCurrentInquiryForOnboarding(null)
                 }}
               />
             </DialogContent>
@@ -491,29 +570,35 @@ export default function InquiriesManagement() {
               <AdmissionInquiryForm
                 isEditing={true}
                 initialData={{
+                  id: inquiryToEdit.id,
                   first_name: inquiryToEdit.first_name,
-                  middle_name: inquiryToEdit.middle_name || "",
+                  middle_name: inquiryToEdit.middle_name || null,
                   last_name: inquiryToEdit.last_name,
                   birth_date: inquiryToEdit.birth_date,
-                  gender: inquiryToEdit.gender.toLowerCase(),
-                  class_applying: inquiryToEdit.class_applying.toString(),
+                  gender: inquiryToEdit.gender,
+                  inquiry_for_class: inquiryToEdit.inquiry_for_class,
                   father_name: inquiryToEdit.father_name,
-                  primary_mobile: inquiryToEdit.primary_mobile.toString(),
-                  parent_email: inquiryToEdit.parent_email || "",
-                  address: inquiryToEdit.address || "",
-                  privious_school: inquiryToEdit.previous_school || "",
-                  privious_class: inquiryToEdit.previous_class || "",
-                  privious_percentage: inquiryToEdit.previous_percentage || "",
-                  privious_year: inquiryToEdit.previous_year || "",
-                  special_achievements: inquiryToEdit.special_achievements || "",
-                  applying_for_quota: inquiryToEdit.applying_for_quota ? "yes" : "no",
-                  quota_type: inquiryToEdit.quota_type || "",
+                  primary_mobile: inquiryToEdit.primary_mobile,
+                  parent_email: inquiryToEdit.parent_email || null,
+                  address: inquiryToEdit.address,
+                  previous_school: inquiryToEdit.previous_school || null,
+                  previous_class: inquiryToEdit.previous_class || null,
+                  previous_percentage: inquiryToEdit.previous_percentage || null,
+                  previous_year: inquiryToEdit.previous_year || null,
+                  special_achievements: inquiryToEdit.special_achievements || null,
+                  applying_for_quota: inquiryToEdit.applying_for_quota,
+                  quota_type: inquiryToEdit.quota_type || null,
+                  academic_session_id : inquiryToEdit.academic_session_id
                 }}
+                academicSessionId={inquiryToEdit.academic_session_id}
                 inquiryId={inquiryToEdit.id}
                 onSuccess={() => {
                   setEditInquiryDialogOpen(false)
                   setInquiryToEdit(null)
-                  refetch()
+                  GetInquiries({
+                      page: inquiriesData?.meta.currentPage,
+                      academic_session_id : CurrentacademicSessions!.id, 
+                  })
                   toast({
                     title: "Inquiry Updated",
                     description: "The inquiry has been updated successfully.",
