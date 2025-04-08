@@ -285,7 +285,7 @@ export const ConcessionManagement: React.FC = () => {
                                 ) : filteredConcessions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                                            {searchTerm ? "No concessions match your search" : t("no_concessions_found")}
+                                            {searchTerm ? t("no_concessions_match_your_search") : t("no_concessions_found")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (

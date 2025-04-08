@@ -39,6 +39,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import NumberInput from "@/components/ui/NumberInput"
 
 const seatAvailabilitySchema = z.object({
   class_id: z
@@ -160,11 +161,10 @@ function SeatAvailabilityForm({
             <FormItem>
               <FormLabel>{t("total_seats")}</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder={t("enter_total_seats")}
-                  {...field}
-                  onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                <NumberInput
+                 {...field}
+                 value={field.value !== undefined ? String(field.value) : ""}
+                 onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                 />
               </FormControl>
               <FormDescription>

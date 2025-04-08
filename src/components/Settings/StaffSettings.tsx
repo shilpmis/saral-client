@@ -86,6 +86,13 @@ export default function StaffSettings() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDialogForDeleteStaffOpen, setIsDialogForDeleteStaffOpen] = useState<boolean>(false)
   const {t} = useTranslation()
+  const [showNoActiveSessionAlert, setShowNoActiveSessionAlert] = useState(false);
+
+  useEffect(() => {
+    if (!CurrentAcademicSessionForSchool) {
+      setShowNoActiveSessionAlert(true);
+    }
+  }, [CurrentAcademicSessionForSchool]);
 
 
   const handleOpenDialog = (mode: "add" | "edit", role?: StaffRole) => {
@@ -194,165 +201,167 @@ export default function StaffSettings() {
   if (isLoading) return <div>Loading...</div>
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">{t("staff_settings")}</h1>
-      {(isFetching || isLoading) && <div>Loading...</div>}
-      {StaffRoleState && StaffRoleState.length > 0 && (<Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">{t("manage_satff_roles")}</CardTitle>
-          <CardDescription>{t("add,_edit,_or_remove_staff_roles_for_your_school")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">{t("roles")}</h2>
-            <Button onClick={() => handleOpenDialog("add")}>
-              <Plus className="mr-2 h-4 w-4" />{t("add_role")} 
-            </Button>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("role_name")}</TableHead>
-                  <TableHead>{t("role_type")}</TableHead>
-                  <TableHead className="text-right">{t("actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {StaffRoleState.map((staff) => (
-                  <TableRow key={staff.id}>
-                    <TableCell className="font-medium">{staff.role}</TableCell>
-                    <TableCell>{staff.is_teaching_role ? "Teaching" : "Non-Teaching"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mr-2"
-                        onClick={() => handleOpenDialog("edit", staff)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />{t("edit")}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => {
-                        formForStaffRole.setValue('role_id', staff.id)
-                        setIsDialogForDeleteStaffOpen(true)
-                      }}
-                        className="hover:bg-red-600 hover:text-white"
-                      >
-                        <Trash className="h-4 w-4 mr-1" />{t("delete")}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>)}
-      {StaffRoleState && StaffRoleState.length == 0 && (
-        <Card className="border border-dashed border-gray-300 shadow-sm rounded-2xl text-center p-6 max-w-md mx-auto lg:mt-10">
+    <>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">{t("staff_settings")}</h1>
+        {(isFetching || isLoading) && <div>Loading...</div>}
+        {StaffRoleState && StaffRoleState.length > 0 && (<Card>
           <CardHeader>
-            <div className="flex justify-center text-red-500 mb-3">
-              <AlertCircle className="w-12 h-12" />
-            </div>
-            <CardTitle className="text-xl font-semibold">{t("no_staff_role_available")}</CardTitle>
+            <CardTitle className="text-2xl">{t("manage_satff_roles")}</CardTitle>
+            <CardDescription>{t("add,_edit,_or_remove_staff_roles_for_your_school")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600">{t("please_create_role_for_your_school_staff!")}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">{t("roles")}</h2>
+              <Button onClick={() => handleOpenDialog("add")}>
+                <Plus className="mr-2 h-4 w-4" />{t("add_role")} 
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("role_name")}</TableHead>
+                    <TableHead>{t("role_type")}</TableHead>
+                    <TableHead className="text-right">{t("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {StaffRoleState.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">{staff.role}</TableCell>
+                      <TableCell>{staff.is_teaching_role ? "Teaching" : "Non-Teaching"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mr-2"
+                          onClick={() => handleOpenDialog("edit", staff)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />{t("edit")}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => {
+                          formForStaffRole.setValue('role_id', staff.id)
+                          setIsDialogForDeleteStaffOpen(true)
+                        }}
+                          className="hover:bg-red-600 hover:text-white"
+                        >
+                          <Trash className="h-4 w-4 mr-1" />{t("delete")}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
-          <CardFooter className="flex justify-center space-x-4 mt-4">
-            <Button variant="secondary">Refresh</Button>
-            <Button onClick={() => handleOpenDialog("add")}>
-              <Plus className="mr-2 h-4 w-4" />{t("add_role")}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+        </Card>)}
+        {StaffRoleState && StaffRoleState.length == 0 && (
+          <Card className="border border-dashed border-gray-300 shadow-sm rounded-2xl text-center p-6 max-w-md mx-auto lg:mt-10">
+            <CardHeader>
+              <div className="flex justify-center text-red-500 mb-3">
+                <AlertCircle className="w-12 h-12" />
+              </div>
+              <CardTitle className="text-xl font-semibold">{t("no_staff_role_available")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">{t("please_create_role_for_your_school_staff!")}</p>
+            </CardContent>
+            <CardFooter className="flex justify-center space-x-4 mt-4">
+              <Button variant="secondary">Refresh</Button>
+              <Button onClick={() => handleOpenDialog("add")}>
+                <Plus className="mr-2 h-4 w-4" />{t("add_role")}
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? t("add_new_role") : t("edit_role")}</DialogTitle>
-            <DialogDescription>
-              {formForStaffRole.getValues('formType') === "create"
-                ? t("enter_the_details_of_the_new_role_here.")
-                : t("update_the_details_of_the_role_here.")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Form {...formForStaffRole}>
-              <form onSubmit={formForStaffRole.handleSubmit(handleSubmit)} className="space-y-6">
-                <FormField
-                  control={formForStaffRole.control}
-                  name="role_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>{t("role")}</FormLabel>
-                      <FormControl>
-                        <Input type="text" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={formForStaffRole.control}
-                  name="role_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("role_type")}</FormLabel>
-                      <FormControl>
-                        <Select
-                          {...field}
-                          value={field.value}
-                          onValueChange={(value) => field.onChange(value)}
-                          disabled={formForStaffRole.getValues('formType') === "edit"}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select role type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="teaching">{t("teaching")}</SelectItem>
-                            <SelectItem value="non-teaching">{t("non_teaching")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end space-x-4 pt-4">
-                  <Button type="button" variant="secondary" onClick={handleCloseDialog}>
-                    {t("cancel")}
-                  </Button>
-                  <Button type="submit">
-                    {formForStaffRole.getValues('formType') === "create" ? t("add_role") : t("update_role")}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
-        </DialogContent>
-      </Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{formForStaffRole.getValues('formType') === "create" ? t("add_new_role") : t("edit_role")}</DialogTitle>
+              <DialogDescription>
+                {formForStaffRole.getValues('formType') === "create"
+                  ? t("enter_the_details_of_the_new_role_here.")
+                  : t("update_the_details_of_the_role_here.")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <Form {...formForStaffRole}>
+                <form onSubmit={formForStaffRole.handleSubmit(handleSubmit)} className="space-y-6">
+                  <FormField
+                    control={formForStaffRole.control}
+                    name="role_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>{t("role")}</FormLabel>
+                        <FormControl>
+                          <Input type="text" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={formForStaffRole.control}
+                    name="role_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("role_type")}</FormLabel>
+                        <FormControl>
+                          <Select
+                            {...field}
+                            value={field.value}
+                            onValueChange={(value) => field.onChange(value)}
+                            disabled={formForStaffRole.getValues('formType') === "edit"}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select role type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="teaching">{t("teaching")}</SelectItem>
+                              <SelectItem value="non-teaching">{t("non_teaching")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <Button type="button" variant="secondary" onClick={handleCloseDialog}>
+                      {t("cancel")}
+                    </Button>
+                    <Button type="submit">
+                      {formForStaffRole.getValues('formType') === "create" ? t("add_role") : t("update_role")}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={isDialogForDeleteStaffOpen} onOpenChange={setIsDialogForDeleteStaffOpen}>
-        <DialogContent className="max-w-md rounded-2xl shadow-lg">
-          <DialogHeader className="text-center">
-            <AlertTriangle className="text-red-600 w-7 h-7" />
-            <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
-            <DialogDescription className="text-gray-600">
-            {t("are_you_sure_you_want_to_delete ?")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 flex justify-center space-x-4">
-            <Button type="button" variant="outline" onClick={() => setIsDialogForDeleteStaffOpen(false)} className="px-6 py-2 rounded-lg">
-              {t("cancel")}
-            </Button>
-            <Button type="button" variant="destructive" onClick={() => handleDeleteRole(formForStaffRole.getValues('role_id')!)} className="px-6 py-2 rounded-lg bg-red-600 text-white">
-              {t("delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <Dialog open={isDialogForDeleteStaffOpen} onOpenChange={setIsDialogForDeleteStaffOpen}>
+          <DialogContent className="max-w-md rounded-2xl shadow-lg">
+            <DialogHeader className="text-center">
+              <AlertTriangle className="text-red-600 w-7 h-7" />
+              <DialogTitle className="text-2xl font-bold text-gray-800">{t("delete_confirmation")}</DialogTitle>
+              <DialogDescription className="text-gray-600">
+              {t("are_you_sure_you_want_to_delete ?")}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4 flex justify-center space-x-4">
+              <Button type="button" variant="outline" onClick={() => setIsDialogForDeleteStaffOpen(false)} className="px-6 py-2 rounded-lg">
+                {t("cancel")}
+              </Button>
+              <Button type="button" variant="destructive" onClick={() => handleDeleteRole(formForStaffRole.getValues('role_id')!)} className="px-6 py-2 rounded-lg bg-red-600 text-white">
+                {t("delete")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   )
 }
 

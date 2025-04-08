@@ -9,8 +9,10 @@ import StudentProfileView from "@/components/Students/StudentProfileView"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { StudentEnrollment } from "@/types/student"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function StudentProfilePage() {
+  const {t} = useTranslation()
   const params = useParams()
   const navigate = useNavigate()
   const [student, setStudent] = useState<StudentEnrollment | null>(null)
@@ -58,7 +60,7 @@ export default function StudentProfilePage() {
       <div className="container mx-auto py-6 flex items-center justify-center h-screen">
         <div className="space-y-4 text-center">
           <div className="h-16 w-16 mx-auto bg-muted/50 animate-pulse rounded-full"></div>
-          <p>Loading student profile...</p>
+          <p>{t("loading_student_profile")}...</p>
         </div>
       </div>
     )
@@ -69,12 +71,12 @@ export default function StudentProfilePage() {
       <div className="container mx-auto py-6">
         <Button variant="ghost" onClick={handleBack} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t("back")}
         </Button>
         <div className="p-6 text-center">
           <p className="text-destructive">{error}</p>
           <Button onClick={handleBack} className="mt-4">
-            Return to search
+            {t("return_to_search")}
           </Button>
         </div>
       </div>
