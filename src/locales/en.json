@@ -927,5 +927,24 @@
   "edit_the_details_of_the_leave_policy": "Edit the details of the leave policy",
   "no_fee_plans_found": "No Fee Plans Found",
   "no_fee_plans_match_your_search": "No fee plans match your search",
-  "no_concessions_match_your_search": "No concessions match your search"
-}
+  "no_concessions_match_your_search": "No concessions match your search",
+  "there_are_no" : "There are no",
+  "leave_applications_for" : "Leave Applications for",
+  "try_checking" : "Try checking",
+  "applications_instead.": "applications instead.",
+  "teaching": "Teaching",
+  "non_teaching": "Non-Teaching",
+  "no_students" : "No Students",
+  "create_a_new_management_user_with_specific_role" :"Create a new management user with specific role",
+  "select_a_role_to_see_description" : "Select a role to see description",
+  "edit_management_user" : "Edit Management User",
+  "update_user_details_and_permissions" : "Update user details and permissions",
+  "full_access_to_all_system_features" : "Full access to all system features",
+  "manage_teaching_staff_access_and_class_allocations" : "Manage teaching staff access and class allocations",
+  "assigned_classes" : "Assigned Classes",
+  "onboard_teacher" : "Onboard Teacher",
+  "select_a_teacher_and_assign_classes_to_onboard_them_to_the_platform" : "Select a teacher and assign classes to onboard them to the platform",
+  "select_teacher" : "Select Teacher",
+  "no_teachers_found" : "No Teachers Found"
+}  
+  

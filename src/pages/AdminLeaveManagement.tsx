@@ -278,16 +278,16 @@ const AdminLeaveManagement: React.FC = () => {
           <AlertCircle className="h-5 w-5" />
           <AlertTitle>{t("no_leave_applications_found")}</AlertTitle>
           <AlertDescription>
-            There are no {statusFilter} leave applications for {activeTab === "teacher" ? "teaching" : "non-teaching"}{" "}
-            staff
+            {t("there_are_no")} {statusFilter} {t("leave_applications_for")} {activeTab === "teacher" ? t("teaching") : t("non_teaching")}{" "}
+            {t("staff")}
             {selectedDate ? ` on ${new Date(selectedDate).toLocaleDateString()}` : ""}.
             {statusFilter !== "pending" && (
               <div className="mt-2">
-                Try checking{" "}
+                {t("try_checking")}{" "}
                 <Button variant="link" className="p-0 h-auto" onClick={() => setStatusFilter("pending")}>
-                  pending
+                  {t("pending")}
                 </Button>{" "}
-                applications instead.
+                {t("applications_instead.")}
               </div>    
             )}
             {selectedDate && (
