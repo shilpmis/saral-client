@@ -1216,7 +1216,7 @@ export function StudentPromotionManagement() {
             <DialogTitle>{t("promote_student")}</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>{t(`you_are_about_to_promote ${selectedStudentForAction.student.first_name} to_the_next_class.`)}</>
+                <>{t("you_are_about_to_promote")}{selectedStudentForAction.student.first_name}{t("to_the_next_class.")}</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -1252,7 +1252,7 @@ export function StudentPromotionManagement() {
                   id="promotionRemarks"
                   value={promotionRemarks}
                   onChange={(e) => setPromotionRemarks(e.target.value)}
-                  placeholder="Enter remarks about this promotion"
+                  placeholder={t("enter_remarks_about_this_promotion")}
                   className="mt-1"
                 />
               </div>
@@ -1293,7 +1293,7 @@ export function StudentPromotionManagement() {
             <DialogTitle>{t("hold_back_student")}</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>{t(`you_are_about_to_hold_back ${selectedStudentForAction.student.first_name} in the_current_class.`)}</>
+                <>{t("you_are_about_to_hold_back")}{selectedStudentForAction.student.first_name}{t("in_the_current_class.")}</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -1306,7 +1306,7 @@ export function StudentPromotionManagement() {
                   id="holdBackReason"
                   value={holdBackReason}
                   onChange={(e) => setHoldBackReason(e.target.value)}
-                  placeholder="Enter reason"
+                  placeholder={t("enter_reason")}
                   className="mt-1"
                 />
               </div>
@@ -1360,7 +1360,7 @@ export function StudentPromotionManagement() {
                   id="transferSchool"
                   value={transferSchool}
                   onChange={(e) => setTransferSchool(e.target.value)}
-                  placeholder="Enter school name"
+                  placeholder={t("enter_school_name")}
                   className="mt-1"
                 />
               </div>
@@ -1420,4 +1420,3 @@ export function StudentPromotionManagement() {
     </div>
   )
 }
-
