@@ -303,9 +303,7 @@ export default function AcademicSettings() {
   }
 
   const confirmDivisionChanges = async () => {
-    const payload = formForDivsion.getValues()
-    console.log("payload", payload)
-    console.log("paykokad", payload)
+    const payload = formForDivsion.getValues();
     if (payload.formType === "edit" && payload.class_id && payload.aliases) {
       try {
         // Edit division
@@ -375,7 +373,7 @@ export default function AcademicSettings() {
               : cls,
           ),
         )
-
+        //refetch again , which stores updates changes in redux store
         setIsDivisionForDialogOpen(false)
         setNewDivision(null)
 
@@ -390,6 +388,7 @@ export default function AcademicSettings() {
         })
       }
     }
+    refetchClasses();
   }
 
   const handleSessionFormSuccess = () => {
@@ -694,7 +693,7 @@ export default function AcademicSettings() {
                   </Label>
                   <Input
                     id="className"
-                    value={editingClass?.name || ""}
+                    value={editingClass?.class || ""}
                     onChange={(e) => setEditingClass((prev) => (prev ? { ...prev, name: e.target.value } : null))}
                     className="col-span-3"
                   />

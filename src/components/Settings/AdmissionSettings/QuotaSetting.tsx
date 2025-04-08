@@ -193,7 +193,9 @@ export default function QuotaManagement() {
     }
   }, [selectedAcademicSession])
 
-  const { data: quotas, isLoading: isLoadingQuotas, isError, error, refetch: refetchQuotas } = useGetQuotasQuery()
+  const { data: quotas, isLoading: isLoadingQuotas, isError, error, refetch: refetchQuotas } = useGetQuotasQuery({
+    academic_session_id : currentAcademicSession!.id
+  })
 
   const {
     data: allocations,

@@ -78,7 +78,11 @@ export default function StaffSettings() {
   const authState = useAppSelector(selectAuthState)
   const StaffRoleState = useAppSelector(selectSchoolStaffRoles)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
-  const [getSchoolStaff, { data, isLoading, isFetching, isSuccess, isError, error }] = useLazyGetSchoolStaffRoleQuery();
+  const [
+    getSchoolStaff, 
+    { data, isLoading, isFetching, isSuccess, isError, error },
+  ] = useLazyGetSchoolStaffRoleQuery();
+ 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDialogForDeleteStaffOpen, setIsDialogForDeleteStaffOpen] = useState<boolean>(false)
   const {t} = useTranslation()
