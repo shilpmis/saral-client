@@ -12,10 +12,13 @@ import AdmissionInquiryForm from "@/components/Admission/AdmissionInquiryForm"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import InquiryList from "@/components/Admission/InquiryList"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 export default function AdminAdmissonView() {
   const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
   const [isInquiryOpen, setIsInquiryOpen] = useState(false)
+  const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
   const { t } = useTranslation()
   
   return (
@@ -24,9 +27,9 @@ export default function AdminAdmissonView() {
         <div className="flex justify-between items-center gap-4">
           <h1 className="text-xl font-bold tracking-tight">{t("admission_dashboard")}</h1>
           <div className="flex gap-4">
-            <Link to="/d/admissions/inquiry">
+            {/* <Link to="/d/admissions/inquiry">
               <Button size="lg">{t("view_all_admission_inquiries")}</Button>
-            </Link>
+            </Link> */}
             <Button onClick={() => setIsQuickInquiryOpen(true)}>{t("add_quick_inquiry")}</Button>
             <Button onClick={() => setIsInquiryOpen(true)}>{t("add_admission_inquiry")}</Button>
           </div>
@@ -34,17 +37,16 @@ export default function AdminAdmissonView() {
 
         {/* Inquiry Modal - Using Dialog component instead of custom modal */}
         <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-3xl h-[80vh] w-auto overflow-auto">
             <DialogHeader>
               <DialogTitle>{t("add_admission_inquiry")}</DialogTitle>
               <DialogDescription>{t("please_fill_out_this_form_to_submit_an_admission_inquiry")}</DialogDescription>
             </DialogHeader>
-            <div className="mt-4">
               <AdmissionInquiryForm
                 onSuccess={() => setIsInquiryOpen(false)}
                 onCancel={() => setIsInquiryOpen(false)}
+                academicSessionId={CurrentacademicSessions!.id}
               />
-            </div>
           </DialogContent>
         </Dialog>
 
@@ -53,7 +55,7 @@ export default function AdminAdmissonView() {
           <TabsList>
             <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
             <TabsTrigger value="inquiries">{t("recent_inquiries")}</TabsTrigger>
-            <TabsTrigger value="quotas">{t("quota_distribution")}</TabsTrigger>
+            {/* <TabsTrigger value="quotas">{t("quota_distribution")}</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -73,7 +75,7 @@ export default function AdminAdmissonView() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="quotas" className="space-y-4">
+          {/* <TabsContent value="quotas" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>{t("quota_distribution")}</CardTitle>
@@ -87,11 +89,14 @@ export default function AdminAdmissonView() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
 
-      <QuickInquiryForm isOpen={isQuickInquiryOpen} onClose={() => setIsQuickInquiryOpen(false)} />
+      <QuickInquiryForm
+      academicSessionId={CurrentacademicSessions!.id} 
+      isOpen={isQuickInquiryOpen} 
+      onClose={() => setIsQuickInquiryOpen(false)} />
     </div>
   )
 }
