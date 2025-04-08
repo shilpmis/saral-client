@@ -74,6 +74,7 @@ interface Student {
   class: {
     id: number
     class_id: number
+    class: string
     division: string
     aliases: string | null
   }
@@ -264,7 +265,6 @@ export function StudentPromotionManagement() {
 
     // Create query parameters object
     const queryParams = {
-      page: currentPage,
       limit: itemsPerPage,
     }
 
@@ -282,6 +282,7 @@ export function StudentPromotionManagement() {
     getStudentsForPromotion({
       academic_session_id: Number.parseInt(sourceAcademicSession),
       class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+      page: currentPage,
       ...queryParams,
     })
     setHasSearched(true)
@@ -484,7 +485,7 @@ export function StudentPromotionManagement() {
         variant: "destructive",
       })
       return
-    } 
+    }
 
     try {
       const formData = new FormData()
@@ -547,6 +548,8 @@ export function StudentPromotionManagement() {
 
   // Toggle select individual student
   const toggleSelectStudent = (studentId: number) => {
+    console.log("studentId found for the student", studentId);
+    console.log("selectedStudents", selectedStudents)
     if (selectedStudents.includes(studentId)) {
       setSelectedStudents(selectedStudents.filter((id) => id !== studentId))
     } else {
@@ -571,6 +574,10 @@ export function StudentPromotionManagement() {
     })
   }, [students, searchTerm])
 
+  useEffect(() => {
+    console.log("filteredStudents", filteredStudents)
+  }, [filteredStudents])
+
   // // Use server-side pagination
   // const paginatedStudents = students
 
@@ -592,11 +599,34 @@ export function StudentPromotionManagement() {
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    // Fetch students with the new page number
-    if (hasSearched) {
-      fetchStudents()
+    // Instead of setting state and then fetching, we'll fetch with the provided page number directly
+    if (hasSearched && sourceAcademicSession && (sourceClass || sourceDivision)) {
+      // Create query parameters object with the new page number
+      const queryParams = {
+        limit: itemsPerPage,
+      }
+
+      // Add division_id as a query parameter if selected
+      if (sourceDivision && sourceDivision !== "all") {
+        const divisionId = sourceDivision.startsWith("division-")
+          ? sourceDivision.replace("division-", "")
+          : sourceDivision
+
+        // @ts-ignore - Adding division_id to query params
+        queryParams.division_id = Number.parseInt(divisionId)
+      }
+
+      // Call the API with the new page number
+      getStudentsForPromotion({
+        academic_session_id: Number.parseInt(sourceAcademicSession),
+        class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+        page: page, // Use the page parameter directly
+        ...queryParams,
+      })
     }
+
+    // Update the state after initiating the fetch
+    setCurrentPage(page)
   }
 
   // Export students list
@@ -643,7 +673,6 @@ export function StudentPromotionManagement() {
     setCurrentPage(1)
   }, [sourceClass, sourceDivision])
 
-  
   // Reset search when filters change
   useEffect(() => {
     setSearchTerm("")
@@ -659,6 +688,14 @@ export function StudentPromotionManagement() {
     isTransferring ||
     isExporting ||
     isLoadingAcademicClasses
+
+
+  useEffect(()=> {
+
+  }, [])
+  useEffect(()=> {
+    console.log("selectedStudentForAction", selectedStudentForAction)
+  },[selectedStudentForAction])
 
   return (
     <div className="space-y-6">
@@ -945,11 +982,11 @@ export function StudentPromotionManagement() {
                       </TableRow>
                     ) : filteredStudents.length > 0 ? (
                       filteredStudents.map((student) => (
-                        <TableRow key={student.id}>
+                        <TableRow key={student.student.id}>
                           <TableCell>
                             <Checkbox
-                              checked={selectedStudents.includes(student.id)}
-                              onCheckedChange={() => toggleSelectStudent(student.id)}
+                              checked={selectedStudents.includes(student.student.id)}
+                              onCheckedChange={() => toggleSelectStudent(student.student.id)}
                               disabled={student.status !== "pursuing" || student.promotionStatus === "promoted"}
                             />
                           </TableCell>
@@ -959,7 +996,7 @@ export function StudentPromotionManagement() {
                             {student.student.first_name} {student.student.middle_name} {student.student.last_name}
                           </TableCell>
                           <TableCell>
-                            Class {student.class.class_id} {student.class.division}
+                            Class {student.class.class.class} {student.class.division}
                           </TableCell>
                           <TableCell>
                             <Badge variant={student.status === "pursuing" ? "default" : "secondary"}>
@@ -1169,7 +1206,7 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision || "Auto Assign"}
+                  Class {targetClass} {targetDivision }
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
