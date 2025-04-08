@@ -435,7 +435,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>

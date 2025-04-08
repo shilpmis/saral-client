@@ -106,7 +106,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       first_name_in_guj: null,
       middle_name_in_guj: null,
       last_name_in_guj: null,
-      gender: "Male", // Default to "Male"
+      gender: undefined, 
       birth_date: "",
       birth_place: null,
       birth_place_in_guj: null,
@@ -754,7 +754,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -786,7 +786,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -803,7 +803,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -820,7 +820,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -861,7 +861,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             type="date"
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -880,7 +880,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -897,7 +897,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -916,7 +916,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -933,7 +933,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -980,7 +980,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -999,7 +999,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -1016,7 +1016,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -1035,7 +1035,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -1052,7 +1052,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -1089,7 +1089,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -1106,7 +1106,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ? String(field.value) :  ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -1126,7 +1126,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             type="date"
                             {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value ||  ""}
                             onChange={(e) => field.onChange(e.target.value || null)}
                           />
                         </FormControl>
@@ -1143,7 +1143,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("admission_class")}</FormLabel>
                         <Select
-                          value={field.value !== undefined ? String(field.value) : ""}
+                          value={field.value ||  ""}
                           onValueChange={(value) => {
                             field.onChange(value)
                             handleClassChange(value, "admission_Class")
@@ -1180,7 +1180,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("admission_division")}</FormLabel>
                         <Select
-                          value={field.value !== undefined ? String(field.value) : ""}
+                          value={field.value ||  ""}
                           onValueChange={(value) => {
                             field.onChange(value)
                             handleDivisionChange(value, "admission_Class")
@@ -1583,7 +1583,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormControl>
                         <NumberInput
                           {...field}
-                          value={field.value ?? ""}
+                          value={field.value ? String(field.value) :  ""}
                           onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                         />
                       </FormControl>
