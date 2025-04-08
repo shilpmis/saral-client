@@ -168,7 +168,6 @@ export function StudentPromotionManagement() {
     if (!academicSessionsData) return []
 
     // Check if the data is in the expected format
-    console.log("academicSessionsData", academicSessionsData)
 
     // Extract sessions from the response
     let sessions = []
@@ -343,7 +342,6 @@ export function StudentPromotionManagement() {
       return
     }
 
-    console.log("Selected students for promotion:", selectedStudents)
     try {
       const result = await promoteStudents({
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -541,15 +539,12 @@ export function StudentPromotionManagement() {
     if (selectedStudents.length === filteredStudents.length) {
       setSelectedStudents([])
     } else {
-      setSelectedStudents(filteredStudents.map((item) => 
-        item.student.student_id))
+      setSelectedStudents(filteredStudents.map((item) => item.student.id))
     }
   }
 
   // Toggle select individual student
   const toggleSelectStudent = (studentId: number) => {
-    console.log("studentId found for the student", studentId);
-    console.log("selectedStudents", selectedStudents)
     if (selectedStudents.includes(studentId)) {
       setSelectedStudents(selectedStudents.filter((id) => id !== studentId))
     } else {
@@ -573,10 +568,6 @@ export function StudentPromotionManagement() {
       )
     })
   }, [students, searchTerm])
-
-  useEffect(() => {
-    console.log("filteredStudents", filteredStudents)
-  }, [filteredStudents])
 
   // // Use server-side pagination
   // const paginatedStudents = students
@@ -689,13 +680,8 @@ export function StudentPromotionManagement() {
     isExporting ||
     isLoadingAcademicClasses
 
-
-  useEffect(()=> {
-
-  }, [])
-  useEffect(()=> {
-    console.log("selectedStudentForAction", selectedStudentForAction)
-  },[selectedStudentForAction])
+  useEffect(() => {}, [])
+  useEffect(() => {}, [selectedStudentForAction])
 
   return (
     <div className="space-y-6">
@@ -996,7 +982,7 @@ export function StudentPromotionManagement() {
                             {student.student.first_name} {student.student.middle_name} {student.student.last_name}
                           </TableCell>
                           <TableCell>
-                            Class {student.class.class.class} {student.class.division}
+                            Class {student.class.class_id} {student.class.division}
                           </TableCell>
                           <TableCell>
                             <Badge variant={student.status === "pursuing" ? "default" : "secondary"}>
@@ -1206,7 +1192,7 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision }
+                  Class {targetClass} {targetDivision === "auto" ? "Auto Assign" : targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
@@ -1457,4 +1443,3 @@ export function StudentPromotionManagement() {
     </div>
   )
 }
-
