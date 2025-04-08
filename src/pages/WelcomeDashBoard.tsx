@@ -92,7 +92,7 @@ export function WelcomeDashboard() {
         read: true,
       },
     ])
-  }, [t])
+  }, [])
 
   // Role-specific quick actions
   const getQuickActions = (): QuickAction[] => {

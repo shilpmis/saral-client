@@ -276,24 +276,24 @@ const AdminLeaveManagement: React.FC = () => {
       return (
         <Alert className="my-6">
           <AlertCircle className="h-5 w-5" />
-          <AlertTitle>No leave applications found</AlertTitle>
+          <AlertTitle>{t("no_leave_applications_found")}</AlertTitle>
           <AlertDescription>
-            There are no {statusFilter} leave applications for {activeTab === "teacher" ? "teaching" : "non-teaching"}{" "}
-            staff
+            {t("there_are_no")} {statusFilter} {t("leave_applications_for")} {activeTab === "teacher" ? t("teaching") : t("non_teaching")}{" "}
+            {t("staff")}
             {selectedDate ? ` on ${new Date(selectedDate).toLocaleDateString()}` : ""}.
             {statusFilter !== "pending" && (
               <div className="mt-2">
-                Try checking{" "}
+                {t("try_checking")}{" "}
                 <Button variant="link" className="p-0 h-auto" onClick={() => setStatusFilter("pending")}>
-                  pending
+                  {t("pending")}
                 </Button>{" "}
-                applications instead.
-              </div>
+                {t("applications_instead.")}
+              </div>    
             )}
             {selectedDate && (
               <div className="mt-2">
                 <Button variant="outline" size="sm" className="mt-2" onClick={clearDateFilter}>
-                  Clear date filter
+                  {t("clear_date_filter")}
                 </Button>
               </div>
             )}
@@ -317,7 +317,7 @@ const AdminLeaveManagement: React.FC = () => {
             disabled={isRefreshing || loadingForTeachersLeave || loadingForOtherStaffLeave}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh
+            {t("refresh")}
           </Button>
         </CardHeader>
         <CardContent>
@@ -479,7 +479,7 @@ const AdminLeaveManagement: React.FC = () => {
                 className="min-h-[100px]"
               />
               {DialogForApplication.action === "reject" && !actionReason.trim() && (
-                <p className="text-sm text-destructive">A reason is required when rejecting a leave request</p>
+                <p className="text-sm text-destructive">{t("a_reason_is_required_when_rejecting_a_leave_request")}</p>
               )}
             </div>
           </div>

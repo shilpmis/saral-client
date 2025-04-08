@@ -1,21 +1,24 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import type { LeaveRequest } from "@/types/leave"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface LeaveHistoryProps {
   leaveRequests: LeaveRequest[]
 }
 
 export function LeaveHistory({ leaveRequests }: LeaveHistoryProps) {
+  const {t} = useTranslation()
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Leave Type</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Reason</TableHead>
+          <TableHead>{t("start_date")}</TableHead>
+          <TableHead>{t("end_date")}</TableHead>
+          <TableHead>{t("leave_type")}</TableHead>
+          <TableHead>{t("status")}</TableHead>
+          <TableHead>{t("reason")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

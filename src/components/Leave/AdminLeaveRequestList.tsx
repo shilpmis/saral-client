@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { LeaveRequest } from "@/types/leave"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface AdminLeaveRequestListProps {
   leaveRequests: LeaveRequest[]
@@ -10,17 +11,19 @@ interface AdminLeaveRequestListProps {
 }
 
 const AdminLeaveRequestList: React.FC<AdminLeaveRequestListProps> = ({ leaveRequests, onUpdateStatus }) => {
+  const {t} = useTranslation()
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Reason</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead>{t("name")}</TableHead>
+          <TableHead>{t("start_date")}</TableHead>
+          <TableHead>{t("end_date")}</TableHead>
+          <TableHead>{t("type")}</TableHead>
+          <TableHead>{t("status")}</TableHead>
+          <TableHead>{t("reason")}</TableHead>
+          <TableHead>{t("actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -40,10 +43,10 @@ const AdminLeaveRequestList: React.FC<AdminLeaveRequestListProps> = ({ leaveRequ
               {request.status === "pending" && (
                 <div className="space-x-2">
                   <Button size="sm" onClick={() => onUpdateStatus(request.id, "approved")}>
-                    Approve
+                    {t("approve")}
                   </Button>
                   <Button size="sm" variant="destructive" onClick={() => onUpdateStatus(request.id, "rejected")}>
-                    Reject
+                    {t("reject")}
                   </Button>
                 </div>
               )}

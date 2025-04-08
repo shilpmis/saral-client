@@ -1,83 +1,83 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import baseUrl from "@/utils/base-urls"
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import baseUrl from "@/utils/base-urls";
 
 // Define types for the API responses and requests
 interface Student {
-  id: number
-  academic_session_id: number
-  division_id: number
-  student_id: number
-  status: string
+  id: number;
+  academic_session_id: number;
+  division_id: number;
+  student_id: number;
+  status: string;
   class: {
-    id: number
-    class_id: number
-    division: string
-    aliases: string | null
-  }
+    id: number;
+    class_id: number;
+    division: string;
+    aliases: string | null;
+  };
   student: {
-    id: number
-    first_name: string
-    middle_name: string
-    last_name: string
-    gr_no: number
-    roll_number: number
-    gender: string
-    birth_date: string
-    primary_mobile: number
-    father_name: string
-    mother_name: string
-    is_active: number
-  }
+    id: number;
+    first_name: string;
+    middle_name: string;
+    last_name: string;
+    gr_no: number;
+    roll_number: number;
+    gender: string;
+    birth_date: string;
+    primary_mobile: number;
+    father_name: string;
+    mother_name: string;
+    is_active: number;
+  };
 }
 
 interface StudentsResponse {
-  success: boolean
+  success: boolean;
   data: {
-    students: Student[]
+    students: Student[];
     pagination: {
-      total: number
-      per_page: number
-      current_page: number
-      last_page: number
-      first_page: number
-      first_page_url: string
-      last_page_url: string
-      next_page_url: string | null
-      previous_page_url: string | null
-    }
-  }
+      total: number;
+      per_page: number;
+      current_page: number;
+      last_page: number;
+      first_page: number;
+      first_page_url: string;
+      last_page_url: string;
+      next_page_url: string | null;
+      previous_page_url: string | null;
+    };
+  };
 }
 
 // Update the PromoteStudentsRequest interface to include the status field
 interface PromoteStudentsRequest {
-  source_academic_session_id: number
-  target_academic_session_id: number
-  target_class_id: number
-  target_division_id: number | null
-  student_ids: number[]
-  status?: string
+  source_academic_session_id: number;
+  target_academic_session_id: number;
+  target_class_id: number;
+  target_division_id: number | null;
+  student_ids: number[];
+  status?: string;
 }
 
 // New interface for single student promotion
 interface PromoteSingleStudentRequest {
-  source_academic_session_id: number
-  target_academic_session_id: number
-  source_division_id: number
-  target_division_id: number
-  student_id: number
-  status: string
-  remarks: string
+  source_academic_session_id: number;
+  target_academic_session_id: number;
+  source_division_id: number;
+  target_division_id: number;
+  student_id: number;
+  status: string;
+  remarks: string;
 }
 
 interface HoldBackStudentRequest {
-  student_id: number
-  reason: string
-  academic_session_id: number
+  student_id: number;
+  reason: string;
+  academic_session_id: number;
 }
 
 interface PromotionHistoryResponse {
-  success: boolean
-  data: any[] // Define a more specific type if you know the structure
+  success: boolean;
+  data: any[]; // Define a more specific type if you know the structure
 }
 
 export const PromotionApi = createApi({
@@ -85,20 +85,37 @@ export const PromotionApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${baseUrl.serverUrl}api/v1/`,
     prepareHeaders: (headers) => {
-      headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
-      headers.set("Accept", "*/*")
-      headers.set("Content-Type", "application/json")
-      return headers
+      headers.set(
+        "Authorization",
+        `Bearer ${localStorage.getItem("access_token")}`
+      );
+      headers.set("Accept", "*/*");
+      headers.set("Content-Type", "application/json");
+      return headers;
     },
   }),
   endpoints: (builder) => ({
     // Get students for promotion
     getStudentsForPromotion: builder.query<
       StudentsResponse,
-      { academic_session_id: number; class_id?: number; division_id?: number; limit?: number; page?: number }
+      {
+        academic_session_id: number;
+        class_id?: number;
+        division_id?: number;
+        limit?: number;
+        page?: number;
+      }
     >({
-      query: ({ academic_session_id, class_id, division_id, limit = 10, page = 1 }) => {
-        const url = `students-for-permotion?limit=${limit}${page ? `&page=${page}` : ""}`
+      query: ({
+        academic_session_id,
+        class_id,
+        division_id,
+        limit = 10,
+        page = 1,
+      }) => {
+        const url = `students-for-permotion?limit=${limit}${
+          page ? `&page=${page}` : ""
+        }`;
         return {
           url,
           method: "POST",
@@ -107,7 +124,7 @@ export const PromotionApi = createApi({
             ...(class_id && { class_id }),
             ...(division_id && { division_id }),
           },
-        }
+        };
       },
     }),
 
@@ -124,7 +141,10 @@ export const PromotionApi = createApi({
     }),
 
     // Promote single student
-    promoteSingleStudent: builder.mutation<{ success: boolean; message: string }, PromoteSingleStudentRequest>({
+    promoteSingleStudent: builder.mutation<
+      { success: boolean; message: string },
+      PromoteSingleStudentRequest
+    >({
       query: (payload) => ({
         url: "promote-students",
         method: "POST",
@@ -133,7 +153,10 @@ export const PromotionApi = createApi({
     }),
 
     // Hold back student
-    holdBackStudent: builder.mutation<{ success: boolean; message: string }, HoldBackStudentRequest>({
+    holdBackStudent: builder.mutation<
+      { success: boolean; message: string },
+      HoldBackStudentRequest
+    >({
       query: (payload) => ({
         url: "hold-back-student",
         method: "POST",
@@ -142,7 +165,10 @@ export const PromotionApi = createApi({
     }),
 
     // Transfer student
-    transferStudent: builder.mutation<{ success: boolean; message: string }, FormData>({
+    transferStudent: builder.mutation<
+      { success: boolean; message: string },
+      FormData
+    >({
       query: (formData) => ({
         url: "transfer-student",
         method: "POST",
@@ -151,13 +177,16 @@ export const PromotionApi = createApi({
         // For FormData, we need to remove the Content-Type header
         // as the browser will set it with the correct boundary
         prepareHeaders: (headers: Headers): Headers => {
-          headers.set("Authorization", `Bearer ${localStorage.getItem("access_token")}`)
-          headers.set("Accept", "*/*")
-          headers.delete("Content-Type")
-          return headers
+          headers.set(
+            "Authorization",
+            `Bearer ${localStorage.getItem("access_token")}`
+          );
+          headers.set("Accept", "*/*");
+          headers.delete("Content-Type");
+          return headers;
         },
-        }),
       }),
+    }),
 
     // Get promotion history
     getPromotionHistory: builder.query<PromotionHistoryResponse, number>({
@@ -180,7 +209,7 @@ export const PromotionApi = createApi({
       }),
     }),
   }),
-})
+});
 
 // Export hooks for usage in components
 export const {
@@ -192,5 +221,4 @@ export const {
   useTransferStudentMutation,
   useGetPromotionHistoryQuery,
   useExportStudentsListMutation,
-} = PromotionApi
-
+} = PromotionApi;
