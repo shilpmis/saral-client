@@ -1,5 +1,8 @@
+import { Fees } from "@/pages/Fees";
 import { EnumValues } from "zod";
-import { ClassData } from "./academic";
+import { ClassData, Division } from "./academic";
+import { Quota } from "@/services/QuotaService";
+import { AppliedConcessioinToStudent, FeesPlan, FeeStatus } from "./fees";
 
 export enum StudentStatus {
   ACTIVE = "ACTIVE",
@@ -10,13 +13,18 @@ export enum StudentStatus {
 export interface StudentEnrollment {
   id: number;
   academic_session_id: number;
-  class_id: number;
+  division_id: number;
   student_id: number;
   quota_id: number | null;
-  status: string;
+  status: "pursuing" | "permoted" | "failed" | "drop";
+  is_new_admission: boolean;
   remarks: string | null;
   type: string;
-  class: ClassData;
+  class: Division; // here noted as class , actual
+  student: Student;
+  quota: Quota | null;
+  fees_status: FeeStatus;
+  provided_concession: AppliedConcessioinToStudent[];
 }
 
 export interface StudentMeta {
@@ -42,6 +50,8 @@ export interface StudentMeta {
   bank_name: string | null;
   account_no: number | null;
   IFSC_code: string | null;
+  blood_group?: string | null;
+  identification_mark?: string | null;
 }
 
 export interface Student {
@@ -51,6 +61,7 @@ export interface Student {
   first_name: string;
   middle_name: string | null;
   last_name: string;
+  enrollment_code: string;
   first_name_in_guj: string | null;
   middle_name_in_guj: string | null;
   last_name_in_guj: string | null;
@@ -85,7 +96,7 @@ export interface PageDetailsForStudents {
 export interface StudentEntry {
   students_data: Omit<
     Student,
-    "id" | "student_meta" | "school_id" | "acadamic_class"
+    "id" | "student_meta" | "school_id" | "acadamic_class" | "enrollment_code"
   >;
   student_meta_data: StudentMeta;
 }
