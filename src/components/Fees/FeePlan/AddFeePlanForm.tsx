@@ -22,6 +22,7 @@ import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchoo
 import {  useGetAcademicClassesQuery, useLazyGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import NumberInput from "@/components/ui/NumberInput"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 
 // Define the installment types
 const installmentTypes = [
@@ -198,22 +199,19 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
   const authState = useAppSelector(selectAuthState)
   const user = useAppSelector(selectCurrentUser)
-  // const [getFeesPlan, { data: FetchedFeePlans }] = useLazyGetFeesPlanQuery();
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const AcademicClassesForSchool = useAppSelector(selectAcademicClasses)
+
   const {t} = useTranslation()
   const [getAllFeesType, { data: FetchedFeesType, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery();
   const [getClassesWithoutFeesPlan, { data: ClassesWithOutFeesPlan, isLoading: isClassWithOutFeesPlanLoading , error : ErrorWhilwFetchingClassWithOutFeesPlan }] = useLazyGetAllClassesWithOuutFeesPlanQuery();
-
-
-  // console.log('isError :::', ErrorWhilwFetchingClassWithOutFeesPlan)
 
   const {
       data: classesData = [],
       isLoading: isLoadingClasses,
       refetch: refetchClasses,
     } = useGetAcademicClassesQuery(user!.school_id)
-
-  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
-  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getFeePlanInDetail, { data: fetchedDetialFeePlan,
     isLoading: isFetchingFeesPlan,
@@ -687,7 +685,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                           <SelectContent>
                             {ClassesWithOutFeesPlan && ClassesWithOutFeesPlan.map((cls) => (
                               <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
-                                {cls.class_id}-{cls.division}  {cls.aliases}
+                                {AcademicClassesForSchool && AcademicClassesForSchool.find((clas)=>clas.id === cls.class_id)?.class}-{cls.division}  {cls.aliases}
                               </SelectItem>
                             ))}
                             {(isClassWithOutFeesPlanLoading || !ClassesWithOutFeesPlan) && (
@@ -767,7 +765,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                       const installmentType = form.watch(`fees_types.${index}.installment_type`)
                       const totalAmount = form.watch(`fees_types.${index}.total_amount`)
                       const installmentTotal = calculateInstallmentTotal(index)
-                      const isAmountExceeded = installmentTotal > Number.parseInt(totalAmount.toString() || "0", 10)
+                      const isAmountExceeded = installmentTotal > Number.parseInt(totalAmount ? totalAmount.toString() : "0", 10)  
 
                       return (
                         <TabsContent key={field.id} value={index.toString()} className="space-y-4 pt-4">
