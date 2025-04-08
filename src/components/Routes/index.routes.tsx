@@ -240,14 +240,14 @@ export default function RootRoute() {
               }
             />
 
-            <Route
+            {/* <Route
               path="admissions/inquiry"
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
                   <InquiriesManagement />
                 </PrivateRoute>
               }
-            />
+            /> */}
 
             {/* Settings - nested routes */}
             <Route

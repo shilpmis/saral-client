@@ -1,6 +1,6 @@
-import type { Inquiry } from "@/services/InquiryServices"
-import { toast } from "@/hooks/use-toast"
-import type { Student } from "@/types/student"
+import type { Inquiry } from "@/services/InquiryServices";
+import { toast } from "@/hooks/use-toast";
+import type { Student } from "@/types/student";
 
 /**
  * Handles the student onboarding process after successful form submission
@@ -13,11 +13,11 @@ import type { Student } from "@/types/student"
  */
 export const handleStudentOnboarding = async (
   studentData: Student,
-  enrollmentId: string,
+  // enrollmentId: string,
   inquiry: Inquiry,
   updateInquiry: any,
   refetch: () => void,
-  closeDialog: () => void,
+  closeDialog: () => void
 ) => {
   try {
     // Update the inquiry with the enrollment ID and change status to enrolled
@@ -25,28 +25,27 @@ export const handleStudentOnboarding = async (
       id: inquiry.id,
       status: "enrolled",
       // enrollment_id:enrollmentId,
-    }).unwrap()
+    }).unwrap();
 
     toast({
       title: "Student Onboarded Successfully",
-      description: `Student has been successfully onboarded with enrollment ID: ${enrollmentId}`,
-    })
+      description: `Student has been successfully onboarded`,
+    });
 
     // Close the dialog and refresh the inquiries list
-    closeDialog()
-    refetch()
+    closeDialog();
+    refetch();
 
-    return true
+    return true;
   } catch (error: any) {
-    console.error("Error updating inquiry status:", error)
+    console.error("Error updating inquiry status:", error);
 
     toast({
       title: "Error",
       description: "Failed to update inquiry status. Please try again.",
       variant: "destructive",
-    })
+    });
 
-    return false
+    return false;
   }
-}
-
+};

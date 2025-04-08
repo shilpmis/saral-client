@@ -2,22 +2,26 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useLazyFetchSingleStundetQuery } from "@/services/StudentServices"
+import { useLazyFetchSingleStudentDataInDetailQuery, useLazyFetchSingleStundetQuery } from "@/services/StudentServices"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import StudentProfileView from "@/components/Students/StudentProfileView"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { StudentEnrollment } from "@/types/student"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export default function StudentProfilePage() {
   const {t} = useTranslation()
   const params = useParams()
   const navigate = useNavigate()
-  const [student, setStudent] = useState<any>(null)
+  const [student, setStudent] = useState<StudentEnrollment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Use RTK Query hook for fetching student details
-  const [fetchStudentDetails, { isLoading: isFetching }] = useLazyFetchSingleStundetQuery()
+  const [fetchStudentDetails, { isLoading: isFetching }] = useLazyFetchSingleStudentDataInDetailQuery();
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -28,7 +32,7 @@ export default function StudentProfilePage() {
         // Fetch detailed student information by ID
         const response = await fetchStudentDetails({
           student_id: Number(params.id),
-          student_meta: true,
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
         }).unwrap()
 
         if (response) {
@@ -79,6 +83,6 @@ export default function StudentProfilePage() {
     )
   }
 
-  return student ? <StudentProfileView student={student} onBack={handleBack} /> : null
+  return student ? <StudentProfileView student={student} onBack={handleBack} showToolBar={true} /> : null
 }
 

@@ -19,7 +19,7 @@ const formSchema = z.object({
   parent_name: z.string().min(2, { message: "Parent name is required" }),
   contact_number: z.string().min(10, { message: "Valid contact number is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  class_applying: z.string().min(1, { message: "Grade is required" }),
+  inquiry_for_class: z.string().min(1, { message: "Grade is required" }),
 })
 
 interface QuickInquiryFormProps {
@@ -39,7 +39,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       parent_name: "",
       contact_number: "",
       email: "",
-      class_applying: "",
+      inquiry_for_class: "",
     },
   })
 
@@ -49,7 +49,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       academic_session_id: currentAcademicSession?.id || 1,
       parent_contact: values.contact_number,
       email: values.email,
-      class_applying: Number(values.class_applying),
+      inquiry_for_class: Number(values.inquiry_for_class),
       parent_name: values.parent_name,
       student_name: values.student_name,
       first_name: values.student_name.split(" ")[0] || values.student_name, // Assuming first name is the first word
@@ -57,26 +57,26 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
       father_name: values.parent_name, // Assuming parent_name is the father's name
       primary_mobile: values.contact_number, // Assuming contact_number is the primary mobile
     }
-    const res = await addInquiries(payload)
+    // const res = await addInquiries(payload)
 
-    if (res.data) {
-      form.reset()
-      toast({
-        variant: "default",
-        title: "Inquiry added successfully",
-        description: "Inquiry added successfully",
-      })
-      onClose()
-    }
+    // if (res.data) {
+    //   form.reset()
+    //   toast({
+    //     variant: "default",
+    //     title: "Inquiry added successfully",
+    //     description: "Inquiry added successfully",
+    //   })
+    //   onClose()
+    // }
 
-    if (res.error) {
-      console.log("Check this error", res.error)
-      toast({
-        variant: "destructive",
-        title: "Error adding inquiry",
-        description: "There was an error adding the inquiry. Please try again.",
-      })
-    }
+    // if (res.error) {
+    //   console.log("Check this error", res.error)
+    //   toast({
+    //     variant: "destructive",
+    //     title: "Error adding inquiry",
+    //     description: "There was an error adding the inquiry. Please try again.",
+    //   })
+    // }
   }
 
   return (
@@ -141,7 +141,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
             />
             <FormField
               control={form.control}
-              name="class_applying"
+              name="inquiry_for_class"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("grade_applying_for")}</FormLabel>

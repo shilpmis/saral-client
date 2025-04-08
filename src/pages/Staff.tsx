@@ -69,6 +69,7 @@ import { z } from "zod";
 import { useBulkUploadStudentsMutation } from "@/services/StudentServices";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice";
+import { useNavigate } from "react-router-dom";
 
 // Type for validation results
 type ValidationResult = {
@@ -153,6 +154,7 @@ const FilterOptions: React.FC<{
 export const Staff: React.FC = () => {
 
   const { t } = useTranslation();
+  const navigate = useNavigate()
   const authState = useAppSelector(selectAuthState);
   const StaffRolesForSchool = useAppSelector(selectSchoolStaffRoles);
   const AcademicSessionsForSchool = useAppSelector(
@@ -283,7 +285,8 @@ export const Staff: React.FC = () => {
         variant: "destructive",
       });
       // Redirect to staff type creation page
-      window.location.href = "/staff-type-creation"; // Replace with the actual route for staff type creation
+      navigate('/d/settings/staff')
+      // window.location.href = "/staff-type-creation"; // Replace with the actual route for staff type creation
     }
   }, [StaffRolesForSchool]);
 

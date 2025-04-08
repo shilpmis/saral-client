@@ -116,18 +116,18 @@ export const createClasses = createAsyncThunk<
   }
 });
 
-export const createDivision = createAsyncThunk<Division, Omit<Division, "id">>(
-  "academic/createDivision",
-  async (paylaod, { rejectWithValue }) => {
-    try {
-      const res = await ApiService.post("class/division", paylaod);
-      return res.data;
-    } catch (error: any) {
-      console.log(error);
-      return rejectWithValue(error.response?.data || "Failed to create class");
-    }
+export const createDivision = createAsyncThunk<
+  Division,
+  Omit<Division, "id" | "class">
+>("academic/createDivision", async (paylaod, { rejectWithValue }) => {
+  try {
+    const res = await ApiService.post("class/division", paylaod);
+    return res.data;
+  } catch (error: any) {
+    console.log(error);
+    return rejectWithValue(error.response?.data || "Failed to create class");
   }
-);
+});
 
 export const editDivision = createAsyncThunk<
   Class[],
