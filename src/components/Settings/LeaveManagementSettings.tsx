@@ -30,6 +30,7 @@ import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { selectLeaveTypeForSchool, setLeave } from "@/redux/slices/leaveSlice"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import NumberInput from "../ui/NumberInput"
 
 // Schema for leave type
 const leaveTypeSchema = z.object({
@@ -733,7 +734,7 @@ export function LeaveManagementSettings() {
           isOpen: value
         })
       }}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{DialogForLeavePolicy.type === 'edit' ? t("edit_leave_policy") : t("add_leave_policy")}</DialogTitle>
             <DialogDescription>
@@ -827,33 +828,27 @@ export function LeaveManagementSettings() {
                   <FormItem>
                     <FormLabel required>{t("annual_allowance")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <NumberInput
+                        {...field}
                         min={1}
                         max={100}
-                        {...field}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          if (!isNaN(value)) {
-                            field.onChange(value);
-                            
-                            // Update max_consecutive_days based on new annual_quota
-                            const minConsecutive = Math.floor(value * 0.3);
-                            const maxConsecutive = Math.ceil(value * 0.35);
-                            const currentConsecutive = leavePolicyForm.getValues("max_consecutive_days");
-                            
-                            if (currentConsecutive < minConsecutive || currentConsecutive > maxConsecutive) {
-                              leavePolicyForm.setValue("max_consecutive_days", minConsecutive);
-                            }
-                            
-                            // Update max_carry_forward_days if needed
-                            if (leavePolicyForm.getValues("can_carry_forward")) {
-                              const maxCarryForward = Math.floor(value * 0.5);
-                              const currentCarryForward = leavePolicyForm.getValues("max_carry_forward_days");
-                              
-                              if (currentCarryForward > maxCarryForward) {
-                                leavePolicyForm.setValue("max_carry_forward_days", maxCarryForward);
-                              }
+                        value={field.value ? field.value.toString() : undefined}
+                        onChange={(value) => {
+                          if(value === undefined){
+                            return;
+                          }
+                          field.onChange(value);
+                          const minConsecutive = Math.floor(Number(value) * 0.3);
+                          const maxConsecutive = Math.ceil(Number(value) * 0.35);
+                          const currentConsecutive = leavePolicyForm.getValues("max_consecutive_days");
+                          if (currentConsecutive < minConsecutive || currentConsecutive > maxConsecutive) {
+                            leavePolicyForm.setValue("max_consecutive_days", minConsecutive);
+                          }
+                          if (leavePolicyForm.getValues("can_carry_forward")) {
+                            const maxCarryForward = Math.floor(Number(value) * 0.5);
+                            const currentCarryForward = leavePolicyForm.getValues("max_carry_forward_days");
+                            if (currentCarryForward > maxCarryForward) {
+                              leavePolicyForm.setValue("max_carry_forward_days", maxCarryForward);
                             }
                           }
                         }}
@@ -874,12 +869,12 @@ export function LeaveManagementSettings() {
                   <FormItem>
                     <FormLabel required>{t("max_consecutive_days")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <NumberInput
+                        {...field}
                         min={minConsecutiveDays}
                         max={maxConsecutiveDays}
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value ? field.value.toString() : undefined}
+                        onChange={(value) => field.onChange(value)}
                       />
                     </FormControl>
                     <FormDescription>
@@ -925,13 +920,13 @@ export function LeaveManagementSettings() {
                   <FormItem>
                     <FormLabel required>{t("max_carry_forward")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <NumberInput
+                        {...field}
                         min={0}
                         max={maxCarryForwardAllowed}
+                        value={field.value ? field.value.toString() : undefined}
                         disabled={!leavePolicyForm.watch("can_carry_forward")}
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(value) => field.onChange(value)}
                       />
                     </FormControl>
                     <FormDescription>
