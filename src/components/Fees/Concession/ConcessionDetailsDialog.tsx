@@ -26,7 +26,7 @@ import {
 } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -67,6 +67,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   const [updateConcessionStatusForPlan, { isLoading: isUpdatingPlan }] = useUpdateConcsessionAppliedToPlanMutation()
   const [updateConcessionStatusForStudent, { isLoading: isUpdatingStudent }] =
   useUpdateConcsessionAppliedToStudentMutation()
+  const academicClasses = useAppSelector(selectAcademicClasses)
   const academicDivisions = useAppSelector(selectAllAcademicClasses)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const authState = useAppSelector(selectAuthState)
@@ -107,13 +108,14 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   }
 
   // Get class name from class ID
-  const getClassName = (classId: number) => {
-    if (!academicDivisions) return "Loading..."
+  const getClassName = (division_id: number) => {
+    if (!academicDivisions || !academicClasses ) return "Loading..."
 
-    const division = academicDivisions.find((div) => div.id === classId)
-    if (!division) return `Class ID: ${classId}`
+    let division = academicDivisions.find((div) => div.id === division_id)
+    let clas = academicClasses.find((cls) => cls.id === division?.class_id)
+    // if (!division) return `Class ID: ${classId}`
     // TODO :: Need to fix   
-    return `Class ${division.class_id} ${division.aliases ? ` - ${division.aliases}` : ""}`
+    return `Class ${clas?.class} ${division?.division ? ` - ${division.aliases}` : ""}`
   }
 
   // Handle status toggle click
@@ -722,7 +724,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                             <TableCell>{item.student?.gr_no}</TableCell>
                             <TableCell>
                               {studentClass
-                                ? `Class ${studentClass.class?.name} ${studentClass.class?.divisions}`
+                                ? `Class ${studentClass.class?.class} ${studentClass.class?.division}`
                                 : "N/A"}
                             </TableCell>
                             <TableCell>{item.student?.roll_number}</TableCell>

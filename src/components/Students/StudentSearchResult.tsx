@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import type { SerializedError } from "@reduxjs/toolkit"
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query"
 import type { Student } from "@/types/student"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface StudentSearchResultsProps {
   results: Student[]
@@ -14,6 +15,8 @@ interface StudentSearchResultsProps {
 }
 
 export function StudentSearchResults({ results, isLoading, error, onSelectStudent }: StudentSearchResultsProps) {
+
+  const { t } = useTranslation()
   if (isLoading) {
     return (
       <Card className="absolute z-10 w-full mt-1 shadow-lg">
@@ -31,7 +34,7 @@ export function StudentSearchResults({ results, isLoading, error, onSelectStuden
   if (error) {
     return (
       <Card className="absolute z-10 w-full mt-1 shadow-lg">
-        <CardContent className="p-2 text-destructive">Failed to load search results. Please try again.</CardContent>
+        <CardContent className="p-2 text-destructive">{t("failed_to_load_search_results._please_try_again.")}</CardContent>
       </Card>
     )
   }

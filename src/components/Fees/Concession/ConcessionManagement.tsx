@@ -187,7 +187,6 @@ export const ConcessionManagement: React.FC = () => {
             isOpen: false,
             concession: null,
           })
-          console.log("Res===>",res);
           toast({
             title: "Success",
             description: "Concession applied to fee plan successfully",
@@ -286,7 +285,7 @@ export const ConcessionManagement: React.FC = () => {
                                 ) : filteredConcessions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                                            {searchTerm ? "No concessions match your search" : t("no_concessions_found")}
+                                            {searchTerm ? t("no_concessions_match_your_search") : t("no_concessions_found")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -327,14 +326,14 @@ export const ConcessionManagement: React.FC = () => {
                                                     >
                                                         <Link className="h-4 w-4" />
                                                     </Button>
-                                                    <Button
+                                                    {/* <Button
                                                         variant="outline"
                                                         size="icon"
                                                         onClick={() => openDeleteDialog(concession)}
                                                         title="Delete Concession"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    </Button> */}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

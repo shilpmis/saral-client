@@ -87,9 +87,9 @@ export const QuotaApi = createApi({
   }),
   tagTypes: ["Quota", "Seats"],
   endpoints: (builder) => ({
-    getQuotas: builder.query<Quota[], void>({
-      query: (academic_session_id) =>
-        `quota/all?academic_session_id=${academic_session_id}`,
+    getQuotas: builder.query<Quota[], { academic_session_id: number }>({
+      query: ({ academic_session_id }) =>
+        `quota/all?academic_session=${academic_session_id}`,
       providesTags: ["Quota"],
     }),
     getQuotaAllocations: builder.query<any, void>({
@@ -103,7 +103,7 @@ export const QuotaApi = createApi({
       query: (data) => {
         const { academic_session_id, ...quota } = data;
         return {
-          url: `quota?academic_session_id=${academic_session_id}`,
+          url: `quota?academic_session=${academic_session_id}`,
           method: "POST",
           body: quota,
         };
@@ -115,7 +115,7 @@ export const QuotaApi = createApi({
       { payload: Partial<Quota>; academic_session_id: number; quota_id: number }
     >({
       query: ({ payload, academic_session_id, quota_id }) => ({
-        url: `quota/${quota_id}?academic_session_id=${academic_session_id}`,
+        url: `quota/${quota_id}?academic_session=${academic_session_id}`,
         method: "PUT",
         body: payload,
       }),
@@ -126,7 +126,7 @@ export const QuotaApi = createApi({
       { id: number; academic_session_id: number }
     >({
       query: ({ id, academic_session_id }) => ({
-        url: `quota/${id}?academic_session_id=${academic_session_id}`,
+        url: `quota/${id}?academic_session=${academic_session_id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Quota"],

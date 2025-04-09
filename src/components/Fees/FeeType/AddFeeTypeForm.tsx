@@ -34,15 +34,15 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({
     defaultValues: type === 'edit' && initialData
       ? {
         name: initialData.name,
-        description: initialData.description || "",
-        // is_concession_applicable: initialData.is_concession_applicable,
+        description: initialData.description,
         status: initialData.status
+        // is_concession_applicable: initialData.is_concession_applicable,
       }
       : {
-        name: "",
-        description: "",
-        // is_concession_applicable: false,
+        name: undefined,
+        description: undefined,
         status: "Active",
+        // is_concession_applicable: false,
       },
   })
 

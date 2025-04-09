@@ -39,6 +39,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import NumberInput from "@/components/ui/NumberInput"
 
 const seatAvailabilitySchema = z.object({
   class_id: z
@@ -124,7 +125,7 @@ function SeatAvailabilityForm({
           name="class_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("class")}</FormLabel>
+              <FormLabel required>{t("class")}</FormLabel>
               <Select
                 disabled={isEditing}
                 value={field.value ? field.value.toString() : ""}
@@ -158,13 +159,12 @@ function SeatAvailabilityForm({
           name="total_seats"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormLabel required>{t("total_seats")}</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder={t("enter_total_seats")}
-                  {...field}
-                  onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                <NumberInput
+                 {...field}
+                 value={field.value !== undefined ? String(field.value) : ""}
+                 onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                 />
               </FormControl>
               <FormDescription>
@@ -247,7 +247,7 @@ function QuotaAllocationForm({
           name="class_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("class")}</FormLabel>
+              <FormLabel required>{t("class")}</FormLabel>
               <FormControl>
                 <Input value={classId ? getClassName(classId) : ""} disabled className="bg-muted/50" />
               </FormControl>
@@ -262,7 +262,7 @@ function QuotaAllocationForm({
           name="quota_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("quota")}</FormLabel>
+              <FormLabel required>{t("quota")}</FormLabel>
               <Select
                 disabled={isEditing}
                 value={field.value ? field.value.toString() : ""}
@@ -317,7 +317,7 @@ function QuotaAllocationForm({
           name="total_seats"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormLabel required>{t("total_seats")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -367,7 +367,9 @@ export default function SeatsManagement() {
     refetch: refetchSeats,
   } = useGetClassSeatAvailabilityQuery()
 
-  const { data: quotas, isLoading: isLoadingQuotas, refetch: refetchQuotas } = useGetQuotasQuery()
+  const { data: quotas, isLoading: isLoadingQuotas, refetch: refetchQuotas } = useGetQuotasQuery({
+    academic_session_id : currentAcademicSession!.id,
+  })
 
   const [addSeatAvailability, { isLoading: isAddingSeats }] = useAddSeatAvailabilityMutation()
   const [updateSeatAvailability, { isLoading: isSeatsAreUpdating }] = useUpdateSeatAvailabilityMutation()
@@ -392,7 +394,7 @@ export default function SeatsManagement() {
     isOpen: false,
     isEdit: false,
     class_id: null,
-    total_seats: 40,
+    total_seats: 0,
   })
 
   const [quotaDialogData, setQuotaDialogData] = useState<{
@@ -475,7 +477,7 @@ export default function SeatsManagement() {
     }
   }
 
-  const handleSeatDialogOpen = (isEdit: boolean, classId: number | null = null, totalSeats = 40) => {
+  const handleSeatDialogOpen = (isEdit: boolean, classId: number | null = null, totalSeats = 0) => {
     setSeatDialogData({
       isOpen: true,
       isEdit,
@@ -485,7 +487,7 @@ export default function SeatsManagement() {
   }
 
   const handleSeatDialogClose = () => {
-    setSeatDialogData({ isOpen: false, isEdit: false, class_id: null, total_seats: 40 })
+    setSeatDialogData({ isOpen: false, isEdit: false, class_id: null, total_seats: 0 })
   }
 
   const handleSaveSeat = async (data: SeatAvailabilityFormValues) => {
@@ -728,13 +730,13 @@ export default function SeatsManagement() {
           </div>
         </div>
 
-        {isErrorSeats && (
+        {/* {isErrorSeats && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{t("error")}</AlertTitle>
             <AlertDescription>{getErrorMessage(seatsError)}</AlertDescription>
           </Alert>
-        )}
+        )} */}
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
@@ -768,6 +770,8 @@ export default function SeatsManagement() {
                   </Select>
                 </div>
 
+                    {filteredSeats && filteredSeats.length > 0 ? (
+                      filteredSeats.map((seat) => (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -781,9 +785,7 @@ export default function SeatsManagement() {
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {filteredSeats && filteredSeats.length > 0 ? (
-                      filteredSeats.map((seat) => (
+                        <TableBody>
                         <TableRow key={seat.id}>
                           <TableCell className="font-medium">
                             {t("class")} {seat.class.class}
@@ -810,16 +812,16 @@ export default function SeatsManagement() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-4">
-                          {t("no_seat_data_available_add_seat_availability_to_get_started")}
-                        </TableCell>
-                      </TableRow>
-                    )}
                   </TableBody>
                 </Table>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground text-red-600 w-full">
+                        <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground opacity-50 text-red-500" />
+                        <p className="mt-4">{t("no_seat_data_available")}</p>
+                        <p className="text-sm">{t("add_seat_availability_to_get_started")}</p>
+                      </div>
+                    )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -903,8 +905,8 @@ export default function SeatsManagement() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                  <div className="text-center py-8 text-muted-foreground text-red-600">
+                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground opacity-50 text-red-500" />
                     <p className="mt-4">{t("no_seat_data_available")}</p>
                     <p className="text-sm">{t("add_seat_availability_to_get_started")}</p>
                   </div>

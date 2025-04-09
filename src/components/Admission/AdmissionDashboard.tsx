@@ -1,18 +1,34 @@
 import type React from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts"
+
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Legend,
+} from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2 } from "lucide-react"
-import { useGetAdmissionDashboardQuery, useGetAdmissionDetailedStatsQuery, useGetAdmissionTrendsQuery } from "@/services/dashboardServices"
+import { Loader2, Plus, Search, Filter } from "lucide-react"
+import {
+  useGetAdmissionDashboardQuery,
+  useGetAdmissionDetailedStatsQuery,
+  useGetAdmissionTrendsQuery,
+} from "@/services/dashboardServices"
 import { useEffect, useState } from "react"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-
-interface DashboardData {
-  totalInquiries: number
-  pendingApplications: number
-  acceptedAdmissions: number
-  upcomingInterviews: number
-}
+import { Button } from "@/components/ui/button"
+import { QuickInquiryForm } from "./QuickInquiryForm" 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { RecentInquiries } from "./RecentInquiries"
+import { current } from "@reduxjs/toolkit"
 
 interface ClassWiseTrend {
   time_period: string
@@ -25,52 +41,129 @@ interface TrendResponse {
   classes: string[]
 }
 
-interface StatusCounts {
-  [key: string]: number
-}
-
 export const AdmissionDashboard: React.FC = () => {
-  // State for trend period
-  const [trendPeriod, setTrendPeriod] = useState<'day' | 'week' | 'month'>('week')
-  const {t} = useTranslation()
-  
-  // Fetch basic dashboard metrics
-  const { 
-    data: dashboardData, 
-    isLoading: isLoadingDashboard 
-  } = useGetAdmissionDashboardQuery()
-  
-  // Fetch detailed status statistics
-  const { 
-    data: statusStats, 
-    isLoading: isLoadingStats 
-  } = useGetAdmissionDetailedStatsQuery()
-  
-  // Fetch trend data with period state
-  const { 
-    data: trendResponse, 
-    isLoading: isLoadingTrends 
-  } = useGetAdmissionTrendsQuery({ period: trendPeriod, limit: 6 }) as { data: TrendResponse | undefined; isLoading: boolean }
+  // State for trend period and academic year
+  const [trendPeriod, setTrendPeriod] = useState<"day" | "week" | "month">("week")
+  const [isQuickInquiryOpen, setIsQuickInquiryOpen] = useState(false)
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<number | null>(null)
+  const { t } = useTranslation()
+
+  // Get all academic sessions
+  const academicSessions = useAppSelector(selectAccademicSessionsForSchool)
+  const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
+
+  // Set default academic year on component mount
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      // Find the current/active academic session
+      // const activeSession = academicSessions.find((session) => Boolean(session.is_active))
+      setSelectedAcademicYear(selectedAcademicYear)
+    }else{
+      setSelectedAcademicYear(CurrentacademicSessions!.id)
+    }
+    console.log("Current academic session:", CurrentacademicSessions!.id ,selectedAcademicYear)
+  }, [academicSessions, selectedAcademicYear])
+
+  // Fetch basic dashboard metrics with academic year filter
+  const {
+    data: dashboardData,
+    isLoading: isLoadingDashboard,
+    refetch: refetchDashboard,
+  } = useGetAdmissionDashboardQuery(
+    {academic_session_id: selectedAcademicYear || CurrentacademicSessions!.id} // Default to first session if none selected
+  )
+
+  // Fetch detailed status statistics with academic year filter
+  const {
+    data: statusStats,
+    isLoading: isLoadingStats,
+    refetch: refetchStats,
+  } = useGetAdmissionDetailedStatsQuery(
+    {academic_session_id: selectedAcademicYear || CurrentacademicSessions!.id}
+  )
+
+  // Fetch trend data with period state and academic year filter
+  const {
+    data: trendResponse,
+    isLoading: isLoadingTrends,
+    refetch: refetchTrends,
+  } = useGetAdmissionTrendsQuery(
+      { period: trendPeriod,
+        limit: 6, 
+        academic_session_id: selectedAcademicYear || CurrentacademicSessions!.id
+      }
+  ) as { data: TrendResponse | undefined; isLoading: boolean; refetch: () => void }
+
+  // Refetch data when academic year changes
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      refetchDashboard()
+      refetchStats()
+      refetchTrends()
+    }
+  }, [selectedAcademicYear, refetchDashboard, refetchStats, refetchTrends])
 
   // Array of colors for different classes
   const classColors = [
-    "#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088fe", "#00C49F", 
-    "#FFBB28", "#FF8042", "#a4de6c", "#d0ed57"
+    "#8884d8",
+    "#82ca9d",
+    "#ffc658",
+    "#ff8042",
+    "#0088fe",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#a4de6c",
+    "#d0ed57",
   ]
 
   // Create data for status-based chart
-  const statusChartData = statusStats 
+  const statusChartData = statusStats
     ? Object.entries(statusStats).map(([status, count]) => ({
         status,
-        count
+        count,
       }))
     : []
 
   // Loading state indicator
   const isLoading = isLoadingDashboard || isLoadingStats || isLoadingTrends
-  
+
   return (
     <div className="space-y-6">
+      {/* Academic Year Filter and Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{t("academic_year")}:</span>
+          <Select
+            value={selectedAcademicYear?.toString() || ""}
+            onValueChange={(value) => setSelectedAcademicYear(Number(value))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t("select_academic_year")} />
+            </SelectTrigger>
+            <SelectContent>
+              {academicSessions?.map((session) => (
+                <SelectItem key={session.id} value={session.id.toString()}>
+                  {session.session_name} {Boolean(session.is_active) && `(${t("current")})`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* <div className="flex gap-2">
+          <Button variant="outline" onClick={() => (window.location.href = "/d/admission/inquiries")}>
+            <Search className="h-4 w-4 mr-2" />
+            {t("view_all_inquiries")}
+          </Button>
+          <Button onClick={() => setIsQuickInquiryOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("quick_inquiry")}
+          </Button>
+        </div> */}
+      </div>
+
       {isLoading && (
         <div className="flex justify-center p-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -97,13 +190,11 @@ export const AdmissionDashboard: React.FC = () => {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoadingDashboard ? "..." : dashboardData?.totalInquiries}
-            </div>
+            <div className="text-2xl font-bold">{isLoadingDashboard ? "..." : dashboardData?.totalInquiries}</div>
             <p className="text-xs text-muted-foreground">{t("total_applications_received")}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("pending_applications")}</CardTitle>
@@ -121,13 +212,11 @@ export const AdmissionDashboard: React.FC = () => {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoadingDashboard ? "..." : dashboardData?.pendingApplications}
-            </div>
+            <div className="text-2xl font-bold">{isLoadingDashboard ? "..." : dashboardData?.pendingApplications}</div>
             <p className="text-xs text-muted-foreground">{t("awaiting_review")}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("accepted_admissions")}</CardTitle>
@@ -145,13 +234,11 @@ export const AdmissionDashboard: React.FC = () => {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoadingDashboard ? "..." : dashboardData?.acceptedAdmissions}
-            </div>
+            <div className="text-2xl font-bold">{isLoadingDashboard ? "..." : dashboardData?.acceptedAdmissions}</div>
             <p className="text-xs text-muted-foreground">{t("approved_admissions")}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("upcoming_interviews")}</CardTitle>
@@ -170,9 +257,7 @@ export const AdmissionDashboard: React.FC = () => {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoadingDashboard ? "..." : dashboardData?.upcomingInterviews}
-            </div>
+            <div className="text-2xl font-bold">{isLoadingDashboard ? "..." : dashboardData?.upcomingInterviews}</div>
             <p className="text-xs text-muted-foreground">{t("scheduled_interviews")}</p>
           </CardContent>
         </Card>
@@ -183,8 +268,9 @@ export const AdmissionDashboard: React.FC = () => {
           <TabsTrigger value="trends">{t("admission_trends")}</TabsTrigger>
           <TabsTrigger value="status">{t("status_breakdown")}</TabsTrigger>
           <TabsTrigger value="class">{t("class_wise_trends")}</TabsTrigger>
+          <TabsTrigger value="recent">{t("recent_inquiries")}</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="trends">
           <Card>
             <CardHeader>
@@ -193,21 +279,21 @@ export const AdmissionDashboard: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <span>{t("number_of_inquiries_received_per_time_period")}</span>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => setTrendPeriod('day')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("day")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "day" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       {t("daily")}
                     </button>
-                    <button 
-                      onClick={() => setTrendPeriod('week')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("week")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "week" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       {t("weekly")}
                     </button>
-                    <button 
-                      onClick={() => setTrendPeriod('month')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("month")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "month" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       {t("monthly")}
                     </button>
@@ -223,20 +309,14 @@ export const AdmissionDashboard: React.FC = () => {
                     <XAxis dataKey="time_period" />
                     <YAxis />
                     <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="total" 
-                      stroke="#8884d8" 
-                      strokeWidth={2} 
-                      name="Total Inquiries" 
-                    />
+                    <Line type="monotone" dataKey="total" stroke="#8884d8" strokeWidth={2} name="Total Inquiries" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="status">
           <Card>
             <CardHeader>
@@ -267,21 +347,21 @@ export const AdmissionDashboard: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <span>{t("admission_inquiries_by_class_over_time")}</span>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => setTrendPeriod('day')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'day' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("day")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "day" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       {t("daily")}
                     </button>
-                    <button 
-                      onClick={() => setTrendPeriod('week')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'week' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("week")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "week" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
-                    {t("weekly")}
+                      {t("weekly")}
                     </button>
-                    <button 
-                      onClick={() => setTrendPeriod('month')}
-                      className={`px-2 py-1 text-xs rounded ${trendPeriod === 'month' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    <button
+                      onClick={() => setTrendPeriod("month")}
+                      className={`px-2 py-1 text-xs rounded ${trendPeriod === "month" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       {t("monthly")}
                     </button>
@@ -292,22 +372,19 @@ export const AdmissionDashboard: React.FC = () => {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={trendResponse?.trends || []} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
+                  <BarChart data={trendResponse?.trends || []} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time_period" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
                     {trendResponse?.classes?.map((className, index) => (
-                      <Bar 
+                      <Bar
                         key={className}
-                        dataKey={className} 
-                        stackId="a" 
-                        fill={classColors[index % classColors.length]} 
-                        name={className} 
+                        dataKey={className}
+                        stackId="a"
+                        fill={classColors[index % classColors.length]}
+                        name={className}
                       />
                     ))}
                   </BarChart>
@@ -316,9 +393,21 @@ export const AdmissionDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="recent">
+          {selectedAcademicYear && <RecentInquiries academicSessionId={selectedAcademicYear} />}
+        </TabsContent>
       </Tabs>
+
+      {/* Quick Inquiry Form Dialog */}
+      {selectedAcademicYear && (<QuickInquiryForm
+        isOpen={isQuickInquiryOpen}
+        onClose={() => setIsQuickInquiryOpen(false)}
+        academicSessionId={selectedAcademicYear}
+      />)}
     </div>
   )
 }
 
 export default AdmissionDashboard
+
