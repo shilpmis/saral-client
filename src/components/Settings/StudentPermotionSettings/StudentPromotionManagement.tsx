@@ -74,7 +74,7 @@ interface Student {
   }
   class: {
     id: number
-    class_id: number
+    class: number
     division: string
     aliases: string | null
   }
@@ -417,13 +417,16 @@ export function StudentPromotionManagement() {
         // Refresh students
         fetchStudents()
       } else {
+        console.log("result result", result)
         toast({
           title: "Error",
           description: result.message || "Failed to promote student",
           variant: "destructive",
         })
       }
-    } catch (error: any) {      
+    } catch (error: any) {
+      console.log("error occured while promoting student", error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to promote student. Please try again.",
@@ -682,6 +685,10 @@ export function StudentPromotionManagement() {
     isExporting ||
     isLoadingAcademicClasses
 
+
+  useEffect(()=> {
+    console.log("selectedStudentForAction", selectedStudentForAction)
+  }, [])
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -1253,7 +1260,7 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {selectedStudentForAction?.class?.class_id} {selectedStudentForAction?.class?.division}
+                  {/* Class {selectedStudentForAction?.class.class} {selectedStudentForAction?.class.division} */}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1422,7 +1429,7 @@ export function StudentPromotionManagement() {
                   {selectedStudentForAction && (
                     <p className="text-sm text-muted-foreground">
                       {selectedStudentForAction.student.first_name} {selectedStudentForAction.student.middle_name}{" "}
-                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class.class_id}{" "}
+                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class.class}{" "}
                       {selectedStudentForAction.class.division}
                     </p>
                   )}
