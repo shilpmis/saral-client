@@ -417,16 +417,13 @@ export function StudentPromotionManagement() {
         // Refresh students
         fetchStudents()
       } else {
-        console.log("result result", result)
         toast({
           title: "Error",
           description: result.message || "Failed to promote student",
           variant: "destructive",
         })
       }
-    } catch (error: any) {
-      console.log("error occured while promoting student", error);
-      
+    } catch (error: any) {      
       toast({
         title: "Error",
         description: error.message || "Failed to promote student. Please try again.",
@@ -685,10 +682,6 @@ export function StudentPromotionManagement() {
     isExporting ||
     isLoadingAcademicClasses
 
-
-  useEffect(()=> {
-    console.log("selectedStudentForAction", selectedStudentForAction)
-  }, [])
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
