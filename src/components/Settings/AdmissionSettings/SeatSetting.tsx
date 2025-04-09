@@ -125,7 +125,7 @@ function SeatAvailabilityForm({
           name="class_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("class")}</FormLabel>
+              <FormLabel required>{t("class")}</FormLabel>
               <Select
                 disabled={isEditing}
                 value={field.value ? field.value.toString() : ""}
@@ -159,7 +159,7 @@ function SeatAvailabilityForm({
           name="total_seats"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormLabel required>{t("total_seats")}</FormLabel>
               <FormControl>
                 <NumberInput
                  {...field}
@@ -247,7 +247,7 @@ function QuotaAllocationForm({
           name="class_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("class")}</FormLabel>
+              <FormLabel required>{t("class")}</FormLabel>
               <FormControl>
                 <Input value={classId ? getClassName(classId) : ""} disabled className="bg-muted/50" />
               </FormControl>
@@ -262,7 +262,7 @@ function QuotaAllocationForm({
           name="quota_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("quota")}</FormLabel>
+              <FormLabel required>{t("quota")}</FormLabel>
               <Select
                 disabled={isEditing}
                 value={field.value ? field.value.toString() : ""}
@@ -317,7 +317,7 @@ function QuotaAllocationForm({
           name="total_seats"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("total_seats")}</FormLabel>
+              <FormLabel required>{t("total_seats")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
