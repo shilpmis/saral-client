@@ -343,8 +343,8 @@ export function LeaveManagementSettings() {
       leaveTypeForm.reset({
         name: leaveType?.leave_type_name,
         description: leaveType?.leave_type_name,
-        is_paid: leaveType?.is_paid,
-        affects_payroll: leaveType?.affects_payroll,
+        is_paid: Boolean(Number(leaveType?.is_paid)),
+        affects_payroll: Boolean(Number(leaveType?.affects_payroll)),
       })
     } else {
       leaveTypeForm.reset({
