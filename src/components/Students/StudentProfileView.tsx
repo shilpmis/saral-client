@@ -130,10 +130,10 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 )}
               </PDFDownloadLink>
             )}
-          <Button className="flex items-center gap-1">
+          {/* <Button className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             {t("edit_profile")}
-          </Button>
+          </Button> */}
         </div>
       </div>)}
 
