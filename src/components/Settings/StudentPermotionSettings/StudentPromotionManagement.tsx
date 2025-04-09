@@ -75,6 +75,7 @@ interface Student {
   class: {
     id: number
     class_id: number
+    class: string
     division: string
     aliases: string | null
   }
@@ -169,7 +170,6 @@ export function StudentPromotionManagement() {
     if (!academicSessionsData) return []
 
     // Check if the data is in the expected format
-    console.log("academicSessionsData", academicSessionsData)
 
     // Extract sessions from the response
     let sessions = []
@@ -266,7 +266,6 @@ export function StudentPromotionManagement() {
 
     // Create query parameters object
     const queryParams = {
-      page: currentPage,
       limit: itemsPerPage,
     }
 
@@ -284,6 +283,7 @@ export function StudentPromotionManagement() {
     getStudentsForPromotion({
       academic_session_id: Number.parseInt(sourceAcademicSession),
       class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+      page: currentPage,
       ...queryParams,
     })
     setHasSearched(true)
@@ -344,7 +344,6 @@ export function StudentPromotionManagement() {
       return
     }
 
-    console.log("Selected students for promotion:", selectedStudents)
     try {
       const result = await promoteStudents({
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -486,7 +485,7 @@ export function StudentPromotionManagement() {
         variant: "destructive",
       })
       return
-    } 
+    }
 
     try {
       const formData = new FormData()
@@ -542,8 +541,7 @@ export function StudentPromotionManagement() {
     if (selectedStudents.length === filteredStudents.length) {
       setSelectedStudents([])
     } else {
-      setSelectedStudents(filteredStudents.map((item) => 
-        item.student.student_id))
+      setSelectedStudents(filteredStudents.map((item) => item.student.id))
     }
   }
 
@@ -594,11 +592,34 @@ export function StudentPromotionManagement() {
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    // Fetch students with the new page number
-    if (hasSearched) {
-      fetchStudents()
+    // Instead of setting state and then fetching, we'll fetch with the provided page number directly
+    if (hasSearched && sourceAcademicSession && (sourceClass || sourceDivision)) {
+      // Create query parameters object with the new page number
+      const queryParams = {
+        limit: itemsPerPage,
+      }
+
+      // Add division_id as a query parameter if selected
+      if (sourceDivision && sourceDivision !== "all") {
+        const divisionId = sourceDivision.startsWith("division-")
+          ? sourceDivision.replace("division-", "")
+          : sourceDivision
+
+        // @ts-ignore - Adding division_id to query params
+        queryParams.division_id = Number.parseInt(divisionId)
+      }
+
+      // Call the API with the new page number
+      getStudentsForPromotion({
+        academic_session_id: Number.parseInt(sourceAcademicSession),
+        class_id: sourceClass ? Number.parseInt(sourceClass) : undefined,
+        page: page, // Use the page parameter directly
+        ...queryParams,
+      })
     }
+
+    // Update the state after initiating the fetch
+    setCurrentPage(page)
   }
 
   // Export students list
@@ -645,7 +666,6 @@ export function StudentPromotionManagement() {
     setCurrentPage(1)
   }, [sourceClass, sourceDivision])
 
-  
   // Reset search when filters change
   useEffect(() => {
     setSearchTerm("")
@@ -661,6 +681,7 @@ export function StudentPromotionManagement() {
     isTransferring ||
     isExporting ||
     isLoadingAcademicClasses
+
 
   return (
     <div className="space-y-6">
@@ -946,11 +967,11 @@ export function StudentPromotionManagement() {
                       </TableRow>
                     ) : filteredStudents.length > 0 ? (
                       filteredStudents.map((student) => (
-                        <TableRow key={student.id}>
+                        <TableRow key={student.student.id}>
                           <TableCell>
                             <Checkbox
-                              checked={selectedStudents.includes(student.id)}
-                              onCheckedChange={() => toggleSelectStudent(student.id)}
+                              checked={selectedStudents.includes(student.student.id)}
+                              onCheckedChange={() => toggleSelectStudent(student.student.id)}
                               disabled={student.status !== "pursuing" || student.promotionStatus === "promoted"}
                             />
                           </TableCell>
@@ -1161,7 +1182,11 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {sourceClass} {sourceDivision}
+                  Class {sourceClass}{" "}
+                  {sourceDivision === "all"
+                    ? "All Divisions"
+                    : availableSourceDivisions.find((div) => div.id.toString() === sourceDivision)?.division ||
+                      sourceDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1170,7 +1195,11 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision || "Auto Assign"}
+                  Class {targetClass}{" "}
+                  {targetDivision === "auto"
+                    ? "Auto Assign"
+                    : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
+                      targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
@@ -1225,7 +1254,7 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {selectedStudentForAction?.class.class_id} {selectedStudentForAction?.class.division}
+                  Class {selectedStudentForAction?.class.class} {selectedStudentForAction?.class.division}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1234,7 +1263,11 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass} {targetDivision || "Auto Assign"}
+                  Class {targetClass}{" "}
+                  {targetDivision === "auto"
+                    ? "Auto Assign"
+                    : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
+                      targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
