@@ -682,8 +682,6 @@ export function StudentPromotionManagement() {
     isExporting ||
     isLoadingAcademicClasses
 
-  useEffect(() => {}, [])
-  useEffect(() => {}, [selectedStudentForAction])
 
   return (
     <div className="space-y-6">
