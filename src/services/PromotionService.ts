@@ -71,8 +71,9 @@ interface PromoteSingleStudentRequest {
 
 interface HoldBackStudentRequest {
   student_id: number;
-  reason: string;
-  academic_session_id: number;
+  remark: string;
+  source_academic_session_id: number;
+  target_academic_session_id: number;
 }
 
 interface PromotionHistoryResponse {
