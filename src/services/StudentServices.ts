@@ -141,6 +141,7 @@ export const StudentApi = createApi({
         name?: string;
         gr_no?: number;
         class_id?: number;
+        primary_mobile?: number;
         detailed?: boolean;
       }
     >({
@@ -149,6 +150,7 @@ export const StudentApi = createApi({
         name,
         gr_no,
         class_id,
+        primary_mobile,
         detailed = false,
       }) => {
         const params = new URLSearchParams();
@@ -156,6 +158,7 @@ export const StudentApi = createApi({
         if (name) params.append("name", name);
         if (gr_no) params.append("gr_no", gr_no.toString());
         if (class_id) params.append("class_id", class_id.toString());
+        if (primary_mobile) params.append("primary_mobile", primary_mobile.toString());
         params.append("detailed", detailed.toString());
 
         return {

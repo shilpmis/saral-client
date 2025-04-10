@@ -5,8 +5,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   User,
   GraduationCap,
-  Users,
-  BookOpen,
   ShieldCheck,
   BadgeIcon as IdCard,
   PenIcon as UserPen,
@@ -20,6 +18,8 @@ import {
   Type,
   PersonStanding,
   X,
+  Phone,
+  SearchX,
 } from "lucide-react"
 import { useContext, useEffect, useMemo, useState } from "react"
 import type { SearchCategory } from "@/types/searchCategory"
@@ -31,14 +31,18 @@ import { Button } from "@/components/ui/button"
 import { useLazySearchStudentsQuery } from "@/services/StudentServices"
 import { useDebounceThrottle } from "@/hooks/use-debounce-throttle"
 import { StudentSearchResults } from "../Students/StudentSearchResult"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 export function Search() {
+  // Get the current active academic session from Redux
+  const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool)
+
   // Original categories
   const studentCategories: SearchCategory[] = [
     { id: "name", label: "Student Name", icon: <User className="h-4 w-4" /> },
     { id: "grno", label: "GR Number", icon: <GraduationCap className="h-4 w-4" /> },
-    { id: "class", label: "Class", icon: <Users className="h-4 w-4" /> },
-    { id: "subject", label: "Subject", icon: <BookOpen className="h-4 w-4" /> },
+    { id: "mobile", label: "Mobile Number", icon: <Phone className="h-4 w-4" /> },
   ]
   const staffCategories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
@@ -81,15 +85,13 @@ export function Search() {
 
   // State for student search
   const [showResults, setShowResults] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
 
   // Use RTK Query hook for search
   const [searchStudents, { data: searchResults = [], isLoading, error: searchError }] = useLazySearchStudentsQuery()
 
   // Use debounce-throttle hook for search query
   const debouncedSearchQuery = useDebounceThrottle(searchQuery, 500, 300)
-
-  // Academic session ID (hardcoded for now, could come from context or props)
-  const academicSessionId = 2
 
   // Original handlers
   const handleSearch = (category: SearchCategory) => {
@@ -100,6 +102,7 @@ export function Search() {
     setSearchQuery(value)
     if (value === "") {
       setShowResults(false)
+      setHasSearched(false)
     } else {
       setShowResults(true)
     }
@@ -116,14 +119,16 @@ export function Search() {
 
   // Perform search based on selected category
   const performSearch = async () => {
-    if (!searchQuery || !selectedCategory) return
+    if (!searchQuery || !selectedCategory || !currentAcademicSession?.id) return
+
+    setHasSearched(true)
 
     try {
       // For now, we're only implementing the name search for students
       if (activePage === "Search for Students") {
         if (selectedCategory.id === "name") {
           searchStudents({
-            academic_session_id: academicSessionId,
+            academic_session_id: currentAcademicSession.id,
             name: searchQuery,
             detailed: false,
           })
@@ -131,11 +136,17 @@ export function Search() {
           const grNo = Number.parseInt(searchQuery)
           if (!isNaN(grNo)) {
             searchStudents({
-              academic_session_id: academicSessionId,
+              academic_session_id: currentAcademicSession.id,
               gr_no: grNo,
               detailed: false,
             })
           }
+        } else if (selectedCategory.id === "mobile") {
+          searchStudents({
+            academic_session_id: currentAcademicSession.id,
+            primary_mobile: Number(searchQuery),
+            detailed: false,
+          })
         } else {
           console.log("from Student", searchQuery, selectedCategory?.id)
         }
@@ -158,19 +169,26 @@ export function Search() {
     // Clear search results and query
     setShowResults(false)
     setSearchQuery("")
+    setHasSearched(false)
   }
 
   const handleClearSearch = () => {
     setSearchQuery("")
     setShowResults(false)
+    setHasSearched(false)
   }
 
   // Effect for debounced search
   useEffect(() => {
-    if (debouncedSearchQuery && selectedCategory && activePage === "Search for Students") {
+    if (
+      debouncedSearchQuery &&
+      selectedCategory &&
+      activePage === "Search for Students" &&
+      currentAcademicSession?.id
+    ) {
       performSearch()
     }
-  }, [debouncedSearchQuery, selectedCategory])
+  }, [debouncedSearchQuery, selectedCategory, currentAcademicSession])
 
   // Original effects
   const pageTitles: any = useMemo(
@@ -187,15 +205,15 @@ export function Search() {
     setSearchQuery("")
     setSelectedCategory(null)
     setActivePage(pageTitles[location.pathname])
+    setHasSearched(false)
   }, [location.pathname, pageTitles, setActivePage])
 
   useEffect(() => {
-    if (searchQuery === "") {
+    if (searchQuery === "" && activePage !== "Search for Students") {
       setSelectedCategory(null)
     }
-  }, [searchQuery])
+  }, [searchQuery, activePage])
 
-  // Click outside to close results
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
@@ -224,7 +242,9 @@ export function Search() {
               className="pl-[120px] pr-10"
               value={searchQuery}
               onChange={(e) => onChangeSearch(e.target.value)}
-              disabled={selectedCategory === null}
+              disabled={
+                (selectedCategory === null && activePage !== "Search for Students") || !currentAcademicSession?.id
+              }
               onKeyDown={(event) => searchTrigger(event)}
               onFocus={() => {
                 if (searchQuery && searchResults.length > 0) {
@@ -351,18 +371,49 @@ export function Search() {
             )}
           </div>
 
-          {/* Show search results */}
+          {/* Show search results or loading state */}
           {showResults && activePage === "Search for Students" && (
-            <StudentSearchResults
-              results={searchResults}
-              isLoading={isLoading}
-              error={searchError}
-              onSelectStudent={handleSelectStudent}
-            />
+            <>
+              {isLoading ? (
+                <div className="p-4 text-center">
+                  <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Searching...</p>
+                </div>
+              ) : (
+                <>
+                  {searchResults.length > 0 ? (
+                    <StudentSearchResults
+                      results={searchResults}
+                      isLoading={isLoading}
+                      error={searchError}
+                      onSelectStudent={handleSelectStudent}
+                    />
+                  ) : (
+                    hasSearched && (
+                      <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-md max-h-60 overflow-auto">
+                        <div className="flex items-center justify-center p-4 border-b">
+                          <SearchX className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            No results found for "{searchQuery}" in {selectedCategory?.label}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </>
           )}
 
           {/* Show error message if any */}
           {searchError && <div className="text-sm text-red-500 mt-1">Failed to search. Please try again.</div>}
+
+          {/* Show message if no active academic session */}
+          {!currentAcademicSession?.id && (
+            <div className="text-sm text-amber-500 mt-1">
+              No active academic session found. Please set an active academic session first.
+            </div>
+          )}
         </div>
       ) : (
         ""
@@ -370,4 +421,3 @@ export function Search() {
     </div>
   )
 }
-
