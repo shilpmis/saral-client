@@ -995,7 +995,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                     <Table>
                                       <TableHeader>
                                         <TableRow>
-                                          <TableHead>{t("installment")} #</TableHead>
+                                          <TableHead>{t("installments")} #</TableHead>
                                           <TableHead>{t("due_date")}</TableHead>
                                           <TableHead>{t("amount")}</TableHead>
                                         </TableRow>

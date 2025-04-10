@@ -222,13 +222,13 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl">
             <Receipt className="mr-2 h-5 w-5" />
-            Process Fee Payment
+            {t("process_fee_payment")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="bg-blue-50 p-4 rounded-md mb-4">
           <p className="text-sm text-blue-700 font-medium">
-            Payment Amount: <span className="font-bold">{formatCurrency(totalAmount)}</span>
+            {t("payment_amount")}: <span className="font-bold">{formatCurrency(totalAmount)}</span>
           </p>
           <p className="text-xs text-blue-600 mt-1">
             For {installments.length} installment{installments.length !== 1 ? "s" : ""}
@@ -237,17 +237,17 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
           {totalAvailableConcession > 0 && (
             <div className="mt-2 pt-2 border-t border-blue-200">
               <p className="text-xs text-blue-700">
-                Available Concession Balance:{" "}
+                {t("available_concession_balance")}:{" "}
                 <span className="font-semibold">{formatCurrency(totalAvailableConcession)}</span>
               </p>
               {availableConcessionBalance.student_concession > 0 && (
                 <p className="text-xs text-blue-600">
-                  Student Concession: {formatCurrency(availableConcessionBalance.student_concession)}
+                  {t("student_concession")}: {formatCurrency(availableConcessionBalance.student_concession)}
                 </p>
               )}
               {availableConcessionBalance.plan_concession > 0 && (
                 <p className="text-xs text-blue-600">
-                  Plan Concession: {formatCurrency(availableConcessionBalance.plan_concession)}
+                  {t("plan_concession")}: {formatCurrency(availableConcessionBalance.plan_concession)}
                 </p>
               )}
             </div>
@@ -261,7 +261,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
               name="payment_mode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Mode</FormLabel>
+                  <FormLabel>{t("payment_mode")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -269,9 +269,9 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Cash">{t("cash")}</SelectItem>
+                      <SelectItem value="Online">{t("online")}</SelectItem>
+                      <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -284,9 +284,9 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
               name="transaction_reference"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Transaction Reference (Optional)</FormLabel>
+                  <FormLabel>{t("transaction_reference")} (Optional)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter reference number" />
+                    <Input {...field} placeholder={t("enter_reference_number")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -298,7 +298,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
               name="payment_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Date</FormLabel>
+                  <FormLabel>{t("payment_date")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -312,9 +312,9 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
               name="remarks"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Remarks (Optional)</FormLabel>
+                  <FormLabel>{t("remarks")} (Optional)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Add any additional notes" />
+                    <Input {...field} placeholder={t("add_any_additional_notes")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -331,8 +331,8 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Apply Available Concessions</FormLabel>
-                      <FormDescription>Use available concession balance to reduce payment amount</FormDescription>
+                      <FormLabel>{t("apply_available_concessions")}</FormLabel>
+                      <FormDescription>{t("use_available_concession_balance_to_reduce_payment_amount")}</FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -342,15 +342,14 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
             {applyConcession && totalAvailableConcession > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Apply Concession to Installments</CardTitle>
+                  <CardTitle className="text-base">{t("apply_concession_to_installments")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Concession Application</AlertTitle>
+                    <AlertTitle>{t("concession_application")}</AlertTitle>
                     <AlertDescription>
-                      Enter the discount amount for each installment. Total discount cannot exceed your available
-                      concession balance of {formatCurrency(totalAvailableConcession)}.
+                      {t("enter_the_discount_amount_for_each_installment._total_discount_cannot_exceed_your_available_concession_balance_of")} {formatCurrency(totalAvailableConcession)}.
                     </AlertDescription>
                   </Alert>
 
@@ -371,13 +370,13 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                       return (
                         <div key={installment.id} className="grid grid-cols-2 gap-4 items-center border-b pb-3">
                           <div>
-                            <p className="font-medium text-sm">Installment #{installment.installment_no}</p>
+                            <p className="font-medium text-sm">{t("installments")} #{installment.installment_no}</p>
                             <p className="text-xs text-muted-foreground">
-                              Original Amount: {formatCurrency(originalAmount)}
+                              {t("original_amount")}: {formatCurrency(originalAmount)}
                             </p>
                             {preAppliedDiscount > 0 && (
                               <p className="text-xs text-green-600">
-                                Already Discounted: {formatCurrency(preAppliedDiscount)}
+                                {t("already_discounted")}: {formatCurrency(preAppliedDiscount)}
                                 (Current: {formatCurrency(alreadyDiscountedAmount)})
                               </p>
                             )}
@@ -396,7 +395,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                             </div>
                             {discountedAmounts[installment.id] > 0 && (
                               <p className="text-xs text-green-600 mt-1">
-                                Final amount:{" "}
+                                {t("final_amount")}:{" "}
                                 {formatCurrency(alreadyDiscountedAmount - (discountedAmounts[installment.id] || 0))}
                               </p>
                             )}
@@ -409,21 +408,20 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                   {totalDiscountApplied > 0 && (
                     <div className="bg-green-50 p-3 rounded-md">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-green-700">Total Discount Applied:</span>
+                        <span className="text-sm font-medium text-green-700">{t("total_discount_applied")}:</span>
                         <span className="text-sm font-bold text-green-700">{formatCurrency(totalDiscountApplied)}</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-sm font-medium text-green-700">Final Payment Amount:</span>
+                        <span className="text-sm font-medium text-green-700">{t("final_payment_amount")}:</span>
                         <span className="text-sm font-bold text-green-700">{formatCurrency(finalPaymentAmount)}</span>
                       </div>
 
                       {totalDiscountApplied > totalAvailableConcession && (
                         <Alert variant="destructive" className="mt-2">
                           <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Discount exceeds available balance</AlertTitle>
+                          <AlertTitle>{t("discount_exceeds_available_balance")}</AlertTitle>
                           <AlertDescription>
-                            The total discount amount exceeds your available concession balance. Please reduce the
-                            discount amount.
+                            {t("the_total_discount_amount_exceeds_your_available_concession_balance._please_reduce_the_discount_amount.")}
                           </AlertDescription>
                         </Alert>
                       )}
@@ -436,12 +434,12 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
             <Separator className="my-4" />
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Selected Installments:</p>
+              <p className="text-sm font-medium">{t("selected_installments")}:</p>
               <div className="max-h-32 overflow-y-auto border rounded-md p-2">
                 <ul className="space-y-1">
                   {installments.map((installment) => (
                     <li key={installment.id} className="text-sm flex justify-between">
-                      <span>Installment #{installment.installment_no}</span>
+                      <span>{t("installments")} #{installment.installment_no}</span>
                       <span className="font-medium">{formatCurrency(Number(installment.installment_amount))}</span>
                     </li>
                   ))}
@@ -451,7 +449,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
 
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 type="submit"

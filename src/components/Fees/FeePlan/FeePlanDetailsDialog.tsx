@@ -301,7 +301,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>{t("installment")} #</TableHead>
+                                <TableHead>{t("installments")} #</TableHead>
                                 <TableHead>{t("due_date")}</TableHead>
                                 <TableHead>{t("amount")}</TableHead>
                                 <TableHead>{t("status")}</TableHead>
@@ -330,8 +330,8 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
               <TabsContent value="concessions">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Concession Details</CardTitle>
-                    <CardDescription>All concessions applied to this fee plan</CardDescription>
+                    <CardTitle>{t("concession_details")}</CardTitle>
+                    <CardDescription>{t("all_concessions_applied_to_this_fee_plan")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {feePlanDetails.consession && feePlanDetails.consession.length > 0 ? (
@@ -339,11 +339,11 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Concession Name</TableHead>
-                              <TableHead>Category</TableHead>
-                              <TableHead>Type</TableHead>
-                              <TableHead>Value</TableHead>
-                              <TableHead>Status</TableHead>
+                              <TableHead>{t("concession_name")}</TableHead>
+                              <TableHead>{t("category")}</TableHead>
+                              <TableHead>{t("type")}</TableHead>
+                              <TableHead>{t("value")}</TableHead>
+                              <TableHead>{t("status")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -371,19 +371,19 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-muted-foreground">No concessions have been applied to this fee plan</p>
+                        <p className="text-muted-foreground">{t("no_concessions_have_been_applied_to_this_fee_plan")}</p>
                       </div>
                     )}
 
                     <div className="mt-6">
-                      <h3 className="text-lg font-medium mb-4">Concession Impact</h3>
+                      <h3 className="text-lg font-medium mb-4">{t("concession_impact")}</h3>
 
                       {calculateTotalConcession() ? (
                         <div className="space-y-4">
                           {calculateTotalConcession()?.hasPercentage && (
                             <div>
                               <div className="flex justify-between mb-1">
-                                <span className="text-sm font-medium">Percentage Concession</span>
+                                <span className="text-sm font-medium">{t("percentage_concession")}</span>
                                 <span className="text-sm font-medium">{calculateTotalConcession()?.percentage}%</span>
                               </div>
                               <Progress
@@ -396,7 +396,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                           {calculateTotalConcession()?.hasAmount && (
                             <div>
                               <div className="flex justify-between mb-1">
-                                <span className="text-sm font-medium">Fixed Amount Concession</span>
+                                <span className="text-sm font-medium">{t("fixed_amount_concession")}</span>
                                 <span className="text-sm font-medium">
                                   {formatCurrency(calculateTotalConcession()?.amount || 0)}
                                 </span>
@@ -407,20 +407,19 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                                     Number(feePlanDetails.fees_plan.total_amount)) *
                                   100
                                 ).toFixed(2)}
-                                % of total fee amount
+                                % {t("of_total_fee_amount")}
                               </div>
                             </div>
                           )}
 
                           <div className="bg-muted p-4 rounded-md mt-4">
                             <p className="text-sm">
-                              <strong>Note:</strong> The actual concession amount may vary based on the application
-                              rules and student eligibility.
+                              <strong>{t("note")}:</strong> {t("the_actual_concession_amount_may_vary_based_on_the_application_rules_and_student_eligibility.")}
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-muted-foreground">No concessions applied to calculate impact</p>
+                        <p className="text-muted-foreground">{t("no_concessions_applied_to_calculate_impact")}</p>
                       )}
                     </div>
                   </CardContent>
@@ -430,7 +429,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
           </div>
         ) : (
           <div className="p-6 text-center">
-            <p className="text-muted-foreground">No fee plan data available</p>
+            <p className="text-muted-foreground">{t("no_fee_plan_data_available")}</p>
           </div>
         )}
       </DialogContent>
