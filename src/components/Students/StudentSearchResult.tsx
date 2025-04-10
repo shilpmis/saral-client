@@ -59,7 +59,7 @@ export function StudentSearchResults({ results, isLoading, error, onSelectStuden
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {student.acadamic_class && student.acadamic_class[0]
-                    ? `Class ${student.acadamic_class[0].class.name} ${student.acadamic_class[0].class.divisions}`
+                    ? `Class ${student.acadamic_class[0].class.class} ${student.acadamic_class[0].class.division}`
                     : "Class information not available"}
                 </div>
               </div>
