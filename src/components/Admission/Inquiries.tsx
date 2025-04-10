@@ -38,10 +38,12 @@ import { handleStudentOnboarding } from "@/utils/handle-student-onboarding"
 import AdmissionInquiryForm from "./AdmissionInquiryForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 
 export default function InquiriesManagement() {
 
   const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
 
   const { data: inquiriesData, isLoading, refetch } = useGetInquiriesQuery({ page: 1  ,academic_session_id : CurrentacademicSessions!.id })
   const [updateInquiry, { isLoading: isUpdating }] = useUpdateInquiryMutation()
@@ -270,7 +272,7 @@ export default function InquiriesManagement() {
                       <TableCell className="font-medium">
                         {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
                       </TableCell>
-                      <TableCell>{inquiry.inquiry_for_class}</TableCell>
+                      <TableCell>{AcademicClasses?.find((cls) => cls.id === inquiry.inquiry_for_class)?.class}</TableCell>
                       <TableCell>{inquiry.father_name}</TableCell>
                       <TableCell>{inquiry.primary_mobile}</TableCell>
                       <TableCell>{new Date(inquiry.birth_date).toLocaleDateString()}</TableCell>

@@ -83,7 +83,7 @@ export interface FeesPlanDetail {
 export interface InstallmentBreakdowns {
   fee_plan_details_id: number;
   installment_no: number;
-  installment_amount: number;
+  installment_amount: string;
   due_date: string;
   status: "Active" | "Inactive";
 }
@@ -96,7 +96,7 @@ export interface ReqObjectForCreateFeesPlan {
     fees_type_id: number;
     installment_type: string;
     total_installment: number;
-    total_amount: number;
+    total_amount: string;
     installment_breakDowns: Pick<
       InstallmentBreakdowns,
       "installment_no" | "due_date" | "installment_amount"
@@ -110,7 +110,7 @@ export interface ReqObjectForUpdateFeesPlan {
     fees_type_id: number;
     installment_type: string;
     total_installment: number;
-    total_amount: number;
+    total_amount: string;
     installment_breakDowns: Pick<
       InstallmentBreakdowns,
       "installment_no" | "due_date" | "installment_amount"

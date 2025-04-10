@@ -28,7 +28,6 @@ export default function AdminLayout() {
   const [showAcademicSessionForm, setShowAcademicSessionForm] = useState(false);
 
   useEffect(() => {
-    console.log("verificationStatus", verificationStatus);
     if (!verificationStatus.isAuthenticated && !verificationStatus.isVerificationInProgress) {
       navigate("/");
     }
@@ -38,9 +37,6 @@ export default function AdminLayout() {
     // Close the dialog
     setShowAcademicSessionForm(false);
   };
-
-
-  console.log("currentAcademicSession" , currentAcademicSession)
 
   return (
     <>

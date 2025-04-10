@@ -14,7 +14,7 @@ import {
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Plus, Search, Filter } from "lucide-react"
+import { Loader2, Plus, Search, Filter, RefreshCw } from "lucide-react"
 import {
   useGetAdmissionDashboardQuery,
   useGetAdmissionDetailedStatsQuery,
@@ -29,6 +29,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { RecentInquiries } from "./RecentInquiries"
 import { current } from "@reduxjs/toolkit"
+import { toast } from "@/hooks/use-toast"
 
 interface ClassWiseTrend {
   time_period: string
@@ -128,6 +129,27 @@ export const AdmissionDashboard: React.FC = () => {
   // Loading state indicator
   const isLoading = isLoadingDashboard || isLoadingStats || isLoadingTrends
 
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const refreshData = async () => {
+      setIsRefreshing(true)
+      try {
+        await Promise.all([refetchDashboard(), refetchStats(), refetchTrends()])
+        toast({
+          title: t("data_refreshed"),
+          description: t("the_latest_data_has_been_loaded"),
+        })
+      } catch (error) {
+        toast({
+          title: t("refresh_failed"),
+          description: t("could_not_refresh_data"),
+          variant: "destructive",
+        })
+      } finally {
+        setIsRefreshing(false)
+      }
+    }
+
   return (
     <div className="space-y-6">
       {/* Academic Year Filter and Actions */}
@@ -151,6 +173,9 @@ export const AdmissionDashboard: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
+        <Button variant="outline" size="icon" onClick={refreshData} disabled={isRefreshing}>
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+        </Button>
 
         {/* <div className="flex gap-2">
           <Button variant="outline" onClick={() => (window.location.href = "/d/admission/inquiries")}>
@@ -268,7 +293,7 @@ export const AdmissionDashboard: React.FC = () => {
           <TabsTrigger value="trends">{t("admission_trends")}</TabsTrigger>
           <TabsTrigger value="status">{t("status_breakdown")}</TabsTrigger>
           <TabsTrigger value="class">{t("class_wise_trends")}</TabsTrigger>
-          <TabsTrigger value="recent">{t("recent_inquiries")}</TabsTrigger>
+          {/* <TabsTrigger value="recent">{t("recent_inquiries")}</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="trends">

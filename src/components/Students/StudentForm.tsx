@@ -65,18 +65,18 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const customStudentSchema = studentSchema
-    .refine(
-      (data) => {
-        if (data.admission_class && data.class) {
-          return Number.parseInt(data.admission_class) <= Number.parseInt(data.class)
-        }
-        return true
-      },
-      {
-        message: "Admission class should not be greater than the current class",
-        path: ["admission_class"], // Specify the path to the field that should show the error
-      },
-    )
+    // .refine(
+    //   (data) => {
+    //     if (data.admission_class && data.class) {
+    //       return Number.parseInt(data.admission_class) <= Number.parseInt(data.class)
+    //     }
+    //     return true
+    //   },
+    //   {
+    //     message: "Admission class should not be greater than the current class",
+    //     path: ["admission_class"], // Specify the path to the field that should show the error
+    //   },
+    // )
     .refine(
       (data) => {
         if (data.class) {
@@ -89,20 +89,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
         path: ["division"], // Specify the path to the field that should show the error
       },
     )
-    .refine(
-      (data) => {
-        if (data.admission_class) {
-          return (
-            data.admission_division !== undefined && data.admission_division !== null && data.admission_division !== ""
-          )
-        }
-        return true
-      },
-      {
-        message: "Admission division cannot be null if admission class is selected",
-        path: ["admission_division"], // Specify the path to the field that should show the error
-      },
-    )
+    // .refine(
+    //   (data) => {
+    //     if (data.admission_class) {
+    //       return (
+    //         data.admission_division !== undefined && data.admission_division !== null && data.admission_division !== ""
+    //       )
+    //     }
+    //     return true
+    //   },
+    //   {
+    //     message: "Admission division cannot be null if admission class is selected",
+    //     path: ["admission_division"], // Specify the path to the field that should show the error
+    //   },
+    // )
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(customStudentSchema),
@@ -233,7 +233,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
     }
   }, [AcademicClasses, selectedClass])
 
-  const available_classes = useMemo<Division[] | null>(() => {
+  const available_division = useMemo<Division[] | null>(() => {
     if (AcademicClasses) {
       const cls: Division[] = []
       for (let i = 0; i < AcademicClasses!.length; i++) {
@@ -305,12 +305,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
     if (form_type === "create") {
 
-      const CurrentClass = available_classes?.filter(
+      const CurrentClass = available_division?.filter(
         (division) => division.class_id == Number(values?.class) && division.id == Number(values.division),
       )[0]
-      const AdmissionClass = available_classes?.filter(
-        (division) => division.class_id == Number(values?.admission_class) && division.id == Number(values.admission_division),
-      )[0]
+      // const AdmissionClass = available_division?.filter(
+      //   (division) => division.class_id == Number(values?.admission_class) && division.id == Number(values.admission_division),
+      // )[0]
 
 
       const payload: StudentEntry = {
@@ -344,7 +344,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           caste_in_guj: values.caste_in_guj,
           category: values.category,
           admission_date: values.admission_date,
-          admission_class_id: AdmissionClass ? AdmissionClass!.id : null,
+          admission_class_id: null,
           secondary_mobile: values.secondary_mobile,
           privious_school: values.privious_school,
           privious_school_in_guj: values.privious_school_in_guj,
@@ -602,20 +602,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
   useEffect(() => {
     if (form_type === "update") {
-      const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      const CurrentClass = available_division?.filter((cls) => cls.id === initial_data?.class_id)[0]
       if (CurrentClass) handleClassChange(CurrentClass.id.toString(), "class")
       if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
 
-      const CurrentDivision = available_classes?.filter((cls) => cls.id === initial_data?.class_id)[0]
+      const CurrentDivision = available_division?.filter((cls) => cls.id === initial_data?.class_id)[0]
 
-      const AdmissionClass = available_classes?.filter(
+      const AdmissionClass = available_division?.filter(
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0]
 
       if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
       // if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
-      const AdmissionDivision = available_classes?.filter(
+      const AdmissionDivision = available_division?.filter(
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0];
 
@@ -660,21 +660,26 @@ const StudentForm: React.FC<StudentFormProps> = ({
         IFSC_code: initial_data?.student_meta?.IFSC_code || null,
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
-        admission_class: AdmissionDivision?.class_id ? AdmissionDivision?.class_id.toString() : null,
-        admission_division: AdmissionDivision?.id ? AdmissionDivision?.id.toString() : null,
+        admission_class: null,
+        admission_division:  null,
         class: CurrentDivision?.class_id.toString(),
         division: CurrentDivision?.id.toString(),
       })
     } else if (form_type === "create" && initial_data && is_use_for_onBoarding) {
 
-      // Set selectedClass state based on initial data
+      /**
+       * While Onbarding, we need to set the class and division based on the initial data
+       * where intial_data has class_id as a id of a class not division . so need to find the class according to this and 
+       * set class and admission class , also call method to fetch division for this class   
+       */
+
       if (initial_data?.class_id && AcademicClasses) {
         
-        const CurrentClass = available_classes?.filter((cls) => cls.id === initial_data.class_id)[0]
+        const CurrentClass = AcademicClasses?.filter((cls) => cls.id === initial_data.class_id)[0];
         if (CurrentClass) handleClassChange(CurrentClass.id.toString(), "class")
         if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
             
-        const AdmissionClass = available_classes?.filter(
+        const AdmissionClass = AcademicClasses?.filter(
           (cls) => cls.id === initial_data?.class_id,
         )[0]
 
@@ -726,7 +731,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
         //   : null,
         IFSC_code: initial_data?.student_meta?.IFSC_code || null,
         secondary_mobile: initial_data?.student_meta?.secondary_mobile || null,
-        admission_class : initial_data?.student_meta?.admission_class_id ? initial_data?.student_meta?.admission_class_id.toString() : null,
+        admission_class: null,
+        admission_division:  null,
       })
     }
     else{
@@ -741,6 +747,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
   useEffect(() => {
     const errors = form.formState.errors;
+    console.log("errors" , errors)
     if (Object.keys(errors).length > 0) {
       const firstErrorField = Object.keys(errors)[0]
       const tabToActivate = tabMapping[firstErrorField]
@@ -1185,7 +1192,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="admission_class"
@@ -1259,7 +1266,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       </FormItem>
                     )}
                   />
-                </div>
+                </div>   */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -1664,10 +1671,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   {t("previous")}
                 </Button>
-                <Button type="submit">
+                <Button type="submit" disabled={isStundetGetingUpdate || isStundetGetingCreate || isOnBoardingStudent}>
                   {(!isStundetGetingUpdate || !isStundetGetingCreate) && 
                   (form_type === "create" ? is_use_for_onBoarding ?  t("onboard_student") :  t("submit") : "Update")}
-                  {(isStundetGetingUpdate || isStundetGetingCreate) && <Loader2 className="animate-spin" />}
+                  {(isStundetGetingUpdate || isStundetGetingCreate || isOnBoardingStudent) && <Loader2 className="animate-spin" />}
                 </Button>
               </CardFooter>
             </Card>

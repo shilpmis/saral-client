@@ -206,10 +206,8 @@ export const studentSchema = z.object({
   class: z.string().min(1, "Class is required"),
   division: z.string().min(1, "Division is required"),
   admission_class: z.string().min(1, "Admission Class is required").nullable(),
-  admission_division: z
-    .string()
-    .min(1, "Admission Division is required")
-    .nullable(),
+  admission_division: z.string().nullable(),
+  // .min(1, "Admission Division is required")
 
   privious_school: z
     .string()

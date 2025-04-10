@@ -149,7 +149,6 @@ export const ConcessionManagement: React.FC = () => {
     const handleApplyConcession = async (data: ApplyConcessionToStudentData | ApplyConcessionToPlanData) => {
         if (!dialogState.concession) return
         let res;
-        console.log("data" , data)
         try {
           if(dialogState.concession.applicable_to === 'plan') {
             res = await ApplyConcessionToPlan({
@@ -190,7 +189,7 @@ export const ConcessionManagement: React.FC = () => {
           toast({
             title: "Success",
             description: "Concession applied to fee plan successfully",
-        })          
+          })          
         } catch (error) {
           console.log("Error" , error)
             toast({
