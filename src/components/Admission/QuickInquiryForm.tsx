@@ -40,7 +40,10 @@ const formSchema = z.object({
     })
     .refine((val) => val.toString().length >= 10, { message: "Contact number must be at least 10 digits" }),
   address: z.string().min(5, { message: "Address is required" }),
-  previous_school: z.string().optional(),
+  previous_school: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length >= 3, { message: "School Name must be at least 3 characters" }),
   applying_for_quota: z.boolean().default(false),
   quota_type: z.number().nullable().optional(),
 })
@@ -234,8 +237,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                   </FormItem>
                 )}
               />
-            </div>
-
+            </div>    
             {/* Class Applying For */}
             <FormField
               control={form.control}
@@ -265,7 +267,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                         ))
                       ) : (
                         <SelectItem value="none" disabled>
-                          {t("no_classes_available")}
+                          Only shows the classes which has seat allocation for 2025-2026 academic session and are open for admissions by admin.
                         </SelectItem>
                       )}
                     </SelectContent>

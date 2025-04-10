@@ -123,7 +123,6 @@ export default function InquiriesManagement() {
   }
 
   const handleOnboardStudent = (inquiry: Inquiry) => {
-    console.log("AcademicClasses" , AcademicClasses)
     if(!AcademicClasses){
       toast({
         title: "Error",
@@ -133,7 +132,7 @@ export default function InquiriesManagement() {
       return
     }
     setCurrentInquiryForOnboarding({...inquiry , 
-      inquiry_for_class :  AcademicClasses.find((item => item.class == String(inquiry.inquiry_for_class)))!.id,
+      inquiry_for_class :  AcademicClasses.find((item => item.id == inquiry.inquiry_for_class))!.id
     })
     setShowStudentForm(true)
   }
@@ -297,7 +296,7 @@ export default function InquiriesManagement() {
                       <TableCell className="font-medium">
                         {inquiry.first_name} {inquiry.middle_name ? inquiry.middle_name : ""} {inquiry.last_name}
                       </TableCell>
-                      <TableCell>{inquiry.inquiry_for_class}</TableCell>
+                      <TableCell>{AcademicClasses?.find((cls) => cls.id === inquiry.inquiry_for_class)?.class}</TableCell>
                       <TableCell>{inquiry.father_name}</TableCell>
                       <TableCell>{inquiry.primary_mobile}</TableCell>
                       <TableCell>{new Date(inquiry.birth_date).toLocaleDateString()}</TableCell>
