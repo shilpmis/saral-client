@@ -197,9 +197,6 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
     }
   }
 
-  useEffect(()=>{
-    console.log("studentForm.formState.errors" ,studentForm.formState.errors)
-  },[studentForm.formState.errors])
 
   // Handle form submission for student concessions
   const handleSubmitForApplyConcessionToStudents = async (values: z.infer<typeof applyConcessionToStudentSchema>) => {
@@ -225,11 +222,6 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       onSubmit(submissionData)
 
       // setStudentDialogOpen(false)
-
-      toast({
-        title: "Success",
-        description: "Concession applied to student successfully",
-      })
 
       // Refresh student data
       if (selectedClass && selectedDivision) {
