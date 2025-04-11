@@ -71,7 +71,6 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
   const [discountedAmounts, setDiscountedAmounts] = useState<Record<number, number>>({})
   const [totalDiscountApplied, setTotalDiscountApplied] = useState(0)
   const [finalPaymentAmount, setFinalPaymentAmount] = useState(totalAmount)
-  const isLoading = false // Temporary placeholder since the mutation is commented out
 
   const [PayInstallments , {isLoading : isPaymentProcessing , isError : isErroInPayment}] = usePayMultipleInstallmentsMutation()
 
@@ -448,14 +447,14 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
             </div>
 
             <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                {t("cancel")}
+              <Button type="button" variant="outline" onClick={onClose} disabled={isPaymentProcessing}>
+                Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || (applyConcession && totalDiscountApplied > totalAvailableConcession)}
+                disabled={isPaymentProcessing || (applyConcession && totalDiscountApplied > totalAvailableConcession)}
               >
-                {isLoading ? (
+                {isPaymentProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processing...

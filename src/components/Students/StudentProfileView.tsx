@@ -234,8 +234,8 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                         {student.fees_status?.status || "N/A"}
                       </Badge>
                       <span className="text-sm font-medium">
-                        ₹{Number.parseFloat(String(student.fees_status?.paid_amount) || "0").toLocaleString()} / ₹
-                        {Number.parseFloat(student.fees_status?.total_amount || "0").toLocaleString()}
+                        ₹{String(student.fees_status?.paid_amount || "0")} / ₹
+                        {student.fees_status?.total_amount || "0"}
                       </span>
                     </div>
                   </div>

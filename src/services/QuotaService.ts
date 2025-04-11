@@ -105,7 +105,7 @@ export const QuotaApi = createApi({
         return {
           url: `quota?academic_session=${academic_session_id}`,
           method: "POST",
-          body: quota,
+          body: { ...quota, academic_session_id },
         };
       },
       invalidatesTags: ["Quota"],

@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -28,7 +26,6 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { set } from "date-fns"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
 
@@ -41,8 +38,8 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
 type StudentFeesPanelProps = {}
 
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
-  const {t} = useTranslation();
-  const navigate = useNavigate();
+  const { t } = useTranslation()
+  const navigate = useNavigate()
   const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
@@ -414,7 +411,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-             {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -583,7 +580,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
           </TabsTrigger>
           <TabsTrigger value="concessions" className="flex items-center">
-            <Tag className="mr-2 h-4 w-4" />{t("concessions")}
+            <Tag className="mr-2 h-4 w-4" />
+            {t("concessions")}
           </TabsTrigger>
         </TabsList>
 
@@ -599,9 +597,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 >
                   {t("pay_selected")} ({selectedInstallments.length})
                 </Button>
-                <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
+                {/* <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
                   {t("apply_concession")}
-                </Button>
+                </Button> */}
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -626,12 +624,18 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       <AlertTitle className="text-amber-700">{t("available_concession_balance")}</AlertTitle>
                       <AlertDescription className="text-amber-600">
                         <div className="flex flex-col gap-1">
-                          <span>{t("total_available")}: {formatCurrency(totalConcessionBalance)}</span>
+                          <span>
+                            {t("total_available")}: {formatCurrency(totalConcessionBalance)}
+                          </span>
                           {concessionBalance.student_concession > 0 && (
-                            <span>{t("student_concession")}: {formatCurrency(concessionBalance.student_concession)}</span>
+                            <span>
+                              {t("student_concession")}: {formatCurrency(concessionBalance.student_concession)}
+                            </span>
                           )}
                           {concessionBalance.plan_concession > 0 && (
-                            <span>{t("plan_concession")}: {formatCurrency(concessionBalance.plan_concession)}</span>
+                            <span>
+                              {t("plan_concession")}: {formatCurrency(concessionBalance.plan_concession)}
+                            </span>
                           )}
                         </div>
                       </AlertDescription>
@@ -918,9 +922,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t("applied_concessions")}</CardTitle>
-              <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
+              {/* <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
                 {t("apply_new_concession")}
-              </Button>
+              </Button> */}
             </CardHeader>
             <CardContent className="p-0">
               {(student.provided_concession && student.provided_concession.length > 0) ||
@@ -1128,9 +1132,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       {params.student_id && (
         <PayFeesDialog
           isOpen={isPayFeesDialogOpen}
-          onClose={() => setIsPayFeesDialogOpen(false)}
-          onSuccessfulSubmit={()=>{
+          onClose={() => {
             setIsPayFeesDialogOpen(false)
+            setSelectedInstallments([]) // Clear selected installments when dialog is closed
+          }}
+          onSuccessfulSubmit={() => {
+            setIsPayFeesDialogOpen(false)
+            setSelectedInstallments([]) // Clear selected installments after successful payment
             getStudentFeesDetails(Number.parseInt(params.student_id!))
           }}
           installments={selectedInstallments}
@@ -1145,7 +1153,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       {params.student_id && (
         <ConcessionDialog
           isOpen={isConcessionDialogOpen}
-          onClose={() => setIsConcessionDialogOpen(false)}
+          onClose={() => {
+            setIsConcessionDialogOpen(false)
+            // If you want to refresh data after concession is applied or dialog is closed
+            getStudentFeesDetails(Number.parseInt(params.student_id!))
+          }}
           studentId={Number.parseInt(params.student_id)}
           maxAmount={Number(feesStatus.due_amount)}
         />
@@ -1160,7 +1172,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("update_payment_status")}</DialogTitle>
-            <DialogDescription>{t("change_the_status_of_payment")} #{selectedPayment?.id}</DialogDescription>
+            <DialogDescription>
+              {t("change_the_status_of_payment")} #{selectedPayment?.id}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -1230,4 +1244,3 @@ const getFeeTypeName = (feeTypeId: number): string => {
 }
 
 export default StudentFeesPanel
-

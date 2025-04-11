@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast"
 import { useCreateAcademicSessionMutation } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectCurrentUser } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectCurrentUser } from "@/redux/slices/authSlice"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 const formSchema = z
@@ -41,6 +41,7 @@ const formSchema = z
 
 export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
   const user = useAppSelector(selectCurrentUser)
+  const AcademicSessionForSchool = useAppSelector(selectAccademicSessionsForSchool);
   const [createAcademicSession, { isLoading }] = useCreateAcademicSessionMutation()
   const { t } = useTranslation()
 
@@ -96,6 +97,9 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
       if (onSuccess) {
         onSuccess()
       }
+      //  refresh the page or redirect the user after successful creation , 
+      // needed in condition where newly created session is first for school and need othet api to reacall as per id .
+      window.location.reload(); 
     } catch (error: any) {
       console.log("Failed to create academic session:", error)
 
@@ -239,7 +243,7 @@ export function AcademicSessionForm({ onSuccess }: { onSuccess?: () => void }) {
               Creating...
             </>
           ) : (
-            t("create_academic_session")
+            AcademicSessionForSchool?.length !== 0 ?  t("create_academic_session") : t("create_academic_session_and_active")
           )}
         </Button>
       </form>

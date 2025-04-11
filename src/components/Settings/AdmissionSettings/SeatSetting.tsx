@@ -770,8 +770,6 @@ export default function SeatsManagement() {
                   </Select>
                 </div>
 
-                    {filteredSeats && filteredSeats.length > 0 ? (
-                      filteredSeats.map((seat) => (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -785,6 +783,8 @@ export default function SeatsManagement() {
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
+                    {filteredSeats && filteredSeats.length > 0 ? (
+                      filteredSeats.map((seat) => (
                         <TableBody>
                         <TableRow key={seat.id}>
                           <TableCell className="font-medium">
@@ -812,16 +812,18 @@ export default function SeatsManagement() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                  </TableBody>
-                </Table>
+                      </TableBody>
                       ))
                     ) : (
+                      <>
                       <div className="text-center py-8 text-muted-foreground text-red-600 w-full">
                         <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground opacity-50 text-red-500" />
                         <p className="mt-4">{t("no_seat_data_available")}</p>
                         <p className="text-sm">{t("add_seat_availability_to_get_started")}</p>
                       </div>
-                    )}
+                      </>
+                    )}                       
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
