@@ -71,6 +71,19 @@ interface Student {
     father_name: string
     mother_name: string
     is_active: number
+    fees_status?: {
+      id: number
+      student_id: number
+      academic_session_id: number
+      fees_plan_id: number
+      total_amount: string
+      discounted_amount: string
+      paid_amount: string
+      due_amount: string
+      status: string
+      total_refund_amount: string
+      refunded_amount: string
+    }
   }
   class: {
     id: number
@@ -323,6 +336,36 @@ export function StudentPromotionManagement() {
     }
   }
 
+  // Helper function to check if student can be promoted based on fee status
+  const canPromoteBasedOnFeeStatus = (student: Student) => {
+    if (!student.student.fees_status) return false
+
+    const restrictedStatuses = ["Pending", "Partially Paid", "Overdue", null]
+    return !restrictedStatuses.includes(student.student.fees_status.status)
+  }
+
+  // Toggle select individual student
+  const toggleSelectStudent = (studentId: number) => {
+    if (selectedStudents.includes(studentId)) {
+      setSelectedStudents(selectedStudents.filter((id) => id !== studentId))
+    } else {
+      // Find the student
+      const student = filteredStudents.find((s) => s.student.id === studentId)
+
+      // Check if student can be promoted based on fee status
+      if (student && !canPromoteBasedOnFeeStatus(student)) {
+        toast({
+          title: "Cannot Select Student",
+          description: "This student cannot be promoted due to pending fee payments.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setSelectedStudents([...selectedStudents, studentId])
+    }
+  }
+
   // Handle promotion of selected students (bulk)
   const handlePromoteStudents = async () => {
     if (!targetClass || !targetAcademicSession) {
@@ -338,6 +381,20 @@ export function StudentPromotionManagement() {
       toast({
         title: "No Students Selected",
         description: "Please select at least one student to promote",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check if all selected students can be promoted based on fee status
+    const studentsWithFeeIssues = filteredStudents.filter(
+      (student) => selectedStudents.includes(student.student.id) && !canPromoteBasedOnFeeStatus(student),
+    )
+
+    if (studentsWithFeeIssues.length > 0) {
+      toast({
+        title: "Fee Payment Issues",
+        description: `${studentsWithFeeIssues.length} selected students have pending fee payments and cannot be promoted.`,
         variant: "destructive",
       })
       return
@@ -397,6 +454,16 @@ export function StudentPromotionManagement() {
       return
     }
 
+    // Check if student can be promoted based on fee status
+    if (!canPromoteBasedOnFeeStatus(selectedStudentForAction)) {
+      toast({
+        title: "Cannot Promote Student",
+        description: "This student cannot be promoted due to pending fee payments.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       const result = await promoteSingleStudent({
         source_academic_session_id: Number.parseInt(sourceAcademicSession),
@@ -425,8 +492,8 @@ export function StudentPromotionManagement() {
         })
       }
     } catch (error: any) {
-      console.log("error occured while promoting student", error);
-      
+      console.log("error occured while promoting student", error)
+
       toast({
         title: "Error",
         description: error.message || "Failed to promote student. Please try again.",
@@ -545,15 +612,6 @@ export function StudentPromotionManagement() {
       setSelectedStudents([])
     } else {
       setSelectedStudents(filteredStudents.map((item) => item.student.id))
-    }
-  }
-
-  // Toggle select individual student
-  const toggleSelectStudent = (studentId: number) => {
-    if (selectedStudents.includes(studentId)) {
-      setSelectedStudents(selectedStudents.filter((id) => id !== studentId))
-    } else {
-      setSelectedStudents([...selectedStudents, studentId])
     }
   }
 
@@ -685,8 +743,7 @@ export function StudentPromotionManagement() {
     isExporting ||
     isLoadingAcademicClasses
 
-
-  useEffect(()=> {
+  useEffect(() => {
     console.log("selectedStudentForAction", selectedStudentForAction)
   }, [])
   return (
@@ -946,6 +1003,7 @@ export function StudentPromotionManagement() {
                       <TableHead>{t("current_class")}</TableHead>
                       <TableHead>{t("status")}</TableHead>
                       <TableHead>{t("promotion_status")}</TableHead>
+                      <TableHead>{t("fee_status")}</TableHead>
                       <TableHead className="text-right">{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -966,7 +1024,9 @@ export function StudentPromotionManagement() {
                           <div className="flex flex-col items-center justify-center py-4">
                             <Info className="h-10 w-10 text-muted-foreground mb-2" />
                             <p className="text-muted-foreground">
-                              {t("please_select_academic_session_ class,_and_division,_then_click_apply_filters_to_view_students")}
+                              {t(
+                                "please_select_academic_session_ class,_and_division,_then_click_apply_filters_to_view_students",
+                              )}
                             </p>
                           </div>
                         </TableCell>
@@ -978,7 +1038,11 @@ export function StudentPromotionManagement() {
                             <Checkbox
                               checked={selectedStudents.includes(student.student.id)}
                               onCheckedChange={() => toggleSelectStudent(student.student.id)}
-                              disabled={student.status !== "pursuing" || student.promotionStatus === "promoted"}
+                              disabled={
+                                student.status !== "pursuing" ||
+                                student.promotionStatus === "promoted" ||
+                                !canPromoteBasedOnFeeStatus(student)
+                              }
                             />
                           </TableCell>
                           <TableCell>{student.student.gr_no}</TableCell>
@@ -1013,6 +1077,32 @@ export function StudentPromotionManagement() {
                               <Badge variant="outline">{t("pending")}</Badge>
                             )}
                           </TableCell>
+                          <TableCell>
+                            {student.student.fees_status ? (
+                              <Badge
+                                variant={
+                                  student.student.fees_status.status === "Paid"
+                                    ? "default"
+                                    : student.student.fees_status.status === "Partially Paid"
+                                      ? "outline"
+                                      : "destructive"
+                                }
+                                className={
+                                  student.student.fees_status.status === "Paid"
+                                    ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                    : student.student.fees_status.status === "Partially Paid"
+                                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                      : "bg-red-100 text-red-800 hover:bg-red-100"
+                                }
+                              >
+                                {student.student.fees_status.status}
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+                                Not Available
+                              </Badge>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button
@@ -1022,7 +1112,11 @@ export function StudentPromotionManagement() {
                                   setSelectedStudentForAction(student)
                                   setIsPromoteSingleDialogOpen(true)
                                 }}
-                                disabled={student.status !== "pursuing" || student.promotionStatus !== "pending"}
+                                disabled={
+                                  student.status !== "pursuing" ||
+                                  student.promotionStatus !== "pending" ||
+                                  !canPromoteBasedOnFeeStatus(student)
+                                }
                               >
                                 {t("promote")}
                               </Button>
@@ -1220,7 +1314,9 @@ export function StudentPromotionManagement() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>{t("important")}</AlertTitle>
               <AlertDescription>
-                {t("this_action_will_promote_the_selected_students_to_the_next_class_for_the_new_academic_year._make_sure_you_have_selected_the_correct_students_and_target_class.")}
+                {t(
+                  "this_action_will_promote_the_selected_students_to_the_next_class_for_the_new_academic_year._make_sure_you_have_selected_the_correct_students_and_target_class.",
+                )}
               </AlertDescription>
             </Alert>
           </div>
@@ -1251,37 +1347,23 @@ export function StudentPromotionManagement() {
             <DialogTitle>{t("promote_student")}</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>{t("you_are_about_to_promote")}{selectedStudentForAction.student.first_name}{t("to_the_next_class.")}</>
+                <>
+                  {t("you_are_about_to_promote")}
+                  {selectedStudentForAction.student.first_name}
+                  {t("to_the_next_class.")}
+                </>
               )}
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4">
-            <div className="flex items-center justify-center my-4">
-              <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
-                <p className="text-sm font-medium">
-                  {/* Class {selectedStudentForAction?.class.class} {selectedStudentForAction?.class.division} */}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
-                </p>
-              </div>
-              <ArrowRight className="mx-4 text-muted-foreground" />
-              <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
-                <p className="text-sm font-medium">
-                  Class {targetClass}{" "}
-                  {targetDivision === "auto"
-                    ? "Auto Assign"
-                    : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
-                      targetDivision}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {
-                    academicSessions.find((s: AcademicSession) => s.id.toString() === targetAcademicSession)
-                      ?.session_name
-                  }
-                </p>
-              </div>
+            <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
+              <p className="text-sm font-medium">
+                Class {selectedStudentForAction?.class?.class} {selectedStudentForAction?.class?.division}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
+              </p>
             </div>
 
             <div className="space-y-4 mt-4">
@@ -1300,7 +1382,7 @@ export function StudentPromotionManagement() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>{t("note")}</AlertTitle>
                 <AlertDescription>
-                 {t("make_sure_you_have_selected_the_correct_target_class_and_division_for_this_student.")}
+                  {t("make_sure_you_have_selected_the_correct_target_class_and_division_for_this_student.")}
                 </AlertDescription>
               </Alert>
             </div>
@@ -1332,12 +1414,27 @@ export function StudentPromotionManagement() {
             <DialogTitle>{t("hold_back_student")}</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>{t("you_are_about_to_hold_back")}{selectedStudentForAction.student.first_name}{t("in_the_current_class.")}</>
+                <>
+                  {t("you_are_about_to_hold_back")}
+                  {selectedStudentForAction.student.first_name}
+                  {t("in_the_current_class.")}
+                </>
               )}
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4">
+            <div className="flex items-center justify-center my-4">
+              <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
+                <p className="text-sm font-medium">
+                  Class {selectedStudentForAction?.class?.class} {selectedStudentForAction?.class?.division}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="holdBackReason">{t("reason_for_holding_back")}</Label>
@@ -1386,7 +1483,10 @@ export function StudentPromotionManagement() {
             <DialogTitle>{t("transfer_student")}</DialogTitle>
             <DialogDescription>
               {selectedStudentForAction && (
-                <>{t("enter_transfer_details_for")}{selectedStudentForAction.student.first_name}.</>
+                <>
+                  {t("enter_transfer_details_for")}
+                  {selectedStudentForAction.student.first_name}.
+                </>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -1429,11 +1529,17 @@ export function StudentPromotionManagement() {
                   {selectedStudentForAction && (
                     <p className="text-sm text-muted-foreground">
                       {selectedStudentForAction.student.first_name} {selectedStudentForAction.student.middle_name}{" "}
-                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class.class}{" "}
-                      {selectedStudentForAction.class.division}
+                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class?.class}{" "}
+                      {selectedStudentForAction.class?.division}
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="mt-4 text-center px-4 py-2 border rounded-md bg-muted/30">
+                <p className="text-sm font-medium">Current Academic Session</p>
+                <p className="text-xs text-muted-foreground">
+                  {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
+                </p>
               </div>
             </div>
           </div>
