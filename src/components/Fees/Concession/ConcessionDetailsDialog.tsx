@@ -40,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ConcessionDetailsDialogProps {
   concessionId: number
@@ -62,6 +63,7 @@ interface StatusUpdateData {
 }
 
 export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = ({ concessionId }) => {
+  const {t} = useTranslation()
   const [activeTab, setActiveTab] = useState("overview")
   const [getConcessionDetails, { data: concessionDetails, isLoading, isError }] = useLazyGetConcessionsInDetailQuery()
   const [updateConcessionStatusForPlan, { isLoading: isUpdatingPlan }] = useUpdateConcsessionAppliedToPlanMutation()
@@ -198,9 +200,9 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   if (isError || !concessionDetails) {
     return (
       <div className="p-6 text-center">
-        <p className="text-red-500">Failed to load concession details. Please try again.</p>
+        <p className="text-red-500">{t("failed_to_load_concession_details._please_try_again.")}</p>
         <Button onClick={loadConcessionDetails} className="mt-4">
-          Retry
+          {t("retry")}
         </Button>
       </div>
     )
@@ -235,11 +237,11 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
             <DialogTitle className="flex items-center gap-2">
               {statusUpdateData?.currentStatus === "Active" ? (
                 <>
-                  <XCircle className="h-5 w-5 text-destructive" /> Deactivate Concession
+                  <XCircle className="h-5 w-5 text-destructive" /> {t("deactivate_concession")}
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" /> Activate Concession
+                  <CheckCircle2 className="h-5 w-5 text-green-500" /> {t("activate_concession")}
                 </>
               )}
             </DialogTitle>
@@ -262,36 +264,36 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
               </Alert>
 
               <div className="bg-muted p-3 rounded-md mt-3">
-                <h4 className="font-medium mb-2">Concession Details</h4>
+                <h4 className="font-medium mb-2">{t("concession_details")}</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <div className="text-muted-foreground">Type:</div>
+                  <div className="text-muted-foreground">{t("type")}:</div>
                   <div className="font-medium capitalize">{statusUpdateData?.type}</div>
 
                   {statusUpdateData?.type === "plan" ? (
                     <>
-                      <div className="text-muted-foreground">Plan Name:</div>
+                      <div className="text-muted-foreground">{t("plan_name")}:</div>
                       <div className="font-medium">{statusUpdateData?.name}</div>
                     </>
                   ) : (
                     <>
-                      <div className="text-muted-foreground">Student:</div>
+                      <div className="text-muted-foreground">{t("student")}:</div>
                       <div className="font-medium">{statusUpdateData?.studentName}</div>
-                      <div className="text-muted-foreground">Plan:</div>
+                      <div className="text-muted-foreground">{t("plan")}:</div>
                       <div className="font-medium">{statusUpdateData?.planName}</div>
                     </>
                   )}
 
-                  <div className="text-muted-foreground">Deduction:</div>
+                  <div className="text-muted-foreground">{t("deduction")}:</div>
                   <div className="font-medium">{statusUpdateData?.deductionValue}</div>
 
-                  <div className="text-muted-foreground">Current Status:</div>
+                  <div className="text-muted-foreground">{t("current_status")}:</div>
                   <div>
                     <Badge variant={statusUpdateData?.currentStatus === "Active" ? "default" : "destructive"}>
                       {statusUpdateData?.currentStatus}
                     </Badge>
                   </div>
 
-                  <div className="text-muted-foreground">New Status:</div>
+                  <div className="text-muted-foreground">{t("new_status")}:</div>
                   <div>
                     <Badge variant={statusUpdateData?.currentStatus === "Active" ? "destructive" : "default"}>
                       {statusUpdateData?.currentStatus === "Active" ? "Inactive" : "Active"}
@@ -303,7 +305,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
           </DialogHeader>
           <DialogFooter className="sm:justify-between mt-4">
             <Button variant="outline" onClick={() => setConfirmDialog(false)} disabled={isUpdating}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant={statusUpdateData?.currentStatus === "Active" ? "destructive" : "default"}
@@ -321,20 +323,20 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
         <h2 className="text-xl font-bold">{concession.name}</h2>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
-            <Printer className="mr-2 h-4 w-4" /> Print
+            <Printer className="mr-2 h-4 w-4" /> {t("print")}
           </Button>
           <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" /> Export
+            <Download className="mr-2 h-4 w-4" /> {t("export")}
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="applied-plans">{isPlanConcession ? "Applied Plans" : "Applied Fee Plans"}</TabsTrigger>
+          <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
+          <TabsTrigger value="applied-plans">{isPlanConcession ? "Applied Plans" : t("applied_fee_plans")}</TabsTrigger>
           <TabsTrigger value="students" disabled={isPlanConcession}>
-            Students
+            {t("students")}
           </TabsTrigger>
         </TabsList>
 
@@ -344,34 +346,34 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  Concession Details
+                  {t("concession_details")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Category:</span>
+                  <span className="text-sm text-muted-foreground">{t("category")}:</span>
                   <span className="text-sm font-medium capitalize">{concession.category}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Applicable To:</span>
+                  <span className="text-sm text-muted-foreground">{t("applicable_to")}:</span>
                   <Badge variant="outline" className="capitalize">
                     {concession.applicable_to}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Concession To:</span>
+                  <span className="text-sm text-muted-foreground">{t("concession_to")}:</span>
                   <Badge variant="outline" className="capitalize">
                     {concession.concessions_to}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Status:</span>
+                  <span className="text-sm text-muted-foreground">{t("status")}:</span>
                   <Badge variant={concession.status === "Active" ? "default" : "destructive"}>
                     {concession.status || "Active"}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Academic Session:</span>
+                  <span className="text-sm text-muted-foreground">{t("academic_session")}:</span>
                   <span className="text-sm font-medium">{concession.academic_session_id}</span>
                 </div>
               </CardContent>
@@ -381,23 +383,23 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
                   <Link className="mr-2 h-5 w-5" />
-                  Application Summary
+                  {t("application_summary")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Total Applied Plans:</span>
+                  <span className="text-sm text-muted-foreground">{t("total_applied_plans")}:</span>
                   <span className="text-sm font-medium">{totalAppliedPlans}</span>
                 </div>
                 {isPlanConcession && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total Fee Types:</span>
+                    <span className="text-sm text-muted-foreground">{t("total_fee_types")}:</span>
                     <span className="text-sm font-medium">{totalFeeTypes}</span>
                   </div>
                 )}
                 {isStudentConcession && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total Students:</span>
+                    <span className="text-sm text-muted-foreground">{t("total_students")}:</span>
                     <span className="text-sm font-medium">{totalStudents}</span>
                   </div>
                 )}
@@ -407,7 +409,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
 
           <Card>
             <CardHeader>
-              <CardTitle>Description</CardTitle>
+              <CardTitle>{t("description")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm">{concession.description}</p>
@@ -416,20 +418,20 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
 
           <Alert>
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Concession Application Details</AlertTitle>
+            <AlertTitle>{t("concession_application_details")}</AlertTitle>
             <AlertDescription>
               {isPlanConcession &&
                 concession.concessions_to === "fees_type" &&
-                "This concession applies to specific fee types within fee plans."}
+                t("this_concession_applies_to_specific_fee_types_within_fee_plans.")}
               {isPlanConcession &&
                 concession.concessions_to === "plan" &&
-                "This concession applies to entire fee plans."}
+                t("this_concession_applies_to_entire_fee_plans.")}
               {isStudentConcession &&
                 concession.concessions_to === "fees_type" &&
-                "This concession applies to specific fee types for individual students."}
+                t("this_concession_applies_to_specific_fee_types_for_individual_students.")}
               {isStudentConcession &&
                 concession.concessions_to === "plan" &&
-                "This concession applies to entire fee plans for individual students."}
+                t("this_concession_applies_to_entire_fee_plans_for_individual_students.")}
             </AlertDescription>
           </Alert>
         </TabsContent>
@@ -437,11 +439,11 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
         <TabsContent value="applied-plans">
           <Card>
             <CardHeader>
-              <CardTitle>{isPlanConcession ? "Applied Fee Plans" : "Fee Plans Applied to Students"}</CardTitle>
+              <CardTitle>{isPlanConcession ? t("applied_fee_plans") : t("fee_plans_applied_to_students")}</CardTitle>
               <CardDescription>
                 {isPlanConcession
-                  ? "Fee plans to which this concession has been applied"
-                  : "Fee plans that have this concession applied for students"}
+                  ? t("fee_plans_to_which_this_concession_has_been_applied")
+                  : t("fee_plans_that_have_this_concession_applied_for_students")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -450,13 +452,13 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Plan Name</TableHead>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Deduction Type</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Fee Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("plan_name")}</TableHead>
+                        <TableHead>{t("class")}</TableHead>
+                        <TableHead>{t("deduction_type")}</TableHead>
+                        <TableHead>{t("value")}</TableHead>
+                        <TableHead>{t("fee_type")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -483,7 +485,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                               <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-8 flex items-center gap-1">
                                   <ArrowRightLeft className="h-3.5 w-3.5" />
-                                  <span>Change Status</span>
+                                  <span>{t("change_status")}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -510,7 +512,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                   className={plan.status === "Active" ? "text-muted-foreground" : ""}
                                 >
                                   <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
-                                  <span>Set Active</span>
+                                  <span>{t("set_active")}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
@@ -535,7 +537,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                   className={plan.status !== "Active" ? "text-muted-foreground" : ""}
                                 >
                                   <XCircle className="mr-2 h-4 w-4 text-destructive" />
-                                  <span>Set Inactive</span>
+                                  <span>{t("set_inactive")}</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -550,13 +552,13 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Plan Name</TableHead>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Deduction Type</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("plan_name")}</TableHead>
+                        <TableHead>{t("class")}</TableHead>
+                        <TableHead>{t("student")}</TableHead>
+                        <TableHead>{t("deduction_type")}</TableHead>
+                        <TableHead>{t("value")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -597,7 +599,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                               <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-8 flex items-center gap-1">
                                   <ArrowRightLeft className="h-3.5 w-3.5" />
-                                  <span>Change Status</span>
+                                  <span>{t("change_status")}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -624,7 +626,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                   className={item.status === "Active" ? "text-muted-foreground" : ""}
                                 >
                                   <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
-                                  <span>Set Active</span>
+                                  <span>{t("set_active")}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
@@ -649,7 +651,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                   className={item.status !== "Active" ? "text-muted-foreground" : ""}
                                 >
                                   <XCircle className="mr-2 h-4 w-4 text-destructive" />
-                                  <span>Set Inactive</span>
+                                  <span>{t("set_inactive")}</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -664,7 +666,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                   <p className="text-muted-foreground">
                     {isPlanConcession
                       ? "This concession has not been applied to any fee plans yet"
-                      : "This concession has not been applied to any students yet"}
+                      : t("this_concession_has_not_been_applied_to_any_students_yet.")}
                   </p>
                 </div>
               )}
@@ -678,23 +680,23 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Users className="mr-2 h-5 w-5" />
-                  Students with Concession
+                  {t("students_with_concession")}
                 </CardTitle>
-                <CardDescription>Students who have been granted this concession</CardDescription>
+                <CardDescription>{t("students_who_have_been_granted_this_concession")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>GR Number</TableHead>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Roll Number</TableHead>
-                        <TableHead>Fee Plan</TableHead>
-                        <TableHead>Deduction</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("student")}</TableHead>
+                        <TableHead>{t("gr_number")}</TableHead>
+                        <TableHead>{t("class")}</TableHead>
+                        <TableHead>{t("roll_number")}</TableHead>
+                        <TableHead>{t("fee_plan")}</TableHead>
+                        <TableHead>{t("deduction")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -744,7 +746,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="outline" size="sm" className="h-8 flex items-center gap-1">
                                     <ArrowRightLeft className="h-3.5 w-3.5" />
-                                    <span>Change Status</span>
+                                    <span>{t("change_status")}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -771,7 +773,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                     className={item.status === "Active" ? "text-muted-foreground" : ""}
                                   >
                                     <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
-                                    <span>Set Active</span>
+                                    <span>{t("set_active")}</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
@@ -796,7 +798,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                                     className={item.status !== "Active" ? "text-muted-foreground" : ""}
                                   >
                                     <XCircle className="mr-2 h-4 w-4 text-destructive" />
-                                    <span>Set Inactive</span>
+                                    <span>{t("set_inactive")}</span>
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -811,7 +813,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
             </Card>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No students have been granted this concession yet</p>
+              <p className="text-muted-foreground">{t("no_students_have_been_granted_this_concession_yet")}</p>
             </div>
           )}
         </TabsContent>

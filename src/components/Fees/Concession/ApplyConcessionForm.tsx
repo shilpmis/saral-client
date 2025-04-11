@@ -44,6 +44,7 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ApplyConcessionToPlanData, applyConcessionToPlanSchema, ApplyConcessionToStudentData, applyConcessionToStudentSchema } from "@/utils/fees.validation"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ApplyConcessionFormProps {
   concession: Concession
@@ -52,7 +53,8 @@ interface ApplyConcessionFormProps {
 }
 
 export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ concession, onSubmit, onCancel }) => {
-  
+
+  const {t} = useTranslation()
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -62,15 +64,15 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-          <h2 className="text-xl font-semibold mb-4">No Active Academic Session</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("no_active_academic_session")}</h2>
           <p className="text-gray-600 mb-6">
-            Please set an active academic session to proceed.
+            {t("please_set_an_active_academic_session_to_proceed.")}
           </p>
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             onClick={() => navigate("/academic-sessions")}
           >
-            Go to Academic Sessions
+            {t("go_to_academic_sessions")}
           </button>
         </div>
       </div>
@@ -387,13 +389,13 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   return (
     <div className="space-y-6">
       <div className="bg-muted p-4 rounded-md mb-6">
-        <h3 className="font-medium text-lg mb-2">Applying Concession: {concession.name}</h3>
-        <p className="text-sm text-muted-foreground mb-1">Category: {concession.category}</p>
+        <h3 className="font-medium text-lg mb-2">{t("applying_concession")}: {concession.name}</h3>
+        <p className="text-sm text-muted-foreground mb-1">{t("category")}: {concession.category}</p>
         <p className="text-sm text-muted-foreground mb-1">
-          Applicable to: <span className="capitalize">{concession.applicable_to}</span>
+          {t("applicable_to")}: <span className="capitalize">{concession.applicable_to}</span>
         </p>
         <p className="text-sm text-muted-foreground mb-1">
-          Concession applies to: <span className="capitalize">
+          {t("concession_applies_to")}: <span className="capitalize">
             {concession.concessions_to === 'fees_type' ? 'Fee Type' : "Plan"}
             </span>
         </p>
@@ -403,11 +405,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       {/* Warning about deduction type */}
       <Alert variant="destructive" className="bg-amber-50 border-amber-200">
         <Info className="h-4 w-4 text-amber-600" />
-        <AlertTitle className="text-amber-800">Important Information</AlertTitle>
+        <AlertTitle className="text-amber-800">{t("important_information")}</AlertTitle>
         <AlertDescription className="text-amber-700">
           {concession.concessions_to === "fees_type"
-            ? "This concession will be applied to specific fee types. The deduction amount or percentage will be applied to each selected fee type individually."
-            : "This concession will be applied to the entire fee plan. The deduction amount or percentage will be applied to the total plan amount."}
+            ? t("this_concession_will_be_applied_to_specific_fee_types._the_deduction_amount_or_percentage_will_be_applied_to_each_selected_fee_type_individually.")
+            : t("this_concession_will_be_applied_to_the_entire_fee_plan._the_deduction_amount_or_percentage_will_be_applied_to_the_total_plan_amount.")}
         </AlertDescription>
       </Alert>
 
@@ -421,7 +423,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                 name="deduction_type"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Deduction Type</FormLabel>
+                    <FormLabel>{t("deduction_type")}</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -432,13 +434,13 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                           <FormControl>
                             <RadioGroupItem value="percentage" />
                           </FormControl>
-                          <FormLabel className="font-normal">Percentage (%)</FormLabel>
+                          <FormLabel className="font-normal">{t("percentage")} (%)</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="fixed_amount" />
                           </FormControl>
-                          <FormLabel className="font-normal">Fixed Amount (₹)</FormLabel>
+                          <FormLabel className="font-normal">{t("fixed_amount")} (₹)</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -453,18 +455,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   name="percentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Percentage</FormLabel>
+                      <FormLabel>{t("percentage")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Enter percentage value"
+                          placeholder={t("enter_percentage_value")}
                           {...field}
                           value={field.value ?? ""}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                         />
                       </FormControl>
                       <FormMessage />
-                      <FormDescription>Enter a value between 1 and 100</FormDescription>
+                      <FormDescription>{t("enter_a_value_between_1_and_100")}</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -474,18 +476,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   name="fixed_amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount</FormLabel>
+                      <FormLabel>{t("amount")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Enter amount in rupees"
+                          placeholder={t("enter_amount_in_rupees")}
                           {...field}
                           value={field.value ?? ""}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                         />
                       </FormControl>
                       <FormMessage />
-                      <FormDescription>Enter the fixed amount to deduct</FormDescription>
+                      <FormDescription>{t("enter_the_fixed_amount_to_deduct")}</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -494,15 +496,15 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
             <Card>
               <CardHeader>
-                <CardTitle>Select Fee Plan</CardTitle>
-                <CardDescription>Choose the fee plan to which this concession will be applied</CardDescription>
+                <CardTitle>{t("select_fee_plan")}</CardTitle>
+                <CardDescription>{t("choose_the_fee_plan_to_which_this_concession_will_be_applied")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                      placeholder="Search fee plans..."
+                      placeholder={t("search_fee_plans...")}
                       className="pl-8"
                       value={searchTermPlan}
                       onChange={(e) => setSearchTermPlan(e.target.value)}
@@ -514,11 +516,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px]">Select</TableHead>
-                        <TableHead>Plan Name</TableHead>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Total Amount</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[50px]">{t("select")}</TableHead>
+                        <TableHead>{t("plan_name")}</TableHead>
+                        <TableHead>{t("class")}</TableHead>
+                        <TableHead>{t("total_amount")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -567,9 +569,9 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
             {concession.concessions_to === "fees_type" && selectedPlan && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Select Fee Types</CardTitle>
+                  <CardTitle>{t("select_fee_types")}</CardTitle>
                   <CardDescription>
-                    Choose the specific fee types to which this concession will be applied
+                    {t("choose_the_specific_fee_types_to_which_this_c_ncession_will_be_applied")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -600,7 +602,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No fee types available</p>
+                    <p className="text-muted-foreground">{t("no_fee_types_available")}</p>
                   )}
                 </CardContent>
               </Card>
@@ -608,7 +610,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isApplyingToPlan}>
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -636,18 +638,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Student Selection</CardTitle>
-              <CardDescription>Select a class and division to view students</CardDescription>
+              <CardTitle>{t("student_selection")}</CardTitle>
+              <CardDescription>{t("select_a_class_and_division_to_view_students")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <label htmlFor="class-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                    Class
+                    {t("class")}
                   </label>
                   <Select value={selectedClass} onValueChange={handleClassChange}>
                     <SelectTrigger id="class-select">
-                      <SelectValue placeholder="Select Class" />
+                      <SelectValue placeholder={t("select_class")} />
                     </SelectTrigger>
                     <SelectContent>
                       {academicClasses?.map((cls, index) =>
@@ -662,7 +664,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                 </div>
                 <div>
                   <label htmlFor="division-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                    Division
+                    {t("division")}
                   </label>
                   <Select
                     value={selectedDivision ? selectedDivision.id.toString() : ""}
@@ -670,7 +672,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                     disabled={!selectedClass}
                   >
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Division" />
+                      <SelectValue placeholder={t("select_division")} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableDivisions?.divisions.map((division, index) => (
@@ -683,7 +685,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                 </div>
                 <div>
                   <label htmlFor="student-search" className="text-sm font-medium text-gray-700 mb-1 block">
-                    Search
+                    {t("search")}
                   </label>
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -705,7 +707,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       <AlertCircle className="h-5 w-5 text-blue-500" />
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm">Please select a class and division to view students.</p>
+                      <p className="text-sm">{t("please_select_a_class_and_division_to_view_students.")}</p>
                     </div>
                   </div>
                 </div>
@@ -719,22 +721,22 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  {searchTermStudent ? "No students match your search" : "No students found in this class/division"}
+                  {searchTermStudent ? "No students match your search" : t("no_students_found_in_this_class/division")}
                 </div>
               ) : isErroWhileFetchingStudentFeesStatuForClass ? (
-                <div className="text-center py-8 text-red-500">This class has no Fees Plan for now.</div>
+                <div className="text-center py-8 text-red-500">{t("this_class_has_no_fees_plan_for_now.")}</div>
               ) : (
                 <ScrollArea className="h-[400px] rounded-md">
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Student</TableHead>
-                          <TableHead>GR Number</TableHead>
-                          <TableHead>Roll Number</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Due Amount</TableHead>
-                          <TableHead className="text-right">Action</TableHead>
+                          <TableHead>{t("student")}</TableHead>
+                          <TableHead>{t("gr_number")}</TableHead>
+                          <TableHead>{t("roll_number")}</TableHead>
+                          <TableHead>{t("status")}</TableHead>
+                          <TableHead>{t("due_amount")}</TableHead>
+                          <TableHead className="text-right">{t("action")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -775,7 +777,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                             <TableCell className="text-right">
                               <Button variant="outline" size="sm" onClick={() => handleOpenStudentDialog(student)}>
                                 <UserPlus className="h-4 w-4 mr-2" />
-                                Apply Concession
+                                {t("apply_concession")}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -805,7 +807,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
 
@@ -813,7 +815,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Apply Concession to Student</DialogTitle>
+                <DialogTitle>{t("apply_concession_to_student")}</DialogTitle>
                 <DialogDescription>
                   {selectedStudent && (
                     <>
@@ -830,7 +832,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                     name="deduction_type"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel>Deduction Type</FormLabel>
+                        <FormLabel>{t("deduction_type")}</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
@@ -841,13 +843,13 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                               <FormControl>
                                 <RadioGroupItem value="percentage" />
                               </FormControl>
-                              <FormLabel className="font-normal">Percentage (%)</FormLabel>
+                              <FormLabel className="font-normal">{t("percentage")} (%)</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
                                 <RadioGroupItem value="fixed_amount" />
                               </FormControl>
-                              <FormLabel className="font-normal">Fixed Amount (₹)</FormLabel>
+                              <FormLabel className="font-normal">{t("fixed_amount")} (₹)</FormLabel>
                             </FormItem>
                           </RadioGroup>
                         </FormControl>
@@ -862,17 +864,17 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       name="percentage"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Percentage</FormLabel>
+                          <FormLabel>{t("percentage")}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Enter percentage value"
+                              placeholder={t("enter_percentage_value")}
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                             />
                           </FormControl>
-                          <FormDescription>Enter a value between 1 and 100</FormDescription>
+                          <FormDescription>{t("enter_a_value_between_1_and_100")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -883,17 +885,17 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       name="fixed_amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Amount</FormLabel>
+                          <FormLabel>{t("amount")}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Enter amount in rupees"
+                              placeholder={t("enter_amount_in_rupees")}
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                             />
                           </FormControl>
-                          <FormDescription>Enter the fixed amount to deduct</FormDescription>
+                          <FormDescription>{t("enter_the_fixed_amount_to_deduct")}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -903,9 +905,9 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                   {/* Fee Types selection for student concessions */}
                   {concession.concessions_to === "fees_type" && (
                     <div className="space-y-3">
-                      <FormLabel>Select Fee Types</FormLabel>
+                      <FormLabel>{t("select_fee_types")}</FormLabel>
                       <FormDescription>
-                        Choose the specific fee types to which this concession will be applied
+                        {t("choose_the_specific_fee_types_to_which_this_concession_will_be_applied")}
                       </FormDescription>
 
                       {isLoadingFeeTypes ? (
@@ -935,11 +937,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                           ))}
                         </div>
                       ) : (
-                        <p className="text-muted-foreground">No fee types available</p>
+                        <p className="text-muted-foreground">{t("no_fee_types_available")}</p>
                       )}
 
                       {concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0 && (
-                        <p className="text-sm text-red-500">Please select at least one fee type</p>
+                        <p className="text-sm text-red-500">{t("please_select_at_least_one_fee_type")}</p>
                       )}
                     </div>
                   )}
@@ -949,11 +951,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                     name="reason"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reason</FormLabel>
+                        <FormLabel>{t("reason")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter reason for concession" {...field} />
+                          <Input placeholder={t("enter_reason_for_concession")} {...field} />
                         </FormControl>
-                        <FormDescription>Briefly explain why this concession is being applied</FormDescription>
+                        <FormDescription>{t("briefly_explain_why_this_concession_is_being_applied")}</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -966,7 +968,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       onClick={() => setStudentDialogOpen(false)}
                       disabled={isApplyingToStudent}
                     >
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button
                       type="submit"
