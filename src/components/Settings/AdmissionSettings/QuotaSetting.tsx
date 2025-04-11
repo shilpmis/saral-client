@@ -197,11 +197,11 @@ export default function QuotaManagement() {
     academic_session_id : currentAcademicSession!.id
   })
 
-  const {
-    data: allocations,
-    isLoading: isLoadingAllocations,
-    refetch: refetchAllocations,
-  } = useGetQuotaAllocationsQuery()
+  // const {
+  //   data: allocations,
+  //   isLoading: isLoadingAllocations,
+  //   refetch: refetchAllocations,
+  // } = useGetQuotaAllocationsQuery()
 
   const { data: classSeats, isLoading: isLoadingSeats, refetch: refetchSeats } = useGetClassSeatAvailabilityQuery()
 
@@ -234,7 +234,7 @@ export default function QuotaManagement() {
   const refreshData = async () => {
     setIsRefreshing(true)
     try {
-      await Promise.all([refetchQuotas(), refetchAllocations(), refetchSeats(), refetchClasses()])
+      await Promise.all([refetchQuotas(), refetchSeats(), refetchClasses()])
       toast({
         title: t("data_refreshed"),
         description: t("the_latest_data_has_been_loaded"),
@@ -360,7 +360,7 @@ export default function QuotaManagement() {
       })
 
       refetchQuotas()
-      refetchAllocations()
+      // refetchAllocations()
     } catch (err: any) {
       const errorMessage = getErrorMessage(err)
       toast({
@@ -397,7 +397,7 @@ export default function QuotaManagement() {
     })
   }
 
-  if (isLoadingQuotas || isLoadingAllocations || isLoadingSeats || isLoadingClasses) {
+  if (isLoadingQuotas || isLoadingSeats || isLoadingClasses) {
     return (
       <div className="container mx-auto py-10">
         <div className="flex flex-col space-y-6">
