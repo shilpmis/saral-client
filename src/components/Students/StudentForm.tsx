@@ -374,7 +374,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }).unwrap()
 
             if (onSubmitSuccess) {
-              onSubmitSuccess(res)
+              onSubmitSuccess({...res , class_id :payload.students_data.class_id})
             } else {
               onClose()
             }
@@ -395,9 +395,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
             title: "Success",
             description: "Student Created Successfully",
           })
-          onClose()
+          if (onSubmitSuccess) {
+            onSubmitSuccess({...response.data , class_id :payload.students_data.class_id})
+          } else{
+            onClose()
+          }
         } catch (error: any) {
-          if (error.data.errors.code === "E_VALIDATION_ERROR") {
+          console.log("Error while Update Student :", error)
+          if (error?.data?.errors.code === "E_VALIDATION_ERROR") {
             error.data.errors.messages.map((msg: any) => {
               toast({
                 variant: "destructive",
@@ -557,10 +562,15 @@ const StudentForm: React.FC<StudentFormProps> = ({
         if (response.data) {
           if (setListedStudentForSelectedClass) setListedStudentForSelectedClass(response.data.data)
           if (setPaginationDataForSelectedClass) setPaginationDataForSelectedClass(response.data.meta)
-          onClose()
+            if (onSubmitSuccess) {
+              onSubmitSuccess({...response.data , class_id :payload.students_data.class_id})
+            } else{
+              onClose()
+            }            
         }
       } catch (error: any) {
-        if (error.data.errors.code === "E_VALIDATION_ERROR") {
+        console.log("Erro while adding student :" , error)
+        if (error?.data?.errors?.code === "E_VALIDATION_ERROR") {
           error.data.errors.messages.map((msg: any) => {
             toast({
               variant: "destructive",
