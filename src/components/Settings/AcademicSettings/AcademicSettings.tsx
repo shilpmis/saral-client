@@ -772,7 +772,7 @@ export default function AcademicSettings() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {formForDivsion.getValues("formType") === "create" ? "Add" : "Update"} {t("division")}
+                  {formForDivsion.getValues("formType") === "create" ? t("add") : t("update")} {t("division")}
                 </DialogTitle>
                 <DialogDescription>{t("confirm_or_modify_the_division_alias.")}</DialogDescription>
               </DialogHeader>
@@ -814,7 +814,7 @@ export default function AcademicSettings() {
                           <FormControl>
                             <Input
                               type="text"
-                              placeholder="Enter aliases name for class"
+                              placeholder={t("enter_aliases_name_for_class")}
                               {...field}
                               value={field.value ?? ""}
                             />
@@ -828,7 +828,7 @@ export default function AcademicSettings() {
                         {t("cancel")}
                       </Button>
                       <Button type="submit">
-                        {formForDivsion.getValues("formType") === "create" ? "Add a new" : "Update"} Division
+                        {formForDivsion.getValues("formType") === "create" ? t("add_a_new") : t("update")} {t("division")}
                       </Button>
                     </DialogFooter>
                   </form>

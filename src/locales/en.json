@@ -1039,5 +1039,14 @@
   "deactivate_user" : "Deactivate User",
   "are_you_sure_you_want_to_deactivate_this_user" : "Are you sure you want to deactivate this user",
   "deactivate" : "Deactivate",
-  "to" : "To"
+  "to" : "To",
+  "sum_of_installment_amounts" : "Sum of Installment Amounts",
+  "exceeds_total_amount" : "Exceeds Total Amount",
+  "max" : "Max",
+  "enter_aliases_name_for_class" : "Enter aliases name for class",
+  "add_a_new" : "Add a new",
+  "enter_address" : "Enter address",
+  "enter_previous_school" : "Enter previous school",
+  "applying_for_quota" : "Applying for quota",
+  "creating_inquiry_for_academic_session" : "Creating inquiry for academic session"
 }  

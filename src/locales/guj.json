@@ -1048,5 +1048,14 @@
   "deactivate_user" : "વપરાશકર્તાને અક્ષમ કરો",
   "are_you_sure_you_want_to_deactivate_this_user" : "શું તમે ખરેખર આ વપરાશકર્તાને અક્ષમ કરવા માંગો છો",
   "deactivate" : "અક્ષમ કરો",
-  "to" : "ને"
+  "to" : "ને",
+  "sum_of_installment_amounts" : "ઇન્સ્ટોલમેન્ટ રકમોનો સમ",
+  "exceeds_total_amount" : "કુલ રકમને પાર કરે છે",
+  "max" : "મહત્તમ",
+  "enter_aliases_name_for_class" : "ક્લાસ માટે ઉપનામ નામ દાખલ કરો",
+  "add_a_new" : "નવું ઉમેરો",
+  "enter_address" : "સરનામું દાખલ કરો",
+  "enter_previous_school" : "પૂર્વવર્તી શાળા દાખલ કરો",
+  "applying_for_quota" : "ક્વોટા માટે અરજી કરવી",
+  "creating_inquiry_for_academic_session" : "શૈક્ષણિક સત્ર માટે પૂછપરછ બનાવવી" 
 }
