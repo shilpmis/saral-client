@@ -1,6 +1,5 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -22,12 +21,12 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
 const PayFeesPanel: React.FC = () => {
-//   const router = useRouter()
-  const navigate = useNavigate();  
+  //   const router = useRouter()
+  const navigate = useNavigate()
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
-  
-  const {t} = useTranslation()
+
+  const { t } = useTranslation()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getClassFeesStatus, { data: feesData, isLoading, isError }] = useLazyGetStudentFeesDetailsForClassQuery()
 
@@ -63,7 +62,7 @@ const PayFeesPanel: React.FC = () => {
       setSelectedDivision(selectedDiv[0])
 
       try {
-        await getClassFeesStatus({class_id : selectedDiv[0].id , academic_session : CurrentAcademicSessionForSchool!.id})
+        await getClassFeesStatus({ class_id: selectedDiv[0].id, academic_session: CurrentAcademicSessionForSchool!.id })
       } catch (error) {
         toast({
           variant: "destructive",
@@ -164,8 +163,10 @@ const PayFeesPanel: React.FC = () => {
     if (!academicClasses && authState.user) {
       getAcademicClasses(authState.user.school_id)
     }
+  }, [academicClasses, authState.user, getAcademicClasses])
 
-    // Auto-select first class and division when academicClasses are loaded
+  // Auto-select first class and division when academicClasses are loaded
+  useEffect(() => {
     if (academicClasses && academicClasses.length > 0 && !selectedClass) {
       // Find first class with divisions
       const firstClassWithDivisions = academicClasses.find((cls) => cls.divisions.length > 0)
@@ -176,18 +177,21 @@ const PayFeesPanel: React.FC = () => {
 
         // Set the first division of that class
         if (firstClassWithDivisions.divisions.length > 0) {
-          const firstDivision = firstClassWithDivisions.divisions[0]
-          setSelectedDivision(firstDivision)
-
-          // Fetch fees data for this class and division
-          selectedDivision && getClassFeesStatus({
-            class_id : selectedDivision.id,
-            academic_session : CurrentAcademicSessionForSchool!.id
-          })
+          setSelectedDivision(firstClassWithDivisions.divisions[0])
         }
       }
     }
-  }, [academicClasses, authState.user, getAcademicClasses, selectedClass])
+  }, [academicClasses, selectedClass])
+
+  // Fetch data when selectedDivision changes
+  useEffect(() => {
+    if (selectedDivision && CurrentAcademicSessionForSchool) {
+      getClassFeesStatus({
+        class_id: selectedDivision.id,
+        academic_session: CurrentAcademicSessionForSchool.id,
+      })
+    }
+  }, [selectedDivision, CurrentAcademicSessionForSchool, getClassFeesStatus])
 
   // Update students when fees data changes
   useEffect(() => {
@@ -362,7 +366,7 @@ const PayFeesPanel: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                    {t("failed_to_load_fees_data._please_try_again.")}
+                      {t("failed_to_load_fees_data._please_try_again.")}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (
@@ -386,7 +390,7 @@ const PayFeesPanel: React.FC = () => {
                         {formatCurrency(student.fees_status.due_amount)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={student.fees_status.status === 'Paid' ? 'default' : 'destructive'}>
+                        <Badge variant={student.fees_status.status === "Paid" ? "default" : "destructive"}>
                           {student.fees_status.status}
                         </Badge>
                       </TableCell>
@@ -404,15 +408,19 @@ const PayFeesPanel: React.FC = () => {
               </TableBody>
             </Table>
           </div>
-          {feesData && selectedDivision &&  (<SaralPagination
-          currentPage={feesData.meta.last_page}
-          totalPages={feesData.meta.last_page}
-          onPageChange={(page) => getClassFeesStatus({ 
-            class_id: selectedDivision.id,
-            academic_session: CurrentAcademicSessionForSchool!.id, 
-            page
-          })}
-          ></SaralPagination>)}
+          {feesData && selectedDivision && (
+            <SaralPagination
+              currentPage={feesData.meta.last_page}
+              totalPages={feesData.meta.last_page}
+              onPageChange={(page) =>
+                getClassFeesStatus({
+                  class_id: selectedDivision.id,
+                  academic_session: CurrentAcademicSessionForSchool!.id,
+                  page,
+                })
+              }
+            ></SaralPagination>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -420,4 +428,3 @@ const PayFeesPanel: React.FC = () => {
 }
 
 export default PayFeesPanel
-
