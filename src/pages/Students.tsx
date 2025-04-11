@@ -8,7 +8,7 @@ import { Plus, Upload, MoreHorizontal, Loader2, AlertCircle, CheckCircle2, FileT
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
@@ -28,6 +28,7 @@ import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/compon
 import { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { StudentSchemaForUploadData } from "@/utils/student.validation"
+import { set } from "date-fns"
 
 // Type for validation results
 type ValidationResult = {
@@ -111,6 +112,7 @@ export const Students: React.FC = () => {
   const {t} = useTranslation()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
@@ -1028,6 +1030,26 @@ export const Students: React.FC = () => {
                       selectedStudent: null,
                     })
                   }}
+                  onSubmitSuccess={async(student_data : Student) => {
+                    setOpenDialogForStudent({
+                      isOpen: false,
+                      type: "add",
+                      selectedStudent: null,
+                    })
+                    let divison = AcademicDivisions?.find((cls) => cls.id === student_data.class_id)
+                    
+                    if(divison){
+                      setSelectedClass(divison.class_id.toString());
+                      setSelectedDivision(divison);
+                      if(!SelectedSession) setSelectedSession(CurrentAcademicSessionForSchool!.id)                    
+                      await getStudentForClass({
+                        class_id: divison.class_id,
+                        academic_session: CurrentAcademicSessionForSchool!.id,
+                        page : 1,
+                        student_meta : false,
+                      })
+                    }
+                  }}
                   form_type="create"
                 />
               )}
@@ -1039,16 +1061,21 @@ export const Students: React.FC = () => {
                       type: "edit",
                       selectedStudent: null,
                     })
-
-                    // Refresh the student list if a division is selected
-                    // if (selectedDivision) {
-                    //   getStudentForClass({
-                    //     class_id: selectedDivision.id,
-                    //     page: currentPage,
-                    //     student_meta: true,
-                    //     academic_session: SelectedSession,
-                    //   })
-                    // }
+                  }}
+                  onSubmitSuccess={(student_data : Student) => {
+                    setOpenDialogForStudent({
+                      isOpen: false,
+                      type: "add",
+                      selectedStudent: null,
+                    })
+                    if (selectedDivision && SelectedSession) {
+                      getStudentForClass({
+                        class_id: student_data.class_id,
+                        academic_session: SelectedSession,
+                        page : currentPage,
+                        student_meta : false,
+                      })
+                    }
                   }}
                   form_type="update"
                   initial_data={studentDataForEditStudent}

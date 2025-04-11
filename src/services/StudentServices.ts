@@ -158,7 +158,8 @@ export const StudentApi = createApi({
         if (name) params.append("name", name);
         if (gr_no) params.append("gr_no", gr_no.toString());
         if (class_id) params.append("class_id", class_id.toString());
-        if (primary_mobile) params.append("primary_mobile", primary_mobile.toString());
+        if (primary_mobile)
+          params.append("primary_mobile", primary_mobile.toString());
         params.append("detailed", detailed.toString());
 
         return {
