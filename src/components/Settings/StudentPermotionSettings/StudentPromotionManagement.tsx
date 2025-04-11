@@ -1359,7 +1359,16 @@ export function StudentPromotionManagement() {
           <div className="py-4">
             <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
               <p className="text-sm font-medium">
-                Class {selectedStudentForAction?.class?.class} {selectedStudentForAction?.class?.division}
+                Class{" "}
+                {selectedStudentForAction
+                  ? typeof selectedStudentForAction.class.class === "number"
+                    ? selectedStudentForAction.class.class
+                    : selectedStudentForAction.class.id ||
+                      (selectedStudentForAction.class.class && typeof selectedStudentForAction.class.class === "object"
+                        ? selectedStudentForAction.class.id
+                        : "")
+                  : ""}{" "}
+                {selectedStudentForAction?.class?.division}
               </p>
               <p className="text-xs text-muted-foreground">
                 {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1427,7 +1436,17 @@ export function StudentPromotionManagement() {
             <div className="flex items-center justify-center my-4">
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
-                  Class {selectedStudentForAction?.class?.class} {selectedStudentForAction?.class?.division}
+                  Class{" "}
+                  {selectedStudentForAction
+                    ? typeof selectedStudentForAction.class.class === "number"
+                      ? selectedStudentForAction.class.class
+                      : selectedStudentForAction.class.id ||
+                        (selectedStudentForAction.class.class &&
+                        typeof selectedStudentForAction.class.class === "object"
+                          ? selectedStudentForAction.class.id
+                          : "")
+                    : ""}{" "}
+                  {selectedStudentForAction?.class?.division}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1528,9 +1547,18 @@ export function StudentPromotionManagement() {
                   <p className="text-sm font-medium">{t("student_details")}</p>
                   {selectedStudentForAction && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedStudentForAction.student.first_name} {selectedStudentForAction.student.middle_name}{" "}
-                      {selectedStudentForAction.student.last_name} - Class {selectedStudentForAction.class?.class}{" "}
-                      {selectedStudentForAction.class?.division}
+                      {selectedStudentForAction?.student.first_name} {selectedStudentForAction?.student.middle_name}{" "}
+                      {selectedStudentForAction?.student.last_name} - Class{" "}
+                      {selectedStudentForAction
+                        ? typeof selectedStudentForAction.class.class === "number"
+                          ? selectedStudentForAction.class.class
+                          : selectedStudentForAction.class.id ||
+                            (selectedStudentForAction.class.class &&
+                            typeof selectedStudentForAction.class.class === "object"
+                              ? selectedStudentForAction.class.id
+                              : "")
+                        : ""}{" "}
+                      {selectedStudentForAction?.class?.division}
                     </p>
                   )}
                 </div>
