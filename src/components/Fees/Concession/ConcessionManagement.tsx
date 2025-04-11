@@ -351,7 +351,7 @@ export const ConcessionManagement: React.FC = () => {
             >
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
                     <DialogHeader>
-                        <DialogTitle>{dialogState.type === "edit" ? "Edit Concession" : t("add_new_concession")}</DialogTitle>
+                        <DialogTitle>{dialogState.type === "edit" ? t("edit_concession") : t("add_new_concession")}</DialogTitle>
                     </DialogHeader>
                     <AddConcessionForm
                         initialData={dialogState.concession}
@@ -366,7 +366,7 @@ export const ConcessionManagement: React.FC = () => {
             <Dialog open={dialogState.isOpen && dialogState.type === "apply"} onOpenChange={(open) => !open && closeDialog()}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
                     <DialogHeader>
-                        <DialogTitle>{dialogState.concession?.applicable_to === 'plan' ? 'Apply Concession to Fee Plan' : 'Apply Concession to Student'}</DialogTitle>
+                        <DialogTitle>{dialogState.concession?.applicable_to === 'plan' ? 'Apply Concession to Fee Plan' : t("apply_concession_to_student")}</DialogTitle>
                     </DialogHeader>
                     {dialogState.concession && (
                         <ApplyConcessionForm
@@ -385,7 +385,7 @@ export const ConcessionManagement: React.FC = () => {
             >
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
                     <DialogHeader>
-                        <DialogTitle>Concession Details</DialogTitle>
+                        <DialogTitle>{t("concession_details")}</DialogTitle>
                     </DialogHeader>
                     {dialogState.concession && <ConcessionDetailsDialog concessionId={dialogState.concession.id} />}
                 </DialogContent>

@@ -151,13 +151,12 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                 t("this_concession_will_be_applied_to_entire_fee_plans._the_deduction_will_apply_to_the_total_plan_amount.")}
               {applicableTo === "plan" &&
                 concessionsTo === "fees_type" &&
-                "This concession will be applied to specific fee types within fee plans. You'll be able to select which fee types when applying the concession."}
-              {applicableTo === "students" &&
+                t("this_concession_will_be_applied_to_specific_fee_types_within_fee_plans._you'll_be_able_to_select_which_fee_types_when_applying_the_concession.")}              {applicableTo === "students" &&
                 concessionsTo === "plan" &&
-                "This concession will be applied to individual students' fee plans. The deduction will apply to the total plan amount for selected students."}
+                t("this_concession_will_be_applied_to_individual_students_fee_plans._the_deduction_will_apply_to_the_total_plan_amount_for_selected_students.")}
               {applicableTo === "students" &&
                 concessionsTo === "fees_type" &&
-                "This concession will be applied to specific fee types for individual students. You'll be able to select which fee types when applying the concession to a student."}
+                t("this_concession_will_be_applied_to_specific_fee_types_for_individual_students._you'll_be_able_to_select_which_fee_types_when_applying_the_concession_to_a_student.")}
             </AlertDescription>
           </Alert>
         )}
@@ -219,7 +218,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                 {initialData ? "Updating..." : "Creating..."}
               </>
             ) : initialData ? (
-              "Update Concession"
+              t("update_concession")
             ) : (
               t("create_concession")
             )}
