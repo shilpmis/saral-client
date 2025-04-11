@@ -207,9 +207,9 @@ interface AddFeePlanFormProps {
 }
 
 export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSuccessfulSubmit, type, plan_id }) => {
+  
   const authState = useAppSelector(selectAuthState)
   const user = useAppSelector(selectCurrentUser)
-  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
   const AcademicClassesForSchool = useAppSelector(selectAcademicClasses)
 
@@ -750,35 +750,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   <CardTitle>{t("fee_plan_details")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="fees_plan.name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel required>{t("plan_name")}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t("enter_fee_plan_name")} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="fees_plan.description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("description")}</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder={t("enter_plan_description")} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {type === "create" && (
+                  
+                {type === "create" && (
                     <FormField
                       control={form.control}
                       name="fees_plan.class_id"
@@ -815,6 +788,35 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                       )}
                     />
                   )}
+
+                  <FormField
+                    control={form.control}
+                    name="fees_plan.name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>{t("plan_name")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t("enter_fee_plan_name")} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="fees_plan.description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("description")}</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder={t("enter_plan_description")} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
 
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button type="button" variant="outline" onClick={onCancel}>
@@ -1036,7 +1038,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                     )}
                                   />
 
-                                  <FormField
+                                  {/* {type === "create" &&  ( */}
+                                    <FormField
                                     control={form.control}
                                     name={`fees_types.${index}.total_amount`}
                                     render={({ field }) => (
@@ -1046,6 +1049,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                           <NumberInput
                                             {...field}
                                             decimal={true}
+                                            // disabled={type === "update" || !!fetchedDetialFeePlan?.fees_types[index]}
                                             value={field.value.toString() ?? undefined}
                                             onChange={(value) => {
                                               field.onChange(value)
@@ -1270,8 +1274,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   <Button type="button" variant="outline" onClick={onCancel}>
                     {t("cancel")}
                   </Button>
-                  <Button type="submit" disabled={isCreatingFeePlan}>
-                    {isCreatingFeePlan && <Loader2 />}
+                  <Button type="submit" disabled={isCreatingFeePlan || isUpdatinFeePlan}>
+                    {(isCreatingFeePlan || isUpdatinFeePlan) && <Loader2 />}
                     {plan_id ? t("edit_fee_plan") : t("create_fee_plan")}
                   </Button>
                 </div>
