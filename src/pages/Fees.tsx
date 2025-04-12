@@ -10,25 +10,24 @@ import { ReportGeneration } from "@/components/Fees/Reports/ReportGeneration"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 export const Fees: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState("fee-types")
   const {t} = useTranslation();
-
 
   return (
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full">
-          <TabsTrigger value="dashboard">{t("dashboard")}</TabsTrigger>
+          {/* <TabsTrigger value="dashboard">{t("dashboard")}</TabsTrigger> */}
           <TabsTrigger value="fee-types">{t("fee_types")}</TabsTrigger>
           <TabsTrigger value="fee-plans">{t("fee_plans")}</TabsTrigger>
           <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
           <TabsTrigger value="student-fees">{t("student_fees")}</TabsTrigger>
           {/* <TabsTrigger value="reports">{t("reports")}</TabsTrigger> */}
         </TabsList>
-
+{/* 
         <TabsContent value="dashboard">
           <FeeDashboard />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="fee-types">
           <FeeTypeManagement />
