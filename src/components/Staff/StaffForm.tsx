@@ -10,39 +10,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { StaffFormData, staffSchema } from "@/utils/staff.validation";
+import { type StaffFormData, staffSchema } from "@/utils/staff.validation"
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
-import { StaffRole, StaffType } from "@/types/staff"
+import type { StaffRole, StaffType } from "@/types/staff"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import NumberInput from "@/components/ui/NumberInput"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { Loader2 } from "lucide-react"
 
 interface StaffFormProps {
-  // initial_data?: Partial<StaffFormData>   
+  // initial_data?: Partial<StaffFormData>
   initial_data?: StaffType | null
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
+  isApiInProgress: boolean
+  onSuccess?: () => void // Add this line
 }
 
 const formatData = (value: any): string => {
   return value ? new Date(value).toISOString().split("T")[0] : " "
 }
 
-const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, formType }) => {
-
-  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, isApiInProgress ,onClose, formType, onSuccess }) => {
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
   const [getStaffRoles, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
-  const {t} = useTranslation()
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState(formType === "update" ? "personal" : "role")
   const [teachingRoles, setTeachingRoles] = useState<StaffRole[] | null>(null)
   const [nonTeachingRoles, setNonTeachingRoles] = useState<StaffRole[] | null>(null)
 
-  const authState = useAppSelector(selectAuthState);
-  const StaffRolesForSchool = useAppSelector(selectSchoolStaffRoles);
+  const authState = useAppSelector(selectAuthState)
+  const StaffRolesForSchool = useAppSelector(selectSchoolStaffRoles)
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
@@ -77,8 +79,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
       IFSC_code: null,
       joining_date: null,
       employment_status: undefined,
-    }
-  });
+    },
+  })
 
   const tabMapping: { [key: string]: string } = {
     is_teaching_role: "role",
@@ -112,10 +114,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
     class_id: "employment",
     joining_date: "employment",
     employment_status: "employment",
-  };
+  }
 
   const handleSubmit: SubmitHandler<StaffFormData> = (data) => {
     onSubmit(data)
+    // The parent component will handle the success callback after API call
   }
 
   const handleNextTab = useCallback(() => {
@@ -137,19 +140,19 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
   }, [activeTab])
 
   useEffect(() => {
-    const errors = form.formState.errors;
+    const errors = form.formState.errors
     if (Object.keys(errors).length > 0) {
-      const firstErrorField = Object.keys(errors)[0];
-      console.log("firstErrorField", firstErrorField)
-      const tabToActivate = tabMapping[firstErrorField];
-      setActiveTab(tabToActivate);
+      const firstErrorField = Object.keys(errors)[0]
+      // console.log("firstErrorField", firstErrorField)
+      const tabToActivate = tabMapping[firstErrorField]
+      setActiveTab(tabToActivate)
 
       // Focus on the input field with the error
       setTimeout(() => {
-        inputRefs.current[firstErrorField]?.focus();
-      }, 0);
+        inputRefs.current[firstErrorField]?.focus()
+      }, 0)
     }
-  }, [form.formState.errors]);
+  }, [form.formState.errors])
 
   useEffect(() => {
     if (!teachingRoles || !nonTeachingRoles) {
@@ -157,22 +160,22 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
     }
   }, [])
 
-    useEffect(() => {
-      if(!StaffRolesForSchool){
-        getStaffRoles(authState.user!.school_id);
-      }
-  }, [StaffRolesForSchool]);
+  useEffect(() => {
+    if (!StaffRolesForSchool) {
+      getStaffRoles(authState.user!.school_id)
+    }
+  }, [StaffRolesForSchool])
 
   useEffect(() => {
-    if (schoolStaff && StaffRolesForSchool ) {
+    if (schoolStaff && StaffRolesForSchool) {
       setTeachingRoles(schoolStaff.filter((role: StaffRole) => role?.is_teaching_role))
       setNonTeachingRoles(schoolStaff?.filter((role: StaffRole) => !role?.is_teaching_role))
     }
-  }, [schoolStaff , StaffRolesForSchool])
+  }, [schoolStaff, StaffRolesForSchool])
 
   useEffect(() => {
-    console.log(formType, initial_data)
-    if (formType === 'update' && initial_data?.staff_role_id) {
+    // console.log(formType, initial_data)
+    if (formType === "update" && initial_data?.staff_role_id) {
       form.reset({
         is_teaching_role: Boolean(initial_data?.is_teching_staff),
         staff_role_id: initial_data?.staff_role_id,
@@ -203,7 +206,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
         employment_status: initial_data?.employment_status,
         state: initial_data?.state,
         qualification: initial_data?.qualification ?? null,
-        subject_specialization: initial_data?.subject_specialization ?? null
+        subject_specialization: initial_data?.subject_specialization ?? null,
       })
     }
   }, [formType])
@@ -222,7 +225,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
             <TabsTrigger value="employment">{t("employee")}</TabsTrigger>
           </TabsList>
 
-          {formType != 'update' && (
+          {formType != "update" && (
             <TabsContent value="role">
               <Card>
                 <CardHeader>
@@ -265,29 +268,33 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel required>{t("staff_role")}</FormLabel>
-                        {teachingRoles && nonTeachingRoles && (<Select
-                          onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("select_staff_role")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {form.watch("is_teaching_role")
-                              ? teachingRoles && teachingRoles.map((staff) => (
-                                <SelectItem key={staff.id} value={staff.id.toString()}>
-                                  {staff.role}
-                                </SelectItem>
-                              ))
-                              : nonTeachingRoles && nonTeachingRoles.map((staff) => (
-                                <SelectItem key={staff.id} value={staff.id.toString()}>
-                                  {staff.role}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>)}
+                        {teachingRoles && nonTeachingRoles && (
+                          <Select
+                            onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("select_staff_role")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {form.watch("is_teaching_role")
+                                ? teachingRoles &&
+                                  teachingRoles.map((staff) => (
+                                    <SelectItem key={staff.id} value={staff.id.toString()}>
+                                      {staff.role}
+                                    </SelectItem>
+                                  ))
+                                : nonTeachingRoles &&
+                                  nonTeachingRoles.map((staff) => (
+                                    <SelectItem key={staff.id} value={staff.id.toString()}>
+                                      {staff.role}
+                                    </SelectItem>
+                                  ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         {(!teachingRoles || !nonTeachingRoles) && <div>Loading...</div>}
                         <FormMessage />
                       </FormItem>
@@ -435,7 +442,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
+                            value={field.value ? String(field.value) : ""}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                           />
                         </FormControl>
@@ -574,7 +581,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                {t("next")}
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -823,7 +830,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
-                {t("next")}
+                  {t("next")}
                 </Button>
               </CardFooter>
             </Card>
@@ -864,7 +871,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                           <SelectItem value="Permanent">{t("permanent")}</SelectItem>
                           <SelectItem value="Trial_Period">{t("trial_period")}</SelectItem>
                           <SelectItem value="Resigned">{t("resigned")}</SelectItem>
-                          <SelectItem value="Contact_base">{t("contract_base")}</SelectItem>
+                          <SelectItem value="Contract_Based">{t("contract_base")}</SelectItem>
                           <SelectItem value="Notice_Period">{t("notice_period")}</SelectItem>
                         </SelectContent>
                       </Select>
@@ -877,7 +884,14 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   {t("previous")}
                 </Button>
-                <Button type="submit">{t("submit")}</Button>
+                {/* <Button type="submit" disabled={isApiInProgress}>
+                  {isApiInProgress ? <Loader2 className="animate-spin" />  : null}
+                  {t("submit")}
+                </Button> */}
+                <Button type="submit" disabled={isApiInProgress}>
+                    {(isApiInProgress) && <Loader2 className="animate-spin" />}
+                    {formType === "create" ?  t("Create") : "Update"}
+                </Button>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -888,4 +902,3 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, onClose, 
 }
 
 export default StaffForm
-
