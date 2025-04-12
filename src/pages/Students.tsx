@@ -3,15 +3,18 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, Upload, MoreHorizontal, Loader2, AlertCircle, CheckCircle2, FileText, Table, FileDown } from "lucide-react"
+import { Plus, Upload, Loader2, AlertCircle, CheckCircle2, FileText, FileDown, School } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
-import type { AcademicClasses, Division } from "@/types/academic"
+import {
+  selectAccademicSessionsForSchool,
+  selectActiveAccademicSessionsForSchool,
+  selectAuthState,
+} from "@/redux/slices/authSlice"
+import type { Division } from "@/types/academic"
 import type { PageDetailsForStudents, Student } from "@/types/student"
 import StudentTable from "@/components/Students/StudentTable"
 import {
@@ -24,12 +27,11 @@ import { Input } from "@/components/ui/input"
 import { downloadCSVTemplate } from "@/utils/CSVTemplateForStudents"
 import ExcelDownloadModalForStudents from "@/components/Students/ExcelDownloadModalForStudents"
 import { z } from "zod"
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AcademicSession } from "@/types/user"
+import type { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { StudentSchemaForUploadData } from "@/utils/student.validation"
-import { set } from "date-fns"
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useNavigate, useNavigation } from "react-router-dom"
 // Type for validation results
 type ValidationResult = {
   row: number
@@ -41,75 +43,73 @@ type ValidationResult = {
 // Custom CSV parser function
 const parseCSV = (file: File): Promise<any[]> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    const reader = new FileReader()
 
     reader.onload = (event) => {
       try {
-        const csvData = event.target?.result as string;
-        const lines = csvData.split("\n");
+        const csvData = event.target?.result as string
+        const lines = csvData.split("\n")
 
         // Extract headers (first line)
-        const headers = lines[0]
-          .split(",")
-          .map((header) => header.trim().replace(/^"(.*)"$/, "$1")); // Remove quotes if present
+        const headers = lines[0].split(",").map((header) => header.trim().replace(/^"(.*)"$/, "$1")) // Remove quotes if present
 
         // Parse data rows
-        const results = [];
+        const results = []
         for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue; // Skip empty lines
+          if (!lines[i].trim()) continue // Skip empty lines
 
-          const values: string[] = [];
-          let current = "";
-          let insideQuotes = false;
+          const values: string[] = []
+          let current = ""
+          let insideQuotes = false
 
           for (const char of lines[i]) {
             if (char === '"' && !insideQuotes) {
-              insideQuotes = true; // Start of quoted field
+              insideQuotes = true // Start of quoted field
             } else if (char === '"' && insideQuotes) {
-              insideQuotes = false; // End of quoted field
+              insideQuotes = false // End of quoted field
             } else if (char === "," && !insideQuotes) {
-              values.push(current.trim());
-              current = ""; // Reset for the next value
+              values.push(current.trim())
+              current = "" // Reset for the next value
             } else {
-              current += char; // Append character to the current value
+              current += char // Append character to the current value
             }
           }
-          values.push(current.trim()); // Add the last value
+          values.push(current.trim()) // Add the last value
 
           // Create object with headers as keys
-          const row: any = {};
+          const row: any = {}
           headers.forEach((header, index) => {
-            let value: any = values[index] || null; // Set null for empty fields
+            let value: any = values[index] || null // Set null for empty fields
 
             // Convert specific fields to their expected types
             if (header === "Roll Number" && value !== null) {
-              value = Number(value); // Convert Roll Number to a number
-              if (isNaN(value)) value = null; // Handle invalid numbers
+              value = Number(value) // Convert Roll Number to a number
+              if (isNaN(value)) value = null // Handle invalid numbers
             }
 
-            row[header] = value;
-          });
+            row[header] = value
+          })
 
-          results.push(row);
+          results.push(row)
         }
 
-        resolve(results);
+        resolve(results)
       } catch (error: any) {
-        reject(new Error(`Failed to parse CSV: ${error.message}`));
+        reject(new Error(`Failed to parse CSV: ${error.message}`))
       }
-    };
+    }
 
     reader.onerror = () => {
-      reject(new Error("Error reading file"));
-    };
+      reject(new Error("Error reading file"))
+    }
 
-    reader.readAsText(file);
-  });
-};
+    reader.readAsText(file)
+  })
+}
 
 export const Students: React.FC = () => {
-
-  const {t} = useTranslation()
+  const { t } = useTranslation()
+  const navaigate = useNavigate()
   const authState = useAppSelector(selectAuthState)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
   const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
@@ -135,7 +135,7 @@ export const Students: React.FC = () => {
     isOpen: boolean
     type: "add" | "edit"
     selectedStudent: Student | null
-  }>({ isOpen: false, type: "add", selectedStudent: null });
+  }>({ isOpen: false, type: "add", selectedStudent: null })
 
   const [fileName, setFileName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -154,51 +154,47 @@ export const Students: React.FC = () => {
   const [serverValidationErrors, setServerValidationErrors] = useState<ValidationResult[]>([])
 
   const handleClassChange = useCallback((value: string) => {
-    setSelectedClass(value);
-    setSelectedDivision(null); // Reset division when class changes
-  }, []);
+    setSelectedClass(value)
+    setSelectedDivision(null) // Reset division when class changes
+  }, [])
 
-  const handleDivisionChange = useCallback(async (value: string) => {
-      
-    if (AcademicClasses && SelectedSession) {
-        const selectedClassObj = AcademicClasses.find(
-          (cls) => cls.id.toString() === selectedClass
-        );
+  const handleDivisionChange = useCallback(
+    async (value: string) => {
+      if (AcademicClasses && SelectedSession) {
+        const selectedClassObj = AcademicClasses.find((cls) => cls.id.toString() === selectedClass)
 
         if (selectedClassObj) {
-          const selectedDiv = selectedClassObj.divisions.find(
-            (div) => div.id.toString() === value
-          );
+          const selectedDiv = selectedClassObj.divisions.find((div) => div.id.toString() === value)
 
           if (selectedDiv) {
-            setSelectedDivision(selectedDiv);
+            setSelectedDivision(selectedDiv)
 
             // Fetch students for the selected division and session
             await getStudentForClass({
               class_id: selectedDiv.id,
               academic_session: SelectedSession,
-            });
+            })
           }
         }
       }
     },
-    [AcademicClasses, SelectedSession, selectedClass, getStudentForClass]
-  );
+    [AcademicClasses, SelectedSession, selectedClass, getStudentForClass],
+  )
 
   const handleAcademicSessionChange = useCallback(
     async (value: number) => {
-      setSelectedSession(value);
+      setSelectedSession(value)
 
       // Fetch students for the selected division and session if both are selected
       if (selectedDivision) {
         await getStudentForClass({
           class_id: selectedDivision.id,
           academic_session: value,
-        });
+        })
       }
     },
-    [selectedDivision, getStudentForClass]
-  );
+    [selectedDivision, getStudentForClass],
+  )
 
   const filteredStudents = useMemo(() => {
     if (listedStudentForSelectedClass) {
@@ -211,13 +207,11 @@ export const Students: React.FC = () => {
 
   const availableDivisions = useMemo(() => {
     if (AcademicClasses && selectedClass) {
-      const selectedClassObj = AcademicClasses.find(
-        (cls) => cls.id.toString() === selectedClass
-      );
-      return selectedClassObj ? selectedClassObj.divisions : [];
+      const selectedClassObj = AcademicClasses.find((cls) => cls.id.toString() === selectedClass)
+      return selectedClassObj ? selectedClassObj.divisions : []
     }
-    return [];
-  }, [AcademicClasses, selectedClass]);
+    return []
+  }, [AcademicClasses, selectedClass])
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
@@ -251,20 +245,23 @@ export const Students: React.FC = () => {
   }, [])
 
   // Function to validate CSV data with Zod
-  
+
   const validateCsvData = useCallback((data: any[]): ValidationResult[] => {
-    const results: ValidationResult[] = [];
+    const results: ValidationResult[] = []
 
     data.forEach((row, index) => {
       // Set all optional fields to null if not provided
-      const sanitizedRow = Object.keys(StudentSchemaForUploadData.shape).reduce((acc, key) => {
-        acc[key] = row[key] !== undefined && row[key] !== "" ? row[key] : null;
-        return acc;
-      }, {} as Record<string, any>);
+      const sanitizedRow = Object.keys(StudentSchemaForUploadData.shape).reduce(
+        (acc, key) => {
+          acc[key] = row[key] !== undefined && row[key] !== "" ? row[key] : null
+          return acc
+        },
+        {} as Record<string, any>,
+      )
 
       try {
         // Attempt to validate the sanitized row data against the schema
-        StudentSchemaForUploadData.parse(sanitizedRow);
+        StudentSchemaForUploadData.parse(sanitizedRow)
 
         // If validation passes, add a success result
         results.push({
@@ -272,21 +269,21 @@ export const Students: React.FC = () => {
           hasErrors: false,
           errors: [],
           rawData: sanitizedRow,
-        });
+        })
       } catch (error) {
         if (error instanceof z.ZodError) {
           // Format Zod validation errors
           const formattedErrors = error.errors.map((err) => ({
             field: err.path.join("."),
             message: err.message,
-          }));
+          }))
 
           results.push({
             row: index + 2,
             hasErrors: true,
             errors: formattedErrors,
             rawData: sanitizedRow,
-          });
+          })
         }
       }
 
@@ -296,14 +293,13 @@ export const Students: React.FC = () => {
           results[results.length - 1].errors.push({
             field: key,
             message: "Optional field not provided (valid)",
-          });
+          })
         }
-      });
-    });
+      })
+    })
 
-    return results;
-  }, []);
-
+    return results
+  }, [])
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,7 +322,7 @@ export const Students: React.FC = () => {
 
             const headers = Object.keys(parsedData[0])
             const requiredHeaders = StudentSchemaForUploadData.shape
-            const missingHeaders = Object.keys(requiredHeaders).filter(header => !headers.includes(header))
+            const missingHeaders = Object.keys(requiredHeaders).filter((header) => !headers.includes(header))
 
             if (missingHeaders.length > 0) {
               setUploadError(`Missing required headers: ${missingHeaders.join(", ")}`)
@@ -363,8 +359,7 @@ export const Students: React.FC = () => {
   }, [])
 
   const handleFileUploadSubmit = async () => {
-    
-    if(!CurrentAcademicSessionForSchool){
+    if (!CurrentAcademicSessionForSchool) {
       setUploadError("Please select an academic session first")
       return
     }
@@ -397,7 +392,6 @@ export const Students: React.FC = () => {
 
       // Handle success response
       if (response.data) {
-
         // If upload was successful
         if (response.data.totalInserted) {
           // Close the dialog
@@ -424,7 +418,10 @@ export const Students: React.FC = () => {
            * Refetch the student list for the selected class
            */
           if (selectedDivision) {
-            await getStudentForClass({ class_id: selectedDivision.id, academic_session: CurrentAcademicSessionForSchool!.id })
+            await getStudentForClass({
+              class_id: selectedDivision.id,
+              academic_session: CurrentAcademicSessionForSchool!.id,
+            })
 
             // Make sure the UI updates with the new data
             if (studentDataForSelectedClass) {
@@ -434,7 +431,7 @@ export const Students: React.FC = () => {
           }
         }
       } else {
-        let errors = response.error.data.errors;
+        const errors = response.error.data.errors
         if (errors) {
           const dbValidationResults: ValidationResult[] = errors.map((error: any) => ({
             row: error.row,
@@ -450,7 +447,6 @@ export const Students: React.FC = () => {
           setValidationPassed(false)
         }
       }
-
     } catch (error: any) {
       console.error("Upload error:", error)
       setUploadError(error.data?.message || "Failed to upload students. Please try again.")
@@ -470,14 +466,15 @@ export const Students: React.FC = () => {
     async (page: number) => {
       setCurrentPage(page)
       if (selectedDivision && SelectedSession) {
-        await getStudentForClass({ class_id: selectedDivision.id , page: page, academic_session: SelectedSession  }).then((response) => {
-          setPaginationDataForSelectedClass(response.data.meta)
-        })
+        await getStudentForClass({ class_id: selectedDivision.id, page: page, academic_session: SelectedSession }).then(
+          (response) => {
+            setPaginationDataForSelectedClass(response.data.meta)
+          },
+        )
       }
     },
     [setCurrentPage, selectedDivision, getStudentForClass],
   )
-
 
   // Get all unique fields from the parsed data
   const getUniqueFields = useMemo(() => {
@@ -513,7 +510,7 @@ export const Students: React.FC = () => {
           setSelectedDivision(firstDivision)
 
           // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id , academic_session: SelectedSession })
+          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
         }
       }
     }
@@ -521,7 +518,7 @@ export const Students: React.FC = () => {
 
   useEffect(() => {
     if (CurrentAcademicSessionForSchool) {
-      setSelectedSession(CurrentAcademicSessionForSchool.id);
+      setSelectedSession(CurrentAcademicSessionForSchool.id)
       // setSelectedSessionForDownloadExcel(CurrentAcademicSessionForSchool.id);
     }
   }, [CurrentAcademicSessionForSchool])
@@ -554,9 +551,7 @@ export const Students: React.FC = () => {
     })
   }, [uploadResults])
 
-
   return (
-
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -566,10 +561,10 @@ export const Students: React.FC = () => {
               onClick={() =>
                 setOpenDialogForStudent({ ...openDialogForStudent, isOpen: true, type: "add", selectedStudent: null })
               }
+              disabled={!AcademicClasses || AcademicClasses.length === 0}
             >
               <Plus className="mr-2 h-4 w-4" /> {t("add_new_student")}
             </Button>
-
 
             {/* Upload CSV */}
             <Dialog
@@ -585,7 +580,11 @@ export const Students: React.FC = () => {
               }}
             >
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => setDialogOpenForBulkUpload(true)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setDialogOpenForBulkUpload(true)}
+                  disabled={!AcademicClasses || AcademicClasses.length === 0}
+                >
                   <Upload className="mr-2 h-4 w-4" /> {t("upload_csv")}
                 </Button>
               </DialogTrigger>
@@ -721,8 +720,8 @@ export const Students: React.FC = () => {
                         {serverValidationErrors.map((error, index) => (
                           <li key={index}>
                             <strong>Row {error.row}:</strong>
-                            <ul className="list-disc list-inside ml-4"> 
-                            {/* </ul> */}
+                            <ul className="list-disc list-inside ml-4">
+                              {/* </ul> */}
                               {error.errors.map((err, idx) => (
                                 <li key={idx}>
                                   <strong>{err.field}:</strong> {err.message}
@@ -789,7 +788,9 @@ export const Students: React.FC = () => {
                       <span>{t("invalid_data_with_error_message")}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-500 mr-1">!</span>
+                      <span className="bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-500 mr-1">
+                        !
+                      </span>
                       <span>Optional field not provided (valid)</span>
                     </div>
                   </div>
@@ -835,10 +836,12 @@ export const Students: React.FC = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {sortedValidationResults.map((result, index) => (
                           <tr key={index} className={result.hasErrors ? "bg-red-50" : ""}>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">{result.row - 1}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 border-r">
+                              {result.row - 1}
+                            </td>
                             {getUniqueFields.map((field) => {
                               // Find if this field has an error or warning
-                              const fieldError = result.errors.find((err) => err.field === field);
+                              const fieldError = result.errors.find((err) => err.field === field)
 
                               return (
                                 <td
@@ -847,8 +850,8 @@ export const Students: React.FC = () => {
                                     fieldError?.message.includes("Optional field not provided")
                                       ? "bg-yellow-50" // Highlight warnings in yellow
                                       : fieldError
-                                      ? "bg-red-50" // Highlight errors in red
-                                      : "bg-green-50" // Highlight valid fields in green
+                                        ? "bg-red-50" // Highlight errors in red
+                                        : "bg-green-50" // Highlight valid fields in green
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -857,8 +860,8 @@ export const Students: React.FC = () => {
                                         fieldError?.message.includes("Optional field not provided")
                                           ? "text-yellow-500 text-xs"
                                           : fieldError
-                                          ? "text-red-500 text-xs"
-                                          : "sr-only"
+                                            ? "text-red-500 text-xs"
+                                            : "sr-only"
                                       }
                                     >
                                       {fieldError ? fieldError.message : "Valid field"}
@@ -868,8 +871,8 @@ export const Students: React.FC = () => {
                                         fieldError?.message.includes("Optional field not provided")
                                           ? "text-yellow-500 font-bold"
                                           : fieldError
-                                          ? "text-red-500 font-bold"
-                                          : "text-green-500"
+                                            ? "text-red-500 font-bold"
+                                            : "text-green-500"
                                       }`}
                                     >
                                       {fieldError ? "!" : "✓"}
@@ -890,7 +893,6 @@ export const Students: React.FC = () => {
                       </tbody>
                     </table>
                   </CardContent>
-
                 </Card>
                 <div className="flex justify-end mt-4">
                   <Button onClick={() => setValidationDialogOpen(false)}>Close</Button>
@@ -898,26 +900,47 @@ export const Students: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {/* <DropdownMenuItem>Export Data</DropdownMenuItem> */}
-                {/* <ExcelDownloadModalForStudents academicClasses={AcademicClasses} /> */}
-                <DropdownMenuItem>
-                  <button className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => setDialogOpenForDownLoadExcel(true)}>
-                    <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
-                  </button>
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem>Print List</DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpenForDownLoadExcel(true)}
+              className="flex items-center"
+              disabled={!AcademicClasses || AcademicClasses.length === 0}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> {t("download_excel")}
+            </Button>
           </div>
         </div>
+
+        {/* Add warning alert when no academic classes exist */}
+        {(!AcademicClasses || AcademicClasses.length === 0) && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle>{t("no_academic_classes_found")}</AlertTitle>
+            <AlertDescription>
+              {authState.user?.role_id === 1 ? (
+                <>
+                  {t("you_need_to_create_academic_classes_before_managing_students.")}
+                  <div className="mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => (navaigate( "/d/settings/academic"))}
+                      className="bg-white text-destructive hover:bg-white/90"
+                    >
+                      <School className="mr-2 h-4 w-4" />
+                      {t("create_academic_classes")}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {t("the_administrator_has_not_created_any_academic_classes_yet.")}
+                  <div className="mt-2">{t("please_contact_your_administrator_to_set_up_classes_and_divisions.")}</div>
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!AcademicSessionsForSchool || AcademicSessionsForSchool.length === 0 ? (
           <Card className="mb-6">
@@ -937,7 +960,8 @@ export const Students: React.FC = () => {
               <div className="flex gap-2">
                 <Select
                   value={SelectedSession ? SelectedSession.toString() : " "}
-                  onValueChange={(value) => handleAcademicSessionChange(Number(value))}>
+                  onValueChange={(value) => handleAcademicSessionChange(Number(value))}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder={t("select_academic_year")} />
                   </SelectTrigger>
@@ -953,7 +977,11 @@ export const Students: React.FC = () => {
                       ))}
                   </SelectContent>
                 </Select>
-                <Select value={selectedClass} onValueChange={handleClassChange} disabled={!AcademicClasses || AcademicClasses.length === 0}>
+                <Select
+                  value={selectedClass}
+                  onValueChange={handleClassChange}
+                  disabled={!AcademicClasses || AcademicClasses.length === 0}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder={t("select_class")} />
                   </SelectTrigger>
@@ -1030,23 +1058,23 @@ export const Students: React.FC = () => {
                       selectedStudent: null,
                     })
                   }}
-                  onSubmitSuccess={async(student_data : Student) => {
+                  onSubmitSuccess={async (student_data: Student) => {
                     setOpenDialogForStudent({
                       isOpen: false,
                       type: "add",
                       selectedStudent: null,
                     })
-                    let divison = AcademicDivisions?.find((cls) => cls.id === student_data.class_id)
-                    
-                    if(divison){
-                      setSelectedClass(divison.class_id.toString());
-                      setSelectedDivision(divison);
-                      if(!SelectedSession) setSelectedSession(CurrentAcademicSessionForSchool!.id)                    
+                    const divison = AcademicDivisions?.find((cls) => cls.id === student_data.class_id)
+
+                    if (divison) {
+                      setSelectedClass(divison.class_id.toString())
+                      setSelectedDivision(divison)
+                      if (!SelectedSession) setSelectedSession(CurrentAcademicSessionForSchool!.id)
                       await getStudentForClass({
                         class_id: divison.class_id,
                         academic_session: CurrentAcademicSessionForSchool!.id,
-                        page : 1,
-                        student_meta : false,
+                        page: 1,
+                        student_meta: false,
                       })
                     }
                   }}
@@ -1062,7 +1090,7 @@ export const Students: React.FC = () => {
                       selectedStudent: null,
                     })
                   }}
-                  onSubmitSuccess={(student_data : Student) => {
+                  onSubmitSuccess={(student_data: Student) => {
                     setOpenDialogForStudent({
                       isOpen: false,
                       type: "add",
@@ -1072,8 +1100,8 @@ export const Students: React.FC = () => {
                       getStudentForClass({
                         class_id: student_data.class_id,
                         academic_session: SelectedSession,
-                        page : currentPage,
-                        student_meta : false,
+                        page: currentPage,
+                        student_meta: false,
                       })
                     }
                   }}
@@ -1093,12 +1121,14 @@ export const Students: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialogOpenForDownLoadExcel}
+      <Dialog
+        open={dialogOpenForDownLoadExcel}
         onOpenChange={(open) => {
           if (!open) {
             setDialogOpenForDownLoadExcel(false)
           }
-        }}>
+        }}
+      >
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("download_student_data")}</DialogTitle>
@@ -1111,4 +1141,3 @@ export const Students: React.FC = () => {
 }
 
 export default Students
-

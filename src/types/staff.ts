@@ -50,7 +50,7 @@ export interface StaffType {
     | "Permanent"
     | "Trial_Period"
     | "Resigned"
-    | "Contact_base"
+    | "Contract_Based"
     | "Notice_Period";
   experience_years: number | null;
   aadhar_no: number | null;
