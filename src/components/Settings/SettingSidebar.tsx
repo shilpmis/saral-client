@@ -94,12 +94,12 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
     if (href.startsWith("/")) {
       return location.pathname === href || location.pathname.startsWith(`${href}/`)
     }
-    // For relative paths, check if the currentPath matches
-    return currentPath === href || location.pathname.endsWith(href)
+    // For relative paths, check if the currentPath matches or if it's in the URL
+    return currentPath === href || location.pathname.includes(`/${href}`)
   }
 
   return (
-    <div className="w-64 min-h-screen border-r bg-white">
+    <div className="w-64 min-h-screen border-r bg-gray-50/40">
       <ScrollArea className="h-full py-6">
         <div className="px-4 pb-4">
           <h2 className="px-2 text-lg font-semibold tracking-tight">{t("settings")}</h2>
@@ -117,10 +117,10 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
                         key={item.href}
                         to={item.href}
                         className={cn(
-                          "flex items-center gap-x-3 text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                          "flex items-center gap-x-3 text-sm px-3 py-2 rounded-md transition-colors",
                           active
-                            ? "bg-orange-100 text-orange-700 hover:bg-orange-200 hover:text-orange-800"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                            ? "bg-gray-100 text-black font-medium hover:bg-gray-200"
+                            : "text-gray-600 font-normal hover:bg-gray-100 hover:text-gray-900",
                         )}
                       >
                         <item.icon className={cn("h-4 w-4", active && "text-orange-700")} />
