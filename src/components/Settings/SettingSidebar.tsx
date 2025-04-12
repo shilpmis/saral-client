@@ -2,23 +2,8 @@ import type React from "react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import {
-  User,
-  Settings,
-  CreditCard,
-  Mail,
-  Lock,
-  Users,
-  Building2,
-  GraduationCap,
-  DollarSign,
-  Bell,
-  BookOpen,
-  Aperture,
-  Clock,
-  UsersIcon,
-} from "lucide-react"
-import { Link } from "react-router-dom"
+import { Settings, Users, Building2, GraduationCap, Aperture, UsersIcon } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface NavItem {
@@ -86,23 +71,35 @@ const navigationSections: NavSection[] = [
         icon: Building2,
         href: "admission",
       },
-
       {
         title: "student_management",
         icon: UsersIcon,
         href: "student",
-      }
+      },
     ],
   },
 ]
+
 interface SettingsSidebarProps {
   currentPath: string
 }
 
 export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
-  const{t} = useTranslation()
+  const { t } = useTranslation()
+  const location = useLocation()
+
+  // Function to check if a menu item is active
+  const isActive = (href: string) => {
+    // Check if the href is a full path or just a segment
+    if (href.startsWith("/")) {
+      return location.pathname === href || location.pathname.startsWith(`${href}/`)
+    }
+    // For relative paths, check if the currentPath matches
+    return currentPath === href || location.pathname.endsWith(href)
+  }
+
   return (
-    <div className="w-64 min-h-screen border-r bg-gray-50/40">
+    <div className="w-64 min-h-screen border-r bg-white">
       <ScrollArea className="h-full py-6">
         <div className="px-4 pb-4">
           <h2 className="px-2 text-lg font-semibold tracking-tight">{t("settings")}</h2>
@@ -113,19 +110,24 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
               <div className="space-y-1">
                 <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{t(section.title)}</h3>
                 <div className="space-y-1">
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={cn(
-                        "flex items-center gap-x-3 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-100 transition-colors",
-                        currentPath === item.href ? "bg-gray-100 text-gray-900" : "text-gray-600",
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {t(item.title)}
-                    </Link>
-                  ))}
+                  {section.items.map((item) => {
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        className={cn(
+                          "flex items-center gap-x-3 text-sm font-medium px-3 py-2 rounded-md transition-colors",
+                          active
+                            ? "bg-orange-100 text-orange-700 hover:bg-orange-200 hover:text-orange-800"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                        )}
+                      >
+                        <item.icon className={cn("h-4 w-4", active && "text-orange-700")} />
+                        {t(item.title)}
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
               {i < navigationSections.length - 1 && <Separator className="my-4 opacity-50" />}
@@ -136,5 +138,3 @@ export function SettingsSidebar({ currentPath }: SettingsSidebarProps) {
     </div>
   )
 }
-
-
