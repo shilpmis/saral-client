@@ -203,7 +203,7 @@ const PayFeesPanel: React.FC = () => {
   return (
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold">
           {t("fee_management")}
         </h2>
         <div className="flex space-x-2 mt-4 sm:mt-0">
@@ -410,7 +410,7 @@ const PayFeesPanel: React.FC = () => {
           </div>
           {feesData && selectedDivision && (
             <SaralPagination
-              currentPage={feesData.meta.last_page}
+              currentPage={feesData.meta.current_page}
               totalPages={feesData.meta.last_page}
               onPageChange={(page) =>
                 getClassFeesStatus({
