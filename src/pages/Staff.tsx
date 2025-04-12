@@ -132,7 +132,7 @@ export const Staff: React.FC = () => {
   const navigate = useNavigate()
   const authState = useAppSelector(selectAuthState)
   const StaffRolesForSchool = useAppSelector(selectSchoolStaffRoles)
-  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  // const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
@@ -229,9 +229,7 @@ export const Staff: React.FC = () => {
         description: "Please create staff roles before managing staff.",
         variant: "destructive",
       })
-      // Redirect to staff type creation page
-      navigate("/d/settings/staff")
-      // window.location.href = "/staff-type-creation"; // Replace with the actual route for staff type creation
+      // navigate("/d/settings/staff")
     }
   }, [StaffRolesForSchool])
 
@@ -807,36 +805,32 @@ export const Staff: React.FC = () => {
   return (
     <>
       {StaffRolesForSchool && StaffRolesForSchool.length === 0 ? (
-        <Alert className="my-6">
-          <AlertCircle className="h-5 w-5" />
-          <AlertTitle>No Staff Created</AlertTitle>
+        <Alert className="my-6" variant="destructive">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle>No Staff Roles Created</AlertTitle>
           <AlertDescription>
-            There are no {statusValue} staff for {activeTab === "teaching" ? "teaching" : "non-teaching"} staff
-            {statusValue !== "Active" && (
-              <div className="mt-2">
-                Try checking{" "}
-                <Button variant="link" className="p-0 h-auto" onClick={() => setStatusValue("Active")}>
-                  active
-                </Button>{" "}
-                staff instead.
-              </div>
+            {authState.user?.role_id === 1 ? (
+              <>
+                <p>You need to create staff roles before you can manage staff members.</p>
+                <div className="mt-4">
+                  <Button
+                    onClick={() => navigate("/d/settings/staff")}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Create Staff Roles
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  The administrator has not created any staff roles yet. Please contact your administrator to set up
+                  staff roles before managing staff.
+                </p>
+              </>
             )}
-            {/* ) */}
-            {statusValue !== "Active" && (
-              <div className="mt-2">
-                Try checking{" "}
-                <Button variant="link" className="p-0 h-auto" onClick={() => setStatusValue("Active")}>
-                  active
-                </Button>{" "}
-                staff instead.
-              </div>
-            )}
-            {/* {selectedDate && ( */}
-            <div className="mt-2">
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => clearDateFilter()}>
-                Clear date filter
-              </Button>
-            </div>
           </AlertDescription>
         </Alert>
       ) : (
