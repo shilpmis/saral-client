@@ -1,4 +1,4 @@
-import * as z from "zod"
+import * as z from "zod";
 
 // Define the schema for staff data
 export const staffSchema = z
@@ -7,19 +7,19 @@ export const staffSchema = z
     is_teaching_role: z.boolean(),
     staff_role_id: z
       .number({
-        required_error: 'Staff role is required',
-        invalid_type_error: 'Staff role must be a number'
+        required_error: "Staff role is required",
+        invalid_type_error: "Staff role must be a number",
       })
-      .int('Staff role ID must be an integer')
-      .positive('Staff role is required'),
+      .int("Staff role ID must be an integer")
+      .positive("Staff role is required"),
 
     // Personal details
     first_name: z
       .string()
-      .min(2, 'First name is required')
+      .min(2, "First name is required")
       .regex(
         /^[A-Za-z\s]+$/,
-        'First name should contain only alphabets and spaces'
+        "First name should contain only alphabets and spaces"
       ),
 
     // Make middle name optional
@@ -27,99 +27,108 @@ export const staffSchema = z
       .string()
       .regex(
         /^[A-Za-z\s]*$/,
-        'Middle name should contain only alphabets and spaces'
+        "Middle name should contain only alphabets and spaces"
       )
       .nullable(),
 
     last_name: z
       .string()
-      .min(2, 'Last name is required')
-      .regex(/^[A-Za-z\s]+$/, 'Last name is required'),
+      .min(2, "Last name is required")
+      .regex(/^[A-Za-z\s]+$/, "Last name is required"),
 
-    first_name_in_guj: z.string().min(2, 'First name in Gujarati is required').nullable(),
+    first_name_in_guj: z
+      .string()
+      .min(2, "First name in Gujarati is required")
+      .nullable(),
 
     // Make middle name in Gujarati optional
     middle_name_in_guj: z.string().nullable(),
 
-    last_name_in_guj: z.string().min(2, 'Last name in Gujarati is required').nullable(),
+    last_name_in_guj: z
+      .string()
+      .min(2, "Last name in Gujarati is required")
+      .nullable(),
 
-    gender: z.enum(['Male', 'Female'], {
-      errorMap: () => ({ message: 'Gender must be either Male or Female' })
+    gender: z.enum(["Male", "Female"], {
+      errorMap: () => ({ message: "Gender must be either Male or Female" }),
     }),
 
     birth_date: z
       .string()
-      .min(1, 'Birth date is required')
-      .refine(date => !isNaN(Date.parse(date)), {
-        message: 'Invalid date format'
+      .min(1, "Birth date is required")
+      .refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid date format",
       })
       .refine(
-        date => {
-          const parsedDate = new Date(date)
-          const today = new Date()
-          return parsedDate <= today
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
+          return parsedDate <= today;
         },
         {
-          message: 'Birth date cannot be in the future'
+          message: "Birth date cannot be in the future",
         }
       )
       .refine(
-        date => {
-          const parsedDate = new Date(date)
-          const today = new Date()
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
 
           // Calculate age
-          let age = today.getFullYear() - parsedDate.getFullYear()
-          const monthDiff = today.getMonth() - parsedDate.getMonth()
+          let age = today.getFullYear() - parsedDate.getFullYear();
+          const monthDiff = today.getMonth() - parsedDate.getMonth();
 
           if (
             monthDiff < 0 ||
             (monthDiff === 0 && today.getDate() < parsedDate.getDate())
           ) {
-            age--
+            age--;
           }
 
-          return age >= 18 && age <= 70
+          return age >= 18 && age <= 70;
         },
         {
-          message: 'Staff must be between 18 and 70 years old'
+          message: "Staff must be between 18 and 70 years old",
         }
-      ).nullable(),
+      )
+      .nullable(),
 
     // Aadhar validation
     aadhar_no: z
       .number()
-      .int('Aadhar number must be an integer')
-      .positive('Aadhar number must be positive')
+      .int("Aadhar number must be an integer")
+      .positive("Aadhar number must be positive")
       .refine(
-        val => {
-          const strVal = val.toString()
-          return strVal.length === 12
+        (val) => {
+          const strVal = val.toString();
+          return strVal.length === 12;
         },
         {
-          message: 'Aadhar number must be exactly 12 digits'
+          message: "Aadhar number must be exactly 12 digits",
         }
-      ).nullable(),
+      )
+      .nullable(),
 
     // Contact details - fixed to ensure exactly 10 digits
     mobile_number: z
       .number()
-      .int('Mobile number must be an integer')
-      .positive('Mobile number must be positive')
+      .int("Mobile number must be an integer")
+      .positive("Mobile number must be positive")
       .refine(
-        val => {
-          const strVal = val.toString()
-          return strVal.length === 10 && /^[6-9]/.test(strVal)
+        (val) => {
+          const strVal = val.toString();
+          return strVal.length === 10 && /^[6-9]/.test(strVal);
         },
         {
-          message: 'Mobile number must be 10 digits and start with 6-9'
+          message: "Mobile number must be 10 digits and start with 6-9",
         }
       ),
 
     email: z
       .string()
-      .min(1, 'Email is required')
-      .email('Invalid email address').nullable(),
+      .min(1, "Email is required")
+      .email("Invalid email address")
+      .nullable(),
 
     // Teacher-specific fields - conditionally required based on is_teaching_role
     qualification: z.string().nullable(),
@@ -129,45 +138,55 @@ export const staffSchema = z
     // Other details
     religion: z
       .string()
-      .min(2, 'Religion is required')
+      .min(2, "Religion is required")
       .regex(
         /^[A-Za-z\s]+$/,
-        'Religion should contain only alphabets and spaces'
-      ).nullable(),
+        "Religion should contain only alphabets and spaces"
+      )
+      .nullable(),
 
-    religion_in_guj: z.string().min(2, 'Religion in Gujarati is required').nullable(),
+    religion_in_guj: z
+      .string()
+      .min(2, "Religion in Gujarati is required")
+      .nullable(),
 
     caste: z
       .string()
-      .min(2, 'Caste is required')
-      .regex(/^[A-Za-z\s]+$/, 'Caste should contain only alphabets and spaces').nullable(),
+      .min(2, "Caste is required")
+      .regex(/^[A-Za-z\s]+$/, "Caste should contain only alphabets and spaces")
+      .nullable(),
 
-    caste_in_guj: z.string().min(2, 'Caste in Gujarati is required').nullable(),
+    caste_in_guj: z.string().min(2, "Caste in Gujarati is required").nullable(),
 
-    category: z.enum(['ST', 'SC', 'OBC', 'OPEN'], {
-      errorMap: () => ({ message: 'Category must be ST, SC, OBC, or OPEN' })
-    }).nullable(),
+    category: z
+      .enum(["ST", "SC", "OBC", "OPEN"], {
+        errorMap: () => ({ message: "Category must be ST, SC, OBC, or OPEN" }),
+      })
+      .nullable(),
 
     // Address details
-    address: z.string().min(5, 'Address is required').nullable(),
+    address: z.string().min(5, "Address is required").nullable(),
 
     district: z
       .string()
-      .min(2, 'District is required')
+      .min(2, "District is required")
       .regex(
         /^[A-Za-z\s]+$/,
-        'District should contain only alphabets and spaces'
-      ).nullable(),
+        "District should contain only alphabets and spaces"
+      )
+      .nullable(),
 
     city: z
       .string()
-      .min(2, 'City is required')
-      .regex(/^[A-Za-z\s]+$/, 'City should contain only alphabets and spaces').nullable(),
+      .min(2, "City is required")
+      .regex(/^[A-Za-z\s]+$/, "City should contain only alphabets and spaces")
+      .nullable(),
 
     state: z
       .string()
-      .min(2, 'State is required')
-      .regex(/^[A-Za-z\s]+$/, 'State should contain only alphabets and spaces').nullable(),
+      .min(2, "State is required")
+      .regex(/^[A-Za-z\s]+$/, "State should contain only alphabets and spaces")
+      .nullable(),
 
     // postal_code: z
     //   .number()
@@ -185,70 +204,74 @@ export const staffSchema = z
 
     postal_code: z
       .string()
-      .regex(/^\d{6}$/, 'Postal code must be exactly 6 digits').nullable(),
-
+      .regex(/^\d{6}$/, "Postal code must be exactly 6 digits")
+      .nullable(),
 
     // Bank details
     bank_name: z
       .string()
-      .min(2, 'Bank name is required')
+      .min(2, "Bank name is required")
       .regex(
         /^[A-Za-z\s]+$/,
-        'Bank name should contain only alphabets and spaces'
-      ).nullable(),
+        "Bank name should contain only alphabets and spaces"
+      )
+      .nullable(),
 
     // Fixed account number validation
     account_no: z
       .number()
-      .int('Account number must be an integer')
-      .positive('Account number must be positive')
+      .int("Account number must be an integer")
+      .positive("Account number must be positive")
       .refine(
-        val => {
-          const strVal = val.toString()
-          return strVal.length >= 9 && strVal.length <= 18
+        (val) => {
+          const strVal = val.toString();
+          return strVal.length >= 9 && strVal.length <= 18;
         },
         {
-          message: 'Account number must be between 9 and 18 digits'
+          message: "Account number must be between 9 and 18 digits",
         }
-      ).nullable(),
+      )
+      .nullable(),
 
     IFSC_code: z
       .string()
       .regex(
         /^[A-Z]{4}0[A-Z0-9]{6}$/,
-        'IFSC code must be in format ABCD0123456'
-      ).nullable(),
+        "IFSC code must be in format ABCD0123456"
+      )
+      .nullable(),
 
     employment_status: z.enum(
       [
-        'Permanent',
-        'Trial_Period',
-        'Resigned',
-        'Contact_base',
-        'Notice_Period'
+        "Permanent",
+        "Trial_Period",
+        "Resigned",
+        "Contract_Based",
+        "Notice_Period",
       ],
       {
-        errorMap: () => ({ message: 'Select Employment Status' })
+        errorMap: () => ({ message: "Select Employment Status" }),
       }
     ),
 
     // Employment details
     joining_date: z
       .string()
-      .min(1, 'Joining date is required')
-      .refine(date => !isNaN(Date.parse(date)), {
-        message: 'Invalid date format'
+      .min(1, "Joining date is required")
+      .refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid date format",
       })
       .refine(
-        date => {
-          const parsedDate = new Date(date)
-          const today = new Date()
-          return parsedDate <= today
+        (date) => {
+          const parsedDate = new Date(date);
+          const today = new Date();
+          return parsedDate <= today;
         },
         {
-          message: 'Joining date cannot be in the future'
+          message: "Joining date cannot be in the future",
         }
-      ).nullable()
+      )
+      .nullable(),
   })
   .superRefine((data, ctx) => {
     // Conditional validation for teaching staff
@@ -257,9 +280,9 @@ export const staffSchema = z
       if (!data.qualification || data.qualification.length < 2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Qualification is required for teaching staff',
-          path: ['qualification']
-        })
+          message: "Qualification is required for teaching staff",
+          path: ["qualification"],
+        });
       }
 
       // Validate subject specialization
@@ -269,9 +292,9 @@ export const staffSchema = z
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Subject specialization is required for teaching staff',
-          path: ['subject_specialization']
-        })
+          message: "Subject specialization is required for teaching staff",
+          path: ["subject_specialization"],
+        });
       }
 
       // Validate class_id
@@ -289,6 +312,6 @@ export const staffSchema = z
       //   }
       // }
     }
-  })
+  });
 
-export type StaffFormData = z.infer<typeof staffSchema>
+export type StaffFormData = z.infer<typeof staffSchema>;
