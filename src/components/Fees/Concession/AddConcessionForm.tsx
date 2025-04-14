@@ -1,4 +1,3 @@
-
 import type React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,7 +10,6 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, AlertCircle } from "lucide-react"
 import type { Concession } from "@/types/fees"
-import { useEffect } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { concessionSchema } from "@/utils/fees.validation"
 import { useTranslation } from "@/redux/hooks/useTranslation"
