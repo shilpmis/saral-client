@@ -1057,11 +1057,12 @@
   "enter_address": "સરનામું દાખલ કરો",
   "enter_previous_school": "પૂર્વવર્તી શાળા દાખલ કરો",
   "applying_for_quota": "ક્વોટા માટે અરજી કરવી",
-  "creating_inquiry_for_academic_session": "શૈક્ષણિક સત્ર માટે પૂછપરછ બનાવવી",
   "no_academic_classes_found": "કોઈ શૈક્ષણિક વર્ગો મળ્યા નથી",
   "you_need_to_create_academic_classes_before_managing_students.": "તમે વિદ્યાર્થીઓનું સંચાલન કરતા પહેલા શૈક્ષણિક વર્ગો બનાવવાની જરૂર છે.",
   "create_academic_classes": "શૈક્ષણિક વર્ગો બનાવો",
   "the_administrator_has_not_created_any_academic_classes_yet.": "કર્મચારી દ્વારા હજી સુધી કોઈ શૈક્ષણિક વર્ગો બનાવવામાં આવ્યા નથી.",
   "create_new_academic_class": "નવું શૈક્ષણિક વર્ગ બનાવો",
-  "please_contact_your_administrator_to_set_up_classes_and_divisions.": "કૃપા કરીને વર્ગો અને વિભાગો સેટ કરવા માટે તમારા કર્મચારી સાથે સંપર્ક કરો."
+  "please_contact_your_administrator_to_set_up_classes_and_divisions.": "કૃપા કરીને વર્ગો અને વિભાગો સેટ કરવા માટે તમારા કર્મચારી સાથે સંપર્ક કરો.",
+  "no_fee_types_found": "કોઈ ફી પ્રકારો મળ્યા નથી",
+  "you_need_to_create_fee_types_before_you_can_create_fee_plans": "તમે ફી યોજનાઓ બનાવતા પહેલા ફી પ્રકારો બનાવવાની જરૂર છે"
 }

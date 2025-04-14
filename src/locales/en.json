@@ -1048,11 +1048,12 @@
   "enter_address": "Enter address",
   "enter_previous_school": "Enter previous school",
   "applying_for_quota": "Applying for quota",
-  "creating_inquiry_for_academic_session": "Creating inquiry for academic session",
   "no_academic_classes_found": "No academic classes found",
   "you_need_to_create_academic_classes_before_managing_students.": "you need to create academic classes before managing students",
   "create_academic_classes": "Create academic classes",
   "the_administrator_has_not_created_any_academic_classes_yet.": "The administrator has not created any academic classes yet.",
   "create_new_academic_class": "Create new academic class",
-  "please_contact_your_administrator_to_set_up_classes_and_divisions.": "Please contact your administrator to set up classes and divisions."
+  "please_contact_your_administrator_to_set_up_classes_and_divisions.": "Please contact your administrator to set up classes and divisions.",
+  "no_fee_types_found": "No fee types found",
+  "you_need_to_create_fee_types_before_you_can_create_fee_plans": "you need to create fee types before you can create fee plans"
 }
