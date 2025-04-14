@@ -55,9 +55,10 @@ const StudentFeesManagement: React.FC = () => {
 
   // API hooks
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getClassFeesStatus, { data: feesData, isLoading, isError }] = useLazyGetStudentFeesDetailsForClassQuery()
+  const [getClassFeesStatus, { data: feesData, isLoading, isError , error : errorWhileFetchingClassFees }] = useLazyGetStudentFeesDetailsForClassQuery()
   const [getStudentFeesDetails, { data: studentFeeDetails, isLoading: isLoadingDetails }] =
     useLazyGetStudentFeesDetailsQuery()
+
 
   // State for class/division selection and filtering
   const [selectedClass, setSelectedClass] = useState<string>("")
@@ -506,7 +507,7 @@ const StudentFeesManagement: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                      {t("failed_to_load_fees_data._please_try_again.")}
+                      {(errorWhileFetchingClassFees as any)?.data.message || t("failed_to_load_fees_data._please_try_again.")}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (

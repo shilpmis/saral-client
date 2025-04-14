@@ -28,7 +28,7 @@ const PayFeesPanel: React.FC = () => {
 
   const { t } = useTranslation()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getClassFeesStatus, { data: feesData, isLoading, isError }] = useLazyGetStudentFeesDetailsForClassQuery()
+  const [getClassFeesStatus, { data: feesData, isLoading, isError , error : errorWhileFetchingClassFees}] = useLazyGetStudentFeesDetailsForClassQuery()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
@@ -366,7 +366,7 @@ const PayFeesPanel: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                      {t("failed_to_load_fees_data._please_try_again.")}
+                    {(errorWhileFetchingClassFees as any)?.data.message || t("failed_to_load_fees_data._please_try_again.")}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (

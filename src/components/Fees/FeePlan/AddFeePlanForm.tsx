@@ -530,7 +530,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An error occurred while updating the fee plan. Please try again later.",
+        description: (response.error as any).data.message || (response.error as any).data.message ||   "An error occurred while updating the fee plan. Please try again later."
+
+        // description: "An error occurred while updating the fee plan. Please try again later.",
       })
     }
   }

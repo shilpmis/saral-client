@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Plus, Search, Eye } from "lucide-react"
+import { Pencil, Plus, Search, Eye, AlertTriangle } from "lucide-react"
 import { AddFeePlanForm } from "./AddFeePlanForm"
-import { useLazyGetFeesPlanQuery } from "@/services/feesService"
+import { useLazyGetAllFeesTypeQuery, useLazyGetFeesPlanQuery } from "@/services/feesService"
 import type { FeesPlan } from "@/types/fees"
 import type { PageMeta } from "@/types/global"
 import { selectAllAcademicClasses } from "@/redux/slices/academicSlice"
@@ -19,7 +19,7 @@ import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchoo
 import FeePlanDetailsDialog from "./FeePlanDetailsDialog"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import { AcademicSession } from "@/types/user"
+import { AcademicSession, UserRole } from "@/types/user"
 
 export const FeePlanManagement: React.FC = () => {
 
@@ -27,6 +27,7 @@ export const FeePlanManagement: React.FC = () => {
   const AcademicDivision = useAppSelector(selectAllAcademicClasses)
   const authState = useAppSelector(selectAuthState)
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
+  const [getAllFeesType, { data: FeesTypeForSchool, isLoading: isFeeTypeLoading }] = useLazyGetAllFeesTypeQuery()
 
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -100,6 +101,9 @@ export const FeePlanManagement: React.FC = () => {
     if (!AcademicDivision) {
       getAcademicClasses(authState.user!.school_id)
     }
+    getAllFeesType({
+      academic_session_id: CurrentAcademicSessionForSchool!.id,
+    })
   }, [])
 
   useEffect(() => {
@@ -110,16 +114,29 @@ export const FeePlanManagement: React.FC = () => {
     }
   },[selectedAcademicYear])
 
-  console.log("AcademicDivision" ,AcademicDivision);
+  if(FeesTypeForSchool && FeesTypeForSchool.length === 0 && !isFeeTypeLoading){
+    return(
+      <div className="text-center py-8">
+        <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+          <AlertTriangle className="h-6 w-6 text-amber-600" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">{t("no_fee_types_found")}</h3>
+        <p className="text-gray-500 max-w-md mx-auto mb-4">
+          {t("you_need_to_create_fee_types_before_you_can_create_fee_plans")}
+        </p>
+      </div>
+    )
+  }
 
   return (
     <>
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">{t("fee_plan_management")}</h1>
-          <Button onClick={() => setDialogForFeesPlan({ isOpen: true, paln_id: null, type: "create" })}>
+          {(authState.user?.role == UserRole.ADMIN  || authState.user?.role == UserRole.PRINCIPAL) && (<Button 
+            onClick={() => setDialogForFeesPlan({ isOpen: true, paln_id: null, type: "create" })}>
             <Plus className="mr-2 h-4 w-4" /> {t("add_fee_plan")}
-          </Button>
+          </Button>)}
         </div>
         <Card>
           <CardHeader>
@@ -149,7 +166,7 @@ export const FeePlanManagement: React.FC = () => {
               </Select>
             </div>
 
-            <div className="rounded-md border">
+            {filteredFeePlans.length > 0 && (<div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -170,12 +187,6 @@ export const FeePlanManagement: React.FC = () => {
                           <TableCell colSpan={6} className="h-12 animate-pulse bg-gray-100"></TableCell>
                         </TableRow>
                       ))
-                  ) : filteredFeePlans.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                        {searchTerm ? t("no_fee_plans_match_your_search") : t("no_fee_plans_found")}
-                      </TableCell>
-                    </TableRow>
                   ) : (
                     filteredFeePlans.map((feePlan) => (
                       <TableRow key={feePlan.id}>
@@ -201,12 +212,15 @@ export const FeePlanManagement: React.FC = () => {
                             <Button variant="outline" size="icon" onClick={() => handleView(feePlan.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => handleEdit(feePlan.id)}>
+                            {(authState.user?.role == UserRole.ADMIN  || authState.user?.role == UserRole.PRINCIPAL) && (<Button variant="outline" size="icon" 
+                              onClick={() => handleEdit(feePlan.id)}
+                              disabled={CurrentAcademicSessionForSchool?.id !== feePlan.academic_session_id}
+                            >
                               <Pencil className="h-4 w-4" />
-                            </Button>
+                            </Button>)}
                             {/* <Button variant="outline" size="icon" onClick={() => handleDelete(feePlan.id)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button> */}
+                                <Trash2 className="h-4 w-4" />
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -214,42 +228,22 @@ export const FeePlanManagement: React.FC = () => {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </div>)}
 
-            {/* {FeePlansDetail?.page && FeePlansDetail.page.total_pages > 1 && (
-              <div className="flex justify-center mt-4">
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={FeePlansDetail.page.current_page === 1}
-                    onClick={() => handlePageChange(FeePlansDetail.page.current_page - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: FeePlansDetail.page.total_pages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={page === FeePlansDetail.page.current_page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(page)}
-                      >
-                        {page}
-                      </Button>
-                    ))}
+            {!isLoading && 
+              filteredFeePlans.length === 0 && !isLoading && (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                    <AlertTriangle className="h-6 w-6 text-amber-600" />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={FeePlansDetail.page.current_page === FeePlansDetail.page.total_pages}
-                    onClick={() => handlePageChange(FeePlansDetail.page.current_page + 1)}
-                  >
-                    Next
-                  </Button>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t("no_fee_plan_found")}</h3>
+                  <p className="text-gray-500 max-w-md mx-auto mb-4">
+                    {t("you_need_to_create_fee_types_before_you_can_create_fee_plans")}
+                  </p>
                 </div>
-              </div>
-            )} */}
+            )}              
+            
+            
             {FeePlansDetail?.page && (<SaralPagination
                 currentPage={FeePlansDetail.page.current_page}
                 totalPages={FeePlansDetail.page.last_page}

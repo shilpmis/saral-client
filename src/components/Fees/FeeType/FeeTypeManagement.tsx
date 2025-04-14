@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Trash2, Plus, Search } from "lucide-react"
+import { Pencil, Trash2, Plus, Search, AlertTriangle } from "lucide-react"
 import { AddFeeTypeForm } from "./AddFeeTypeForm"
 import { useCreateFeesTypeMutation, useLazyGetFeesTypeQuery, useUpdateFeesTypeMutation } from "@/services/feesService"
 import { FeesType } from "@/types/fees"
@@ -17,10 +17,12 @@ import { z } from "zod"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import { UserRole } from "@/types/user"
 
 export const FeeTypeManagement: React.FC = () => {
-
+    
+    const authState = useAppSelector(selectAuthState)    
     const [getFeesType, { data: FeesType, isLoading: loagingFeesType }] = useLazyGetFeesTypeQuery();
     const [createFeesType, { isLoading: isCreateFeesTypeLoading }] = useCreateFeesTypeMutation();
     const [updateFeesType, { isLoading: isUpdateFeesTypeLoading }] = useUpdateFeesTypeMutation();
@@ -73,10 +75,10 @@ export const FeeTypeManagement: React.FC = () => {
                 })
                 getFeesType({ page: 1 , academic_session : CurrentAcademicSessionForSchool!.id})
             } else {
-                console.log("Error updating Fee Type", fees_type.error);
+                console.log("Error updating Fee Type", (fees_type.error as any).data.message);
                 toast({
                     variant: "destructive",
-                    title: (fees_type.error as any).data.message ?? "Error updating Fee Type"
+                    title: (fees_type.error as any).data.message || (fees_type.error as any).data.message ||   "Error updating Fee Type"
                 })
             }
         } else if (DialogForFeeType.type === 'create') {
@@ -98,7 +100,7 @@ export const FeeTypeManagement: React.FC = () => {
                 console.log("Error creating Fee Type", fees_type.error)
                 toast({
                     variant: "destructive",
-                    title: "Error creating Fee Type"
+                    title: (fees_type.error as any).data.message || (fees_type.error as any).data.message ||   "Error updating Fee Type"
                 })
 
             }
@@ -138,9 +140,9 @@ export const FeeTypeManagement: React.FC = () => {
                     }}
                 >
                     <DialogTrigger asChild>
-                        <Button>
+                        {(authState.user?.role == UserRole.ADMIN  || authState.user?.role == UserRole.PRINCIPAL) && (<Button>
                             <Plus className="mr-2 h-4 w-4" /> {t("add_fee_type")}
-                        </Button>
+                        </Button>)}
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
@@ -174,7 +176,8 @@ export const FeeTypeManagement: React.FC = () => {
                         </div>
                     </div>
 
-                    {DataForFeesType && (<div className="rounded-md border">
+                    {DataForFeesType && (
+                      <div className="rounded-md border">
                         {DataForFeesType.type.length > 0 && (<Table>
                             <TableHeader>
                                 <TableRow>
@@ -200,9 +203,9 @@ export const FeeTypeManagement: React.FC = () => {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex space-x-2">
-                                                <Button variant="outline" size="icon" onClick={() => setDialogForFeeType({ isOpen: true, data: feeType, type: 'edit' })}>
+                                                {(authState.user?.role == UserRole.ADMIN  || authState.user?.role == UserRole.PRINCIPAL) && (<Button variant="outline" size="icon" onClick={() => setDialogForFeeType({ isOpen: true, data: feeType, type: 'edit' })}>
                                                     <Pencil className="h-4 w-4" />
-                                                </Button>
+                                                </Button>)}
                                                 {/* <Button variant="outline" size="icon" onClick={() => handleDelete(feeType.id)}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button> */}
@@ -212,7 +215,19 @@ export const FeeTypeManagement: React.FC = () => {
                                 ))}
                             </TableBody>
                         </Table>)}
-                        {DataForFeesType.type.length === 0 && <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>}
+                        {DataForFeesType.type.length === 0 && 
+                        (
+                          // <div className="text-center py-4 text-gray-500">{t("no_records_found")}</div>
+                          <div className="text-center py-8">
+                          <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                            <AlertTriangle className="h-6 w-6 text-amber-600" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">{t("no_fee_types_found")}</h3>
+                          <p className="text-gray-500 max-w-md mx-auto mb-4">
+                            {t("you_need_to_create_fee_types_before_you_can_create_fee_plans")}
+                          </p>
+                        </div>
+                        )}
                     </div>)}
                     <div className="mt-4">
                         {DataForFeesType && DataForFeesType.type.length > 0 && <SaralPagination
