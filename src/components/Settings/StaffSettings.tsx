@@ -1,15 +1,3 @@
-/***
- * TODO : 
- * 
- * BUG :: Fix responsivenes for this pagr
- * FIX :: Component working properly need to add functionlity to dispaly live changes !
- * 
- * - Open toast after reciving api responce 
- * - Disable all action button while api is processing .
- * - put proper loaders/skeleton in place of loading 
- */
-
-
 import { useState, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
 import {
@@ -53,7 +41,7 @@ const formSchemaForStaffRole = z.object({
   role_name: z
     .string()
     .min(3, 'Role should be at least of 3 characters')
-    .max(25, 'Role should not be more than 15 characters')
+    .max(20, 'Role should not be more than 20 characters')
     .regex(/^[a-zA-Z]+( [a-zA-Z]+)*$/, {
       message: "Only letters are allowed with a single space between words",
     }),
