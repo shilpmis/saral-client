@@ -36,6 +36,7 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Concession } from "@/types/fees"
 import { set } from "date-fns"
+import { UserRole } from "@/types/user"
 
 
 export const ConcessionManagement: React.FC = () => {
@@ -236,9 +237,9 @@ export const ConcessionManagement: React.FC = () => {
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{t("concession_management")}</h1>
-                <Button onClick={() => openDialog("add")}>
+                {(authState.user?.role == UserRole.ADMIN || authState.user?.role == UserRole.PRINCIPAL) && (<Button onClick={() => openDialog("add")}>
                     <Plus className="mr-2 h-4 w-4" /> {t("add_concession")}
-                </Button>
+                </Button>)}
             </div>
 
             <Card>
@@ -312,6 +313,7 @@ export const ConcessionManagement: React.FC = () => {
                                                     <Button
                                                         variant="outline"
                                                         size="icon"
+                                                        disabled={authState.user?.role !== "ADMIN"} 
                                                         onClick={() => openDialog("edit", concession)}
                                                         title="Edit Concession"
                                                     >
@@ -320,6 +322,7 @@ export const ConcessionManagement: React.FC = () => {
                                                     <Button
                                                         variant="outline"
                                                         size="icon"
+                                                        disabled={authState.user?.role !== "ADMIN"} 
                                                         onClick={() => openDialog("apply", concession)}
                                                         title="Apply to Fee Plan"
                                                     >

@@ -320,6 +320,7 @@ export const FeesApi = createApi({
 });
 
 export const {
+  useGetFeesTypeQuery,
   useLazyGetFeesTypeQuery,
   useLazyGetAllFeesTypeQuery,
   useCreateFeesTypeMutation,
