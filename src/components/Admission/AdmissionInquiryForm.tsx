@@ -17,6 +17,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useGetQuotasQuery } from "@/services/QuotaService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import NumberInput from "../ui/NumberInput"
 
 // Define the form schema with Zod
 const formSchema = z.object({
@@ -42,7 +43,11 @@ const formSchema = z.object({
   address: z.string().min(5, { message: "Address is required" }),
   previous_school: z.string().optional(),
   previous_class: z.string().optional(),
-  previous_percentage: z.coerce.number().optional(),
+  previous_percentage: z.coerce
+    .number()
+    .min(0, { message: "Percentage cannot be less than 0" })
+    .max(100, { message: "Percentage cannot exceed 100" })
+    .optional(),
   previous_year: z.string().optional(),
   special_achievements: z.string().optional(),
   applying_for_quota: z.boolean().default(false),
@@ -456,9 +461,9 @@ export default function AdmissionInquiryForm({
 
                     {/* Class Applying For */}
                     <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                        {`Only shows the classes which has seat allocation for  
+                        {t("only_shows_the_classes_which_has_seat_allocation_for")}  
                          ${academicSessionId ? academicSessions?.find((session)=> session.id == academicSessionId)?.session_name : t("please_select_an_academic_year")}
-                         academic session and are open for admissions by admin.`}
+                         {t("academic_session_and_are_open_for_admissions_by_admin.")}
                     </div>
                     <FormField
                       control={form.control}
@@ -621,15 +626,11 @@ export default function AdmissionInquiryForm({
                           <FormItem>
                             <FormLabel>{t("percentage/_grade")}</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
+                              <NumberInput
                                 placeholder={t("enter_percentage")}
-                                {...field}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  field.onChange(value === "" ? undefined : Number(value))
-                                }}
-                                value={field.value === undefined ? "" : field.value}
+                                value={field.value ? String(field.value) :  ""}
+                                onChange={(value) => field.onChange(value === "" ? undefined : Number(value))}
+                                // max={100} // Ensure the value does not exceed 100
                               />
                             </FormControl>
                             <FormMessage />
