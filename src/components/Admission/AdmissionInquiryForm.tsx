@@ -865,7 +865,8 @@ export default function AdmissionInquiryForm({
   return (
     <div className="w-full">
       <Card
-        className={`w-full ${isEditing ? "border-0 shadow-none" : ""} max-w-3xl mx-auto h-[600px] overflow-hidden`}
+        className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto h-[600px] overflow-hidden`}
+        style={{ width: "39rem" }}
       >
         <CardContent className="p-4 sm:p-6 w-full h-full flex flex-col">
           <Form {...form}>
