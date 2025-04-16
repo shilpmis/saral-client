@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "@/hooks/use-toast"
 import { type Inquiry, useAddInquiryMutation, useUpdateInquiryMutation } from "@/services/InquiryServices"
@@ -21,42 +20,9 @@ import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { Loader2, CheckCircle } from "lucide-react"
 import NumberInput from "@/components/ui/NumberInput"
-
-// Define the form schema with Zod
-const formSchema = z.object({
-  first_name: z.string().min(2, { message: "First name is required" }),
-  middle_name: z.string().optional(),
-  last_name: z.string().min(2, { message: "Last name is required" }),
-  birth_date: z.string().min(1, { message: "Date of birth is required" }),
-  gender: z.enum(["male", "female"], {
-    required_error: "Gender is required",
-  }),
-  inquiry_for_class: z.coerce
-    .number({
-      required_error: "Class is required",
-      invalid_type_error: "Class must be a number",
-    })
-    .positive({ message: "Class must be a positive number" }),
-  father_name: z.string().min(2, { message: "Parent name is required" }),
-  primary_mobile: z.coerce
-    .number({
-      required_error: "Contact number is required",
-      invalid_type_error: "Contact number must be a number",
-    })
-    .refine((val) => val.toString().length >= 10, { message: "Contact number must be at least 10 digits" }),
-  parent_email: z.string().email({ message: "Valid email is required" }).nullable(),
-  address: z.string().min(5, { message: "Address is required" }),
-  previous_school: z.string().optional(),
-  previous_class: z.string().optional(),
-  previous_percentage: z.coerce.number().nonnegative({ message: "Percentage cannot be negative" }).optional(),
-  previous_year: z.string().optional(),
-  special_achievements: z.string().optional(),
-  applying_for_quota: z.boolean().default(false),
-  quota_type: z.number().nullable().optional(),
-  academic_session_id: z.number({
-    required_error: "Academic session is required",
-  }),
-})
+import { format } from "date-fns"
+import { formSchema, FormValues } from "./AdmissionFormSchema"
+import { SaralDatePicker } from "../ui/common/SaralDatePicker"
 
 // Define the props for the component
 interface AdmissionInquiryFormProps {
@@ -123,24 +89,24 @@ export default function AdmissionInquiryForm({
   const isLoading = isAddLoading || isUpdateLoading
 
   // Initialize form with react-hook-form and zod validation
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData
       ? {
           first_name: initialData.first_name,
           middle_name: initialData.middle_name || "",
           last_name: initialData.last_name,
-          birth_date: initialData.birth_date,
+          birth_date: initialData.birth_date ? new Date(initialData.birth_date) : undefined,
           gender: initialData.gender,
           inquiry_for_class: initialData.inquiry_for_class,
           father_name: initialData.father_name,
-          primary_mobile: initialData.primary_mobile,
+          primary_mobile: initialData.primary_mobile?.toString() || "",
           parent_email: initialData.parent_email,
           address: initialData.address,
           previous_school: initialData.previous_school || "",
           previous_class: initialData.previous_class || "",
           previous_percentage: Number(initialData.previous_percentage) || undefined,
-          previous_year: initialData.previous_year || "",
+          previous_year: initialData.previous_year ? new Date(initialData.previous_year) : undefined,
           special_achievements: initialData.special_achievements || "",
           applying_for_quota: Boolean(Number(initialData.applying_for_quota)),
           quota_type: initialData.quota_type,
@@ -150,22 +116,23 @@ export default function AdmissionInquiryForm({
           first_name: "",
           middle_name: "",
           last_name: "",
-          birth_date: "",
+          birth_date: undefined,
           gender: undefined,
           inquiry_for_class: undefined,
           father_name: "",
-          primary_mobile: undefined,
+          primary_mobile: "",
           parent_email: null,
           address: "",
           previous_school: "",
           previous_class: "",
           previous_percentage: undefined,
-          previous_year: "",
+          previous_year: undefined,
           special_achievements: "",
           applying_for_quota: false,
           quota_type: null,
           academic_session_id: CurrentacademicSessions!.id,
         },
+    mode: "onChange",
   })
 
   // Update academic session when prop changes
@@ -177,6 +144,10 @@ export default function AdmissionInquiryForm({
 
   // Watch for quota selection to conditionally show quota type field
   const applyingForQuota = form.watch("applying_for_quota")
+
+  // Get all form errors
+  const formErrors = Object.keys(form.formState.errors)
+  const hasErrors = formErrors.length > 0
 
   // Focus on first error field when errors occur
   useEffect(() => {
@@ -196,7 +167,7 @@ export default function AdmissionInquiryForm({
   }, [form.formState.errors])
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       if (isEditing && inquiryId) {
         // Update existing inquiry
@@ -206,17 +177,17 @@ export default function AdmissionInquiryForm({
             first_name: values.first_name,
             middle_name: values.middle_name || "",
             last_name: values.last_name,
-            birth_date: values.birth_date,
+            birth_date: values.birth_date ? format(values.birth_date, "yyyy-MM-dd") : "",
             gender: values.gender,
             inquiry_for_class: values.inquiry_for_class,
             father_name: values.father_name,
-            primary_mobile: values.primary_mobile,
-            parent_email: values.parent_email,
+            primary_mobile: Number(values.primary_mobile),
+            parent_email: values.parent_email ?? null,
             address: values.address,
             previous_school: values.previous_school || "",
             previous_class: values.previous_class || "",
             previous_percentage: values.previous_percentage?.toString() || null,
-            previous_year: values.previous_year || "",
+            previous_year: values.previous_year ? format(values.previous_year, "yyyy-MM-dd") : null,
             special_achievements: values.special_achievements || "",
             applying_for_quota: values.applying_for_quota,
             quota_type: values.applying_for_quota ? (values.quota_type ? values.quota_type : null) : null,
@@ -239,17 +210,17 @@ export default function AdmissionInquiryForm({
           first_name: values.first_name,
           middle_name: values.middle_name || "",
           last_name: values.last_name,
-          birth_date: values.birth_date,
+          birth_date: values.birth_date ? format(values.birth_date, "yyyy-MM-dd") : "",
           gender: values.gender,
           inquiry_for_class: values.inquiry_for_class,
           father_name: values.father_name,
-          primary_mobile: values.primary_mobile,
-          parent_email: values.parent_email,
+          primary_mobile: Number(values.primary_mobile),
+          parent_email: values.parent_email ?? null,
           address: values.address,
           previous_school: values.previous_school || null,
           previous_class: values.previous_class || null,
           previous_percentage: values.previous_percentage ? values.previous_percentage?.toString() : null,
-          previous_year: values.previous_year || null,
+          previous_year: values.previous_year ? format(values.previous_year, "yyyy-MM-dd") : null,
           special_achievements: values.special_achievements || null,
           applying_for_quota: values.applying_for_quota,
           quota_type: values.applying_for_quota ? (values.quota_type ? values.quota_type : null) : null,
@@ -292,7 +263,7 @@ export default function AdmissionInquiryForm({
 
   // Navigation between form steps
   const nextStep = () => {
-    let fieldsToValidate: (keyof z.infer<typeof formSchema>)[] = []
+    let fieldsToValidate: (keyof FormValues)[] = []
 
     if (step === 1) {
       fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "inquiry_for_class"]
@@ -300,7 +271,7 @@ export default function AdmissionInquiryForm({
       fieldsToValidate = ["father_name", "primary_mobile", "address"]
     }
 
-    form.trigger(fieldsToValidate as (keyof z.infer<typeof formSchema>)[]).then((isValid) => {
+    form.trigger(fieldsToValidate as (keyof FormValues)[]).then((isValid) => {
       if (isValid) {
         setStep(step + 1)
       } else {
@@ -364,6 +335,27 @@ export default function AdmissionInquiryForm({
       </div>
     </div>
   )
+
+  // Render validation errors summary
+  const renderErrorSummary = () => {
+    if (!hasErrors) return null
+
+    return (
+      <div className="text-sm text-destructive mb-2">
+        <p className="font-medium">Please correct the following errors:</p>
+        <ul className="list-disc pl-5 mt-1 text-xs">
+          {Object.entries(form.formState.errors)
+            .slice(0, 3)
+            .map(([field, error]) => (
+              <li key={field}>{error?.message?.toString()}</li>
+            ))}
+          {Object.keys(form.formState.errors).length > 3 && (
+            <li>...and {Object.keys(form.formState.errors).length - 3} more</li>
+          )}
+        </ul>
+      </div>
+    )
+  }
 
   // Render navigation buttons
   const renderNavigationButtons = () => (
@@ -436,7 +428,7 @@ export default function AdmissionInquiryForm({
       />
 
       {/* Student Name Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
         <FormField
           control={form.control}
           name="first_name"
@@ -454,7 +446,10 @@ export default function AdmissionInquiryForm({
                   }}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{(field.value || "").length}/30</span>
+              </div>
             </FormItem>
           )}
         />
@@ -473,7 +468,10 @@ export default function AdmissionInquiryForm({
                   }}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{(field.value || "").length}/30</span>
+              </div>
             </FormItem>
           )}
         />
@@ -494,7 +492,10 @@ export default function AdmissionInquiryForm({
                   }}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{field.value.length}/30</span>
+              </div>
             </FormItem>
           )}
         />
@@ -510,12 +511,11 @@ export default function AdmissionInquiryForm({
               {t("date_of_birth")} <span className="text-destructive">*</span>
             </FormLabel>
             <FormControl>
-              <Input
-                type="date"
-                {...field}
-                ref={(el) => {
-                  inputRefs.current.birth_date = el
-                }}
+              <SaralDatePicker
+                date={field.value}
+                onDateChange={field.onChange}
+                placeholder={t("select_date_of_birth")}
+                disableFutureDates={true}
               />
             </FormControl>
             <FormMessage />
@@ -619,7 +619,10 @@ export default function AdmissionInquiryForm({
                   }}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{field.value.length}/30</span>
+              </div>
             </FormItem>
           )}
         />
@@ -632,13 +635,21 @@ export default function AdmissionInquiryForm({
                 {t("contact_number")} <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <NumberInput
+                <Input
+                  placeholder={t("enter_contact_number")}
                   {...field}
-                  value={field.value ? String(field.value) : ""}
-                  onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                  onChange={(e) => {
+                    // Only allow numeric input
+                    const value = e.target.value.replace(/\D/g, "")
+                    field.onChange(value)
+                  }}
+                  maxLength={10}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{field.value.length}/10</span>
+              </div>
             </FormItem>
           )}
         />
@@ -679,7 +690,10 @@ export default function AdmissionInquiryForm({
             <FormControl>
               <Textarea placeholder={t("enter_address")} {...field} className="min-h-[100px]" />
             </FormControl>
-            <FormMessage />
+            <div className="flex justify-between items-start h-5">
+              <FormMessage className="text-xs" />
+              <span className="text-xs text-muted-foreground">{field.value.length}/100</span>
+            </div>
           </FormItem>
         )}
       />
@@ -705,7 +719,10 @@ export default function AdmissionInquiryForm({
                   onChange={(e) => field.onChange(e.target.value || "")}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between items-start h-5">
+                <FormMessage className="text-xs" />
+                <span className="text-xs text-muted-foreground">{(field.value || "").length}/100</span>
+              </div>
             </FormItem>
           )}
         />
@@ -743,6 +760,7 @@ export default function AdmissionInquiryForm({
                   value={field.value ? String(field.value) : ""}
                   onChange={(value) => field.onChange(value ? Number(value) : undefined)}
                   min={0}
+                  max={100}
                 />
               </FormControl>
               <FormMessage />
@@ -756,11 +774,11 @@ export default function AdmissionInquiryForm({
             <FormItem className="w-full">
               <FormLabel>{t("year")}</FormLabel>
               <FormControl>
-                <Input
-                  placeholder={t("enter_year")}
-                  {...field}
-                  value={field.value || ""}
-                  onChange={(e) => field.onChange(e.target.value || "")}
+                <SaralDatePicker
+                  date={field.value}
+                  onDateChange={field.onChange}
+                  placeholder={t("select_previous_year")}
+                  disableFutureDates={true}
                 />
               </FormControl>
               <FormMessage />
@@ -785,7 +803,10 @@ export default function AdmissionInquiryForm({
                 className="min-h-[100px]"
               />
             </FormControl>
-            <FormMessage />
+            <div className="flex justify-between items-start h-5">
+              <FormMessage className="text-xs" />
+              <span className="text-xs text-muted-foreground">{(field.value || "").length}/500</span>
+            </div>
           </FormItem>
         )}
       />
@@ -864,16 +885,15 @@ export default function AdmissionInquiryForm({
 
   return (
     <div className="w-full">
-      <Card
-        className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto h-[600px] overflow-hidden`}
-        style={{ width: "40rem" }}
-      >
-        <CardContent className="p-4 sm:p-6 w-full h-full flex flex-col">
+      <Card className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`} style={{ width: "42rem", padding:"2rem" }}>
+        <CardContent className="p-4 w-full h-full flex flex-col">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full h-full flex flex-col">
               {renderStepIndicators()}
 
-              <div className="w-full flex-grow overflow-y-auto space-y-5">
+              {hasErrors && renderErrorSummary()}
+
+              <div className="w-full flex-grow overflow-y-auto space-y-4 pr-1">
                 {step === 1 && <div className="w-full">{renderStep1()}</div>}
                 {step === 2 && <div className="w-full">{renderStep2()}</div>}
                 {step === 3 && <div className="w-full">{renderStep3()}</div>}
