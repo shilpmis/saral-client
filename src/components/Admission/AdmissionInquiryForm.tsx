@@ -166,6 +166,10 @@ export default function AdmissionInquiryForm({
     }
   }, [form.formState.errors])
 
+  const handleDateChange = (date: Date | undefined) => {
+    console.log("date for birth date", date)
+    form.setValue("birth_date", date ?? new Date())
+  }
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
@@ -335,28 +339,6 @@ export default function AdmissionInquiryForm({
       </div>
     </div>
   )
-
-  // Render validation errors summary
-  const renderErrorSummary = () => {
-    if (!hasErrors) return null
-
-    return (
-      <div className="text-sm text-destructive mb-2">
-        <p className="font-medium">Please correct the following errors:</p>
-        <ul className="list-disc pl-5 mt-1 text-xs">
-          {Object.entries(form.formState.errors)
-            .slice(0, 3)
-            .map(([field, error]) => (
-              <li key={field}>{error?.message?.toString()}</li>
-            ))}
-          {Object.keys(form.formState.errors).length > 3 && (
-            <li>...and {Object.keys(form.formState.errors).length - 3} more</li>
-          )}
-        </ul>
-      </div>
-    )
-  }
-
   // Render navigation buttons
   const renderNavigationButtons = () => (
     <div className="flex justify-between mt-6">
@@ -513,7 +495,10 @@ export default function AdmissionInquiryForm({
             <FormControl>
               <SaralDatePicker
                 date={field.value}
-                onDateChange={field.onChange}
+                onDateChange={(date) => {
+                  handleDateChange(date);
+                  field.onChange(date);
+                }}
                 placeholder={t("select_date_of_birth")}
                 disableFutureDates={true}
               />
@@ -885,14 +870,11 @@ export default function AdmissionInquiryForm({
 
   return (
     <div className="w-full">
-      <Card className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`} style={{ width: "42rem", padding:"2rem" }}>
+      <Card className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`} style={{ width: "45rem", padding:"1rem" }}>
         <CardContent className="p-4 w-full h-full flex flex-col">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full h-full flex flex-col">
               {renderStepIndicators()}
-
-              {hasErrors && renderErrorSummary()}
-
               <div className="w-full flex-grow overflow-y-auto space-y-4 pr-1">
                 {step === 1 && <div className="w-full">{renderStep1()}</div>}
                 {step === 2 && <div className="w-full">{renderStep2()}</div>}
