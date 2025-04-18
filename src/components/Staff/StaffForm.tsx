@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useRef } from "react"
 import { useState, useCallback, useEffect } from "react"
@@ -34,7 +36,14 @@ const formatData = (value: any): string => {
   return value ? new Date(value).toISOString().split("T")[0] : " "
 }
 
-const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, isApiInProgress ,onClose, formType, onSuccess }) => {
+const StaffForm: React.FC<StaffFormProps> = ({
+  onSubmit,
+  initial_data,
+  isApiInProgress,
+  onClose,
+  formType,
+  onSuccess,
+}) => {
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
   const [getStaffRoles, { data: schoolStaff }] = useLazyGetSchoolStaffRoleQuery()
@@ -174,7 +183,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, isApiInPr
   }, [schoolStaff, StaffRolesForSchool])
 
   useEffect(() => {
-    // console.log(formType, initial_data)
+    console.log(formType, initial_data)
     if (formType === "update" && initial_data?.staff_role_id) {
       form.reset({
         is_teaching_role: Boolean(initial_data?.is_teching_staff),
@@ -752,10 +761,10 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, isApiInPr
                       <FormItem>
                         <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
-                          <NumberInput
+                          <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -889,8 +898,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, initial_data, isApiInPr
                   {t("submit")}
                 </Button> */}
                 <Button type="submit" disabled={isApiInProgress}>
-                    {(isApiInProgress) && <Loader2 className="animate-spin" />}
-                    {formType === "create" ?  t("Create") : "Update"}
+                  {isApiInProgress && <Loader2 className="animate-spin" />}
+                  {formType === "create" ? t("Create") : "Update"}
                 </Button>
               </CardFooter>
             </Card>
