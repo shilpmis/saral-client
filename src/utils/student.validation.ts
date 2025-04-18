@@ -270,10 +270,11 @@ export const studentSchema = z.object({
     .regex(/^[A-Za-z\s]+$/, "State should contain only alphabets and spaces")
     .nullable(),
 
-  postal_code: z
+    postal_code: z.coerce
     .string()
     .regex(/^\d{6}$/, "Postal code must be exactly 6 digits")
-    .nullable(),
+    .nullable()
+    .optional(),  
 
   // Bank Details
   bank_name: z
