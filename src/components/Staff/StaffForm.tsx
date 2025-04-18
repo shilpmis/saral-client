@@ -183,7 +183,6 @@ const StaffForm: React.FC<StaffFormProps> = ({
   }, [schoolStaff, StaffRolesForSchool])
 
   useEffect(() => {
-    console.log(formType, initial_data)
     if (formType === "update" && initial_data?.staff_role_id) {
       form.reset({
         is_teaching_role: Boolean(initial_data?.is_teching_staff),

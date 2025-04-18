@@ -21,7 +21,7 @@ import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchoo
 import { Loader2, CheckCircle } from "lucide-react"
 import NumberInput from "@/components/ui/NumberInput"
 import { format } from "date-fns"
-import { formSchema, FormValues } from "./AdmissionFormSchema"
+import { formSchema, type FormValues } from "./AdmissionFormSchema"
 import { SaralDatePicker } from "../ui/common/SaralDatePicker"
 
 // Define the props for the component
@@ -167,7 +167,6 @@ export default function AdmissionInquiryForm({
   }, [form.formState.errors])
 
   const handleDateChange = (date: Date | undefined) => {
-    console.log("date for birth date", date)
     form.setValue("birth_date", date ?? new Date())
   }
   // Handle form submission
@@ -496,8 +495,14 @@ export default function AdmissionInquiryForm({
               <SaralDatePicker
                 date={field.value}
                 onDateChange={(date) => {
-                  handleDateChange(date);
-                  field.onChange(date);
+                  console.log("Birth date selected:", date)
+                  field.onChange(date)
+                  // Ensure the form knows the field was touched
+                  form.setValue("birth_date", date ?? new Date(), {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  })
                 }}
                 placeholder={t("select_date_of_birth")}
                 disableFutureDates={true}
@@ -761,7 +766,16 @@ export default function AdmissionInquiryForm({
               <FormControl>
                 <SaralDatePicker
                   date={field.value}
-                  onDateChange={field.onChange}
+                  onDateChange={(date) => {
+                    console.log("Previous year selected:", date)
+                    field.onChange(date)
+                    // Ensure the form knows the field was touched
+                    form.setValue("previous_year", date, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    })
+                  }}
                   placeholder={t("select_previous_year")}
                   disableFutureDates={true}
                 />
@@ -870,7 +884,10 @@ export default function AdmissionInquiryForm({
 
   return (
     <div className="w-full">
-      <Card className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`} style={{ width: "45rem", padding:"1rem" }}>
+      <Card
+        className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`}
+        style={{ width: "45rem", padding: "1rem" }}
+      >
         <CardContent className="p-4 w-full h-full flex flex-col">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full h-full flex flex-col">
