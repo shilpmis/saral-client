@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -18,17 +20,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, AlertCircle, RefreshCw } from 'lucide-react'
-import { useLazyGetLeavePolicyForSchoolPageWiseQuery, useLazyGetAllLeaveTypeForSchoolQuery, useLazyGetLeaveTypeForSchoolPageWiseQuery, useCreateLeavePolicyMutation, useUpdateLeavePolicyMutation, useCreateLeaveTypeMutation, useUpdateLeaveTypeMutation } from "@/services/LeaveService"
-import { LeavePolicy, LeaveType } from "@/types/leave"
-import { PageMeta } from "@/types/global"
+import { Plus, Edit, AlertCircle, RefreshCw } from "lucide-react"
+import {
+  useLazyGetLeavePolicyForSchoolPageWiseQuery,
+  useLazyGetAllLeaveTypeForSchoolQuery,
+  useLazyGetLeaveTypeForSchoolPageWiseQuery,
+  useCreateLeavePolicyMutation,
+  useUpdateLeavePolicyMutation,
+  useCreateLeaveTypeMutation,
+  useUpdateLeaveTypeMutation,
+} from "@/services/LeaveService"
+import type { LeavePolicy, LeaveType } from "@/types/leave"
+import type { PageMeta } from "@/types/global"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import { selectLeaveTypeForSchool, setLeave } from "@/redux/slices/leaveSlice"
+import { selectLeaveTypeForSchool } from "@/redux/slices/leaveSlice"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import NumberInput from "../ui/NumberInput"
 
@@ -37,7 +47,7 @@ const leaveTypeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   is_paid: z.boolean(),
-  affects_payroll: z.boolean()
+  affects_payroll: z.boolean(),
 })
 
 // Schema for leave policy with improved validation
@@ -62,51 +72,56 @@ export const leavePolicySchema = z
   })
   .superRefine((data, ctx) => {
     // Max consecutive days should be between 30-35% of annual allowance
-    const minConsecutiveDays = Math.floor(data.annual_quota * 0.3);
-    const maxConsecutiveDays = Math.ceil(data.annual_quota * 0.35);
-    
+    const minConsecutiveDays = Math.floor(data.annual_quota * 0.3)
+    const maxConsecutiveDays = Math.ceil(data.annual_quota * 0.35)
+
     if (data.max_consecutive_days < minConsecutiveDays || data.max_consecutive_days > maxConsecutiveDays) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["max_consecutive_days"],
         message: `Max consecutive days should be between ${minConsecutiveDays} and ${maxConsecutiveDays} (30-35% of annual allowance)`,
-      });
+      })
     }
 
     // Max carry forward days cannot be greater than 50% of annual allowance
-    const maxCarryForwardAllowed = Math.floor(data.annual_quota * 0.5);
-    
+    const maxCarryForwardAllowed = Math.floor(data.annual_quota * 0.5)
+
     if (data.can_carry_forward && data.max_carry_forward_days > maxCarryForwardAllowed) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["max_carry_forward_days"],
         message: `Max carryforward days cannot exceed ${maxCarryForwardAllowed} (50% of annual allowance)`,
-      });
+      })
     }
-  });
+  })
 
 type LeaveTypeSchema = z.infer<typeof leaveTypeSchema>
 type LeavePolicySchema = z.infer<typeof leavePolicySchema>
 
 export function LeaveManagementSettings() {
-  const staffRole = useAppSelector(selectSchoolStaffRoles);
-  const AlleaveTypeForSchool = useAppSelector(selectLeaveTypeForSchool);
-  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool);
+  const staffRole = useAppSelector(selectSchoolStaffRoles)
+  const AlleaveTypeForSchool = useAppSelector(selectLeaveTypeForSchool)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
-  const auth = useAppSelector(selectAuthState);
+  const auth = useAppSelector(selectAuthState)
   const [getStaffForSchool, { isLoading, isError }] = useLazyGetSchoolStaffRoleQuery()
   const [getLeavePolicies, { isLoading: isLeavePoliciesLoading }] = useLazyGetLeavePolicyForSchoolPageWiseQuery()
   const [getLeaveType, { isLoading: isLeaveTypeLoading }] = useLazyGetLeaveTypeForSchoolPageWiseQuery()
 
-  const [getAllLeaveType, { data: dataForLeaveType, isLoading: isAllLeaveTypeLoading }] = useLazyGetAllLeaveTypeForSchoolQuery()
+  const [getAllLeaveType, { data: dataForLeaveType, isLoading: isAllLeaveTypeLoading }] =
+    useLazyGetAllLeaveTypeForSchoolQuery()
 
-  const [createLeaveType, { isLoading: loadingForLeaveTypeCreation, isError: ErrorWhileTypeCreation }] = useCreateLeaveTypeMutation()
-  const [updateLeaveType, { isLoading: loadingForLeaveTypeUpdation, isError: ErrorWhileTypeUpdation }] = useUpdateLeaveTypeMutation()
+  const [createLeaveType, { isLoading: loadingForLeaveTypeCreation, isError: ErrorWhileTypeCreation }] =
+    useCreateLeaveTypeMutation()
+  const [updateLeaveType, { isLoading: loadingForLeaveTypeUpdation, isError: ErrorWhileTypeUpdation }] =
+    useUpdateLeaveTypeMutation()
 
-  const [createLeavePolicy, { isLoading: loadingForPolicyCreation, isError: ErrorWhilePolicyCreation }] = useCreateLeavePolicyMutation()
-  const [updateLeavePolicy, { isLoading: loadingForPolicyUpdation, isError: ErrorWhilePolicyUpdation }] = useUpdateLeavePolicyMutation()
+  const [createLeavePolicy, { isLoading: loadingForPolicyCreation, isError: ErrorWhilePolicyCreation }] =
+    useCreateLeavePolicyMutation()
+  const [updateLeavePolicy, { isLoading: loadingForPolicyUpdation, isError: ErrorWhilePolicyUpdation }] =
+    useUpdateLeavePolicyMutation()
 
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false)
 
   const leaveTypeForm = useForm<LeaveTypeSchema>({
     resolver: zodResolver(leaveTypeSchema),
@@ -132,115 +147,117 @@ export function LeaveManagementSettings() {
   })
 
   // Watch annual_quota to update validation hints
-  const annualQuota = leavePolicyForm.watch("annual_quota");
-  const minConsecutiveDays = Math.floor(annualQuota * 0.3);
-  const maxConsecutiveDays = Math.ceil(annualQuota * 0.35);
-  const maxCarryForwardAllowed = Math.floor(annualQuota * 0.5);
+  const annualQuota = leavePolicyForm.watch("annual_quota")
+  const minConsecutiveDays = Math.floor(annualQuota * 0.3)
+  const maxConsecutiveDays = Math.ceil(annualQuota * 0.35)
+  const maxCarryForwardAllowed = Math.floor(annualQuota * 0.5)
 
-  const {t} = useTranslation()
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState("leave-types")
 
   const [DialogForLeaveType, setDialogForLeaveType] = useState<{
-    type: 'add' | 'edit',
-    leave_type: LeaveType | null,
+    type: "add" | "edit"
+    leave_type: LeaveType | null
     isOpen: boolean
   }>({
     isOpen: false,
-    type: 'add',
-    leave_type: null
+    type: "add",
+    leave_type: null,
   })
 
   const [DialogForLeavePolicy, setDialogForLeavePolicy] = useState<{
-    type: 'add' | 'edit',
-    leave_policy: LeavePolicy | null,
+    type: "add" | "edit"
+    leave_policy: LeavePolicy | null
     isOpen: boolean
   }>({
     isOpen: false,
-    type: 'add',
-    leave_policy: null
+    type: "add",
+    leave_policy: null,
   })
 
   const [currentlyDispalyedLeaveTypes, setCurrentlyDispalyedLeaveTypes] = useState<{
-    leave_type: LeaveType[], page: PageMeta
+    leave_type: LeaveType[]
+    page: PageMeta
   } | null>(null)
 
   const [currentlyDispalyedLeavePolicy, setCurrentlyDispalyedLeavePolicy] = useState<{
-    leave_policy: LeavePolicy[], page: PageMeta
+    leave_policy: LeavePolicy[]
+    page: PageMeta
   } | null>(null)
 
   const onLeaveTypeSubmit: SubmitHandler<LeaveTypeSchema> = async (data) => {
     try {
-      if (DialogForLeaveType.type === 'edit') {
-        let updated_type = await updateLeaveType({
-          leave_type_id: DialogForLeaveType.leave_type!.id, 
+      if (DialogForLeaveType.type === "edit") {
+        const updated_type = await updateLeaveType({
+          leave_type_id: DialogForLeaveType.leave_type!.id,
           payload: {
             leave_type_name: data.name,
             is_paid: data.is_paid,
             affects_payroll: data.affects_payroll,
             requires_proof: false,
-            is_active: true
-          }
+            is_active: true,
+          },
         })
-        
-        if ('error' in updated_type) {
+
+        if ("error" in updated_type) {
           toast({
-            variant: 'destructive',
-            title: 'Error updating leave type',
-            description: 'Please try again later',
+            variant: "destructive",
+            title: "Error updating leave type",
+            description: "Please try again later",
           })
           console.log(updated_type)
         } else {
           toast({
-            variant: 'default',
-            title: 'Leave type updated successfully ✔️',
-            description: 'The leave type has been updated',
-            duration: 3000
+            variant: "default",
+            title: "Leave type updated successfully ✔️",
+            description: "The leave type has been updated",
+            duration: 3000,
           })
-          fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
+          fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page)
           setDialogForLeaveType({
             isOpen: false,
-            type: 'add',
-            leave_type: null
+            type: "add",
+            leave_type: null,
           })
         }
       } else {
-        let new_type = await createLeaveType({
+        const new_type = await createLeaveType({
           leave_type_name: data.name,
           is_paid: data.is_paid,
           affects_payroll: data.affects_payroll,
           requires_proof: false,
           is_active: true,
-          academic_session_id: CurrentAcademicSessionForSchool!.id
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
         })
-        
-        if ('error' in new_type) {
+
+        if ("error" in new_type) {
           toast({
-            variant: 'destructive',
-            title: 'Error creating leave type',
-            description: 'Please try again later',
+            variant: "destructive",
+            title: "Error creating leave type",
+            description: "Please try again later",
           })
           console.log(new_type)
         } else {
           toast({
-            variant: 'default',
-            title: 'Leave type created successfully ✔️',
-            description: 'The new leave type has been added',
-            duration: 3000
+            variant: "default",
+            title: "Leave type created successfully ✔️",
+            description: "The new leave type has been added",
+            duration: 3000,
           })
-          fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page);
+          fetchDataForActiveTab("leave-types", currentlyDispalyedLeaveTypes?.page?.current_page)
           setDialogForLeaveType({
             isOpen: false,
-            type: 'add',
-            leave_type: null
+            type: "add",
+            leave_type: null,
           })
         }
       }
     } catch (error) {
-      console.error("Error submitting leave type:", error);
+      console.error("Error submitting leave type:", error)
       toast({
-        variant: 'destructive',
-        title: 'An unexpected error occurred',
-        description: 'Please try again later',
+        variant: "destructive",
+        title: "An unexpected error occurred",
+        description: "Please try again later",
       })
     }
   }
@@ -248,7 +265,7 @@ export function LeaveManagementSettings() {
   const onLeavePolicySubmit: SubmitHandler<LeavePolicySchema> = async (data) => {
     try {
       if (DialogForLeavePolicy.type === "add") {
-        let new_policy = await createLeavePolicy({
+        const new_policy = await createLeavePolicy({
           annual_quota: data.annual_quota,
           staff_role_id: Number(data.staff_role_id),
           leave_type_id: Number(data.leave_type_id),
@@ -258,35 +275,35 @@ export function LeaveManagementSettings() {
           deduction_rules: {},
           approval_hierarchy: {},
           requires_approval: data.requires_approval ? 1 : 0,
-          academic_session_id: CurrentAcademicSessionForSchool!.id
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
         })
-        
-        if ('data' in new_policy) {
+
+        if ("data" in new_policy) {
           toast({
-            variant: 'default',
-            title: 'Policy created successfully ✓',
-            description: 'The new leave policy has been added',
-            duration: 3000
+            variant: "default",
+            title: "Policy created successfully ✓",
+            description: "The new leave policy has been added",
+            duration: 3000,
           })
           fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
           leavePolicyForm.reset()
           setDialogForLeavePolicy({
             isOpen: false,
-            type: 'add',
-            leave_policy: null
+            type: "add",
+            leave_policy: null,
           })
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Error creating policy',
-            description: 'Please check your inputs and try again',
+            variant: "destructive",
+            title: "Error creating policy",
+            description: "Please check your inputs and try again",
           })
           console.log(new_policy)
         }
-      } else if (DialogForLeavePolicy.type === 'edit') {
-        let policy_id = DialogForLeavePolicy.leave_policy!.id
+      } else if (DialogForLeavePolicy.type === "edit") {
+        const policy_id = DialogForLeavePolicy.leave_policy!.id
 
-        let payload = {
+        const payload = {
           annual_quota: data.annual_quota,
           staff_role_id: Number(data.staff_role_id),
           leave_type_id: Number(data.leave_type_id),
@@ -297,50 +314,50 @@ export function LeaveManagementSettings() {
           approval_hierarchy: {},
           requires_approval: data.requires_approval ? 1 : 0,
         }
-        
-        let policy = await updateLeavePolicy({ policy_id: policy_id, payload: payload })
-        
-        if ('data' in policy) {
+
+        const policy = await updateLeavePolicy({ policy_id: policy_id, payload: payload })
+
+        if ("data" in policy) {
           toast({
-            variant: 'default',
-            title: 'Policy updated successfully ✓',
-            description: 'The leave policy has been updated',
-            duration: 3000
+            variant: "default",
+            title: "Policy updated successfully ✓",
+            description: "The leave policy has been updated",
+            duration: 3000,
           })
           fetchDataForActiveTab("leave-policies", currentlyDispalyedLeavePolicy?.page?.current_page)
           leavePolicyForm.reset()
           setDialogForLeavePolicy({
             isOpen: false,
-            type: 'add',
-            leave_policy: null
+            type: "add",
+            leave_policy: null,
           })
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Error updating policy',
-            description: 'Please check your inputs and try again',
+            variant: "destructive",
+            title: "Error updating policy",
+            description: "Please check your inputs and try again",
           })
           console.log(policy.error)
         }
       }
     } catch (error) {
-      console.error("Error submitting leave policy:", error);
+      console.error("Error submitting leave policy:", error)
       toast({
-        variant: 'destructive',
-        title: 'An unexpected error occurred',
-        description: 'Please try again later',
+        variant: "destructive",
+        title: "An unexpected error occurred",
+        description: "Please try again later",
       })
     }
   }
 
-  const openLeaveTypeDialog = (type: 'add' | 'edit', leaveType: LeaveType | null) => {
+  const openLeaveTypeDialog = (type: "add" | "edit", leaveType: LeaveType | null) => {
     setDialogForLeaveType({
       isOpen: true,
       type: type,
-      leave_type: leaveType
+      leave_type: leaveType,
     })
-    
-    if(type === 'edit' && leaveType){
+
+    if (type === "edit" && leaveType) {
       leaveTypeForm.reset({
         name: leaveType?.leave_type_name,
         description: leaveType?.leave_type_name,
@@ -357,25 +374,25 @@ export function LeaveManagementSettings() {
     }
 
     getAllLeaveType({
-      academic_session_id: CurrentAcademicSessionForSchool!.id
+      academic_session_id: CurrentAcademicSessionForSchool!.id,
     })
   }
 
-  const openLeavePolicyDialog = (type: 'add' | 'edit', leavePolicy: LeavePolicy | null) => {
+  const openLeavePolicyDialog = (type: "add" | "edit", leavePolicy: LeavePolicy | null) => {
     // First, fetch required data
     getStaffForSchool(auth.user!.school_id)
     getAllLeaveType({
-      academic_session_id: CurrentAcademicSessionForSchool!.id
-    });
-    
+      academic_session_id: CurrentAcademicSessionForSchool!.id,
+    })
+
     // Then open dialog and set form values
     setDialogForLeavePolicy({
       isOpen: true,
       type: type,
-      leave_policy: leavePolicy
+      leave_policy: leavePolicy,
     })
 
-    if (type === 'edit' && leavePolicy) {
+    if (type === "edit" && leavePolicy) {
       leavePolicyForm.reset({
         annual_quota: leavePolicy?.annual_quota || 10,
         staff_role_id: leavePolicy?.staff_role_id.toString(),
@@ -398,96 +415,91 @@ export function LeaveManagementSettings() {
     }
   }
 
-  async function fetchDataForActiveTab(type: 'leave-types' | 'leave-policies', page: number = 1) {
+  async function fetchDataForActiveTab(type: "leave-types" | "leave-policies", page = 1) {
     try {
-      setRefreshing(true);
-      
-      if (type === 'leave-policies') {
-        const leave_policy = await getLeavePolicies({ 
-          page: page, 
-          academic_session_id: CurrentAcademicSessionForSchool!.id
-        });
-        
+      setRefreshing(true)
+
+      if (type === "leave-policies") {
+        const leave_policy = await getLeavePolicies({
+          page: page,
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+        })
+
         if (leave_policy.data) {
           setCurrentlyDispalyedLeavePolicy({
             leave_policy: leave_policy.data.data,
-            page: leave_policy.data.page
+            page: leave_policy.data.page,
           })
         }
       }
 
-      if (type === 'leave-types') {
-        const leave_type = await getLeaveType({ 
-          page: page, 
-          academic_session_id: CurrentAcademicSessionForSchool!.id 
-        });
-        
+      if (type === "leave-types") {
+        const leave_type = await getLeaveType({
+          page: page,
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+        })
+
         if (leave_type.data) {
           setCurrentlyDispalyedLeaveTypes({
             leave_type: leave_type.data.data,
-            page: leave_type.data.page
+            page: leave_type.data.page,
           })
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error)
       toast({
-        variant: 'destructive',
-        title: 'Failed to load data',
-        description: 'Please try refreshing the page',
+        variant: "destructive",
+        title: "Failed to load data",
+        description: "Please try refreshing the page",
       })
     } finally {
-      setRefreshing(false);
+      setRefreshing(false)
     }
   }
 
   const refreshData = () => {
-    fetchDataForActiveTab(activeTab as 'leave-types' | 'leave-policies', 1);
+    fetchDataForActiveTab(activeTab as "leave-types" | "leave-policies", 1)
   }
 
   useEffect(() => {
     if (!currentlyDispalyedLeavePolicy || !currentlyDispalyedLeaveTypes) {
-      fetchDataForActiveTab(activeTab as 'leave-types' | 'leave-policies', 1);
+      fetchDataForActiveTab(activeTab as "leave-types" | "leave-policies", 1)
     }
-    
+
     if (!dataForLeaveType) {
       getAllLeaveType({
-        academic_session_id: CurrentAcademicSessionForSchool!.id
-      });
+        academic_session_id: CurrentAcademicSessionForSchool!.id,
+      })
     }
   }, [activeTab])
 
   // Helper function to check if there are no leave types
-  const hasNoLeaveTypes = !currentlyDispalyedLeaveTypes?.leave_type.length;
-  
+  const hasNoLeaveTypes = !currentlyDispalyedLeaveTypes?.leave_type.length
+
   // Helper function to check if there are no leave policies
-  const hasNoLeavePolicies = !currentlyDispalyedLeavePolicy?.leave_policy.length;
-  
+  const hasNoLeavePolicies = !currentlyDispalyedLeavePolicy?.leave_policy.length
+
   // Helper function to check if there are no leave types for policy creation
-  const hasNoLeaveTypesForPolicy = !dataForLeaveType?.length;
+  const hasNoLeaveTypesForPolicy = !dataForLeaveType?.length
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">{t("leave_management_settings")}</h1>
-      
+
       <div className="flex justify-end mb-4">
-        <Button 
-          variant="outline" 
-          onClick={refreshData} 
-          disabled={refreshing}
-          className="flex items-center gap-2"
-        >
+        <Button variant="outline" onClick={refreshData} disabled={refreshing} className="flex items-center gap-2">
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           {refreshing ? t("refreshing") : t("refresh")}
         </Button>
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="leave-types">{t("leave_type")}</TabsTrigger>
           <TabsTrigger value="leave-policies">{t("leave_policies")}</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="leave-types">
           <Card>
             <CardHeader>
@@ -496,17 +508,19 @@ export function LeaveManagementSettings() {
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <Button onClick={() => openLeaveTypeDialog('add', null)}>
+                <Button onClick={() => openLeaveTypeDialog("add", null)}>
                   <Plus className="mr-2 h-4 w-4" /> {t("add_leave_type")}
                 </Button>
               </div>
-              
+
               {hasNoLeaveTypes ? (
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{t("no_leave_types_found")}</AlertTitle>
                   <AlertDescription>
-                    {t("you_haven't_created_any_leave_types_yet._click_the_add_leave_type_button_to_create_your_first_leave_type.")}
+                    {t(
+                      "you_haven't_created_any_leave_types_yet._click_the_add_leave_type_button_to_create_your_first_leave_type.",
+                    )}
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -538,7 +552,7 @@ export function LeaveManagementSettings() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="leave-policies">
           <Card>
             <CardHeader>
@@ -547,34 +561,36 @@ export function LeaveManagementSettings() {
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <Button 
-                  onClick={() => openLeavePolicyDialog("add", null)}
-                  disabled={hasNoLeaveTypesForPolicy}
-                >
-                  <Plus className="mr-2 h-4 w-4" />{t("add_leave_policy")}
+                <Button onClick={() => openLeavePolicyDialog("add", null)} disabled={hasNoLeaveTypesForPolicy}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("add_leave_policy")}
                 </Button>
               </div>
-              
+
               {hasNoLeaveTypesForPolicy && (
                 <Alert className="mb-4" variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{t("no_leave_types_available")}</AlertTitle>
                   <AlertDescription>
-                    {t("you_need_to_create_at_one_leave_type_before_you_can_creat_a_leave_policy._go_to_the_leave_types_tab_to_create_a_leave_type_first.")}
+                    {t(
+                      "you_need_to_create_at_one_leave_type_before_you_can_creat_a_leave_policy._go_to_the_leave_types_tab_to_create_a_leave_type_first.",
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
-              
+
               {!hasNoLeaveTypesForPolicy && hasNoLeavePolicies && (
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{t("no_leave_policies_found")}</AlertTitle>
                   <AlertDescription>
-                    {t("you_haven't_created_any_leave_policies_yet._click_the_Aadd_leave_policy_button_to_create_your_first_policy.")}
+                    {t(
+                      "you_haven't_created_any_leave_policies_yet._click_the_Aadd_leave_policy_button_to_create_your_first_policy.",
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
-              
+
               {!hasNoLeavePolicies && (
                 <Table>
                   <TableHeader>
@@ -598,7 +614,7 @@ export function LeaveManagementSettings() {
                           {policy.can_carry_forward ? `Yes (Max ${policy.max_carry_forward_days} days)` : "No"}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => openLeavePolicyDialog('edit', policy)}>
+                          <Button variant="ghost" size="sm" onClick={() => openLeavePolicyDialog("edit", policy)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -613,21 +629,24 @@ export function LeaveManagementSettings() {
       </Tabs>
 
       {/* Leave Type Dialog */}
-      <Dialog open={DialogForLeaveType.isOpen} onOpenChange={(value) => {
-        if (!value) {
-          leaveTypeForm.reset();
-        }
-        setDialogForLeaveType({
-          ...DialogForLeaveType,
-          isOpen: value
-        })
-      }}>
+      <Dialog
+        open={DialogForLeaveType.isOpen}
+        onOpenChange={(value) => {
+          if (!value) {
+            leaveTypeForm.reset()
+          }
+          setDialogForLeaveType({
+            ...DialogForLeaveType,
+            isOpen: value,
+          })
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{DialogForLeaveType.type === 'edit' ? t("edit_leave_type") : t("add_leave_type")}</DialogTitle>
+            <DialogTitle>{DialogForLeaveType.type === "edit" ? t("edit_leave_type") : t("add_leave_type")}</DialogTitle>
             <DialogDescription>
-              {DialogForLeaveType.type === 'edit' 
-                ? t("edit_the_details_of_the_leave_type") 
+              {DialogForLeaveType.type === "edit"
+                ? t("edit_the_details_of_the_leave_type")
                 : t("enter_the_details_of_the_new_leave_type")}
             </DialogDescription>
           </DialogHeader>
@@ -642,9 +661,7 @@ export function LeaveManagementSettings() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., Sick Leave, Casual Leave" />
                     </FormControl>
-                    <FormDescription>
-                      {t("enter_a_descriptive_name_for_this_leave_type")}
-                    </FormDescription>
+                    <FormDescription>{t("enter_a_descriptive_name_for_this_leave_type")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -658,9 +675,7 @@ export function LeaveManagementSettings() {
                     <FormControl>
                       <Input {...field} placeholder="Brief description of this leave type" />
                     </FormControl>
-                    <FormDescription>
-                      {t("optional:_provide_additional_details_about_this_leave_type")}
-                    </FormDescription>
+                    <FormDescription>{t("optional:_provide_additional_details_about_this_leave_type")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -675,10 +690,7 @@ export function LeaveManagementSettings() {
                       <FormDescription>{t("is_this_a_paid_leave_type?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch 
-                        checked={field.value} 
-                        onCheckedChange={field.onChange} 
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -693,27 +705,21 @@ export function LeaveManagementSettings() {
                       <FormDescription>{t("does_this_leave_type_affect_payroll_calculations?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch 
-                        checked={field.value} 
-                        onCheckedChange={field.onChange} 
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
               />
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogForLeaveType({...DialogForLeaveType, isOpen: false})}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogForLeaveType({ ...DialogForLeaveType, isOpen: false })}
                 >
                   {t("cancel")}
                 </Button>
-                <Button 
-                  type="submit"
-                  disabled={loadingForLeaveTypeCreation || loadingForLeaveTypeUpdation}
-                >
-                  {DialogForLeaveType.type === 'edit' ? t("update") : t("create")}
+                <Button type="submit" disabled={loadingForLeaveTypeCreation || loadingForLeaveTypeUpdation}>
+                  {DialogForLeaveType.type === "edit" ? t("update") : t("create")}
                   {(loadingForLeaveTypeCreation || loadingForLeaveTypeUpdation) && (
                     <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
                   )}
@@ -725,20 +731,25 @@ export function LeaveManagementSettings() {
       </Dialog>
 
       {/* Leave Policy Dialog */}
-      <Dialog open={DialogForLeavePolicy.isOpen} onOpenChange={(value) => {
-        if (!value) {
-          leavePolicyForm.reset();
-        }
-        setDialogForLeavePolicy({
-          ...DialogForLeavePolicy,
-          isOpen: value
-        })
-      }}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog
+        open={DialogForLeavePolicy.isOpen}
+        onOpenChange={(value) => {
+          if (!value) {
+            leavePolicyForm.reset()
+          }
+          setDialogForLeavePolicy({
+            ...DialogForLeavePolicy,
+            isOpen: value,
+          })
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{DialogForLeavePolicy.type === 'edit' ? t("edit_leave_policy") : t("add_leave_policy")}</DialogTitle>
+            <DialogTitle>
+              {DialogForLeavePolicy.type === "edit" ? t("edit_leave_policy") : t("add_leave_policy")}
+            </DialogTitle>
             <DialogDescription>
-              {DialogForLeavePolicy.type === 'edit'
+              {DialogForLeavePolicy.type === "edit"
                 ? t("edit_the_details_of_the_leave_policy")
                 : t("enter_the_details_of_the_new_leave_policy")}
             </DialogDescription>
@@ -751,10 +762,10 @@ export function LeaveManagementSettings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel required>{t("staff_role")}</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={DialogForLeavePolicy.type === 'edit'}
+                      disabled={DialogForLeavePolicy.type === "edit"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -775,24 +786,22 @@ export function LeaveManagementSettings() {
                         )}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      {t("select_the_staff_role_this_policy_applies_to")}
-                    </FormDescription>
+                    <FormDescription>{t("select_the_staff_role_this_policy_applies_to")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={leavePolicyForm.control}
                 name="leave_type_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel required>{t("leave_type")}</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={DialogForLeavePolicy.type === 'edit'}
+                      disabled={DialogForLeavePolicy.type === "edit"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -813,14 +822,12 @@ export function LeaveManagementSettings() {
                         )}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      {t("select_the_type_of_leave_for_this_policy")}
-                    </FormDescription>
+                    <FormDescription>{t("select_the_type_of_leave_for_this_policy")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={leavePolicyForm.control}
                 name="annual_quota"
@@ -832,36 +839,34 @@ export function LeaveManagementSettings() {
                         {...field}
                         min={1}
                         max={100}
-                        value={field.value ? field.value.toString() : undefined}
+                        value={field.value ? field.value.toString() : ""}
                         onChange={(value) => {
-                          if(value === undefined){
-                            return;
-                          }
-                          field.onChange(value);
-                          const minConsecutive = Math.floor(Number(value) * 0.3);
-                          const maxConsecutive = Math.ceil(Number(value) * 0.35);
-                          const currentConsecutive = leavePolicyForm.getValues("max_consecutive_days");
-                          if (currentConsecutive < minConsecutive || currentConsecutive > maxConsecutive) {
-                            leavePolicyForm.setValue("max_consecutive_days", minConsecutive);
-                          }
-                          if (leavePolicyForm.getValues("can_carry_forward")) {
-                            const maxCarryForward = Math.floor(Number(value) * 0.5);
-                            const currentCarryForward = leavePolicyForm.getValues("max_carry_forward_days");
-                            if (currentCarryForward > maxCarryForward) {
-                              leavePolicyForm.setValue("max_carry_forward_days", maxCarryForward);
+                          const numValue = Number(value)
+                          if (!isNaN(numValue)) {
+                            field.onChange(numValue)
+                            const minConsecutive = Math.floor(numValue * 0.3)
+                            const maxConsecutive = Math.ceil(numValue * 0.35)
+                            const currentConsecutive = leavePolicyForm.getValues("max_consecutive_days")
+                            if (currentConsecutive < minConsecutive || currentConsecutive > maxConsecutive) {
+                              leavePolicyForm.setValue("max_consecutive_days", minConsecutive)
+                            }
+                            if (leavePolicyForm.getValues("can_carry_forward")) {
+                              const maxCarryForward = Math.floor(numValue * 0.5)
+                              const currentCarryForward = leavePolicyForm.getValues("max_carry_forward_days")
+                              if (currentCarryForward > maxCarryForward) {
+                                leavePolicyForm.setValue("max_carry_forward_days", maxCarryForward)
+                              }
                             }
                           }
                         }}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t("enter_a_value_between_1_and_100_days")}
-                    </FormDescription>
+                    <FormDescription>{t("enter_a_value_between_1_and_100_days")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={leavePolicyForm.control}
                 name="max_consecutive_days"
@@ -873,8 +878,13 @@ export function LeaveManagementSettings() {
                         {...field}
                         min={minConsecutiveDays}
                         max={maxConsecutiveDays}
-                        value={field.value ? field.value.toString() : undefined}
-                        onChange={(value) => field.onChange(value)}
+                        value={field.value ? field.value.toString() : ""}
+                        onChange={(value) => {
+                          const numValue = Number(value)
+                          if (!isNaN(numValue)) {
+                            field.onChange(numValue)
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -884,35 +894,37 @@ export function LeaveManagementSettings() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={leavePolicyForm.control}
                 name="can_carry_forward"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base" required>{t("allow_carry_forward")}</FormLabel>
+                      <FormLabel className="text-base" required>
+                        {t("allow_carry_forward")}
+                      </FormLabel>
                       <FormDescription>{t("can_unused_leaves_be_carried_forward_to_the_next_year?")}</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch 
-                        checked={field.value} 
+                      <Switch
+                        checked={field.value}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked);
+                          field.onChange(checked)
                           if (!checked) {
-                            leavePolicyForm.setValue("max_carry_forward_days", 0);
+                            leavePolicyForm.setValue("max_carry_forward_days", 0)
                           } else {
                             // Set a default value when enabling
-                            const maxAllowed = Math.floor(leavePolicyForm.getValues("annual_quota") * 0.5);
-                            leavePolicyForm.setValue("max_carry_forward_days", maxAllowed);
+                            const maxAllowed = Math.floor(leavePolicyForm.getValues("annual_quota") * 0.5)
+                            leavePolicyForm.setValue("max_carry_forward_days", maxAllowed)
                           }
-                        }} 
+                        }}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={leavePolicyForm.control}
                 name="max_carry_forward_days"
@@ -924,9 +936,14 @@ export function LeaveManagementSettings() {
                         {...field}
                         min={0}
                         max={maxCarryForwardAllowed}
-                        value={field.value ? field.value.toString() : undefined}
+                        value={field.value ? field.value.toString() : ""}
                         disabled={!leavePolicyForm.watch("can_carry_forward")}
-                        onChange={(value) => field.onChange(value)}
+                        onChange={(value) => {
+                          const numValue = Number(value)
+                          if (!isNaN(numValue)) {
+                            field.onChange(numValue)
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -936,20 +953,17 @@ export function LeaveManagementSettings() {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogForLeavePolicy({...DialogForLeavePolicy, isOpen: false})}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogForLeavePolicy({ ...DialogForLeavePolicy, isOpen: false })}
                 >
                   {t("cancel")}
                 </Button>
-                <Button 
-                  type="submit"
-                  disabled={loadingForPolicyCreation || loadingForPolicyUpdation}
-                >
-                  {DialogForLeavePolicy.type === 'edit' ? t("update") : t("create")}
+                <Button type="submit" disabled={loadingForPolicyCreation || loadingForPolicyUpdation}>
+                  {DialogForLeavePolicy.type === "edit" ? t("update") : t("create")}
                   {(loadingForPolicyCreation || loadingForPolicyUpdation) && (
                     <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
                   )}
