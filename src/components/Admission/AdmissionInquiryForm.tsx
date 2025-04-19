@@ -22,7 +22,6 @@ import { Loader2, CheckCircle } from "lucide-react"
 import NumberInput from "@/components/ui/NumberInput"
 import { format } from "date-fns"
 import { formSchema, type FormValues } from "./AdmissionFormSchema"
-import { SaralDatePicker } from "../ui/common/SaralDatePicker"
 
 // Define the props for the component
 interface AdmissionInquiryFormProps {
@@ -492,20 +491,21 @@ export default function AdmissionInquiryForm({
               {t("date_of_birth")} <span className="text-destructive">*</span>
             </FormLabel>
             <FormControl>
-              <SaralDatePicker
-                date={field.value}
-                onDateChange={(date) => {
-                  console.log("Birth date selected:", date)
-                  field.onChange(date)
+              <Input
+                type="date"
+                {...field}
+                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                onChange={(e) => {
+                  const date = e.target.value ? new Date(e.target.value) : undefined;
+                  field.onChange(date);
                   // Ensure the form knows the field was touched
                   form.setValue("birth_date", date ?? new Date(), {
                     shouldValidate: true,
                     shouldDirty: true,
                     shouldTouch: true,
-                  })
+                  });
                 }}
-                placeholder={t("select_date_of_birth")}
-                disableFutureDates={true}
+                max={format(new Date(), 'yyyy-MM-dd')}
               />
             </FormControl>
             <FormMessage />
@@ -764,20 +764,21 @@ export default function AdmissionInquiryForm({
             <FormItem className="w-full">
               <FormLabel>{t("year")}</FormLabel>
               <FormControl>
-                <SaralDatePicker
-                  date={field.value}
-                  onDateChange={(date) => {
-                    console.log("Previous year selected:", date)
-                    field.onChange(date)
+                <Input
+                  type="date"
+                  {...field}
+                  value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    field.onChange(date);
                     // Ensure the form knows the field was touched
                     form.setValue("previous_year", date, {
                       shouldValidate: true,
                       shouldDirty: true,
                       shouldTouch: true,
-                    })
+                    });
                   }}
-                  placeholder={t("select_previous_year")}
-                  disableFutureDates={true}
+                  max={format(new Date(), 'yyyy-MM-dd')}
                 />
               </FormControl>
               <FormMessage />
@@ -885,7 +886,7 @@ export default function AdmissionInquiryForm({
   return (
     <div className="w-full">
       <Card
-        className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px]`}
+        className={`${isEditing ? "border-0 shadow-none" : ""} mx-auto max-h-[600px}`}
         style={{ width: "45rem", padding: "1rem" }}
       >
         <CardContent className="p-4 w-full h-full flex flex-col">
