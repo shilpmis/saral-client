@@ -164,7 +164,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("first_name")}</FormLabel>
+                    <FormLabel required>{t("first_name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("enter_first_name")} {...field} />
                     </FormControl>
@@ -190,7 +190,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("last_name")}</FormLabel>
+                    <FormLabel required>{t("last_name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("enter_last_name")} {...field} />
                     </FormControl>
@@ -207,7 +207,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="birth_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("date_of_birth")}</FormLabel>
+                    <FormLabel required>{t("date_of_birth")}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -244,7 +244,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="inquiry_for_class"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("inquiry_for_class")}</FormLabel>
+                  <FormLabel required>{t("inquiry_for_class")}</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(Number.parseInt(value))}
                     defaultValue={field.value?.toString()}
@@ -284,7 +284,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="father_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("parent_name")}</FormLabel>
+                    <FormLabel required>{t("parent_name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("enter_parent_name")} {...field} />
                     </FormControl>
@@ -297,7 +297,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
                 name="primary_mobile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("contact_number")}</FormLabel>
+                    <FormLabel required>{t("contact_number")}</FormLabel>
                     <FormControl>
                       <Input
                         type="tel"
@@ -322,7 +322,7 @@ export const QuickInquiryForm: React.FC<QuickInquiryFormProps> = ({ isOpen, onCl
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("address")}</FormLabel>
+                  <FormLabel required>{t("address")}</FormLabel>
                   <FormControl>
                     <Textarea placeholder={t("enter_address")} {...field} />
                   </FormControl>
