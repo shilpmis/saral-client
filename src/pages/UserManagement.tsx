@@ -268,9 +268,10 @@ export const UserManagement: React.FC = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save user",
+        description: (error as { data?: { message?: string } })?.data?.message || "Failed to create/update user",
         variant: "destructive",
       })
+
     }
   }
 

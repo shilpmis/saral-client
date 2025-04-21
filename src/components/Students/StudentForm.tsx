@@ -352,7 +352,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           district: values.district,
           city: values.city,
           state: values.state,
-          postal_code: values.postal_code,
+          postal_code: values.postal_code ?? null,
           bank_name: values.bank_name,
           account_no: values.account_no,
           IFSC_code: values.IFSC_code,
@@ -402,7 +402,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           }
         } catch (error: any) {
           console.log("Error while Update Student :", error)
-          if (error?.data?.errors.code === "E_VALIDATION_ERROR") {
+          if (error?.data?.errors?.code === "E_VALIDATION_ERROR") {
             error.data.errors.messages.map((msg: any) => {
               toast({
                 variant: "destructive",
@@ -480,7 +480,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       if (values.state !== initial_data?.student_meta?.state) {
         payload.student_meta_data.state = values.state
       }
-      if (values.postal_code === initial_data?.student_meta?.postal_code) {
+      if (values.postal_code !== initial_data?.student_meta?.postal_code) {
         payload.student_meta_data.postal_code = values.postal_code
       }
       if (values.bank_name !== initial_data?.student_meta?.bank_name) {
@@ -821,8 +821,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -853,8 +855,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -870,8 +874,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -887,8 +893,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -903,7 +911,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("gender")}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ?? undefined}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -911,7 +922,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="Male">{t("male")}</SelectItem>
-                            <SelectItem value="Female">{t("female")}</SelectItem>
+                            <SelectItem value="Female">
+                              {t("female")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -928,8 +941,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             type="date"
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -947,8 +962,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -964,8 +981,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -983,8 +1002,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1000,8 +1021,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1047,8 +1070,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1066,8 +1091,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1083,8 +1110,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <Input
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1102,8 +1131,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1119,8 +1150,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1130,7 +1163,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1156,8 +1193,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1173,8 +1212,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) :  ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : ""}
+                            onChange={(value) =>
+                              field.onChange(value ? Number(value) : undefined)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1193,8 +1234,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             type="date"
                             {...field}
-                            value={field.value ||  ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1287,10 +1330,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value)
-                            handleClassChange(value, "class")
+                            field.onChange(value);
+                            handleClassChange(value, "class");
                           }}
-                          disabled={form_type === "update" || is_use_for_onBoarding} // Disable selection in edit mode
+                          disabled={
+                            form_type === "update" || is_use_for_onBoarding
+                          } // Disable selection in edit mode
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1304,10 +1349,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
                             {AcademicClasses.map(
                               (cls, index) =>
                                 cls.divisions.length > 0 && (
-                                  <SelectItem key={index} value={cls.id.toString()}>
+                                  <SelectItem
+                                    key={index}
+                                    value={cls.id.toString()}
+                                  >
                                     Class {cls.class}
                                   </SelectItem>
-                                ),
+                                )
                             )}
                           </SelectContent>
                         </Select>
@@ -1324,8 +1372,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
-                            field.onChange(value)
-                            handleDivisionChange(value, "class")
+                            field.onChange(value);
+                            handleDivisionChange(value, "class");
                           }}
                           disabled={form_type === "update"} // Disable selection in edit mode
                         >
@@ -1339,11 +1387,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
                               {t("divisions")}
                             </SelectItem>
                             {availableDivisions &&
-                              availableDivisions.divisions.map((division, index) => (
-                                <SelectItem key={index} value={division.id.toString()}>
-                                  {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
-                                </SelectItem>
-                              ))}
+                              availableDivisions.divisions.map(
+                                (division, index) => (
+                                  <SelectItem
+                                    key={index}
+                                    value={division.id.toString()}
+                                  >
+                                    {`${division.division} ${
+                                      division.aliases
+                                        ? "- " + division.aliases
+                                        : ""
+                                    }`}
+                                  </SelectItem>
+                                )
+                              )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -1362,7 +1419,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1379,7 +1438,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1389,7 +1450,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1416,7 +1481,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1433,7 +1500,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1452,7 +1521,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1469,7 +1540,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1483,7 +1556,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("category")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value ?? undefined}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t("select_category")} />
@@ -1502,7 +1578,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1528,7 +1608,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <Input
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1546,7 +1628,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1563,7 +1647,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1582,7 +1668,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value || null)}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -1596,10 +1684,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("postal_code")}</FormLabel>
                         <FormControl>
-                          <NumberInput
+                          <Input
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1609,7 +1697,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   {t("previous")}
                 </Button>
                 <Button type="button" onClick={handleNextTab}>
@@ -1635,7 +1727,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <Input
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1651,8 +1745,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormControl>
                         <NumberInput
                           {...field}
-                          value={field.value ? String(field.value) :  ""}
-                          onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                          value={field.value ? String(field.value) : ""}
+                          onChange={(value) =>
+                            field.onChange(value ? Number(value) : undefined)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1669,7 +1765,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <Input
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1678,13 +1776,32 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 />
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handlePreviousTab}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousTab}
+                >
                   {t("previous")}
                 </Button>
-                <Button type="submit" disabled={isStundetGetingUpdate || isStundetGetingCreate || isOnBoardingStudent}>
-                  {(!isStundetGetingUpdate || !isStundetGetingCreate) && 
-                  (form_type === "create" ? is_use_for_onBoarding ?  t("onboard_student") :  t("submit") : "Update")}
-                  {(isStundetGetingUpdate || isStundetGetingCreate || isOnBoardingStudent) && <Loader2 className="animate-spin" />}
+                <Button
+                  type="submit"
+                  disabled={
+                    isStundetGetingUpdate ||
+                    isStundetGetingCreate ||
+                    isOnBoardingStudent
+                  }
+                >
+                  {(!isStundetGetingUpdate || !isStundetGetingCreate) &&
+                    (form_type === "create"
+                      ? is_use_for_onBoarding
+                        ? t("onboard_student")
+                        : t("submit")
+                      : "Update")}
+                  {(isStundetGetingUpdate ||
+                    isStundetGetingCreate ||
+                    isOnBoardingStudent) && (
+                    <Loader2 className="animate-spin" />
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -1692,7 +1809,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         </Tabs>
       </form>
     </Form>
-  )
+  );
 }
 
 export default StudentForm
