@@ -33,6 +33,7 @@ import { useDebounceThrottle } from "@/hooks/use-debounce-throttle"
 import { StudentSearchResults } from "../Students/StudentSearchResult"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { Badge } from "@/components/ui/badge"
 
 export function Search() {
   // Get the current active academic session from Redux
@@ -92,6 +93,19 @@ export function Search() {
 
   // Use debounce-throttle hook for search query
   const debouncedSearchQuery = useDebounceThrottle(searchQuery, 500, 300)
+
+  // Check if we're on a student profile page and extract the ID
+  const isStudentProfilePage = useMemo(() => {
+    return location.pathname.match(/^\/d\/student\/\d+/)
+  }, [location.pathname])
+  
+  const studentId = useMemo(() => {
+    if (isStudentProfilePage) {
+      const match = location.pathname.match(/^\/d\/student\/(\d+)/)
+      return match ? match[1] : null
+    }
+    return null
+  }, [location.pathname, isStudentProfilePage])
 
   // Original handlers
   const handleSearch = (category: SearchCategory) => {
@@ -203,10 +217,22 @@ export function Search() {
 
   useEffect(() => {
     setSearchQuery("")
-    setSelectedCategory(null)
-    setActivePage(pageTitles[location.pathname])
+    
+    // Only reset the selected category if not navigating to a student profile page
+    // or if we're coming from a non-student page
+    if (!isStudentProfilePage || !location.pathname.includes('/d/student/')) {
+      setSelectedCategory(null)
+    }
+    
+    // Handle student profile page by setting to student search mode
+    if (isStudentProfilePage) {
+      setActivePage("Search for Students")
+    } else {
+      setActivePage(pageTitles[location.pathname])
+    }
+    
     setHasSearched(false)
-  }, [location.pathname, pageTitles, setActivePage])
+  }, [location.pathname, pageTitles, setActivePage, isStudentProfilePage])
 
   useEffect(() => {
     if (searchQuery === "" && activePage !== "Search for Students") {
@@ -233,17 +259,29 @@ export function Search() {
       {activePage === "Search for Students" ||
       activePage === "Search for Staff" ||
       activePage === "Search for Leave" ||
-      activePage === "Search for Fee" ? (
+      activePage === "Search for Fee" ||
+      isStudentProfilePage ? (
         <div className="search-container">
+          {/* Display which student profile is being viewed if on a student page */}
+          {/* {isStudentProfilePage && studentId && (
+            <div className="mb-2 text-xs text-muted-foreground">
+              <span>Currently viewing Student #{studentId}</span>
+            </div>
+          )} */}
+         
           <div className="relative flex items-center">
             <Input
               type="text"
-              placeholder={activePage}
+              placeholder={isStudentProfilePage 
+                ? selectedCategory 
+                  ? `Search for other students by ${selectedCategory.label}` 
+                  : "Search for Students"
+                : activePage}
               className="pl-[120px] pr-10"
               value={searchQuery}
               onChange={(e) => onChangeSearch(e.target.value)}
               disabled={
-                (selectedCategory === null && activePage !== "Search for Students") || !currentAcademicSession?.id
+                (selectedCategory === null && activePage !== "Search for Students" && !isStudentProfilePage) || !currentAcademicSession?.id
               }
               onKeyDown={(event) => searchTrigger(event)}
               onFocus={() => {
@@ -286,7 +324,7 @@ export function Search() {
                 />
               </svg>
             </button>
-            {activePage === "Search for Students" ? (
+            {(activePage === "Search for Students" || isStudentProfilePage) ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
@@ -372,7 +410,7 @@ export function Search() {
           </div>
 
           {/* Show search results or loading state */}
-          {showResults && activePage === "Search for Students" && (
+          {showResults && (activePage === "Search for Students" || isStudentProfilePage) && (
             <>
               {isLoading ? (
                 <div className="p-4 text-center">
