@@ -34,6 +34,11 @@ import InquiriesManagement from "../Admission/Inquiries"
 import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
 import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
+import EmployeePayrollDashboard from "@/pages/EmployeePayrollDashboard"
+import EmployeePayrollDetail from "@/pages/EmployeePayrollDetail"
+import PayrollAnalytics from "@/pages/PayrollAnalytics"
+import SalaryComponents from "@/pages/SalaryComponents"
+import SalaryTemplates from "@/pages/SalaryTemplates"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -239,6 +244,55 @@ export default function RootRoute() {
                 </PrivateRoute>
               }
             />
+
+            {/* Payroll */}
+
+            <Route
+              path="payroll/dahsboard"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <EmployeePayrollDashboard />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/details/:employeeId"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <EmployeePayrollDetail />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/analytics"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <PayrollAnalytics />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/salary-components"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryComponents />
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="payroll/salary-template"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryTemplates />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Payroll */}
 
             {/* <Route
               path="admissions/inquiry"
