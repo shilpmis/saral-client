@@ -185,11 +185,14 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
         }
       })
 
+      
       // Create the final payment request object with the array inside
       const paymentRequest = {
         student_id: studentId,
         installments: installmentPayments as FeePaymentRequest[],
       }
+      console.log("Installment Payments:", paymentRequest)
+      return;
 
       // Send payment request to API
       // Uncomment when ready to use the actual API
