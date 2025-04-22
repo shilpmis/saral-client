@@ -109,14 +109,16 @@ export const StaffApi = createApi({
         employee_code?: string
         staff_role_id?: number
         mobile_number?: number
+        academic_session_id?: number
       }
     >({
-      query: ({ name, employee_code, staff_role_id, mobile_number }) => {
+      query: ({ name, employee_code, staff_role_id, mobile_number, academic_session_id }) => {
         const params = new URLSearchParams()
         if (name) params.append("name", name)
         if (employee_code) params.append("employee_code", employee_code)
         if (staff_role_id) params.append("staff_role_id", staff_role_id.toString())
         if (mobile_number) params.append("mobile_number", mobile_number.toString())
+        if (academic_session_id) params.append("academic_session_id", academic_session_id.toString())
 
         return {
           url: `staff/search?${params.toString()}`,

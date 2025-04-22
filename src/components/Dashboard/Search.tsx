@@ -183,23 +183,27 @@ export function Search() {
           })
         }
       }
-      // For staff search
+      // For staff search - passing academic_session_id
       else if (activePage === "Search for Staff" || isStaffProfilePage) {
         if (selectedCategory.id === "name") {
           searchStaff({
             name: searchQuery,
+            academic_session_id: currentAcademicSession?.id
           })
         } else if (selectedCategory.id === "employee_code") {
           searchStaff({
             employee_code: searchQuery,
+            academic_session_id: currentAcademicSession?.id
           })
         } else if (selectedCategory.id === "mobile") {
           searchStaff({
             mobile_number: Number(searchQuery),
+            academic_session_id: currentAcademicSession?.id
           })
         } else if (selectedCategory.id === "role") {
           searchStaff({
             staff_role_id: Number(searchQuery),
+            academic_session_id: currentAcademicSession?.id
           })
         }
       }
@@ -512,7 +516,7 @@ export function Search() {
                 </div>
               ) : (
                 <>
-                  {staffSearchResults.length > 0 ? (
+                  {staffSearchResults && staffSearchResults.length > 0 ? (
                     <StaffSearchResults
                       results={staffSearchResults}
                       isLoading={isStaffLoading}
@@ -520,7 +524,7 @@ export function Search() {
                       onSelectStaff={handleSelectStaff}
                     />
                   ) : (
-                    hasSearched && (
+                    hasSearched && !isStaffLoading && (
                       <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-md max-h-60 overflow-auto">
                         <div className="flex items-center justify-center p-4 border-b">
                           <SearchX className="h-4 w-4 mr-2 text-muted-foreground" />
