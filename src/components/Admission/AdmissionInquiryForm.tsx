@@ -541,9 +541,9 @@ export default function AdmissionInquiryForm({
 
       {/* Class Applying For */}
       <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-        {`Only shows the classes which have seat allocation for  
+        {t("only_shows_the_classes_which_have_seat_allocation_for")}  
            ${academicSessionId ? academicSessions?.find((session) => session.id == academicSessionId)?.session_name : t("please_select_an_academic_year")}
-           academic session and are open for admissions by admin.`}
+           {t("academic_session_and_are_open_for_admissions_by_admin.")}
       </div>
       <FormField
         control={form.control}
