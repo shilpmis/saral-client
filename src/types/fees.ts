@@ -139,6 +139,13 @@ export interface FeeStatus {
   due_amount: string;
   status: "Pending" | "Partially Paid" | "Paid" | "Overdue";
   paid_fees: StudentFeesInstallment[];
+  repaid_installment: boolean;
+  applied_concessions:
+    | {
+        concession_id: number;
+        applied_amount: number;
+      }[]
+    | null;
 }
 
 export interface StudentWithFeeStatus {
@@ -157,7 +164,7 @@ export interface InstallmentBreakdown {
   installment_no: number;
   installment_amount: string;
   due_date: string;
-  status: "Active" | "Paid" | "Overdue";
+  status: "Paid" | "Unpaid" | "Partially Paid" | "Overdue" | "Failed";
 }
 
 export interface StudentFeesInstallment {
@@ -166,6 +173,7 @@ export interface StudentFeesInstallment {
   installment_id: number;
   paid_amount: number;
   remaining_amount: number;
+  amount_paid_as_carry_forward: number;
   discounted_amount: number;
   paid_as_refund: boolean;
   refunded_amount: number;
@@ -220,20 +228,59 @@ export interface StudentFeeDetails {
       total_concession_for_plan: number;
     };
   };
+  installments: {
+    id: number;
+    fees_plan_id: number;
+    fees_type_id: number;
+    installment_type: string;
+    total_installment: number;
+    total_amount: string;
+    paid_amount: string;
+    discounted_amount: string;
+    due_amount: string;
+    concession_amount: null;
+    installments_breakdown: {
+      id: number;
+      installment_no: number;
+      installment_amount: string;
+      due_date: string;
+      payment_status: "Unpaid" | "Paid";
+      is_paid: boolean;
+      payment_date: string;
+      remaining_amount: string;
+      transaction_reference: string;
+      discounted_amount: string;
+      paid_amount: string;
+      carry_forward_amount: string;
+      amount_paid_as_carry_forward: string;
+      applied_concession: {
+        concession_id: number;
+        applied_amount: number;
+      }[];
+    }[];
+  }[];
 }
 
 export interface FeePaymentRequest {
   fee_plan_details_id: number;
   installment_id: number;
-  discounted_amount: number;
   paid_amount: number;
+  discounted_amount: number;
   paid_as_refund: boolean;
   refunded_amount: number;
-  payment_mode: "Cash" | "Online" | "Cheque" | "Bank Transfer";
+  payment_mode: string;
   transaction_reference: string;
   payment_date: string;
   remarks: string;
-  // status: "Paid";
+  remaining_amount: number;
+  amount_paid_as_carry_forward: number;
+  applied_concessions:
+    | {
+        concession_id: number;
+        applied_amount: number;
+      }[]
+    | null;
+  repaid_installment: boolean;
 }
 
 export interface FeePaymentFormData {

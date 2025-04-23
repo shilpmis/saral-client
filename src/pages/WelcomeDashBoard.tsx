@@ -214,21 +214,21 @@ export function WelcomeDashboard() {
     switch (userRole) {
       case "admin":
         return [
-          { label: t("total_students"), value: "1,234" },
-          { label: t("total_staff"), value: "98" },
-          { label: t("pending_approvals"), value: "12" },
+          // { label: t("total_students"), value: "1,234" },
+          // { label: t("total_staff"), value: "98" },
+          // { label: t("pending_approvals"), value: "12" },
         ]
       case "clerk":
         return [
-          { label: t("pending_fees"), value: "45" },
-          { label: t("today_collections"), value: "₹24,500" },
-          { label: t("new_admissions"), value: "8" },
+          // { label: t("pending_fees"), value: "45" },
+          // { label: t("today_collections"), value: "₹24,500" },
+          // { label: t("new_admissions"), value: "8" },
         ]
       case "teacher":
         return [
-          { label: t("classes_today"), value: "5" },
-          { label: t("assignments_due"), value: "12" },
-          { label: t("attendance_rate"), value: "96%" },
+          // { label: t("classes_today"), value: "5" },
+          // { label: t("assignments_due"), value: "12" },
+          // { label: t("attendance_rate"), value: "96%" },
         ]
       default:
         return []
@@ -258,12 +258,12 @@ export function WelcomeDashboard() {
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-6">
-              {getRoleStats().map((stat, i) => (
+              {/* {getRoleStats().map((stat, i) => (
                 <div key={i} className="text-center">
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
-              ))}
+              ))} */}
             </div>
 
             <Avatar className="h-12 w-12 border-2 border-background">
@@ -279,8 +279,8 @@ export function WelcomeDashboard() {
         {getRoleStats().map((stat, i) => (
           <Card key={i} className="text-center">
             <CardContent className="p-4">
-              <p className="text-xl font-bold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              {/* <p className="text-xl font-bold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p> */}
             </CardContent>
           </Card>
         ))}

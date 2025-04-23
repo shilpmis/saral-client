@@ -192,8 +192,8 @@ export const FeesApi = createApi({
         url: `/fees/pay/installments`,
         method: "POST",
         body: {
-          student_id,
-          installlments: installments,
+          student_id: student_id,
+          installments: installments,
         },
       }),
     }),

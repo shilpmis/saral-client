@@ -104,7 +104,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="plan">{t("fee_plan_(apply_to_fee_plans)")}</SelectItem>
+                    {/* <SelectItem value="plan">{t("fee_plan_(apply_to_fee_plans)")}</SelectItem> */}
                     <SelectItem value="students">{t("students_(apply_to_selected_students)")}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -127,7 +127,7 @@ export const AddConcessionForm: React.FC<AddConcessionFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="plan">{t("entire_plan_(apply_to_whole_fee_plan)")}</SelectItem>
+                    {/* <SelectItem value="plan">{t("entire_plan_(apply_to_whole_fee_plan)")}</SelectItem> */}
                     <SelectItem value="fees_type">{t("fee_types_(apply_to_specific_fee_types)")}</SelectItem>
                   </SelectContent>
                 </Select>

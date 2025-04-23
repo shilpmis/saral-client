@@ -367,7 +367,7 @@ export const ConcessionManagement: React.FC = () => {
 
             {/* Apply Concession Dialog */}
             <Dialog open={dialogState.isOpen && dialogState.type === "apply"} onOpenChange={(open) => !open && closeDialog()}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+                <DialogContent className="max-w-3xl max-h-[70vh] overflow-auto">
                     <DialogHeader>
                         <DialogTitle>{dialogState.concession?.applicable_to === 'plan' ? 'Apply Concession to Fee Plan' : t("apply_concession_to_student")}</DialogTitle>
                     </DialogHeader>
