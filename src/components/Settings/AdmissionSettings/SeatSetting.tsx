@@ -959,7 +959,7 @@ export default function SeatsManagement() {
                   ` ${getQuotaName(quotaDialogData.quota_id || 0)} ${t("in")} ${getClassName(
                     quotaDialogData.class_id || 0,
                   )}`
-                : t("allocate_seats_from_a_quota_to") + ` ${t("class")} ${getClassName(quotaDialogData.class_id || 0)}`}
+                : t("allocate_seats_from_a_quota_to") + `  ${getClassName(quotaDialogData.class_id || 0)}`}
             </DialogDescription>
           </DialogHeader>
           <QuotaAllocationForm

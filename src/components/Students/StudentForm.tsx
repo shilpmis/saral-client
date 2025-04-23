@@ -402,7 +402,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           }
         } catch (error: any) {
           console.log("Error while Update Student :", error)
-          if (error?.data?.errors.code === "E_VALIDATION_ERROR") {
+          if (error?.data?.errors?.code === "E_VALIDATION_ERROR") {
             error.data.errors.messages.map((msg: any) => {
               toast({
                 variant: "destructive",
