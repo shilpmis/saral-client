@@ -33,6 +33,7 @@ import SeatsManagement from "../Settings/AdmissionSettings/SeatSetting"
 import InquiriesManagement from "../Admission/Inquiries"
 import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
+import StaffProfilePage from "@/pages/StaffProfilePage" // Import the StaffProfilePage component
 import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
 
 export default function RootRoute() {
@@ -114,6 +115,25 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_STAFF]}
                 >
                   <Staff />
+                </PrivateRoute>
+              }
+            />
+
+            {/* New Staff Profile Route */}
+            <Route
+              path="staff/:id"
+              element={
+                <PrivateRoute
+                  allowedRoles={[
+                    UserRole.ADMIN,
+                    UserRole.PRINCIPAL,
+                    UserRole.CLERK,
+                    UserRole.IT_ADMIN,
+                    UserRole.SCHOOL_TEACHER,
+                  ]}
+                  allowedPermissions={[Permission.MANAGE_STAFF]}
+                >
+                  <StaffProfilePage />
                 </PrivateRoute>
               }
             />
@@ -339,4 +359,4 @@ export default function RootRoute() {
     </SearchProvider>
   )
 }
-
+  
