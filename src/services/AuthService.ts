@@ -5,6 +5,7 @@ import type { RootState } from "../redux/store"
 import { setCredentials, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
 import baseUrl from "@/utils/base-urls"
 import { LoginCredentials, LoginResponse } from "@/types/login"
+import { ResetPasswordCredentials } from "@/types/auth"
 
 
 /**
@@ -92,3 +93,15 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
     return rejectWithValue(error.response?.data || "Logout failed");
   }
 });
+
+export const resetPassword = createAsyncThunk<{ message: string }, ResetPasswordCredentials>(
+  "auth/resetPassword",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await ApiService.post("/reset-password", credentials)
+      return { message: response.data.message || "Password reset successful" }
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || "Password reset failed")
+    }
+  },
+)
