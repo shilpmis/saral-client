@@ -1360,7 +1360,7 @@ export const Staff: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>{t("download_staff_data")}</DialogTitle>
               </DialogHeader>
-              <ExcelDownloadModalForStaff />
+              <ExcelDownloadModalForStaff onClose={() => setDialogOpenForDownLoadExcel(false)} />
             </DialogContent>
           </Dialog>
         </div>

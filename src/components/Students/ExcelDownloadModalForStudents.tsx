@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { FileDown, Loader2 } from 'lucide-react'
@@ -15,6 +14,8 @@ import { useDownloadExcelTemplateMutation } from "@/services/StudentServices"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { studentHeaderMappings, formatKeyToHeader } from "@/utils/headerMappings"
+import * as XLSX from 'xlsx'
 
 interface ExcelDownloadModalProps {
   academicClasses: AcademicClasses[] | null
@@ -140,9 +141,62 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     }))
   }
 
+  // Add helper function to transform Excel headers client-side
+  const transformExcelHeaders = (excelBlob: Blob): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get the first sheet
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          // Transform the headers
+          const transformedData = jsonData.map((record: any) => {
+            const transformedRecord: Record<string, any> = {};
+            
+            Object.entries(record).forEach(([key, value]) => {
+              // Get friendly header from mapping or format the key
+              const friendlyHeader = studentHeaderMappings[key] || formatKeyToHeader(key);
+              transformedRecord[friendlyHeader] = value;
+            });
+            
+            return transformedRecord;
+          });
+          
+          // Create new worksheet with transformed data
+          const newWorksheet = XLSX.utils.json_to_sheet(transformedData);
+          const newWorkbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Students");
+          
+          // Generate Excel file
+          const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+          const transformedBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          
+          resolve(transformedBlob);
+        } catch (error) {
+          console.error("Error transforming Excel headers:", error);
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error("Failed to read Excel file"));
+      reader.readAsArrayBuffer(excelBlob);
+    });
+  };
+
   const downloadExcel = async () => {
     setIsDownloading(true)
     const fieldsToInclude: Record<string, string[]> = {}
+
+    // Collect fields but don't create header mappings for the API
     Object.entries(selectedFields)
       .filter(([_, isSelected]) => isSelected)
       .forEach(([fieldId]) => {
@@ -162,22 +216,24 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     }
 
     try {
+      // Call API without header mappings
       const response = await getExcelForClass({
         class_id: selectedDivision!.id,
         academic_session: Number(selectedAcademicSession),
         payload: {
-          student_meta: fieldsToInclude.student_meta,
-          students: fieldsToInclude.students
+          student_meta: fieldsToInclude.student_meta || [],
+          students: fieldsToInclude.students || [],
         }
       }).unwrap()
 
-      if (response.error) {
-        throw new Error('Failed to download Excel file')
-      }
-
+      // Transform Excel headers client-side before download
+      const transformedExcel = await transformExcelHeaders(response);
+      
+      // Generate filename
       const fileName = `Students_${selectedClass}_${selectedDivision?.division || ""}_${new Date().toISOString().split("T")[0]}.xlsx`
 
-      const url = URL.createObjectURL(response)
+      // Download the transformed Excel
+      const url = URL.createObjectURL(transformedExcel)
       const link = document.createElement("a")
       link.href = url
       link.download = fileName
@@ -239,7 +295,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
                       <SelectItem key={cls.class} value={cls.class.toString()}>
                         Class {cls.class}
                       </SelectItem>
-                    ) : null,
+                    ) : null
                   )}
                 </SelectContent>
               </Select>

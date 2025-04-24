@@ -120,7 +120,11 @@ export const StudentApi = createApi({
       {
         class_id: number;
         academic_session: number;
-        payload: { students: string[]; student_meta: string[] };
+        payload: { 
+          students: string[]; 
+          student_meta: string[];
+          headers?: Record<string, string>;  // Add headers mapping
+        };
       }
     >({
       query: ({ academic_session, class_id, payload }) => ({
@@ -128,7 +132,11 @@ export const StudentApi = createApi({
         method: "POST",
         body: {
           class_id: class_id,
-          fields: payload,
+          fields: {
+            students: payload.students || [],
+            student_meta: payload.student_meta || []
+          },
+          headers: payload.headers || {} // Send headers mapping
         },
         responseHandler: (response) => response.blob(),
       }),
