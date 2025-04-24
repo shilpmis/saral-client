@@ -75,10 +75,11 @@ export const StaffApi = createApi({
     }),
     downloadExcelTemplate: builder.mutation<any, { type: "teaching" | "non-teaching" , school_id : number, academic_session : number,  fields: string[] }>({
       query: ({ school_id ,academic_session , fields , type }) => ({
-        url: `staff/export/${school_id}/${academic_session}?staff-type=${type}`,
+        url: `staff/export/${school_id}/${academic_session}`,
         method: "POST",
         body: {
-          fields: fields
+          fields: fields,
+          'staff-type': type, 
         },
         responseHandler: (response) => response.blob()
       }),
