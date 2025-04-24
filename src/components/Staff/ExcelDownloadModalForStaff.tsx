@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { FileDown, Loader2 } from "lucide-react"
@@ -12,10 +11,11 @@ import { Separator } from "@/components/ui/separator"
 import { useDownloadExcelTemplateMutation } from "@/services/StaffService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
-import { current } from "@reduxjs/toolkit"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
-interface ExcelDownloadModalProps {}
+interface ExcelDownloadModalProps {
+  onClose?: () => void; // Add onClose prop to communicate with parent
+}
 
 const fieldGroups = {
   role: [
@@ -43,15 +43,14 @@ const fieldGroups = {
   ],
 }
 
-export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export default function ExcelDownloadModalForStaff({ onClose }: ExcelDownloadModalProps) {
   const [staffType, setStaffType] = useState<"teaching" | "non-teaching">("teaching")
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({})
   const [isDownloading, setIsDownloading] = useState(false)
   const {t} = useTranslation()
 
-    const authState = useAppSelector(selectAuthState)
-    const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const authState = useAppSelector(selectAuthState)
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getExcelForStaff, { isLoading: isDownloadingExcel }] = useDownloadExcelTemplateMutation()
 
@@ -115,7 +114,11 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
 
       URL.revokeObjectURL(url)
       document.body.removeChild(link)
-      setIsOpen(false)
+      
+      // Close the modal using the parent's handler after successful download
+      if (onClose) {
+        onClose()
+      }
     } catch (error) {
       console.error("Error downloading Excel:", error)
       alert("Failed to download Excel file. Please try again.")
@@ -219,4 +222,3 @@ export default function ExcelDownloadModalForStaff({}: ExcelDownloadModalProps) 
     </div>
   )
 }
-
