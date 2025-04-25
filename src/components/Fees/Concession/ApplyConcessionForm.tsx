@@ -29,6 +29,7 @@ import {
   useLazyGetStudentFeesDetailsForClassQuery,
   useLazyGetFilteredFeesPlanQuery,
   useLazyGetFilterdStudentFeesDetailsForClassQuery,
+  useLazyGetFilterFeesTypeQuery,
 } from "@/services/feesService"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -48,11 +49,12 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ApplyConcessionFormProps {
   concession: Concession
+  isApplyingConcesson : boolean
   onSubmit: (data: ApplyConcessionToPlanData | ApplyConcessionToStudentData ) => void
   onCancel: () => void
 }
 
-export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ concession, onSubmit, onCancel }) => {
+export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ concession, isApplyingConcesson ,  onSubmit, onCancel }) => {
 
   const {t} = useTranslation()
   const authState = useAppSelector(selectAuthState)
@@ -95,7 +97,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const [applyConcessionToPlan, { isLoading: isApplyingToPlan }] = useApplyConcessionsToPlanMutation()
   const [applyConcessionToStudent, { isLoading: isApplyingToStudent }] = useApplyConcessionsToPlanMutation()
   const [getAllFeesType, { data: feeTypes, isLoading: isLoadingFeeTypes }] = useLazyGetAllFeesTypeQuery()
-
+  const [getFilterFeesType , {data : FilteredFeesType , isLoading: isLoadingFilterFeeTypes}] = useLazyGetFilterFeesTypeQuery()
   // Local state for plan concessions
   const [searchTermPlan, setSearchTermPlan] = useState("")
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
@@ -286,6 +288,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
       setSelectedDivision(selectedDiv[0])
 
+
       try {
         await getFilterClassFeesStatus({
           class_id: selectedDiv[0].id,
@@ -293,6 +296,12 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           filter_by : 'eligible_for_concession',
           value : concession.id
         }).unwrap()
+
+        await getFilterFeesType({
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+          filter : 'division',
+          value : selectedDiv[0].id
+        })
       } catch (error) {
         console.log("Error while fetching fees data", error)
         toast({
@@ -601,18 +610,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
             )}
 
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isApplyingToPlan}>
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isApplyingConcesson}>
                 {t("cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={
-                  isApplyingToPlan ||
+                  isApplyingConcesson ||
                   !selectedPlan ||
                   (concession.concessions_to === "fees_type" && selectedFeeTypes.length === 0)
                 }
               >
-                {isApplyingToPlan ? (
+                {isApplyingConcesson ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Applying...
@@ -902,7 +911,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                         {t("choose_the_specific_fee_types_to_which_this_concession_will_be_applied")}
                       </FormDescription>
 
-                      {isLoadingFeeTypes ? (
+                      {isLoadingFilterFeeTypes ? (
                         <div className="space-y-2">
                           {Array(4)
                             .fill(0)
@@ -910,9 +919,9 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                               <Skeleton key={`loading-${index}`} className="h-8 w-full" />
                             ))}
                         </div>
-                      ) : feeTypes && feeTypes.length > 0 ? (
+                      ) : FilteredFeesType && FilteredFeesType.length > 0 ? (
                         <div className="grid grid-cols-1 gap-2 border rounded-md p-3">
-                          {feeTypes.map((feeType) => (
+                          {FilteredFeesType.map((feeType) => (
                             <div key={feeType.id} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`student-fee-type-${feeType.id}`}
@@ -958,18 +967,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
                       type="button"
                       variant="outline"
                       onClick={() => setStudentDialogOpen(false)}
-                      disabled={isApplyingToStudent}
+                      disabled={isApplyingConcesson}
                     >
                       {t("cancel")}
                     </Button>
                     <Button
                       type="submit"
                       disabled={
-                        isApplyingToStudent ||
+                        isApplyingConcesson ||
                         (concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0)
                       }
                     >
-                      {isApplyingToStudent ? (
+                      {isApplyingConcesson ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Applying...
