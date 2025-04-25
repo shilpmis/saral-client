@@ -253,6 +253,7 @@ export interface StudentFeeDetails {
       paid_amount: string;
       carry_forward_amount: string;
       amount_paid_as_carry_forward: string;
+      repaid_installment: boolean;
       applied_concession: {
         concession_id: number;
         applied_amount: number;
