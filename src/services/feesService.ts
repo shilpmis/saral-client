@@ -1,3 +1,4 @@
+import { Value } from "@radix-ui/react-select";
 import { setFeesPlan } from "@/redux/slices/feesSlice";
 import {
   Concession,
@@ -44,6 +45,19 @@ export const FeesApi = createApi({
     getAllFeesType: builder.query<FeesType[], { academic_session_id: number }>({
       query: ({ academic_session_id }) => ({
         url: `/feestype?all=true&academic_session=${academic_session_id}`,
+        method: "GET",
+      }),
+    }),
+    getFilterFeesType: builder.query<
+      FeesType[],
+      {
+        academic_session_id: number;
+        filter: "division";
+        value: number | string;
+      }
+    >({
+      query: ({ academic_session_id, filter, value }) => ({
+        url: `/feestype/filter?type=${filter}&value=${value}&academic_session=${academic_session_id}`,
         method: "GET",
       }),
     }),
@@ -192,8 +206,8 @@ export const FeesApi = createApi({
         url: `/fees/pay/installments`,
         method: "POST",
         body: {
-          student_id,
-          installlments: installments,
+          student_id: student_id,
+          installments: installments,
         },
       }),
     }),
@@ -323,6 +337,7 @@ export const {
   useGetFeesTypeQuery,
   useLazyGetFeesTypeQuery,
   useLazyGetAllFeesTypeQuery,
+  useLazyGetFilterFeesTypeQuery,
   useCreateFeesTypeMutation,
   useUpdateFeesTypeMutation,
   useCreateFeesPlanMutation,

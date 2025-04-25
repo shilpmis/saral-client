@@ -149,7 +149,7 @@ export const ConcessionManagement: React.FC = () => {
     // Handle applying a concession to a fee plan
     const handleApplyConcession = async (data: ApplyConcessionToStudentData | ApplyConcessionToPlanData) => {
         if (!dialogState.concession) return
-        let res;
+        let res : any ;
         try {
           if(dialogState.concession.applicable_to === 'plan') {
             res = await ApplyConcessionToPlan({
@@ -177,7 +177,7 @@ export const ConcessionManagement: React.FC = () => {
           }else{
             toast({
               title: "Error",
-              description: "Failed to apply concession to fee plan",
+              description: res?.error?.message && "Failed to apply concession to fee plan",
               variant: "destructive",
             }) 
           return;
@@ -191,11 +191,11 @@ export const ConcessionManagement: React.FC = () => {
             title: "Success",
             description: "Concession applied to fee plan successfully",
           })          
-        } catch (error) {
+        } catch (error : any) {
           console.log("Error" , error)
             toast({
                 title: "Error",
-                description: "Failed to apply concession to fee plan",
+                description: error.data.message ?? "Failed to apply concession to fee plan",
                 variant: "destructive",
             })
         }
@@ -367,7 +367,7 @@ export const ConcessionManagement: React.FC = () => {
 
             {/* Apply Concession Dialog */}
             <Dialog open={dialogState.isOpen && dialogState.type === "apply"} onOpenChange={(open) => !open && closeDialog()}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+                <DialogContent className="max-w-3xl max-h-[70vh] overflow-auto">
                     <DialogHeader>
                         <DialogTitle>{dialogState.concession?.applicable_to === 'plan' ? 'Apply Concession to Fee Plan' : t("apply_concession_to_student")}</DialogTitle>
                     </DialogHeader>
@@ -375,6 +375,7 @@ export const ConcessionManagement: React.FC = () => {
                         <ApplyConcessionForm
                             concession={dialogState.concession}
                             onSubmit={handleApplyConcession}
+                            isApplyingConcesson={ApplyingConcessionToPlan || ApplyingConcessionToStudent}
                             onCancel={closeDialog}
                         />
                     )}

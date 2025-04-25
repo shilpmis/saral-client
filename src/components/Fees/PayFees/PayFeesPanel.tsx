@@ -28,7 +28,8 @@ const PayFeesPanel: React.FC = () => {
 
   const { t } = useTranslation()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getClassFeesStatus, { data: feesData, isLoading, isError , error : errorWhileFetchingClassFees}] = useLazyGetStudentFeesDetailsForClassQuery()
+  const [getClassFeesStatus, { data: feesData, isLoading, isError, error: errorWhileFetchingClassFees }] =
+    useLazyGetStudentFeesDetailsForClassQuery()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
@@ -195,7 +196,7 @@ const PayFeesPanel: React.FC = () => {
 
   // Update students when fees data changes
   useEffect(() => {
-    if (feesData) {
+    if (feesData && feesData.data) {
       setStudents(feesData.data as unknown as StudentWithFeeStatus[])
     }
   }, [feesData])
@@ -207,12 +208,12 @@ const PayFeesPanel: React.FC = () => {
           {t("fee_management")}
         </h2>
         <div className="flex space-x-2 mt-4 sm:mt-0">
-          <Button variant="outline">
+          {/* <Button variant="outline">
             <Download className="mr-2 h-4 w-4" /> {t("export_report")}
           </Button>
           <Button variant="outline">
             <FileText className="mr-2 h-4 w-4" /> {t("generate_receipts")}
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -366,7 +367,10 @@ const PayFeesPanel: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                    {(errorWhileFetchingClassFees as any)?.data.message || t("failed_to_load_fees_data._please_try_again.")}
+                      {t("failed_to_load_fees_data._please_try_again.")}
+                      {errorWhileFetchingClassFees && (
+                        <p className="text-sm mt-2">Error: {JSON.stringify(errorWhileFetchingClassFees)}</p>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (
@@ -390,7 +394,7 @@ const PayFeesPanel: React.FC = () => {
                         {formatCurrency(student.fees_status.due_amount)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={student.fees_status.status === "Paid" ? "default" : "destructive"}>
+                        <Badge variant={(getStatusBadgeVariant(student.fees_status.status) as 'default' | 'destructive' | 'outline' | 'secondary')}>
                           {student.fees_status.status}
                         </Badge>
                       </TableCell>
@@ -408,7 +412,7 @@ const PayFeesPanel: React.FC = () => {
               </TableBody>
             </Table>
           </div>
-          {feesData && selectedDivision && (
+          {feesData && feesData.meta && selectedDivision && (
             <SaralPagination
               currentPage={feesData.meta.current_page}
               totalPages={feesData.meta.last_page}
@@ -419,7 +423,7 @@ const PayFeesPanel: React.FC = () => {
                   page,
                 })
               }
-            ></SaralPagination>
+            />
           )}
         </CardContent>
       </Card>

@@ -9,11 +9,25 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ArrowLeft, Calendar, CreditCard, Download, FileText, Printer, Receipt, Tag, User, Info } from "lucide-react"
+import {
+  ArrowLeft,
+  Calendar,
+  CreditCard,
+  Download,
+  FileText,
+  Printer,
+  Receipt,
+  Tag,
+  User,
+  Info,
+  CheckCircle2,
+  Eye,
+} from "lucide-react"
 import { useLazyGetStudentFeesDetailsQuery } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
-import ConcessionDialog from "@/components/Fees/PayFees/ConcessionDialog"
+import InstallmentDetailView from "@/components/Fees/Reports/InstallmentDetailViewProps"
+import PaymentReceiptGenerator from "@/components/Fees/Reports/PaymentReceiptGenerator"
 import type { InstallmentBreakdown } from "@/types/fees"
 import {
   Dialog,
@@ -28,11 +42,28 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
+import { selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
-// Add this extended interface at the top of the file, after the imports
+// Extended interface for installment breakdown with additional fields
 interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   original_amount?: string
   discounted_amount?: string
+  paid_amount?: string
+  remaining_amount?: string
+  carry_forward_amount?: string
+  payment_status?: string
+  is_paid?: boolean
+  payment_date?: string | null
+  transaction_reference?: string | null
+  amount_paid_as_carry_forward?: string
+  applied_concession?:
+    | {
+        concession_id: number
+        applied_amount: number
+      }[]
+    | null
 }
 
 type StudentFeesPanelProps = {}
@@ -45,14 +76,29 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+
   const [activeTab, setActiveTab] = useState("due-fees")
   const [isPayFeesDialogOpen, setIsPayFeesDialogOpen] = useState(false)
   const [isConcessionDialogOpen, setIsConcessionDialogOpen] = useState(false)
-  // Update the state type to use the extended interface
   const [selectedInstallments, setSelectedInstallments] = useState<ExtendedInstallmentBreakdown[]>([])
+  const [selectedInstallmentForPayment, setSelectedInstallmentForPayment] =
+    useState<ExtendedInstallmentBreakdown | null>(null)
+
+  // New states for detail view and receipt generator
+  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
+  const [selectedInstallmentForView, setSelectedInstallmentForView] = useState<any>(null)
+  const [selectedFeeTypeForView, setSelectedFeeTypeForView] = useState<any>(null)
+  const [isReceiptGeneratorOpen, setIsReceiptGeneratorOpen] = useState(false)
+  const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = useState<any>(null)
+  const [selectedInstallmentForReceipt, setSelectedInstallmentForReceipt] = useState<any>(null)
+  const [selectedFeeTypeForReceipt, setSelectedFeeTypeForReceipt] = useState<any>(null)
 
   // Format date to readable format
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-"
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -62,11 +108,19 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   }
 
   // Format currency
-  const formatCurrency = (amount: string | number) => {
+  const formatCurrency = (amount: string | number | null | undefined) => {
+    if (amount === null || amount === undefined) return "₹0.00"
     return `₹${Number(amount).toLocaleString("en-IN", {
       maximumFractionDigits: 2,
       minimumFractionDigits: 2,
     })}`
+  }
+
+  // Save state to localStorage
+  const saveStateToLocalStorage = (classId: string, divisionId: string | number | null, page: number) => {
+    localStorage.setItem("selectedClass", classId)
+    localStorage.setItem("selectedDivision", divisionId ? divisionId.toString() : "")
+    localStorage.setItem("currentPage", page.toString())
   }
 
   // Get status badge variant based on status
@@ -83,7 +137,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
-  // Update the toggleInstallmentSelection function to use the extended type
+  // Toggle installment selection
   const toggleInstallmentSelection = (installment: ExtendedInstallmentBreakdown) => {
     if (selectedInstallments.some((item) => item.id === installment.id)) {
       setSelectedInstallments(selectedInstallments.filter((item) => item.id !== installment.id))
@@ -92,7 +146,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
-  // Handle pay fees button click
+  // Handle pay fees button click for multiple installments
   const handlePayFees = () => {
     if (selectedInstallments.length === 0) {
       toast({
@@ -106,78 +160,32 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsPayFeesDialogOpen(true)
   }
 
+  // Handle pay single installment
+  const handlePaySingleInstallment = (installment: ExtendedInstallmentBreakdown) => {
+    setSelectedInstallmentForPayment(installment)
+    setIsPayFeesDialogOpen(true)
+  }
+
   // Handle back to list button click
   const handleBackToList = () => {
     navigate(-1)
   }
 
-  // Update the calculateTotalSelectedAmount function to handle the extended type
+  // Calculate total selected amount
   const calculateTotalSelectedAmount = () => {
-    return selectedInstallments.reduce((total, installment) => {
-      // Use the pre-calculated discounted amount if available
-      if (installment.discounted_amount) {
-        return total + Number(installment.discounted_amount)
-      }
-
-      // Find the fee detail for this installment
-      const feeDetail = studentFeeDetails?.detail.fees_details.find((detail) =>
-        detail.installments_breakdown.some((i) => i.id === installment.id),
-      )
-
-      if (feeDetail) {
-        // Calculate discounted amount
-        const discountedAmount = calculateDiscountedAmount(installment, feeDetail)
-        return total + discountedAmount
-      }
-
-      // Fallback to original amount if fee detail not found
-      return total + Number(installment.installment_amount)
-    }, 0)
-  }
-
-  // Get all due installments
-  const getDueInstallments = () => {
-    if (!studentFeeDetails) return []
-
-    const allInstallments: InstallmentBreakdown[] = []
-    const paidInstallmentIds = studentFeeDetails?.detail.paid_fees?.map((payment) => payment.installment_id) || []
-
-    studentFeeDetails.detail.fees_details.forEach((feeDetail) => {
-      feeDetail.installments_breakdown.forEach((installment) => {
-        // Only include installments that are Active or Overdue AND not in the paid installments list
-        if (
-          (installment.status === "Active" || installment.status === "Overdue") &&
-          !paidInstallmentIds.includes(installment.id)
-        ) {
-          allInstallments.push({
-            ...installment,
-            fee_plan_details_id: feeDetail.id,
-          })
-        }
-      })
-    })
-
-    return allInstallments
-  }
-
-  // Get all paid installments
-  const getPaidInstallments = () => {
-    if (!studentFeeDetails) return []
-
-    const allInstallments: InstallmentBreakdown[] = []
-
-    studentFeeDetails.detail.fees_details.forEach((feeDetail) => {
-      feeDetail.installments_breakdown.forEach((installment) => {
-        if (installment.status === "Paid") {
-          allInstallments.push({
-            ...installment,
-            fee_plan_details_id: feeDetail.id,
-          })
-        }
-      })
-    })
-
-    return allInstallments
+    if (selectedInstallmentForPayment) {
+      // For single installment payment
+      const amount = Number(selectedInstallmentForPayment.installment_amount || 0)
+      const discountedAmount = Number(selectedInstallmentForPayment.discounted_amount || 0)
+      return amount - discountedAmount
+    } else {
+      // For multiple installments
+      return selectedInstallments.reduce((total, installment) => {
+        const amount = Number(installment.installment_amount || 0)
+        const discountedAmount = Number(installment.discounted_amount || 0)
+        return total + (amount - discountedAmount)
+      }, 0)
+    }
   }
 
   // Calculate payment progress percentage
@@ -185,7 +193,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     if (!studentFeeDetails) return 0
 
     const totalAmount = Number(studentFeeDetails.student.fees_status.total_amount)
-    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount)
+    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount) + Number(studentFeeDetails.student.fees_status.discounted_amount) 
 
     return Math.round((paidAmount / totalAmount) * 100)
   }
@@ -200,78 +208,138 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsUpdateStatusDialogOpen(true)
   }
 
+  // Add a function to handle viewing installment details
+  const handleViewInstallmentDetails = (installment: any, feeType: any) => {
+    setSelectedInstallmentForView(installment)
+    setSelectedFeeTypeForView(feeType)
+    setIsDetailViewOpen(true)
+  }
+
   // Add a function to handle generating fee receipt
+  // const handleGenerateReceipt = (payment: any) => {
+  //   // Find the corresponding installment and fee type
+  //   let foundInstallment = null
+  //   let foundFeeType = null
+
+  //   studentFeeDetails.installments.forEach((feeType) => {
+  //     feeType.installments_breakdown.forEach((installment) => {
+  //       if (installment.id === payment.installment_id) {
+  //         foundInstallment = installment
+  //         foundFeeType = feeType
+  //       }
+  //     })
+  //   })
+
+  //   if (foundInstallment && foundFeeType) {
+  //     setSelectedPaymentForReceipt(payment)
+  //     setSelectedInstallmentForReceipt(foundInstallment)
+  //     setSelectedFeeTypeForReceipt(foundFeeType)
+  //     setIsReceiptGeneratorOpen(true)
+  //   } else {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Error",
+  //       description: "Could not find installment details for this payment",
+  //     })
+  //   }
+  // }
+
+  // Add a function to handle viewing payment details
+  // const handleViewPayment = (payment: any) => {
+  //   // Find the corresponding installment and fee type
+  //   let foundInstallment = null
+  //   let foundFeeType = null
+
+  //   studentFeeDetails.installments.forEach((feeType) => {
+  //     feeType.installments_breakdown.forEach((installment) => {
+  //       if (installment.id === payment.installment_id) {
+  //         foundInstallment = installment
+  //         foundFeeType = feeType
+  //       }
+  //     })
+  //   })
+
+  //   if (foundInstallment && foundFeeType) {
+  //     setSelectedInstallmentForView(foundInstallment)
+  //     setSelectedFeeTypeForView(feeType)
+  //     setIsDetailViewOpen(true)
+  //   } else {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Error",
+  //       description: "Could not find installment details for this payment",
+  //     })
+  //   }
+  // }
+
+  //   // Add a function to handle generating fee receipt
   const handleGenerateReceipt = (payment: any) => {
-    toast({
-      title: "Generating Receipt",
-      description: `Generating receipt for payment #${payment.id}`,
+    // Find the corresponding installment and fee type
+    let foundInstallment = null
+    let foundFeeType = null
+
+    if(!studentFeeDetails){
+      alert("studentFeeDetails is undefined , Something went wrong !")
+    }
+
+    studentFeeDetails && studentFeeDetails.installments.forEach((feeType) => {
+      feeType.installments_breakdown.forEach((installment) => {
+        if (installment.id === payment.installment_id) {
+          foundInstallment = installment
+          foundFeeType = feeType
+        }
+      })
     })
-    // Implement receipt generation logic here
+
+    if (foundInstallment && foundFeeType) {
+      setSelectedPaymentForReceipt(payment)
+      setSelectedInstallmentForReceipt(foundInstallment)
+      setSelectedFeeTypeForReceipt(foundFeeType)
+      setIsReceiptGeneratorOpen(true)
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not find installment details for this payment",
+      })
+    }
   }
 
   // Add a function to handle viewing payment details
   const handleViewPayment = (payment: any) => {
-    toast({
-      title: "Payment Details",
-      description: `Viewing details for payment #${payment.id}`,
+    // Find the corresponding installment and fee type
+    let foundInstallment = null
+    let foundFeeType = null
+
+    console.log("payment" ,payment)
+
+    studentFeeDetails?.student.fees_status.paid_fees.forEach((paid_fees) => {
+      if(paid_fees.installment_id === payment.installment_id){
+        foundInstallment = paid_fees
+        foundFeeType = {}
+        return;
+      }
+      // feeType.installments_breakdown.forEach((installment) => {
+      //   if (installment.id === payment.installment_id) {
+      //     foundInstallment = installment
+      //     foundFeeType = feeType
+      //   }
+      // })
     })
-    // Implement payment details view logic here
-  }
 
-  // Add a helper function to calculate discounted amount for an installment
-  const calculateDiscountedAmount = (installment: InstallmentBreakdown, feeDetail: any) => {
-    let discountedAmount = Number(installment.installment_amount)
-
-    if (studentFeeDetails?.student.provided_concession && studentFeeDetails.student.provided_concession.length > 0) {
-      // Apply each relevant concession
-      studentFeeDetails.student.provided_concession.forEach((concession) => {
-        // Check if concession applies to this fee type
-        if (
-          concession.status === "Active" &&
-          (!concession.fees_type_id || concession.fees_type_id === feeDetail.fees_type_id)
-        ) {
-          if (concession.deduction_type === "percentage" && concession.percentage) {
-            // Apply percentage discount
-            const discountAmount = (discountedAmount * Number(concession.percentage)) / 100
-            discountedAmount -= discountAmount
-          } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-            // For fixed amount, we need to distribute it proportionally
-            const totalInstallments = feeDetail.installments_breakdown.length
-            const discountPerInstallment = Number(concession.amount) / totalInstallments
-            discountedAmount -= discountPerInstallment
-          }
-        }
+    if (foundInstallment && foundFeeType) {
+      setSelectedInstallmentForView(foundInstallment)
+      setSelectedFeeTypeForView(foundFeeType)
+      setIsDetailViewOpen(true)
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not find installment details for this payment",
       })
     }
-
-    // Apply plan concessions if available
-    if (
-      studentFeeDetails?.detail.fees_plan.concession_for_plan &&
-      studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0
-    ) {
-      studentFeeDetails.detail.fees_plan.concession_for_plan.forEach((concession) => {
-        // Check if concession applies to this fee type
-        if (
-          concession.status === "Active" &&
-          (!concession.fees_type_id || concession.fees_type_id === feeDetail.fees_type_id)
-        ) {
-          if (concession.deduction_type === "percentage" && concession.percentage) {
-            // Apply percentage discount
-            const discountAmount = (discountedAmount * Number(concession.percentage)) / 100
-            discountedAmount -= discountAmount
-          } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-            // For fixed amount, we need to distribute it proportionally
-            const totalInstallments = feeDetail.installments_breakdown.length
-            const discountPerInstallment = Number(concession.amount) / totalInstallments
-            discountedAmount -= discountPerInstallment
-          }
-        }
-      })
-    }
-
-    // Ensure amount doesn't go below zero
-    return Math.max(0, discountedAmount)
   }
+
 
   // Calculate available concession balance
   const calculateAvailableConcessionBalance = () => {
@@ -282,6 +350,187 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     return {
       student_concession: Number(wallet.total_concession_for_student || 0),
       plan_concession: Number(wallet.total_concession_for_plan || 0),
+    }
+  }
+
+  // Check if an installment has carry-forward amount that needs to be paid
+  const hasCarryForwardToPay = (installment: { carry_forward_amount: number; is_paid: boolean }): boolean => {
+    // Check if the installment has carry-forward amount
+    const carryForwardAmount = Number(installment.carry_forward_amount || 0)
+
+    // If there's carry-forward amount and the installment is marked as paid
+    // but still has carry-forward to be paid, return true
+    return carryForwardAmount > 0 && installment.is_paid
+  }
+
+  // Handle print all details
+  const handlePrintAllDetails = () => {
+    if (!studentFeeDetails) return
+
+    // Create a new window for printing
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not open print window. Please check your popup blocker settings.",
+      })
+      return
+    }
+
+    // Generate HTML content for printing
+    const student = studentFeeDetails.student
+    const feesStatus = student.fees_status
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Student Fee Details</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .section { margin-bottom: 20px; }
+          .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .summary-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          @media print {
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Student Fee Details</h1>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Student Information</div>
+          <div class="summary-box">
+            <p><strong>Name:</strong> ${student.first_name} ${student.middle_name || ""} ${student.last_name}</p>
+            <p><strong>GR Number:</strong> ${student.gr_no}</p>
+            <p><strong>Roll Number:</strong> ${student.roll_number}</p>
+            <p><strong>Fee Plan:</strong> ${studentFeeDetails.detail.fees_plan.name}</p>
+            <p><strong>Academic Year:</strong> ${studentFeeDetails.detail.fees_plan.academic_session_id}</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Fee Summary</div>
+          <div class="summary-box">
+            <p><strong>Total Fees:</strong> ${formatCurrency(feesStatus.total_amount)}</p>
+            <p><strong>Paid Amount:</strong> ${formatCurrency(feesStatus.paid_amount)}</p>
+            <p><strong>Discounted Amount:</strong> ${formatCurrency(feesStatus.discounted_amount)}</p>
+            <p><strong>Due Amount:</strong> ${formatCurrency(feesStatus.due_amount)}</p>
+            <p><strong>Payment Status:</strong> ${feesStatus.status}</p>
+            <p><strong>Payment Progress:</strong> ${calculatePaymentProgress()}%</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Installment Details</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Fee Type</th>
+                <th>Installment</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Discount</th>
+                <th>Payable</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${studentFeeDetails.installments
+                .map((feeType) =>
+                  feeType.installments_breakdown
+                    .map(
+                      (installment) => `
+                  <tr>
+                    <td>${getFeeTypeName(feeType.fees_type_id, studentFeeDetails)}</td>
+                    <td>${feeType.installment_type} - ${installment.installment_no}</td>
+                    <td>${formatDate(installment.due_date)}</td>
+                    <td>${formatCurrency(installment.installment_amount)}</td>
+                    <td>${formatCurrency(installment.discounted_amount)}</td>
+                    <td>${formatCurrency(Number(installment.installment_amount) - Number(installment.discounted_amount))}</td>
+                    <td>${installment.payment_status || "Unpaid"}</td>
+                  </tr>
+                `,
+                    )
+                    .join(""),
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Payment History</div>
+          ${
+            !studentFeeDetails.student.fees_status.paid_fees ||
+            studentFeeDetails.student.fees_status.paid_fees.length === 0
+              ? `<p>No payment history found.</p>`
+              : `<table>
+              <thead>
+                <tr>
+                  <th>Payment ID</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Discount</th>
+                  <th>Carry Forward</th>
+                  <th>Remaining</th>
+                  <th>Mode</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${studentFeeDetails.student.fees_status.paid_fees
+                  .map(
+                    (payment) => `
+                  <tr>
+                    <td>#${payment.id}</td>
+                    <td>${formatDate(payment.payment_date)}</td>
+                    <td>${formatCurrency(payment.paid_amount)}</td>
+                    <td>${formatCurrency(payment.discounted_amount)}</td>
+                    <td>${Number(payment.amount_paid_as_carry_forward) > 0 ? formatCurrency(payment.amount_paid_as_carry_forward) : "-"}</td>
+                    <td>${Number(payment.remaining_amount) > 0 ? formatCurrency(payment.remaining_amount) : "-"}</td>
+                    <td>${payment.payment_mode}</td>
+                    <td>${payment.status}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>`
+          }
+        </div>
+        
+        <div class="footer">
+          <p>This is a computer-generated report and does not require a signature.</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+          <button onclick="window.print()">Print Report</button>
+        </div>
+      </body>
+      </html>
+    `
+
+    // Write to the new window and print
+    printWindow.document.open()
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+
+    // Trigger print after content is loaded
+    printWindow.onload = () => {
+      printWindow.focus()
+      // Uncomment to automatically print
+      // printWindow.print()
     }
   }
 
@@ -308,7 +557,15 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   // Reset selected installments when tab changes
   useEffect(() => {
     setSelectedInstallments([])
+    setSelectedInstallmentForPayment(null)
   }, [activeTab])
+
+  // Reset selected single installment when dialog closes
+  useEffect(() => {
+    if (!isPayFeesDialogOpen) {
+      setSelectedInstallmentForPayment(null)
+    }
+  }, [isPayFeesDialogOpen])
 
   if (isInitialLoading || isLoading || isFetching) {
     return (
@@ -451,8 +708,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
   const student = studentFeeDetails.student
   const feesStatus = student.fees_status
-  const dueInstallments = getDueInstallments()
-  const paidInstallments = getPaidInstallments()
   const paymentProgress = calculatePaymentProgress()
   const concessionBalance = calculateAvailableConcessionBalance()
   const totalConcessionBalance = concessionBalance.student_concession + concessionBalance.plan_concession
@@ -465,12 +720,12 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
             <Printer className="mr-2 h-4 w-4" /> {t("print_details")}
           </Button>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
             <Download className="mr-2 h-4 w-4" /> {t("download_report")}
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -481,7 +736,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             {student.first_name} {student.middle_name} {student.last_name}
           </CardTitle>
           <CardDescription>
-            {t("student_fee_details_for_academic_year")} {studentFeeDetails.detail.fees_plan.academic_session_id}
+            {t("student_fee_details_for_academic_year")} 
+            {AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === studentFeeDetails.detail.fees_plan.academic_session_id)?.session_name}
+            {/* {studentFeeDetails.detail.fees_plan.academic_session_id} */}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -597,13 +854,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 >
                   {t("pay_selected")} ({selectedInstallments.length})
                 </Button>
-                {/* <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                  {t("apply_concession")}
-                </Button> */}
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {dueInstallments.length === 0 ? (
+              {studentFeeDetails.installments.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
                 </div>
@@ -658,7 +912,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               ? `${concession.percentage}% discount`
                               : `${formatCurrency(concession.amount || 0)} fixed discount`}
                             {concession.fees_type_id
-                              ? ` on ${getFeeTypeName(concession.fees_type_id)}`
+                              ? ` on ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
                               : ` on all fees`}
                           </li>
                         ))}
@@ -683,7 +937,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                 ? `${concession.percentage}% discount`
                                 : `${formatCurrency(concession.amount || 0)} fixed discount`}
                               {concession.fees_type_id
-                                ? ` on ${getFeeTypeName(concession.fees_type_id)}`
+                                ? ` on ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
                                 : ` on all fees`}
                             </li>
                           ))}
@@ -691,135 +945,159 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       </div>
                     )}
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">{t("select")}</TableHead>
-                        <TableHead>{t("fee_type")}</TableHead>
-                        <TableHead>{t("installment")}</TableHead>
-                        <TableHead>{t("due_date")}</TableHead>
-                        <TableHead>{t("original_amount")}</TableHead>
-                        <TableHead>{t("discounted_amount")}</TableHead>
-                        <TableHead>{t("status")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {studentFeeDetails.detail.fees_details.map((feeDetail) =>
-                        feeDetail.installments_breakdown
-                          .filter((installment) => installment.status === "Active" || installment.status === "Overdue")
-                          .map((installment) => {
-                            // Calculate discounted amount based on concessions
-                            let discountedAmount = Number(installment.installment_amount)
-                            let hasDiscount = false
+                  {/* Fee Type Sections */}
+                  {studentFeeDetails.installments.map((feeType) => (
+                    <div key={feeType.id} className="mb-6">
+                      <div className="bg-gray-50 p-3 border-b">
+                        <h3 className="font-medium flex items-center">
+                          <Tag className="h-4 w-4 mr-2" />
+                          {getFeeTypeName(feeType.fees_type_id, studentFeeDetails)} - {feeType.installment_type}
+                          <Badge variant="outline" className="ml-2">
+                            {feeType.total_installment} installments
+                          </Badge>
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs text-muted-foreground">
+                          <div>
+                            <span>Total: {formatCurrency(feeType.total_amount)}</span>
+                          </div>
+                          <div>
+                            <span>Paid: {formatCurrency(feeType.paid_amount)}</span>
+                          </div>
+                          <div>
+                            <span>Discounted: {formatCurrency(feeType.discounted_amount)}</span>
+                          </div>
+                          <div>
+                            <span>Due: {formatCurrency(feeType.due_amount)}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                            // Apply student concessions
-                            if (student.provided_concession && student.provided_concession.length > 0) {
-                              student.provided_concession.forEach((concession) => {
-                                if (
-                                  concession.status === "Active" &&
-                                  (!concession.fees_type_id || concession.fees_type_id === feeDetail.fees_type_id)
-                                ) {
-                                  if (concession.deduction_type === "percentage" && concession.percentage) {
-                                    const discountAmount = (discountedAmount * Number(concession.percentage)) / 100
-                                    discountedAmount -= discountAmount
-                                    hasDiscount = true
-                                  } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-                                    const totalInstallments = feeDetail.installments_breakdown.length
-                                    const discountPerInstallment = Number(concession.amount) / totalInstallments
-                                    discountedAmount -= discountPerInstallment
-                                    hasDiscount = true
-                                  }
-                                }
-                              })
-                            }
-
-                            // Apply plan concessions
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px]">{t("select")}</TableHead>
+                            <TableHead>{t("installment")}</TableHead>
+                            <TableHead>{t("due_date")}</TableHead>
+                            <TableHead>{t("amount")}</TableHead>
+                            <TableHead>{t("discount")}</TableHead>
+                            <TableHead>{t("payable")}</TableHead>
+                            <TableHead>{t("status")}</TableHead>
+                            <TableHead>{t("actions")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {feeType.installments_breakdown.map((installment) => {
+                            // Include unpaid installments OR paid installments with carry-forward amounts
                             if (
-                              studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                              studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0
-                            ) {
-                              studentFeeDetails.detail.fees_plan.concession_for_plan.forEach((concession) => {
-                                if (
-                                  concession.status === "Active" &&
-                                  (!concession.fees_type_id || concession.fees_type_id === feeDetail.fees_type_id)
-                                ) {
-                                  if (concession.deduction_type === "percentage" && concession.percentage) {
-                                    const discountAmount = (discountedAmount * Number(concession.percentage)) / 100
-                                    discountedAmount -= discountAmount
-                                    hasDiscount = true
-                                  } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-                                    const totalInstallments = feeDetail.installments_breakdown.length
-                                    const discountPerInstallment = Number(concession.amount) / totalInstallments
-                                    discountedAmount -= discountPerInstallment
-                                    hasDiscount = true
-                                  }
-                                }
+                              !installment.is_paid ||
+                              hasCarryForwardToPay({
+                                carry_forward_amount: Number(installment.carry_forward_amount),
+                                is_paid: installment.is_paid,
                               })
-                            }
+                            ) {
+                              const originalAmount = Number(installment.installment_amount || 0)
+                              const discountAmount = Number(installment.discounted_amount || 0)
+                              const payableAmount = originalAmount - discountAmount
+                              const hasDiscount = discountAmount > 0
+                              const hasCarryForward = Number(installment.carry_forward_amount || 0) > 0
 
-                            // Ensure amount doesn't go below zero
-                            discountedAmount = Math.max(0, discountedAmount)
-
-                            return (
-                              <TableRow
-                                key={installment.id}
-                                className={`hover:bg-gray-50 ${
-                                  studentFeeDetails.detail.paid_fees.some(
-                                    (payment) => payment.installment_id === installment.id,
-                                  )
-                                    ? "opacity-50 pointer-events-none"
-                                    : ""
-                                } ${hasDiscount ? "bg-green-50" : ""}`}
-                              >
-                                <TableCell>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedInstallments.some((item) => item.id === installment.id)}
-                                    // Update the checkbox onChange handler to use the extended type
-                                    onChange={() =>
-                                      toggleInstallmentSelection({
-                                        ...installment,
-                                        fee_plan_details_id: feeDetail.id,
-                                        // Store both original and discounted amounts
-                                        original_amount: installment.installment_amount,
-                                        discounted_amount: discountedAmount.toString(),
-                                        // Keep the original amount for payment calculations
-                                        installment_amount: installment.installment_amount,
-                                      } as ExtendedInstallmentBreakdown)
-                                    }
-                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                    disabled={studentFeeDetails.detail.paid_fees.some(
-                                      (payment) => payment.installment_id === installment.id,
+                              return (
+                                <TableRow
+                                  key={installment.id}
+                                  className={`hover:bg-gray-50 
+                                  ${hasDiscount ? "bg-green-50" : ""} 
+                                  ${hasCarryForward ? "bg-blue-50" : ""} 
+                                  ${installment.is_paid && hasCarryForwardToPay({ carry_forward_amount: Number(installment.carry_forward_amount), is_paid: installment.is_paid }) ? "border-l-4 border-blue-500" : ""}`}
+                                >
+                                  <TableCell>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedInstallments.some((item) => item.id === installment.id)}
+                                      onChange={() =>
+                                        toggleInstallmentSelection({
+                                          ...installment,
+                                          fee_plan_details_id: feeType.id,
+                                          status: installment.payment_status,
+                                        })
+                                      }
+                                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    {feeType.installment_type} - {installment.installment_no}
+                                  </TableCell>
+                                  <TableCell>{formatDate(installment.due_date)}</TableCell>
+                                  <TableCell className={hasDiscount ? "line-through text-gray-500" : ""}>
+                                    {formatCurrency(installment.installment_amount)}
+                                  </TableCell>
+                                  <TableCell className="text-green-600">
+                                    {hasDiscount ? formatCurrency(discountAmount) : "-"}
+                                    {installment.applied_concession && installment.applied_concession.length > 0 && (
+                                      <div className="text-xs mt-1">
+                                        {installment.applied_concession.map((concession, idx) => (
+                                          <div key={idx} className="flex items-center">
+                                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                                            <span>
+                                              ID: {concession.concession_id} (
+                                              {formatCurrency(concession.applied_amount)})
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     )}
-                                  />
-                                </TableCell>
-                                <TableCell className="font-medium">{getFeeTypeName(feeDetail.fees_type_id)}</TableCell>
-                                <TableCell>
-                                  {feeDetail.installment_type} - {installment.installment_no}
-                                </TableCell>
-                                <TableCell>{formatDate(installment.due_date)}</TableCell>
-                                <TableCell className={hasDiscount ? "line-through text-gray-500" : ""}>
-                                  {formatCurrency(installment.installment_amount)}
-                                </TableCell>
-                                <TableCell className={hasDiscount ? "text-green-600 font-medium" : ""}>
-                                  {formatCurrency(discountedAmount)}
-                                  {hasDiscount && (
-                                    <span className="ml-1 text-xs text-green-600">
-                                      (-{formatCurrency(Number(installment.installment_amount) - discountedAmount)})
-                                    </span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={getStatusBadgeVariant(installment.status)}>
-                                    {installment.status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          }),
-                      )}
-                    </TableBody>
-                  </Table>
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {formatCurrency(payableAmount)}
+                                    {hasCarryForward && (
+                                      <div className="text-xs text-blue-600 mt-1">
+                                        Carry Forward: {formatCurrency(installment.carry_forward_amount)}
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={getStatusBadgeVariant(installment.payment_status || "Unpaid")}>
+                                      {installment.payment_status || "Unpaid"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleViewInstallmentDetails(installment, feeType)}
+                                      >
+                                        <Eye className="mr-1 h-3 w-3" /> {t("view")}
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          handlePaySingleInstallment({
+                                            ...installment,
+                                            fee_plan_details_id: feeType.id,
+                                            status: installment.payment_status,
+                                          })
+                                        }
+                                      >
+                                        {installment.is_paid &&
+                                        hasCarryForwardToPay({
+                                          carry_forward_amount: Number(installment.carry_forward_amount),
+                                          is_paid: installment.is_paid,
+                                        })
+                                          ? "Pay Carry Forward"
+                                          : "Pay Now"}
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            }
+                            return null
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ))}
                 </>
               )}
             </CardContent>
@@ -832,7 +1110,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardTitle>Payment History</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {!studentFeeDetails.detail.paid_fees || studentFeeDetails.detail.paid_fees.length === 0 ? (
+              {!studentFeeDetails.student.fees_status.paid_fees ||
+              studentFeeDetails.student.fees_status.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                 </div>
@@ -845,38 +1124,65 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       <TableHead>{t("payment_date")}</TableHead>
                       <TableHead>{t("paid_amount")}</TableHead>
                       <TableHead>{t("discounted")}</TableHead>
+                      <TableHead>{t("carry_forward")}</TableHead>
+                      <TableHead>{t("remaining")}</TableHead>
                       <TableHead>{t("payment_mode")}</TableHead>
                       <TableHead>{t("status")}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {studentFeeDetails.detail.paid_fees.map((payment) => {
+                    {studentFeeDetails.student.fees_status.paid_fees.map((payment) => {
                       // Find the corresponding installment details
-                      let installmentDetails = { type: "Unknown", number: "-" }
+                      let installmentDetails = { type: "Unknown", number: "-", feeType: "Unknown" }
+                      let foundInstallment = null
+                      let foundFeeType = null
 
-                      studentFeeDetails.detail.fees_details.forEach((feeDetail) => {
-                        feeDetail.installments_breakdown.forEach((installment) => {
+                      studentFeeDetails.installments.forEach((feeType) => {
+                        feeType.installments_breakdown.forEach((installment) => {
                           if (installment.id === payment.installment_id) {
                             installmentDetails = {
-                              type: feeDetail.installment_type,
+                              type: feeType.installment_type,
                               number: installment.installment_no.toString(),
+                              feeType: getFeeTypeName(feeType.fees_type_id, studentFeeDetails),
                             }
+                            foundInstallment = installment
+                            foundFeeType = feeType
                           }
                         })
                       })
 
+                      const hasDiscount = Number(payment.discounted_amount) > 0
+                      const hasCarryForward = Number(payment.amount_paid_as_carry_forward) > 0
+                      const hasRemaining = Number(payment.remaining_amount) > 0
+
                       return (
-                        <TableRow key={payment.id} className="hover:bg-gray-50">
+                        <TableRow
+                          key={payment.id}
+                          className={`hover:bg-gray-50 ${hasDiscount ? "bg-green-50" : ""} ${hasCarryForward ? "bg-blue-50" : ""}`}
+                        >
                           <TableCell className="font-medium">#{payment.id}</TableCell>
                           <TableCell>
-                            {installmentDetails.type} - {installmentDetails.number}
+                            <div className="text-sm">
+                              {installmentDetails.type} - {installmentDetails.number}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{installmentDetails.feeType}</div>
                           </TableCell>
                           <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                          <TableCell>{formatCurrency(payment.paid_amount)}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(payment.paid_amount)}</TableCell>
+                          <TableCell>{formatCurrency(payment.discounted_amount)}</TableCell>
                           <TableCell>
-                            {payment.discounted_amount && Number(payment.discounted_amount) > 0 ? (
-                              <span className="text-green-600">{formatCurrency(payment.discounted_amount)}</span>
+                            {hasCarryForward ? (
+                              <span className="text-blue-600">
+                                {formatCurrency(payment.amount_paid_as_carry_forward)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {hasRemaining ? (
+                              <span className="text-amber-600">{formatCurrency(payment.remaining_amount)}</span>
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}
@@ -900,12 +1206,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
                                 <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(payment)}>
-                                <Tag className="mr-1 h-3 w-3" /> {t("status")}
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
-                                <User className="mr-1 h-3 w-3" /> {t("view")}
-                              </Button>
+                              {/* <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
+                                <Eye className="mr-1 h-3 w-3" /> {t("view")}
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -922,9 +1225,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t("applied_concessions")}</CardTitle>
-              {/* <Button variant="outline" onClick={() => setIsConcessionDialogOpen(true)}>
-                {t("apply_new_concession")}
-              </Button> */}
             </CardHeader>
             <CardContent className="p-0">
               {(student.provided_concession && student.provided_concession.length > 0) ||
@@ -975,63 +1275,37 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             <TableHead>{t("applied_to")}</TableHead>
                             <TableHead>{t("deduction_type")}</TableHead>
                             <TableHead>{t("value")}</TableHead>
-                            <TableHead>{t("estimated_savings")}</TableHead>
+                            <TableHead>{t("applied_discount")}</TableHead>
                             <TableHead>{t("status")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {student.provided_concession.map((concession) => {
-                            // Calculate estimated savings based on deduction type
-                            let estimatedSavings = 0
-
-                            if (concession.deduction_type === "percentage" && concession.percentage) {
-                              // For percentage-based concessions
-                              if (concession.fees_type_id) {
-                                // If applied to specific fee type
-                                const feeDetail = studentFeeDetails.detail.fees_details.find(
-                                  (detail) => detail.fees_type_id === concession.fees_type_id,
-                                )
-                                if (feeDetail) {
-                                  estimatedSavings =
-                                    (Number(feeDetail.total_amount) * Number(concession.percentage)) / 100
-                                }
-                              } else {
-                                // If applied to entire fee plan
-                                estimatedSavings =
-                                  (Number(studentFeeDetails.detail.fees_plan.total_amount) *
-                                    Number(concession.percentage)) /
-                                  100
-                              }
-                            } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-                              // For fixed amount concessions
-                              estimatedSavings = Number(concession.amount)
-                            }
-
-                            return (
-                              <TableRow key={concession.id}>
-                                <TableCell className="font-medium">
-                                  {concession.concession?.name || `Concession #${concession.concession_id}`}
-                                </TableCell>
-                                <TableCell>
-                                  {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
-                                </TableCell>
-                                <TableCell className="capitalize">{concession.deduction_type}</TableCell>
-                                <TableCell>
-                                  {concession.deduction_type === "percentage"
-                                    ? `${concession.percentage}%`
-                                    : formatCurrency(concession.amount || 0)}
-                                </TableCell>
-                                <TableCell className="text-green-600 font-medium">
-                                  {formatCurrency(estimatedSavings)}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={concession.status === "Active" ? "default" : "outline"}>
-                                    {concession.status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
+                          {student.provided_concession.map((concession) => (
+                            <TableRow key={concession.id}>
+                              <TableCell className="font-medium">
+                                {concession.concession?.name || `Concession #${concession.concession_id}`}
+                              </TableCell>
+                              <TableCell>
+                                {concession.fees_type_id
+                                  ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
+                                  : "All Fees"}
+                              </TableCell>
+                              <TableCell className="capitalize">{concession.deduction_type}</TableCell>
+                              <TableCell>
+                                {concession.deduction_type === "percentage"
+                                  ? `${concession.percentage}%`
+                                  : formatCurrency(concession.amount || 0)}
+                              </TableCell>
+                              <TableCell className="text-green-600 font-medium">
+                                {formatCurrency(concession.amount || `${concession.percentage} %`)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={concession.status === "Active" ? "default" : "outline"}>
+                                  {concession.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
                         </TableBody>
                       </Table>
                     </div>
@@ -1048,63 +1322,33 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               <TableHead>{t("applied_to")}</TableHead>
                               <TableHead>{t("deduction_type")}</TableHead>
                               <TableHead>{t("value")}</TableHead>
-                              <TableHead>{t("estimated_savings")}</TableHead>
                               <TableHead>{t("status")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => {
-                              // Calculate estimated savings based on deduction type
-                              let estimatedSavings = 0
-
-                              if (concession.deduction_type === "percentage" && concession.percentage) {
-                                // For percentage-based concessions
-                                if (concession.fees_type_id) {
-                                  // If applied to specific fee type
-                                  const feeDetail = studentFeeDetails.detail.fees_details.find(
-                                    (detail) => detail.fees_type_id === concession.fees_type_id,
-                                  )
-                                  if (feeDetail) {
-                                    estimatedSavings =
-                                      (Number(feeDetail.total_amount) * Number(concession.percentage)) / 100
-                                  }
-                                } else {
-                                  // If applied to entire fee plan
-                                  estimatedSavings =
-                                    (Number(studentFeeDetails.detail.fees_plan.total_amount) *
-                                      Number(concession.percentage)) /
-                                    100
-                                }
-                              } else if (concession.deduction_type === "fixed_amount" && concession.amount) {
-                                // For fixed amount concessions
-                                estimatedSavings = Number(concession.amount)
-                              }
-
-                              return (
-                                <TableRow key={concession.id}>
-                                  <TableCell className="font-medium">
-                                    {concession.concession?.name || `Concession #${concession.concession_id}`}
-                                  </TableCell>
-                                  <TableCell>
-                                    {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
-                                  </TableCell>
-                                  <TableCell className="capitalize">{concession.deduction_type}</TableCell>
-                                  <TableCell>
-                                    {concession.deduction_type === "percentage"
-                                      ? `${concession.percentage}%`
-                                      : formatCurrency(concession.amount || 0)}
-                                  </TableCell>
-                                  <TableCell className="text-green-600 font-medium">
-                                    {formatCurrency(estimatedSavings)}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant={concession.status === "Active" ? "default" : "outline"}>
-                                      {concession.status}
-                                    </Badge>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            })}
+                            {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
+                              <TableRow key={concession.id}>
+                                <TableCell className="font-medium">
+                                  {concession.concession?.name || `Concession #${concession.concession_id}`}
+                                </TableCell>
+                                <TableCell>
+                                  {concession.fees_type_id
+                                    ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
+                                    : "All Fees"}
+                                </TableCell>
+                                <TableCell className="capitalize">{concession.deduction_type}</TableCell>
+                                <TableCell>
+                                  {concession.deduction_type === "percentage"
+                                    ? `${concession.percentage}%`
+                                    : formatCurrency(concession.amount || 0)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={concession.status === "Active" ? "default" : "outline"}>
+                                    {concession.status}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
                           </TableBody>
                         </Table>
                       </div>
@@ -1129,6 +1373,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </TabsContent>
       </Tabs>
 
+      {/* Payment Dialog */}
       {params.student_id && (
         <PayFeesDialog
           isOpen={isPayFeesDialogOpen}
@@ -1141,7 +1386,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             setSelectedInstallments([]) // Clear selected installments after successful payment
             getStudentFeesDetails(Number.parseInt(params.student_id!))
           }}
-          installments={selectedInstallments}
+          installments={selectedInstallmentForPayment ? [selectedInstallmentForPayment] : selectedInstallments}
           studentId={Number.parseInt(params.student_id)}
           totalAmount={calculateTotalSelectedAmount()}
           studentConcessions={student.provided_concession}
@@ -1150,19 +1395,34 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         />
       )}
 
-      {params.student_id && (
-        <ConcessionDialog
-          isOpen={isConcessionDialogOpen}
-          onClose={() => {
-            setIsConcessionDialogOpen(false)
-            // If you want to refresh data after concession is applied or dialog is closed
-            getStudentFeesDetails(Number.parseInt(params.student_id!))
-          }}
-          studentId={Number.parseInt(params.student_id)}
-          maxAmount={Number(feesStatus.due_amount)}
-        />
-      )}
+      {/* Installment Detail View Dialog */}
+      <InstallmentDetailView
+        isOpen={isDetailViewOpen}
+        onClose={() => setIsDetailViewOpen(false)}
+        installment={selectedInstallmentForView}
+        feeTypeDetails={selectedFeeTypeForView}
+        studentDetails={studentFeeDetails}
+        formatCurrency={formatCurrency}
+        formatDate={formatDate}
+        getStatusBadgeVariant={getStatusBadgeVariant}
+        getFeeTypeName={getFeeTypeName}
+      />
 
+      {/* Payment Receipt Generator Dialog */}
+      <PaymentReceiptGenerator
+        isOpen={isReceiptGeneratorOpen}
+        onClose={() => setIsReceiptGeneratorOpen(false)}
+        payment={selectedPaymentForReceipt}
+        studentDetails={studentFeeDetails}
+        installmentDetails={selectedInstallmentForReceipt}
+        feeTypeDetails={selectedFeeTypeForReceipt}
+        formatCurrency={formatCurrency}
+        formatDate={formatDate}
+        getStatusBadgeVariant={getStatusBadgeVariant}
+        getFeeTypeName={getFeeTypeName}
+      />
+
+      {/* Update Status Dialog */}
       <Dialog
         open={isUpdateStatusDialogOpen}
         onOpenChange={(open) => {
@@ -1229,8 +1489,18 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   )
 }
 
-// Helper function to get fee type name
-const getFeeTypeName = (feeTypeId: number): string => {
+// Update the getFeeTypeName function to be dynamic
+const getFeeTypeName = (feeTypeId: number, studentFeeDetails: any): string => {
+  // Try to find the fee type in the installments array
+  const feeType = studentFeeDetails?.installments?.find((installment: any) => installment.fees_type_id === feeTypeId)
+
+  // If found in the API response, return the name from there
+  if (feeType) {
+    // The API doesn't directly provide the name, so we need to infer it from the installment type
+    return `${feeType.installment_type} Fee`
+  }
+
+  // Fallback to default names if not found
   switch (feeTypeId) {
     case 1:
       return "Admission Fee"
@@ -1238,6 +1508,10 @@ const getFeeTypeName = (feeTypeId: number): string => {
       return "Tuition Fee"
     case 3:
       return "Activity Fee"
+    case 4:
+      return "Library Fee"
+    case 5:
+      return "Development Fee"
     default:
       return `Fee Type ${feeTypeId}`
   }
