@@ -41,7 +41,7 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
 
 // Update the payment form schema to include cheque as a payment option
 const feePaymentSchema = z.object({
-  payment_mode: z.enum(["Cash", "Online", "Bank Transfer", "Cheque"], {
+  payment_mode: z.enum(['Cash', 'Online', 'Bank Transfer', 'Cheque', 'UPI', 'Full Discount'], {
     required_error: "Payment mode is required",
   }),
   transaction_reference: z.string().optional(),
@@ -461,7 +461,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                       <SelectItem value="Online">{t("online")}</SelectItem>
                       <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
                       <SelectItem value="Cheque">{t("cheque")}</SelectItem>
-                      <SelectItem value="full_discount">{t("full Discount")}</SelectItem>
+                      <SelectItem value="Full Discount">{t("full Discount")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
