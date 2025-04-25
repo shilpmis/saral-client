@@ -42,7 +42,9 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
-import exp from "node:constants"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
+import { selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 // Extended interface for installment breakdown with additional fields
 interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
@@ -73,6 +75,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
 
   const [activeTab, setActiveTab] = useState("due-fees")
   const [isPayFeesDialogOpen, setIsPayFeesDialogOpen] = useState(false)
@@ -108,6 +114,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       maximumFractionDigits: 2,
       minimumFractionDigits: 2,
     })}`
+  }
+
+  // Save state to localStorage
+  const saveStateToLocalStorage = (classId: string, divisionId: string | number | null, page: number) => {
+    localStorage.setItem("selectedClass", classId)
+    localStorage.setItem("selectedDivision", divisionId ? divisionId.toString() : "")
+    localStorage.setItem("currentPage", page.toString())
   }
 
   // Get status badge variant based on status
@@ -180,7 +193,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     if (!studentFeeDetails) return 0
 
     const totalAmount = Number(studentFeeDetails.student.fees_status.total_amount)
-    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount)
+    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount) + Number(studentFeeDetails.student.fees_status.discounted_amount) 
 
     return Math.round((paidAmount / totalAmount) * 100)
   }
@@ -203,6 +216,63 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   }
 
   // Add a function to handle generating fee receipt
+  // const handleGenerateReceipt = (payment: any) => {
+  //   // Find the corresponding installment and fee type
+  //   let foundInstallment = null
+  //   let foundFeeType = null
+
+  //   studentFeeDetails.installments.forEach((feeType) => {
+  //     feeType.installments_breakdown.forEach((installment) => {
+  //       if (installment.id === payment.installment_id) {
+  //         foundInstallment = installment
+  //         foundFeeType = feeType
+  //       }
+  //     })
+  //   })
+
+  //   if (foundInstallment && foundFeeType) {
+  //     setSelectedPaymentForReceipt(payment)
+  //     setSelectedInstallmentForReceipt(foundInstallment)
+  //     setSelectedFeeTypeForReceipt(foundFeeType)
+  //     setIsReceiptGeneratorOpen(true)
+  //   } else {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Error",
+  //       description: "Could not find installment details for this payment",
+  //     })
+  //   }
+  // }
+
+  // Add a function to handle viewing payment details
+  // const handleViewPayment = (payment: any) => {
+  //   // Find the corresponding installment and fee type
+  //   let foundInstallment = null
+  //   let foundFeeType = null
+
+  //   studentFeeDetails.installments.forEach((feeType) => {
+  //     feeType.installments_breakdown.forEach((installment) => {
+  //       if (installment.id === payment.installment_id) {
+  //         foundInstallment = installment
+  //         foundFeeType = feeType
+  //       }
+  //     })
+  //   })
+
+  //   if (foundInstallment && foundFeeType) {
+  //     setSelectedInstallmentForView(foundInstallment)
+  //     setSelectedFeeTypeForView(feeType)
+  //     setIsDetailViewOpen(true)
+  //   } else {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Error",
+  //       description: "Could not find installment details for this payment",
+  //     })
+  //   }
+  // }
+
+  //   // Add a function to handle generating fee receipt
   const handleGenerateReceipt = (payment: any) => {
     // Find the corresponding installment and fee type
     let foundInstallment = null
@@ -269,6 +339,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       })
     }
   }
+
 
   // Calculate available concession balance
   const calculateAvailableConcessionBalance = () => {
@@ -652,9 +723,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
             <Printer className="mr-2 h-4 w-4" /> {t("print_details")}
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
+          {/* <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
             <Download className="mr-2 h-4 w-4" /> {t("download_report")}
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -665,7 +736,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             {student.first_name} {student.middle_name} {student.last_name}
           </CardTitle>
           <CardDescription>
-            {t("student_fee_details_for_academic_year")} {studentFeeDetails.detail.fees_plan.academic_session_id}
+            {t("student_fee_details_for_academic_year")} 
+            {AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === studentFeeDetails.detail.fees_plan.academic_session_id)?.session_name}
+            {/* {studentFeeDetails.detail.fees_plan.academic_session_id} */}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -1133,9 +1206,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
                                 <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
+                              {/* <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
                                 <Eye className="mr-1 h-3 w-3" /> {t("view")}
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1416,7 +1489,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   )
 }
 
-
 // Update the getFeeTypeName function to be dynamic
 const getFeeTypeName = (feeTypeId: number, studentFeeDetails: any): string => {
   // Try to find the fee type in the installments array
@@ -1430,15 +1502,15 @@ const getFeeTypeName = (feeTypeId: number, studentFeeDetails: any): string => {
 
   // Fallback to default names if not found
   switch (feeTypeId) {
-    case 1222:
+    case 1:
       return "Admission Fee"
-    case 223424:
+    case 2:
       return "Tuition Fee"
-    case 3233:
+    case 3:
       return "Activity Fee"
-    case 11234:
+    case 4:
       return "Library Fee"
-    case 5123:
+    case 5:
       return "Development Fee"
     default:
       return `Fee Type ${feeTypeId}`
@@ -1446,4 +1518,3 @@ const getFeeTypeName = (feeTypeId: number, studentFeeDetails: any): string => {
 }
 
 export default StudentFeesPanel
-
