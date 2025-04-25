@@ -147,19 +147,6 @@ export default function RootRoute() {
               }
             />
 
-            {/* Payroll */}
-            <Route
-              path="payroll"
-              element={
-                <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
-                  allowedPermissions={[Permission.MANAGE_PAYROLL]}
-                >
-                  <Payroll />
-                </PrivateRoute>
-              }
-            />
-
             {/* Fees */}
             <Route
               path="fee"
