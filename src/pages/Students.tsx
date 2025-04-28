@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -31,7 +33,7 @@ import type { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { StudentSchemaForUploadData } from "@/utils/student.validation"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useNavigate, useNavigation } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 // Type for validation results
 type ValidationResult = {
   row: number
@@ -305,12 +307,15 @@ export const Students: React.FC = () => {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
       if (file) {
+        // Reset all validation and error states
         setFileName(file.name)
         setSelectedFile(file)
         setUploadError(null)
         setUploadResults([])
         setValidationPassed(false)
         setParsedData([])
+        setServerValidationErrors([]) // Add this line to clear server validation errors
+        setValidationDialogOpen(false) // Close validation dialog if open
 
         // Reset validation state
         setIsValidating(true)
@@ -382,6 +387,8 @@ export const Students: React.FC = () => {
     try {
       setIsUploading(true)
       setUploadError(null)
+      // Clear previous server validation errors
+      setServerValidationErrors([])
 
       const response: any = await bulkUploadStudents({
         academic_session: CurrentAcademicSessionForSchool!.id,
@@ -404,12 +411,13 @@ export const Students: React.FC = () => {
             variant: "default",
           })
 
-          // Reset file selection
+          // Reset file selection and all validation states
           setFileName(null)
           setSelectedFile(null)
           setUploadResults([])
           setValidationPassed(false)
           setParsedData([])
+          setServerValidationErrors([])
           if (fileInputRef.current) {
             fileInputRef.current.value = ""
           }
@@ -430,7 +438,7 @@ export const Students: React.FC = () => {
             }
           }
         }
-      } else {
+      } else if (response.error && response.error.data && response.error.data.errors) {
         const errors = response.error.data.errors
         if (errors) {
           const dbValidationResults: ValidationResult[] = errors.map((error: any) => ({
@@ -494,6 +502,19 @@ export const Students: React.FC = () => {
     // Convert to array and sort
     return Array.from(allFields).sort()
   }, [uploadResults])
+
+  // Add the resetValidationStates function after the other useCallback functions
+  const resetValidationStates = useCallback(() => {
+    setUploadResults([])
+    setValidationPassed(false)
+    setParsedData([])
+    setServerValidationErrors([])
+    setUploadError(null)
+    setIsValidating(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }, [])
 
   useEffect(() => {
     // Auto-select first class and division when AcademicClasses are loaded
@@ -571,10 +592,17 @@ export const Students: React.FC = () => {
               open={dialogOpenForBulkUpload}
               onOpenChange={(open) => {
                 if (!open) {
+                  // Reset all states when dialog is closed
                   setFileName(null)
                   setSelectedFile(null)
                   setUploadError(null)
-                  // Don't reset validation results here so they can be viewed in the separate dialog
+                  setUploadResults([])
+                  setValidationPassed(false)
+                  setParsedData([])
+                  setServerValidationErrors([]) // Add this line to clear server validation errors
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = ""
+                  }
                   setDialogOpenForBulkUpload(false)
                 }
               }}
@@ -770,7 +798,16 @@ export const Students: React.FC = () => {
             </Dialog>
 
             {/* Separate Dialog for Validation Results */}
-            <Dialog open={validationDialogOpen} onOpenChange={setValidationDialogOpen}>
+            <Dialog
+              open={validationDialogOpen}
+              onOpenChange={(open) => {
+                setValidationDialogOpen(open)
+                // If a new file is selected while validation dialog is open, we should close it
+                if (!open && !selectedFile) {
+                  resetValidationStates()
+                }
+              }}
+            >
               <DialogContent className="max-w-5xl max-h-[80vh] overflow-auto">
                 <DialogHeader>
                   <DialogTitle>{t("CSV_validation_results")}</DialogTitle>
@@ -924,7 +961,7 @@ export const Students: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => (navaigate( "/d/settings/academic"))}
+                      onClick={() => navaigate("/d/settings/academic")}
                       className="bg-white text-destructive hover:bg-white/90"
                     >
                       <School className="mr-2 h-4 w-4" />
