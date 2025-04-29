@@ -62,7 +62,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                 <TableBody>
                     {leaveRequests && leaveRequests.applications.map((request) => (
                         <TableRow key={request.id}>
-                            <TableCell>{request.staff.first_name} {request.staff.middle_name} {request.staff.last_name}</TableCell>
+                            {/* <TableCell>{request.staff.first_name} {request.staff.middle_name} {request.staff.last_name}</TableCell> */}
                             <TableCell>{request.leave_type.leave_type_name}</TableCell>
                             <TableCell>{new Date(request.from_date).toLocaleDateString()}</TableCell>
                             <TableCell>{new Date(request.to_date).toLocaleDateString()}</TableCell>
