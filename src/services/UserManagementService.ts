@@ -63,7 +63,7 @@ export const UserManagementApi = createApi({
       { page: number; school_id: number; academic_sessions: number }
     >({
       query: ({ page, academic_sessions }) => ({
-        url: `staff/?type=non-activeuser&academic_sessions=${2}$page=${page}`,
+        url: `staff/?type=non-activeuser&academic_sessions=${academic_sessions}&page=${page}`,
         method: "GET",
       }),
     }),
