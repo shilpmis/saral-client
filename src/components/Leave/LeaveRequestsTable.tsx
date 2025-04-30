@@ -14,13 +14,15 @@ import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2 } from "lucide-react"
+import { Loader2, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface LeaveRequestsTableProps {
   staff_type: "teacher" | "other"
   leaveRequests: { applications: LeaveApplication[]; page: PageMeta } | null
   handleStatusChange: (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => void
   onPageChange: (page: number) => void
+  statusFilter: "pending" | "approved" | "rejected" | "cancelled" | "all" // Add status filter prop
 }
 
 const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
@@ -28,6 +30,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   handleStatusChange,
   staff_type,
   onPageChange,
+  statusFilter, // Accept status filter as a prop
 }) => {
   const [updateStatusForApplication, { isLoading: isUpdatingStatus }] = useUpdateStatusForStaffLeaveApplicationMutation()
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null)
@@ -48,6 +51,8 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         return "bg-green-500"
       case "rejected":
         return "bg-red-500"
+      case "cancelled":
+        return "bg-gray-500"
       default:
         return "bg-yellow-500"
     }
@@ -114,6 +119,50 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     }
   }
 
+  // Helper function to get empty state message and icon based on status filter
+  const getEmptyStateContent = () => {
+    const staffTypeText = staff_type === "other" ? t("non_teaching_staff") : t("teaching_staff")
+    
+    switch (statusFilter) {
+      case "pending":
+        return {
+          icon: <Clock className="h-16 w-16 text-yellow-500 mb-3" />,
+          title: t("no_pending_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_pending_leave_requests_for")} ${staffTypeText}`
+        }
+      case "approved":
+        return {
+          icon: <CheckCircle2 className="h-16 w-16 text-green-500 mb-3" />,
+          title: t("no_approved_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_approved_leave_requests_for")} ${staffTypeText}`
+        }
+      case "rejected":
+        return {
+          icon: <XCircle className="h-16 w-16 text-red-500 mb-3" />,
+          title: t("no_rejected_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_rejected_leave_requests_for")} ${staffTypeText}`
+        }
+      case "cancelled":
+        return {
+          icon: <XCircle className="h-16 w-16 text-gray-500 mb-3" />,
+          title: t("no_cancelled_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_cancelled_leave_requests_for")} ${staffTypeText}`
+        }
+      case "all":
+        return {
+          icon: <AlertCircle className="h-16 w-16 text-primary mb-3" />,
+          title: t("no_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_leave_applications_of_any_status_for")} ${staffTypeText}`
+        }
+      default:
+        return {
+          icon: <AlertCircle className="h-16 w-16 text-blue-500 mb-3" />,
+          title: t("no_leave_applications_found"),
+          description: `${t("no_data_found")}: ${t("there_are_no_leave_requests_for")} ${staffTypeText}`
+        }
+    }
+  }
+
   return (
     <div>
       <Table>
@@ -128,7 +177,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leaveRequests && leaveRequests.applications.length > 0 ? (
+          {leaveRequests && leaveRequests.applications && leaveRequests.applications.length > 0 ? (
             leaveRequests.applications.map((request) => {
               const canModify = isDateTodayOrFuture(request.from_date) && request.status === "pending"
               const isProcessing = processingRequestId === request.uuid
@@ -172,14 +221,15 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-16">
                 <div className="flex flex-col items-center justify-center space-y-3">
-                  <div className="text-muted-foreground text-lg font-medium">
-                    {staff_type === "other"
-                      ? t("no_leave_applications_found_for_non_teaching_staff")
-                      : t("no_leave_applications_found")}
+                  {getEmptyStateContent().icon}
+                  <div className="text-xl font-semibold">
+                    {getEmptyStateContent().title}
                   </div>
-                  <div className="text-sm text-muted-foreground">{t("there_are_no_leave_requests_to_display")}</div>
+                  <div className="text-muted-foreground max-w-lg text-center">
+                    {getEmptyStateContent().description}
+                  </div>
                 </div>
               </TableCell>
             </TableRow>
@@ -248,7 +298,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         </DialogContent>
       </Dialog>
       
-      {leaveRequests && leaveRequests.applications.length > 0 && (
+      {leaveRequests && leaveRequests.applications && leaveRequests.applications.length > 0 && leaveRequests.page && (
         <SaralPagination
           onPageChange={handlePageChange}
           currentPage={leaveRequests.page.current_page}

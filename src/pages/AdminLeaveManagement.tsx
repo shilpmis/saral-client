@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast"
 import { SaralDatePicker } from "@/components/ui/common/SaralDatePicker"
 import type { LeaveApplication } from "@/types/leave"
 import type { PageMeta } from "@/types/global"
-import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import {
   useLazyFetchLeaveApplicationOfOtherStaffForAdminQuery,
@@ -24,6 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Calendar, Filter, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
 
 const AdminLeaveManagement: React.FC = () => {
   const { t } = useTranslation()
@@ -59,7 +59,7 @@ const AdminLeaveManagement: React.FC = () => {
 
   const [actionReason, setActionReason] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected" | "cancelled">("pending")
+  const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected" | "cancelled" | "all">("pending")
 
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
@@ -190,27 +190,28 @@ const AdminLeaveManagement: React.FC = () => {
 
   async function fetchLeaveApplication(
     type: "teacher" | "other",
-    status: "pending" | "approved" | "rejected" | "cancelled",
+    status: "pending" | "approved" | "rejected" | "cancelled" | "all",
     page = 1,
     date?: string,
   ) {
     try {
+      // Create API params, omitting status if it's "all"
+      const params: any = {
+        page: page,
+        date: date,
+        academic_session_id: CurrentAcademicSessionForSchool!.id,
+        role: type === "teacher" ? "teaching" : "non-teaching",
+      }
+      
+      // Only include status if it's not "all"
+      if (status !== "all") {
+        params.status = status;
+      }
+
       if (type === "teacher") {
-        getLeaveApplicationsForTeachingStaff({
-          status: status,
-          page: page,
-          date: date,
-          academic_session_id: CurrentAcademicSessionForSchool!.id,
-          role: "teaching",
-        })
+        getLeaveApplicationsForTeachingStaff(params);
       } else {
-        getLeaveApplicationsForOtherStaff({
-          status: status,
-          page: page,
-          date: date,
-          academic_session_id: CurrentAcademicSessionForSchool!.id,
-          role: "non-teaching",
-        })
+        getLeaveApplicationsForOtherStaff(params);
       }
     } catch (error) {
       console.error("Error fetching leave applications:", error)
@@ -254,6 +255,10 @@ const AdminLeaveManagement: React.FC = () => {
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
       case "rejected":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+      case "cancelled":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+      case "all":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
     }
@@ -287,18 +292,23 @@ const AdminLeaveManagement: React.FC = () => {
           <AlertCircle className="h-5 w-5" />
           <AlertTitle>{t("no_leave_applications_found")}</AlertTitle>
           <AlertDescription>
-            {t("there_are_no")} {statusFilter} {t("leave_applications_for")} {activeTab === "teacher" ? t("teaching") : t("non_teaching")}{" "}
+            {statusFilter === "all"
+              ? t("there_are_no_leave_applications_of_any_status_for")
+              : `${t("there_are_no")} ${statusFilter} ${t("leave_applications_for")}`}{" "}
+            {activeTab === "teacher" ? t("teaching") : t("non_teaching")}{" "}
             {t("staff")}
             {selectedDate ? ` on ${new Date(selectedDate).toLocaleDateString()}` : ""}.
-            {statusFilter !== "pending" && (
+            
+            {statusFilter !== "all" && (
               <div className="mt-2">
                 {t("try_checking")}{" "}
-                <Button variant="link" className="p-0 h-auto" onClick={() => setStatusFilter("pending")}>
-                  {t("pending")}
+                <Button variant="link" className="p-0 h-auto" onClick={() => setStatusFilter("all")}>
+                  {t("all")}
                 </Button>{" "}
                 {t("applications_instead.")}
-              </div>    
+              </div>
             )}
+            
             {selectedDate && (
               <div className="mt-2">
                 <Button variant="outline" size="sm" className="mt-2" onClick={clearDateFilter}>
@@ -355,15 +365,17 @@ const AdminLeaveManagement: React.FC = () => {
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <Select
                     value={statusFilter}
-                    onValueChange={(value: "pending" | "approved" | "rejected" | "cancelled") => setStatusFilter(value)}
+                    onValueChange={(value: "pending" | "approved" | "rejected" | "cancelled" | "all") => setStatusFilter(value)}
                   >
                     <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">{t("all")}</SelectItem>
                       <SelectItem value="pending">{t("pending")}</SelectItem>
                       <SelectItem value="approved">{t("approved")}</SelectItem>
                       <SelectItem value="rejected">{t("rejected")}</SelectItem>
+                      <SelectItem value="cancelled">{t("cancelled")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -390,6 +402,7 @@ const AdminLeaveManagement: React.FC = () => {
                   }
                   staff_type="teacher"
                   onPageChange={onPageChange}
+                  statusFilter={statusFilter} // Add this line to pass the required prop
                 />
               )}
             </TabsContent>
@@ -406,6 +419,7 @@ const AdminLeaveManagement: React.FC = () => {
                   }
                   staff_type="other"
                   onPageChange={onPageChange}
+                  statusFilter={statusFilter} // Add this line to pass the required prop
                 />
               )}
             </TabsContent>
