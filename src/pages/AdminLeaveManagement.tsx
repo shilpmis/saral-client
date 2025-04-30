@@ -92,13 +92,31 @@ const AdminLeaveManagement: React.FC = () => {
 
   const confirmStatusChange = async () => {
     if (!DialogForApplication.application || !DialogForApplication.action) return
+    
+    // Validate remarks are provided
+    if (!actionReason.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Remarks required",
+        description: "Please provide remarks for this action.",
+      })
+      return
+    }
 
     try {
-      // await handleStatusChange(
-      //   DialogForApplication.application.id.toString(),
-      //   DialogForApplication.action,
-      //   activeTab as "teacher" | "other",
-      // )
+      await updateStatusForApplication({
+        application_id: DialogForApplication.application.uuid, // Make sure to use uuid here
+        status: DialogForApplication.action === "approve" ? "approved" : "rejected",
+        remarks: actionReason.trim(),
+        academic_session_id: CurrentAcademicSessionForSchool!.id,
+      }).unwrap()
+
+      fetchLeaveApplication(activeTab as "teacher" | "other", statusFilter, 1)
+      
+      toast({
+        title: "Leave request updated",
+        description: `The leave request has been ${DialogForApplication.action === "approve" ? "approved" : "rejected"}.`,
+      })
 
       setDialogForApplication({
         isOpen: false,
@@ -126,41 +144,32 @@ const AdminLeaveManagement: React.FC = () => {
     })
   }
 
-  // const handleStatusChange = useCallback(
-  //   async (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => {
-  //     try {
-  //       // const status = await updateStatusForApplication({
-  //       //   application_id: requestId,
-  //       //   status: newStatus,
-  //       //   reason: actionReason.trim() || undefined,
-  //       //   academic_session_id: CurrentAcademicSessionForSchool!.id,
-  //       // })
+  const handleStatusChange = useCallback(
+    async (requestId: string, newStatus: "approved" | "rejected", staff_type: "teacher" | "other") => {
+      try {
+        const status = await updateStatusForApplication({
+          application_id: requestId,
+          status: newStatus,
+          remarks: actionReason.trim(), // Include remarks in the request
+          academic_session_id: CurrentAcademicSessionForSchool!.id,
+        }).unwrap()
 
-  //       if (status.data) {
-  //         fetchLeaveApplication(staff_type, statusFilter, 1)
-  //         toast({
-  //           title: "Leave request updated",
-  //           description: `The leave request has been ${newStatus}.`,
-  //         })
-  //       } else if (status.error) {
-  //         console.log("Error updating status:", status)
-  //         toast({
-  //           variant: "destructive",
-  //           title: "Error updating status",
-  //           description: "Please try again later.",
-  //         })
-  //       }
-  //     } catch (error) {
-  //       console.error("Error updating status:", error)
-  //       toast({
-  //         variant: "destructive",
-  //         title: "Error updating status",
-  //         description: "Please try again later.",
-  //       })
-  //     }
-  //   },
-  //   [actionReason, statusFilter, CurrentAcademicSessionForSchool, updateStatusForApplication, toast],
-  // )
+        fetchLeaveApplication(staff_type, statusFilter, 1)
+        toast({
+          title: "Leave request updated",
+          description: `The leave request has been ${newStatus}.`,
+        })
+      } catch (error) {
+        console.error("Error updating status:", error)
+        toast({
+          variant: "destructive",
+          title: "Error updating status",
+          description: "Please try again later.",
+        })
+      }
+    },
+    [actionReason, statusFilter, CurrentAcademicSessionForSchool, updateStatusForApplication, toast],
+  )
 
   const onPageChange = useCallback(
     (page: number) => {
