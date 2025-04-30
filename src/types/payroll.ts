@@ -1,56 +1,121 @@
-// PayrollEntry Interface
-export interface PayrollEntry {
-    id: number;
-    name: string;
-    role: string;
-    category: "teaching" | "non-teaching";
-    active: boolean;
-    salary: {
-      basic: number;
-      gradePay: number;
-      inflation: number;
-      houseRentAllowance: number;
-      permanentTravel: number;
-      medicalAllowance: number;
-      localAllowance: number;
-      principalsAllowance: number;
-      supervisor: number;
-      highMedianAllowance: number;
-      cashAllowance: number;
-      disabilityAllowance: number;
-      chargeAllowance: number;
-      transportAllowance: number;
-      ncash: number;
-      ltc: number;
-      specialSalary: number;
-      bonus: number;
-      ariasAllowance: number;
-      additionalInflation: number;
-      interimRelief: number;
-      other: number;
-      otherSalaryReason: string; // Non-numeric field
-    };
-    deductions: {
-      gpf: number;
-      cpf: number;
-      gpfLoan: number;
-      cpfLoan: number;
-      housingLoan: number;
-      incomeTax: number;
-      professionalTax: number;
-      insuranceDeduction: number;
-      grainAdvance: number;
-      festivalPrelude: number;
-      cooperativeSociety1: number;
-      cooperativeSociety2: number;
-      recovery: number;
-      groupInsurance: number;
-      retailDiscount1: number;
-      additionalGPF: number;
-      ple: number;
-      otherDeductions: number;
-      otherDeductionReason: string; // Non-numeric field
-    };
-    lastPayDate: string;
-  }
-  
+export interface SalaryComponent {
+  id: number;
+  component_name: string;
+  component_code: string | null;
+  component_type: "earning" | "deduction" | "benefits";
+  description: string | null;
+  calculation_method: "amount" | "percentage";
+  amount: number | null;
+  percentage: number | null;
+  is_based_on_annual_ctc: boolean;
+  name_in_payslip: string | null;
+  is_taxable: boolean;
+  pro_rata_calculation: boolean;
+  consider_for_epf: boolean;
+  consider_for_esi: boolean;
+  consider_for_esic: boolean;
+  is_mandatory: boolean;
+  is_mandatory_for_all_templates: boolean;
+  is_active: boolean;
+  deduction_frequency: "once" | "recurring" | null;
+  deduction_type:
+    | "ends_on_selected_month"
+    | "ends_never"
+    | "recovering_specific_amount"
+    | null;
+  benefit_frequency: "once" | "recurring" | null;
+  benefit_type:
+    | "ends_on_selected_month"
+    | "ends_never"
+    | "recovering_specific_amount"
+    | null;
+  school_id: number;
+  academic_session_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SalaryTemplateComponent {
+  salary_components_id: number;
+  amount: number | null;
+  percentage: number | null;
+  is_based_on_annual_ctc: boolean;
+  is_mandatory: boolean;
+  end_month: string | null;
+  recovery_amount: number | null;
+}
+
+export interface SalaryTemplate {
+  id: number;
+  template_name: string;
+  template_code: string;
+  description: string | null;
+  annual_ctc: number;
+  is_mandatory: boolean;
+  is_active: boolean;
+  template_components: SalaryTemplateComponent[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SalaryTemplateComponentForStaff {
+  id: number;
+  staff_salary_templates_id: number;
+  salary_components_id: number;
+  amount: string | null;
+  percentage: string | null;
+  is_mandatory: boolean;
+  recovering_end_month: string | null;
+  total_recovering_amount: string | null;
+  total_recovered_amount: string | null;
+  // component?: SalaryComponent;
+}
+
+export interface StaffSalaryTemplate {
+  id: number;
+  base_template_id: number | null;
+  staff_enrollments_id: number;
+  template_name: string;
+  template_code: string;
+  description: string;
+  annual_ctc: string;
+  template_components: SalaryTemplateComponentForStaff[];
+  base_template: SalaryTemplate;
+}
+
+export interface TypeForCreateSalaryTemplateForrStaff {
+  base_template_id: number | null;
+  staff_enrollments_id: number;
+  template_name: string;
+  template_code: string;
+  description: string;
+  annual_ctc: string;
+  template_components: Omit<
+    SalaryTemplateComponentForStaff,
+    "id" | "base_template" | "component" | "staff_salary_templates_id"
+  >[];
+}
+
+export interface SalaryTemplateUpdatePayload {
+  template_name: string;
+  template_code: string;
+  description: string | null;
+  annual_ctc: number;
+  is_mandatory: boolean;
+  is_active: boolean;
+  new_salary_components: SalaryTemplateComponent[] | null;
+  existing_salary_components:
+    | {
+        salary_components_id: number;
+        amount?: number | null;
+        percentage?: number | null;
+        end_month?: string | null;
+        recovery_amount?: number | null;
+      }[]
+    | null;
+  remove_salary_components:
+    | {
+        salary_components_id: number;
+      }[]
+    | null;
+}

@@ -37,13 +37,12 @@ import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings
 import EmployeePayrollDashboard from "@/pages/EmployeePayrollDashboard"
 import EmployeePayrollDetail from "@/pages/EmployeePayrollDetail"
 import PayrollAnalytics from "@/pages/PayrollAnalytics"
-import SalaryComponents from "@/pages/SalaryComponents"
-import SalaryTemplates from "@/pages/SalaryTemplates"
 import SalaryComponentsManagement from "../Payroll/SalaryComponentsManagement"
 import PayScheduleManagement from "../Payroll/PayScheduleManagement"
 import SalaryTemplatesManagement from "../Payroll/SalaryTemplatesManagement"
 import EmployeeManagement from "../Payroll/EmployeeManagement"
 import EmployeeDetail from "../Payroll/EmployeeDetail"
+import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -401,6 +400,24 @@ export default function RootRoute() {
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <SalaryTemplatesManagement />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/salary-template/edit/:id"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryTemplateForm />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/salary-template/create"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryTemplateForm />
                   </PrivateRoute>
                 }
               />

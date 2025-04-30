@@ -4,6 +4,7 @@ import feesReducer from "./slices/feesSlice";
 import schoolReducer from "./slices/schoolSlice";
 import academicReducer from "./slices/academicSlice";
 import staffReducer from "./slices/staffSlice";
+// import payrollReducer from "./slices/payrollSlice";
 import leaveReducer from "./slices/leaveSlice";
 import languageReducer from "./slices/languageSlice";
 
@@ -21,6 +22,7 @@ import { InquiryApi } from "@/services/InquiryServices";
 import { QuotaApi } from "@/services/QuotaService";
 import { DashboardApi } from "@/services/dashboardServices";
 import { PromotionApi } from "@/services/PromotionService";
+import { PayrollApi } from "@/services/PayrollService";
 
 const store = configureStore({
   reducer: {
@@ -45,6 +47,7 @@ const store = configureStore({
     [QuotaApi.reducerPath]: QuotaApi.reducer,
     [DashboardApi.reducerPath]: DashboardApi.reducer,
     [PromotionApi.reducerPath]: PromotionApi.reducer,
+    [PayrollApi.reducerPath]: PayrollApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -61,7 +64,8 @@ const store = configureStore({
       QuotaApi.middleware,
       InquiryApi.middleware,
       DashboardApi.middleware,
-      PromotionApi.middleware
+      PromotionApi.middleware,
+      PayrollApi.middleware
     ),
 });
 
