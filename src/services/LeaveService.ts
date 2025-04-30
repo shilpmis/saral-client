@@ -223,7 +223,7 @@ export const LeaveApi = createApi({
         url: date
           ? `/leave-applications?role=${role}&academic_session_id=${academic_session_id}&status=${status}&date=${date}&page=${page}`
           : `/leave-applications?role=${role}&academic_session_id=${academic_session_id}&status=${status}&page=${page}`,
-        method: "GET",
+        method: "GET",  
       }),
     }),
 
@@ -251,12 +251,13 @@ export const LeaveApi = createApi({
         status: "pending" | "approved" | "rejected" | "cancelled";
         application_id: string;
         academic_session_id: number;
+        remarks?: string; // Add remarks parameter
       }
     >({
-      query: ({ application_id, status, academic_session_id }) => ({
+      query: ({ application_id, status, academic_session_id, remarks }) => ({
         url: `/leave-application/status/${application_id}?status=${status}&academic_session_id=${academic_session_id}`,
         method: "PUT",
-        body: { status },
+        body: { status, remarks }, // Include remarks in the request body
       }),
     }),
   }),
@@ -270,18 +271,14 @@ export const {
   useLazyGetStaffsLeaveAppicationQuery,
 
   useLazyGetAllLeavePoliciesForUserQuery,
-
   useCreateLeaveTypeMutation,
   useUpdateLeaveTypeMutation,
 
   useCreateLeavePolicyMutation,
   useUpdateLeavePolicyMutation,
-
   useApplyLeaveForStaffMutation,
   useUpdateLeaveForStaffMutation,
-
   useLazyFetchLeaveApplicationOfTeachingStaffForAdminQuery,
   useLazyFetchLeaveApplicationOfOtherStaffForAdminQuery,
-
   useUpdateStatusForStaffLeaveApplicationMutation,
 } = LeaveApi;
