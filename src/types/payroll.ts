@@ -85,7 +85,7 @@ export interface StaffSalaryTemplate {
 
 export interface TypeForCreateSalaryTemplateForrStaff {
   base_template_id: number | null;
-  staff_enrollments_id: number;
+  staff_id: number;
   template_name: string;
   template_code: string;
   description: string;

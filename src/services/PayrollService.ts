@@ -158,7 +158,7 @@ export const PayrollApi = createApi({
       }
     >({
       query: ({ payload }) => ({
-        url: `/payroll/salary-template`,
+        url: `/payroll/staff-salary-template`,
         method: "POST",
         body: payload,
       }),
@@ -169,10 +169,11 @@ export const PayrollApi = createApi({
       {
         payload: Partial<SalaryTemplateUpdatePayload>;
         salary_template_id: number;
+        staff_id: number;
       }
     >({
-      query: ({ payload, salary_template_id }) => ({
-        url: `/payroll/salary-template/${salary_template_id}`,
+      query: ({ payload, salary_template_id, staff_id }) => ({
+        url: `/payroll/staff-salary-template/${staff_id}/${salary_template_id}`,
         method: "PUT",
         body: payload,
       }),

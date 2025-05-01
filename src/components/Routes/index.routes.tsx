@@ -43,6 +43,7 @@ import SalaryTemplatesManagement from "../Payroll/SalaryTemplatesManagement"
 import EmployeeManagement from "../Payroll/EmployeeManagement"
 import EmployeeDetail from "../Payroll/EmployeeDetail"
 import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
+import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormForStaff"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -280,6 +281,24 @@ export default function RootRoute() {
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
                   <EmployeeDetail />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/employee/:employeeId/salary/create"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryTemplateFormForStaff mode="create"/>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/employee/:employeeId/salary/edit"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryTemplateFormForStaff mode="edit" />
                 </PrivateRoute>
               }
             />
