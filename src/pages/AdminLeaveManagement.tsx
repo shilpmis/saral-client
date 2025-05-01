@@ -201,6 +201,7 @@ const AdminLeaveManagement: React.FC = () => {
         date: date,
         academic_session_id: CurrentAcademicSessionForSchool!.id,
         role: type === "teacher" ? "teaching" : "non-teaching",
+        status: status,
       }
       
       // Only include status if it's not "all"
