@@ -320,18 +320,6 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">{concession.name}</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="mr-2 h-4 w-4" /> {t("print")}
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" /> {t("export")}
-          </Button>
-        </div>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
