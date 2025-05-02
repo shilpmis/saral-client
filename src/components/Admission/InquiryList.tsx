@@ -401,7 +401,9 @@ export default function InquiriesManagement() {
                       <div className="text-sm font-medium">{t("gender")}:</div>
                       <div className="text-sm">{selectedInquiry.gender}</div>
                       <div className="text-sm font-medium">{t("applied_for_class")}:</div>
-                      <div className="text-sm">{selectedInquiry.inquiry_for_class}</div>
+                      <div className="text-sm">
+                        {AcademicClasses?.find((cls) => cls.id === selectedInquiry.inquiry_for_class)?.class}
+                      </div>
                     </div>
                   </div>
 
