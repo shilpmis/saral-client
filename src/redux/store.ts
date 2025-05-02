@@ -21,6 +21,7 @@ import { InquiryApi } from "@/services/InquiryServices";
 import { QuotaApi } from "@/services/QuotaService";
 import { DashboardApi } from "@/services/dashboardServices";
 import { PromotionApi } from "@/services/PromotionService";
+import { StaffAttendanceApi } from "@/services/StaffAttendanceService";
 
 const store = configureStore({
   reducer: {
@@ -45,6 +46,7 @@ const store = configureStore({
     [QuotaApi.reducerPath]: QuotaApi.reducer,
     [DashboardApi.reducerPath]: DashboardApi.reducer,
     [PromotionApi.reducerPath]: PromotionApi.reducer,
+    [StaffAttendanceApi.reducerPath]: StaffAttendanceApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -61,7 +63,8 @@ const store = configureStore({
       QuotaApi.middleware,
       InquiryApi.middleware,
       DashboardApi.middleware,
-      PromotionApi.middleware
+      PromotionApi.middleware,
+      StaffAttendanceApi.middleware,
     ),
 });
 
