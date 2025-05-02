@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
 import { ConcessionDetailForPlan, InstallmentBreakdown, InstallmentBreakdowns } from "@/types/fees"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 
 interface FeePlanDetailsDialogProps {
   isOpen: boolean
@@ -47,6 +50,9 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
   const [activeTab, setActiveTab] = useState("overview")
   const [fetchDetailFeePlan, { data: feePlanDetails, isLoading, isError }] = useLazyFetchDetailFeePlanQuery()
   const {t} = useTranslation();
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
 
   useEffect(() => {
     if (isOpen && planId) {
@@ -92,6 +98,13 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
     return total
   }
 
+  const getDivision = (divison_id: number) => {     
+    let division = AcademicDivisions!.find((division) => division.id === divison_id) || null
+    let className = AcademicClasses!.find((cls) => cls.id === division?.class_id) || null
+    if(!division || !className) return "N/A"
+    return `${className.class}-${division.division}` + " " + (division.aliases ? `${division.aliases}` : "")  
+  }
+
   // Calculate total concession amount/percentage
   const calculateTotalConcession = () => {
     if (!feePlanDetails?.consession || feePlanDetails.consession.length === 0) return null
@@ -117,6 +130,8 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
 
     return result
   }
+
+
 
   if (!isOpen) return null
 
@@ -146,7 +161,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
           </div>
         ) : feePlanDetails ? (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">{feePlanDetails.fees_plan.name}</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -156,7 +171,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                   <Download className="mr-2 h-4 w-4" /> {t("export")}
                 </Button>
               </div>
-            </div>
+            </div> */}
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
@@ -177,7 +192,11 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                     <CardContent>
                       <p className="text-2xl font-bold">{formatCurrency(feePlanDetails.fees_plan.total_amount)}</p>
                       <p className="text-sm text-muted-foreground">
-                        {t("for_academic_year")} {feePlanDetails.fees_plan.academic_session_id}
+                        {t("for_academic_year")} {
+                          AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === feePlanDetails.fees_plan.academic_session_id)
+                            ?.session_name || "N/A"
+                          // feePlanDetails.fees_plan.academic_session_id
+                        }
                       </p>
                     </CardContent>
                   </Card>
@@ -212,7 +231,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                         {feePlanDetails.fees_plan.status}
                       </Badge>
                       <p className="text-sm text-muted-foreground mt-2">
-                        Class ID: {feePlanDetails.fees_plan.division_id}
+                        Class : { getDivision(feePlanDetails.fees_plan.division_id)}
                       </p>
                     </CardContent>
                   </Card>

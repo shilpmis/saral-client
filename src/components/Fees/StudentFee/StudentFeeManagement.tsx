@@ -2496,7 +2496,7 @@ const StudentFeesManagement: React.FC = () => {
       </div>
 
       {/* Class Statistics Dashboard */}
-      {selectedDivision && students.length > 0 && (
+      {/* {selectedDivision && students.length > 0 && (
         <Card className="mb-6 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
@@ -2538,10 +2538,7 @@ const StudentFeesManagement: React.FC = () => {
 
               <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                 <div className="flex justify-between items-center">
-                  {/* <div>
-                    <p className="text-sm text-purple-600">{t("collection_rate")}</p>
-                    <p className="text-xl font-bold text-purple-700">{classStats.paidPercentage}%</p>
-                  </div> */}
+                  
                   <div className="w-12 h-12 relative">
                     <svg className="w-12 h-12" viewBox="0 0 36 36">
                       <path
@@ -2550,13 +2547,6 @@ const StudentFeesManagement: React.FC = () => {
                         stroke="#E9D5FF"
                         strokeWidth="3"
                       />
-                      {/* <path
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="#9333EA"
-                        strokeWidth="3"
-                        strokeDasharray={`${classStats.paidPercentage}, 100`}
-                      /> */}
                     </svg>
                   </div>
                 </div>
@@ -2591,7 +2581,7 @@ const StudentFeesManagement: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       <Card className="mb-6">
         <CardHeader>
