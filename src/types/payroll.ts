@@ -1,3 +1,5 @@
+import { StaffType } from "@/types/staff";
+import exp from "constants";
 export interface SalaryComponent {
   id: number;
   component_name: string;
@@ -68,12 +70,11 @@ export interface SalaryTemplateComponentForStaff {
   recovering_end_month: string | null;
   total_recovering_amount: string | null;
   total_recovered_amount: string | null;
-  // component?: SalaryComponent;
 }
 
 export interface StaffSalaryTemplate {
   id: number;
-  base_template_id: number | null;
+  base_template_id: number;
   staff_enrollments_id: number;
   template_name: string;
   template_code: string;
@@ -118,4 +119,61 @@ export interface SalaryTemplateUpdatePayload {
         salary_components_id: number;
       }[]
     | null;
+}
+
+export interface StaffEnrollmentForPayroll {
+  id: number;
+  academic_session_id: number;
+  staff_id: number;
+  status: string;
+  remarks: string | null;
+  school_id: number;
+  staff_salary_templates: StaffSalaryTemplate | null;
+  pay_runs: Omit<StaffPayRun, "payroll_components">[];
+  staff: Partial<StaffType>;
+}
+
+export interface StaffPayRun {
+  id: number;
+  base_template_id: number;
+  staff_enrollments_id: number;
+  payroll_month: string;
+  payroll_year: string;
+  template_name: string;
+  template_code: string;
+  based_anual_ctc: number;
+  total_payroll: number;
+  notes: string;
+  status:
+    | "draft"
+    | "pending"
+    | "processing"
+    | "partially_paid"
+    | "paid"
+    | "failed"
+    | "cancelled"
+    | "on_hold";
+  payroll_components: {
+    salary_components_id: number;
+    payslip_name: string;
+    amount: number | null;
+    percentage: number;
+    is_based_on_annual_ctc: boolean;
+    is_based_on_basic_pay: boolean;
+    is_modofied: boolean;
+  }[];
+}
+
+export interface TypeForUpdateStaffPayRun {
+  template_name: string;
+  notes: string | null;
+  status:
+    | "draft"
+    | "pending"
+    | "processing"
+    | "partially_paid"
+    | "paid"
+    | "failed"
+    | "cancelled"
+    | "on_hold";
 }

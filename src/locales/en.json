@@ -1096,6 +1096,7 @@
   "no_components_added_yet. click_add_component_to_add_salary_components_to_the_template": "No components added yet. Click add component to add salary components to the template",
   "inactive_templates_will_not_be_available": "Inactive templates will not be available",
   "mandatory_templates_cannot_be_modified": "Mandatory templates cannot be modified",
+  "this_component_will_be_considered_for_income_tax_calculations": "This component will be considered for income tax calculations",
   "the_total_annual_cost_to_company_for_this_salary_template": "The total annual cost to company for this salary template",
   "a_short_code_used_to_identify_this_template_in_the_system": "A short code used to identify this template in the system"
 }

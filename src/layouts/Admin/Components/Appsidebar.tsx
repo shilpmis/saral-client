@@ -63,7 +63,7 @@ const PayrollItems = {
   subItems: [
     // { title: "payroll_dashboard", url: "/d/payroll/dashboard", icon: BarChart3 },
     { title: "employees", url: "/d/payroll/employee", icon: Briefcase },
-    { title: "pay_run", url: "/d/payroll/pay-run", icon: Calendar },
+    { title: "pay_run", url: "/d/payroll/payrun", icon: Calendar },
     // { title: "salary_components", url: "/d/payroll/salary-components", icon: FileText },
     // { title: "salary_templates", url: "/d/payroll/salary-templates", icon: CreditCard },
   ],
