@@ -22,7 +22,7 @@ const TeacherClassSelection: React.FC<TeacherClassSelectionProps> = ({ classes }
         {classes.map((cls) => (
           <Card key={cls.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <CardTitle>{cls.class} - {cls.division} </CardTitle>
+              <CardTitle>{cls.class.class} - {cls.division} </CardTitle>
             </CardHeader>
             <CardContent>
               <Link to={`/d/mark-attendance/${cls.id}`}>
