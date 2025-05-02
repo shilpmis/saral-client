@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { AlertCircle, Calendar, Download, Edit, Eye, FileText, Loader2, Plus, Search } from "lucide-react"
+import { AlertCircle, Calendar, Download, Eye, FileText, Loader2, Plus, Printer, Search } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -88,7 +88,8 @@ const getComponentDetails = (componentId: number, salaryComponents: SalaryCompon
 export default function PayRun() {
   // State
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1)
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth() + 1).padStart(2, "0"))
+  const [isInitialized, setIsInitialized] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [viewTemplateDialog, setViewTemplateDialog] = useState<boolean>(false)
   const [viewDraftDialog, setViewDraftDialog] = useState<boolean>(false)
@@ -110,7 +111,23 @@ export default function PayRun() {
     isLoading: isLoadingEnrollments,
     error: enrollmentsError,
     refetch: refetchEnrollments,
-  } = useIndexStaffWithPayrollQuery({ year: selectedYear, month: selectedMonth })
+  } = useIndexStaffWithPayrollQuery(
+    {
+      month: selectedMonth,
+      year: selectedYear.toString(),
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      skip: !isInitialized,
+    },
+  )
+
+  // Add an effect to refetch data when year or month changes
+  useEffect(() => {
+    if (isInitialized) {
+      refetchEnrollments()
+    }
+  }, [selectedYear, selectedMonth, refetchEnrollments, isInitialized])
 
   // Extract staff enrollments
   const staffEnrollments = staffEnrollmentsResponse?.data || []
@@ -176,36 +193,32 @@ export default function PayRun() {
 
   const isMonthDisabled = (month: string) => {
     if (selectedYear < currentYear) return false
-    return selectedYear === currentYear && Number(month) > currentMonth
+    return selectedYear === currentYear && Number.parseInt(month) > currentMonth
   }
 
   // Months for dropdown
   const months = [
-    { value: '01', label: "January" },
-    { value: '02', label: "February" },
-    { value: '03', label: "March" },
-    { value: '04', label: "April" },
-    { value: '05', label: "May" },
-    { value: '06', label: "June" },
-    { value: '07', label: "July" },
-    { value: '08', label: "August" },
-    { value: '09', label: "September" },
-    { value: '10', label: "October" },
-    { value: '11', label: "November" },
-    { value: '12', label: "December" },
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
   ]
 
   // Helper function to find pay run for current month/year
   const getCurrentPayRun = useCallback(
     (enrollment: StaffEnrollmentForPayroll) => {
-      console.log("Finding pay run for:", enrollment)
       if (!enrollment.pay_runs || enrollment.pay_runs.length === 0) return null
 
-      const formattedMonth = selectedMonth.toString().padStart(2, "0")
-      const formattedYear = selectedYear.toString()
-
       const payRun = enrollment.pay_runs.find(
-        (payRun) => payRun.payroll_month === formattedMonth && payRun.payroll_year === formattedYear,
+        (payRun) => payRun.payroll_month === selectedMonth && payRun.payroll_year === selectedYear.toString(),
       )
 
       return payRun || null
@@ -224,7 +237,7 @@ export default function PayRun() {
         id: template.id,
         base_template_id: template.base_template_id,
         staff_enrollments_id: staffEnrollment.id,
-        payroll_month: selectedMonth.toString().padStart(2, "0"),
+        payroll_month: selectedMonth,
         payroll_year: selectedYear.toString(),
         template_name: template.template_name,
         template_code: template.template_code,
@@ -393,7 +406,7 @@ export default function PayRun() {
         id: template.base_template_id,
         base_template_id: template.base_template_id,
         staff_enrollments_id: selectedStaffEnrollment.id,
-        payroll_month: selectedMonth.toString().padStart(2, "0"),
+        payroll_month: selectedMonth,
         payroll_year: selectedYear.toString(),
         template_name: form.getValues("template_name") || template.template_name,
         template_code: template.template_code,
@@ -674,20 +687,33 @@ export default function PayRun() {
     }
   }
 
+  // Handle print payslip
+  const handlePrintPayslip = useCallback(() => {
+    // You could implement a more sophisticated print functionality here
+    // For now, we'll just use the browser's print functionality
+    window.print()
+  }, [])
+
+  useEffect(() => {
+    if (selectedYear && selectedMonth) {
+      setIsInitialized(true)
+    }
+  }, [selectedYear, selectedMonth])
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">PayRun Management</h1>
           <div className="flex items-center space-x-2">
-            <Button variant="outline">
+            {/* <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Create Bulk PayRun
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -720,20 +746,13 @@ export default function PayRun() {
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Month</label>
-                    <Select
-                      value={selectedMonth.toString()}
-                      onValueChange={(value) => setSelectedMonth(Number.parseInt(value))}
-                    >
+                    <Select value={selectedMonth} onValueChange={(value) => setSelectedMonth(value)}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select Month" />
                       </SelectTrigger>
                       <SelectContent>
                         {months.map((month) => (
-                          <SelectItem
-                            key={month.value}
-                            value={month.value}
-                            disabled={isMonthDisabled(month.value)}
-                          >
+                          <SelectItem key={month.value} value={month.value} disabled={isMonthDisabled(month.value)}>
                             {month.label}
                           </SelectItem>
                         ))}
@@ -912,23 +931,29 @@ export default function PayRun() {
                                   </Button>
 
                                   {currentPayRun ? (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        if (enrollment.staff_salary_templates?.id) {
-                                          handleViewDraft(
-                                            enrollment,
-                                            enrollment.staff_salary_templates.id,
-                                            currentPayRun,
-                                          )
-                                        }
-                                      }}
-                                      disabled={currentPayRun.status === "paid"}
-                                    >
-                                      <Edit className="h-4 w-4 mr-1" />
-                                      {currentPayRun.status === "paid" ? "Paid" : "Edit"}
-                                    </Button>
+                                    currentPayRun.status === "paid" ? (
+                                      <Button variant="outline" size="sm" onClick={handlePrintPayslip}>
+                                        <Printer className="h-4 w-4 mr-1" />
+                                        Print Payslip
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          if (enrollment.staff_salary_templates?.id) {
+                                            handleViewDraft(
+                                              enrollment,
+                                              enrollment.staff_salary_templates.id,
+                                              currentPayRun,
+                                            )
+                                          }
+                                        }}
+                                      >
+                                        <FileText className="h-4 w-4 mr-1" />
+                                        Update Status
+                                      </Button>
+                                    )
                                   ) : (
                                     <Button
                                       variant="outline"
@@ -940,7 +965,7 @@ export default function PayRun() {
                                       }}
                                     >
                                       <FileText className="h-4 w-4 mr-1" />
-                                      Draft
+                                      Create Draft
                                     </Button>
                                   )}
                                 </>
@@ -965,7 +990,7 @@ export default function PayRun() {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-500" />
               <span className="text-sm text-gray-500">
-                {months.find((m) => Number(m.value) === selectedMonth)?.label} {selectedYear}
+                {months.find((m) => m.value === selectedMonth)?.label} {selectedYear}
               </span>
             </div>
           </CardFooter>
@@ -1225,7 +1250,7 @@ export default function PayRun() {
                         <div className="flex justify-between">
                           <span className="text-sm">Period:</span>
                           <span className="font-medium">
-                            {months.find((m) => Number(m.value) === Number.parseInt(currentDraft.payroll_month))?.label}{" "}
+                            {months.find((m) => m.value === currentDraft.payroll_month)?.label}{" "}
                             {currentDraft.payroll_year}
                           </span>
                         </div>
@@ -1389,105 +1414,107 @@ export default function PayRun() {
                           </Card>
                         </div>
 
-                        <div className="rounded-md border p-4">
-                          <h4 className="font-medium mb-4">Payment Details</h4>
-                          <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmitDraftUpdate)} className="space-y-4">
-                              <FormField
-                                control={form.control}
-                                name="template_name"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Payslip Name</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="Enter payslip name"
-                                        {...field}
-                                        value={field.value || currentDraft.template_name}
-                                        disabled={currentDraft?.status === "paid"}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name="notes"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Notes</FormLabel>
-                                    <FormControl>
-                                      <Textarea
-                                        placeholder="Add any notes for this payslip"
-                                        {...field}
-                                        value={field.value || ""}
-                                        disabled={currentDraft?.status === "paid"}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Status</FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={field.value || currentDraft.status}
-                                      disabled={currentDraft?.status === "paid"}
-                                    >
+                        {currentDraft.status !== "paid" && (
+                          <div className="rounded-md border p-4">
+                            <h4 className="font-medium mb-4">Payment Details</h4>
+                            <Form {...form}>
+                              <form onSubmit={form.handleSubmit(onSubmitDraftUpdate)} className="space-y-4">
+                                <FormField
+                                  control={form.control}
+                                  name="template_name"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Payslip Name</FormLabel>
                                       <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select status" />
-                                        </SelectTrigger>
+                                        <Input
+                                          placeholder="Enter payslip name"
+                                          {...field}
+                                          value={field.value || currentDraft.template_name}
+                                          disabled={currentDraft?.status === "paid"}
+                                        />
                                       </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="draft">Draft</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="processing">Processing</SelectItem>
-                                        <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                                        <SelectItem value="paid">Paid</SelectItem>
-                                        <SelectItem value="failed">Failed</SelectItem>
-                                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                                        <SelectItem value="on_hold">On Hold</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
-                              <div className="flex justify-end gap-2 pt-2">
-                                <Button
-                                  type="submit"
-                                  variant={form.getValues("status") === "paid" ? "default" : "outline"}
-                                  disabled={isUpdatingDraft || currentDraft?.status === "paid"}
-                                >
-                                  {isUpdatingDraft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                  Update Status
-                                </Button>
-                                {form.getValues("status") !== "paid" && currentDraft?.status !== "paid" && (
+                                <FormField
+                                  control={form.control}
+                                  name="notes"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Notes</FormLabel>
+                                      <FormControl>
+                                        <Textarea
+                                          placeholder="Add any notes for this payslip"
+                                          {...field}
+                                          value={field.value || ""}
+                                          disabled={currentDraft?.status === "paid"}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name="status"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Status</FormLabel>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        value={field.value || currentDraft.status}
+                                        disabled={currentDraft?.status === "paid"}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select status" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="draft">Draft</SelectItem>
+                                          <SelectItem value="pending">Pending</SelectItem>
+                                          <SelectItem value="processing">Processing</SelectItem>
+                                          <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                                          <SelectItem value="paid">Paid</SelectItem>
+                                          <SelectItem value="failed">Failed</SelectItem>
+                                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                                          <SelectItem value="on_hold">On Hold</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <div className="flex justify-end gap-2 pt-2">
                                   <Button
-                                    type="button"
-                                    onClick={() => {
-                                      form.setValue("status", "paid")
-                                      form.handleSubmit(onSubmitDraftUpdate)()
-                                    }}
-                                    disabled={isUpdatingDraft}
+                                    type="submit"
+                                    variant={form.getValues("status") === "paid" ? "default" : "outline"}
+                                    disabled={isUpdatingDraft || (currentDraft?.status as string) === "paid"}
                                   >
-                                    Mark as Paid
+                                    {isUpdatingDraft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Update Status
                                   </Button>
-                                )}
-                              </div>
-                            </form>
-                          </Form>
-                        </div>
+                                  {form.getValues("status") !== "paid" && (currentDraft?.status as string) !== "paid" && (
+                                    <Button
+                                      type="button"
+                                      onClick={() => {
+                                        form.setValue("status", "paid")
+                                        form.handleSubmit(onSubmitDraftUpdate)()
+                                      }}
+                                      disabled={isUpdatingDraft}
+                                    >
+                                      Mark as Paid
+                                    </Button>
+                                  )}
+                                </div>
+                              </form>
+                            </Form>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
@@ -1512,10 +1539,23 @@ export default function PayRun() {
             <Button variant="outline" onClick={() => handleDraftDialogClose(false)}>
               Close
             </Button>
-            <Button variant="outline" disabled={currentDraft?.status !== "paid"}>
-              <Download className="mr-2 h-4 w-4" />
-              Download Payslip
-            </Button>
+            {currentDraft?.status === "paid" ? (
+              <Button variant="outline" onClick={handlePrintPayslip}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print Payslip
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  form.setValue("status", "paid")
+                  form.handleSubmit(onSubmitDraftUpdate)()
+                }}
+                disabled={isUpdatingDraft || !currentDraft}
+              >
+                Mark as Paid
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

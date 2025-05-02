@@ -222,11 +222,11 @@ const navigationSections: NavSection[] = [
             icon: Banknote,
             href: "payroll/salary-components",
           },
-          {
-            title: "pay_schedule",
-            icon: CalendarDays,
-            href: "payroll/payroll-schedual",
-          },
+          // {
+          //   title: "pay_schedule",
+          //   icon: CalendarDays,
+          //   href: "payroll/payroll-schedual",
+          // },
           {
             title: "salary_templates",
             icon: FileText,

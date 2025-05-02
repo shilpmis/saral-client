@@ -212,15 +212,15 @@ const EmployeeDetail = () => {
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Printer className="mr-2 h-4 w-4" /> {t("print")}
           </Button>
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" /> {t("export")}
-          </Button>
-          <Button size="sm">
+          </Button> */}
+          {/* <Button size="sm">
             <Edit className="mr-2 h-4 w-4" /> {t("edit")}
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -305,7 +305,7 @@ const EmployeeDetail = () => {
               </div>
             </div>
 
-            <div className="w-full md:w-auto flex flex-col gap-2">
+            {/* <div className="w-full md:w-auto flex flex-col gap-2">
               <Card className="border-l-4 border-l-primary w-full md:w-64">
                 <CardHeader className="p-4 pb-2">
                   <CardTitle className="text-sm font-medium">{t("salary_information")}</CardTitle>
@@ -342,7 +342,7 @@ const EmployeeDetail = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>

@@ -194,7 +194,7 @@ export const PayrollApi = createApi({
 
     indexStaffWithPayroll: builder.query<
       { data: StaffEnrollmentForPayroll[]; meta: PageMeta },
-      { month: number; year: number }
+      { month: string; year: string }
     >({
       query: ({ month, year }) => ({
         url: `/payroll/staff?period=${year}-${month}`,
