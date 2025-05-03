@@ -557,7 +557,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
         installment_no: number
       },
     ) => {
-      console.log("Check this Intallment", data)
       form.setValue(
         `fees_types.${planDetailIndex}.installment_breakDowns.${installmentIndex}`,
         {

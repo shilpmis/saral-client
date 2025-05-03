@@ -629,6 +629,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0];
 
+
       form.reset({
         first_name: initial_data?.first_name,
         last_name: initial_data?.last_name,
@@ -697,6 +698,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
       }
+
       // Set initial form values from the inquiry data
       form.reset({
         first_name: initial_data.first_name || "",
@@ -705,7 +707,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         first_name_in_guj: initial_data.first_name_in_guj || null,
         middle_name_in_guj: initial_data.middle_name_in_guj || null,
         last_name_in_guj: initial_data.last_name_in_guj || null,
-        gender: initial_data.gender || "Male",
+        gender: initial_data.gender || undefined,
         birth_date: initial_data.birth_date ? formatData(initial_data.birth_date) : "",
         gr_no: initial_data.gr_no,
         primary_mobile: initial_data.primary_mobile,
@@ -913,11 +915,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormLabel>{t("gender")}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value ?? undefined}
+                          defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
+                              <SelectValue placeholder="Select Gender" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

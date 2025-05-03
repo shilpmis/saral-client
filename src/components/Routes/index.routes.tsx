@@ -35,6 +35,7 @@ import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
 import StaffProfilePage from "@/pages/StaffProfilePage" // Import the StaffProfilePage component
 import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
+import StundetFeesStatus from "@/pages/StundetFeesStatus"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -160,6 +161,18 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_FEES]}
                 >
                   <Fees />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="fee/student/:student_id"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
+                  allowedPermissions={[Permission.MANAGE_FEES]}
+                >
+                  <StundetFeesStatus />
                 </PrivateRoute>
               }
             />

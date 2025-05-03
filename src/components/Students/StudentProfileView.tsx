@@ -251,7 +251,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
           <TabsTrigger value="academic">{t("academic")}</TabsTrigger>
-          <TabsTrigger value="fees">{t("fees")}</TabsTrigger>
+          {/* <TabsTrigger value="fees">{t("fees")}</TabsTrigger> */}
           <TabsTrigger value="personal">{t("personal_details")}</TabsTrigger>
         </TabsList>
 
