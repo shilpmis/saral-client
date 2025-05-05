@@ -22,11 +22,8 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2, Search, UserPlus, AlertCircle, Info } from "lucide-react"
 import {
-  useLazyGetFeesPlanQuery,
   useLazyGetAllFeesTypeQuery,
   useApplyConcessionsToPlanMutation,
-  // useApplyConcessionToStudentMutation,
-  useLazyGetStudentFeesDetailsForClassQuery,
   useLazyGetFilteredFeesPlanQuery,
   useLazyGetFilterdStudentFeesDetailsForClassQuery,
   useLazyGetFilterFeesTypeQuery,
@@ -43,33 +40,40 @@ import type { AcademicClasses, Division } from "@/types/academic"
 import type { Concession } from "@/types/fees"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ApplyConcessionToPlanData, applyConcessionToPlanSchema, ApplyConcessionToStudentData, applyConcessionToStudentSchema } from "@/utils/fees.validation"
+import {
+  type ApplyConcessionToPlanData,
+  applyConcessionToPlanSchema,
+  type ApplyConcessionToStudentData,
+  applyConcessionToStudentSchema,
+} from "@/utils/fees.validation"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 
 interface ApplyConcessionFormProps {
   concession: Concession
-  isApplyingConcesson : boolean
-  onSubmit: (data: ApplyConcessionToPlanData | ApplyConcessionToStudentData ) => void
+  isApplyingConcesson: boolean
+  onSubmit: (data: ApplyConcessionToPlanData | ApplyConcessionToStudentData) => void
   onCancel: () => void
 }
 
-export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ concession, isApplyingConcesson ,  onSubmit, onCancel }) => {
-
-  const {t} = useTranslation()
+export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
+  concession,
+  isApplyingConcesson,
+  onSubmit,
+  onCancel,
+}) => {
+  const { t } = useTranslation()
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   if (!CurrentAcademicSessionForSchool) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="bg-white p-6 rounded-lg shadow-lg text-center">
           <h2 className="text-xl font-semibold mb-4">{t("no_active_academic_session")}</h2>
-          <p className="text-gray-600 mb-6">
-            {t("please_set_an_active_academic_session_to_proceed.")}
-          </p>
+          <p className="text-gray-600 mb-6">{t("please_set_an_active_academic_session_to_proceed.")}</p>
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             onClick={() => navigate("/academic-sessions")}
@@ -78,7 +82,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   // Queries and mutations
@@ -97,7 +101,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   const [applyConcessionToPlan, { isLoading: isApplyingToPlan }] = useApplyConcessionsToPlanMutation()
   const [applyConcessionToStudent, { isLoading: isApplyingToStudent }] = useApplyConcessionsToPlanMutation()
   const [getAllFeesType, { data: feeTypes, isLoading: isLoadingFeeTypes }] = useLazyGetAllFeesTypeQuery()
-  const [getFilterFeesType , {data : FilteredFeesType , isLoading: isLoadingFilterFeeTypes}] = useLazyGetFilterFeesTypeQuery()
+  const [getFilterFeesType, { data: FilteredFeesType, isLoading: isLoadingFilterFeeTypes }] =
+    useLazyGetFilterFeesTypeQuery()
   // Local state for plan concessions
   const [searchTermPlan, setSearchTermPlan] = useState("")
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
@@ -179,7 +184,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         concession_id: values.concession_id,
         fees_plan_id: values.fees_plan_id,
         fees_type_ids:
-        concession.concessions_to === "fees_type" ? (selectedFeeTypes.length > 0 ? selectedFeeTypes : null) : null,
+          concession.concessions_to === "fees_type" ? (selectedFeeTypes.length > 0 ? selectedFeeTypes : null) : null,
         deduction_type: values.deduction_type,
         fixed_amount: values.deduction_type === "fixed_amount" ? values.fixed_amount : null,
         percentage: values.deduction_type === "percentage" ? values.percentage : null,
@@ -200,7 +205,6 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       })
     }
   }
-
 
   // Handle form submission for student concessions
   const handleSubmitForApplyConcessionToStudents = async (values: z.infer<typeof applyConcessionToStudentSchema>) => {
@@ -232,8 +236,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         getFilterClassFeesStatus({
           class_id: selectedDivision.id,
           academic_session: CurrentAcademicSessionForSchool!.id,
-          filter_by : 'eligible_for_concession',
-          value : concession.id
+          filter_by: "eligible_for_concession",
+          value: concession.id,
         })
       }
     } catch (error) {
@@ -288,19 +292,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
 
       setSelectedDivision(selectedDiv[0])
 
-
       try {
         await getFilterClassFeesStatus({
           class_id: selectedDiv[0].id,
           academic_session: CurrentAcademicSessionForSchool!.id,
-          filter_by : 'eligible_for_concession',
-          value : concession.id
+          filter_by: "eligible_for_concession",
+          value: concession.id,
         }).unwrap()
 
         await getFilterFeesType({
           academic_session_id: CurrentAcademicSessionForSchool!.id,
-          filter : 'division',
-          value : selectedDiv[0].id
+          filter: "division",
+          value: selectedDiv[0].id,
         })
       } catch (error) {
         console.log("Error while fetching fees data", error)
@@ -338,8 +341,8 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         class_id: selectedDivision.id,
         page: pageNumber,
         academic_session: CurrentAcademicSessionForSchool!.id,
-        filter_by : 'eligible_for_concession',
-        value : concession.id
+        filter_by: "eligible_for_concession",
+        value: concession.id,
       })
     }
   }
@@ -347,10 +350,11 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   // Fetch initial data
   useEffect(() => {
     if (concession.applicable_to === "plan") {
-      getFilterFeePlans({ page: 1, 
+      getFilterFeePlans({
+        page: 1,
         academic_session: CurrentAcademicSessionForSchool!.id,
-        filter_by : 'eligible_for_concession',
-        value : concession.id
+        filter_by: "eligible_for_concession",
+        value: concession.id,
       })
     } else if (concession.applicable_to === "students" && !academicClasses) {
       getAcademicClasses(authState.user!.school_id)
@@ -376,12 +380,19 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
           setSelectedDivision(firstDivision)
 
           // Fetch fees data for this class and division
-          getFilterClassFeesStatus({ 
+          getFilterClassFeesStatus({
             class_id: firstDivision.id,
             academic_session: CurrentAcademicSessionForSchool!.id,
-            filter_by : 'eligible_for_concession',
-            value : concession.id
-             })
+            filter_by: "eligible_for_concession",
+            value: concession.id,
+          })
+
+          // Also fetch filtered fee types for the initially selected division
+          getFilterFeesType({
+            academic_session_id: CurrentAcademicSessionForSchool!.id,
+            filter: "division",
+            value: firstDivision.id,
+          })
         }
       }
     }
@@ -390,15 +401,18 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
   return (
     <div className="space-y-6">
       <div className="bg-muted p-4 rounded-md mb-6">
-        <h3 className="font-medium text-lg mb-2">{t("applying_concession")}: {concession.name}</h3>
-        <p className="text-sm text-muted-foreground mb-1">{t("category")}: {concession.category}</p>
+        <h3 className="font-medium text-lg mb-2">
+          {t("applying_concession")}: {concession.name}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-1">
+          {t("category")}: {concession.category}
+        </p>
         <p className="text-sm text-muted-foreground mb-1">
           {t("applicable_to")}: <span className="capitalize">{concession.applicable_to}</span>
         </p>
         <p className="text-sm text-muted-foreground mb-1">
-          {t("concession_applies_to")}: <span className="capitalize">
-            {concession.concessions_to === 'fees_type' ? 'Fee Type' : "Plan"}
-            </span>
+          {t("concession_applies_to")}:{" "}
+          <span className="capitalize">{concession.concessions_to === "fees_type" ? "Fee Type" : "Plan"}</span>
         </p>
         <p className="text-sm text-muted-foreground">{concession.description}</p>
       </div>
@@ -409,8 +423,12 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
         <AlertTitle className="text-amber-800">{t("important_information")}</AlertTitle>
         <AlertDescription className="text-amber-700">
           {concession.concessions_to === "fees_type"
-            ? t("this_concession_will_be_applied_to_specific_fee_types._the_deduction_amount_or_percentage_will_be_applied_to_each_selected_fee_type_individually.")
-            : t("this_concession_will_be_applied_to_the_entire_fee_plan._the_deduction_amount_or_percentage_will_be_applied_to_the_total_plan_amount.")}
+            ? t(
+                "this_concession_will_be_applied_to_specific_fee_types._the_deduction_amount_or_percentage_will_be_applied_to_each_selected_fee_type_individually.",
+              )
+            : t(
+                "this_concession_will_be_applied_to_the_entire_fee_plan._the_deduction_amount_or_percentage_will_be_applied_to_the_total_plan_amount.",
+              )}
         </AlertDescription>
       </Alert>
 
@@ -636,367 +654,373 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({ conces
       ) : (
         // Student Concession Form
         <>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("student_selection")}</CardTitle>
-              <CardDescription>{t("select_a_class_and_division_to_view_students")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                  <label htmlFor="class-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                    {t("class")}
-                  </label>
-                  <Select value={selectedClass} onValueChange={handleClassChange}>
-                    <SelectTrigger id="class-select">
-                      <SelectValue placeholder={t("select_class")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {academicClasses?.map((cls, index) =>
-                        cls.divisions.length > 0 ? (
-                          <SelectItem key={index} value={cls.class.toString()}>
-                            Class {cls.class}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("student_selection")}</CardTitle>
+                <CardDescription>{t("select_a_class_and_division_to_view_students")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label htmlFor="class-select" className="text-sm font-medium text-gray-700 mb-1 block">
+                      {t("class")}
+                    </label>
+                    <Select value={selectedClass} onValueChange={handleClassChange}>
+                      <SelectTrigger id="class-select">
+                        <SelectValue placeholder={t("select_class")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {academicClasses?.map((cls, index) =>
+                          cls.divisions.length > 0 ? (
+                            <SelectItem key={index} value={cls.class.toString()}>
+                              Class {cls.class}
+                            </SelectItem>
+                          ) : null,
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label htmlFor="division-select" className="text-sm font-medium text-gray-700 mb-1 block">
+                      {t("division")}
+                    </label>
+                    <Select
+                      value={selectedDivision ? selectedDivision.id.toString() : ""}
+                      onValueChange={handleDivisionChange}
+                      disabled={!selectedClass}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder={t("select_division")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableDivisions?.divisions.map((division, index) => (
+                          <SelectItem key={index} value={division.id.toString()}>
+                            {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
                           </SelectItem>
-                        ) : null,
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label htmlFor="division-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                    {t("division")}
-                  </label>
-                  <Select
-                    value={selectedDivision ? selectedDivision.id.toString() : ""}
-                    onValueChange={handleDivisionChange}
-                    disabled={!selectedClass}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder={t("select_division")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDivisions?.divisions.map((division, index) => (
-                        <SelectItem key={index} value={division.id.toString()}>
-                          {`${division.division} ${division.aliases ? "- " + division.aliases : ""}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label htmlFor="student-search" className="text-sm font-medium text-gray-700 mb-1 block">
-                    {t("search")}
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                      id="student-search"
-                      placeholder="Search by name or GR number"
-                      className="pl-8"
-                      value={searchTermStudent}
-                      onChange={(e) => setSearchTermStudent(e.target.value)}
-                    />
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label htmlFor="student-search" className="text-sm font-medium text-gray-700 mb-1 block">
+                      {t("search")}
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                      <Input
+                        id="student-search"
+                        placeholder="Search by name or GR number"
+                        className="pl-8"
+                        value={searchTermStudent}
+                        onChange={(e) => setSearchTermStudent(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {!selectedClass || !selectedDivision ? (
-                <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm">{t("please_select_a_class_and_division_to_view_students.")}</p>
+                {!selectedClass || !selectedDivision ? (
+                  <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <AlertCircle className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm">{t("please_select_a_class_and_division_to_view_students.")}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : isLoadingStudentFeesStatuForClass ? (
-                <div className="space-y-4">
-                  {Array(5)
-                    .fill(0)
-                    .map((_, index) => (
-                      <Skeleton key={`loading-${index}`} className="h-16 w-full" />
-                    ))}
-                </div>
-              ) : filteredStudents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTermStudent ? "No students match your search" : t("no_students_found_in_this_class/division")}
-                </div>
-              ) : isErroWhileFetchingStudentFeesStatuForClass ? (
-                <div className="text-center py-8 text-red-500">{t("this_class_has_no_fees_plan_for_now.")}</div>
-              ) : (
-                <ScrollArea className="h-[400px] rounded-md">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t("student")}</TableHead>
-                          <TableHead>{t("gr_number")}</TableHead>
-                          <TableHead>{t("roll_number")}</TableHead>
-                          <TableHead>{t("status")}</TableHead>
-                          <TableHead>{t("due_amount")}</TableHead>
-                          <TableHead className="text-right">{t("action")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentStudents.map((student) => (
-                          <TableRow key={student.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage src={`/placeholder.svg?height=36&width=36`} alt={student.first_name} />
-                                  <AvatarFallback>
-                                    {student.first_name.charAt(0)}
-                                    {student.last_name.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium">
-                                    {student.first_name} {student.middle_name} {student.last_name}
+                ) : isLoadingStudentFeesStatuForClass ? (
+                  <div className="space-y-4">
+                    {Array(5)
+                      .fill(0)
+                      .map((_, index) => (
+                        <Skeleton key={`loading-${index}`} className="h-16 w-full" />
+                      ))}
+                  </div>
+                ) : filteredStudents.length === 0 && !isErroWhileFetchingStudentFeesStatuForClass ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchTermStudent
+                      ? "No students match your search"
+                      : t("no_students_found_in_this_class/division")}
+                  </div>
+                ) : isErroWhileFetchingStudentFeesStatuForClass ? (
+                  <div className="text-center py-8 text-red-500">{t("this_class_has_no_fees_plan_for_now.")}</div>
+                ) : (
+                  <ScrollArea className="h-[400px] rounded-md">
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("student")}</TableHead>
+                            <TableHead>{t("gr_number")}</TableHead>
+                            <TableHead>{t("roll_number")}</TableHead>
+                            <TableHead>{t("status")}</TableHead>
+                            <TableHead>{t("due_amount")}</TableHead>
+                            <TableHead className="text-right">{t("action")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentStudents.map((student) => (
+                            <TableRow key={student.id}>
+                              <TableCell>
+                                <div className="flex items-center space-x-3">
+                                  <Avatar className="h-9 w-9">
+                                    <AvatarImage
+                                      src={`/generic-placeholder-icon.png?height=36&width=36`}
+                                      alt={student.first_name}
+                                    />
+                                    <AvatarFallback>
+                                      {student.first_name.charAt(0)}
+                                      {student.last_name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="font-medium">
+                                      {student.first_name} {student.middle_name} {student.last_name}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{student.gr_no}</TableCell>
-                            <TableCell>{student.roll_number}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  student.fees_status.status === "Paid"
-                                    ? "default"
-                                    : student.fees_status.status === "Partially Paid"
-                                      ? "outline"
-                                      : "destructive"
-                                }
-                              >
-                                {student.fees_status.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{formatCurrency(student.fees_status.due_amount)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="outline" size="sm" onClick={() => handleOpenStudentDialog(student)}>
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                {t("apply_concession")}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {studentFeesStatuForClass && (
-                    <SaralPagination
-                      totalPages={studentFeesStatuForClass.meta.last_page}
-                      currentPage={studentFeesStatuForClass.meta.current_page}
-                      onPageChange={(page) =>
-                        getFilterClassFeesStatus({
-                          class_id: selectedDivision!.id,
-                          page: page,
-                          academic_session: CurrentAcademicSessionForSchool!.id,
-                          filter_by : 'eligible_for_concession',
-                          value : concession.id
-                        })
-                      }
-                    />
-                  )}
-                </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              {t("cancel")}
-            </Button>
-          </div>
-
-          {/* Student Concession Dialog */}
-          <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{t("apply_concession_to_student")}</DialogTitle>
-                <DialogDescription>
-                  {selectedStudent && (
-                    <>
-                      Student: {selectedStudent.first_name} {selectedStudent.last_name} (GR: {selectedStudent.gr_no})
-                    </>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-
-              <Form {...studentForm}>
-                <form onSubmit={studentForm.handleSubmit(handleSubmitForApplyConcessionToStudents)} className="space-y-4">
-                  <FormField
-                    control={studentForm.control}
-                    name="deduction_type"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>{t("deduction_type")}</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                          >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="percentage" />
-                              </FormControl>
-                              <FormLabel className="font-normal">{t("percentage")} (%)</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="fixed_amount" />
-                              </FormControl>
-                              <FormLabel className="font-normal">{t("fixed_amount")} (₹)</FormLabel>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {studentDeductionType === "percentage" ? (
-                    <FormField
-                      control={studentForm.control}
-                      name="percentage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("percentage")}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder={t("enter_percentage_value")}
-                              {...field}
-                              value={field.value ?? ""}
-                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                            />
-                          </FormControl>
-                          <FormDescription>{t("enter_a_value_between_1_and_100")}</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
-                    <FormField
-                      control={studentForm.control}
-                      name="fixed_amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("amount")}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder={t("enter_amount_in_rupees")}
-                              {...field}
-                              value={field.value ?? ""}
-                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                            />
-                          </FormControl>
-                          <FormDescription>{t("enter_the_fixed_amount_to_deduct")}</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  {/* Fee Types selection for student concessions */}
-                  {concession.concessions_to === "fees_type" && (
-                    <div className="space-y-3">
-                      <FormLabel>{t("select_fee_types")}</FormLabel>
-                      <FormDescription>
-                        {t("choose_the_specific_fee_types_to_which_this_concession_will_be_applied")}
-                      </FormDescription>
-
-                      {isLoadingFilterFeeTypes ? (
-                        <div className="space-y-2">
-                          {Array(4)
-                            .fill(0)
-                            .map((_, index) => (
-                              <Skeleton key={`loading-${index}`} className="h-8 w-full" />
-                            ))}
-                        </div>
-                      ) : FilteredFeesType && FilteredFeesType.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-2 border rounded-md p-3">
-                          {FilteredFeesType.map((feeType) => (
-                            <div key={feeType.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`student-fee-type-${feeType.id}`}
-                                checked={selectedStudentFeeTypes.includes(feeType.id)}
-                                onCheckedChange={() => handleStudentFeeTypeSelect(feeType.id)}
-                              />
-                              <label
-                                htmlFor={`student-fee-type-${feeType.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                              >
-                                {feeType.name}
-                              </label>
-                            </div>
+                              </TableCell>
+                              <TableCell>{student.gr_no}</TableCell>
+                              <TableCell>{student.roll_number}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    student.fees_status.status === "Paid"
+                                      ? "default"
+                                      : student.fees_status.status === "Partially Paid"
+                                        ? "outline"
+                                        : "destructive"
+                                  }
+                                >
+                                  {student.fees_status.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{formatCurrency(student.fees_status.due_amount)}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="outline" size="sm" onClick={() => handleOpenStudentDialog(student)}>
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  {t("apply_concession")}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">{t("no_fee_types_available")}</p>
-                      )}
-
-                      {concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0 && (
-                        <p className="text-sm text-red-500">{t("please_select_at_least_one_fee_type")}</p>
-                      )}
+                        </TableBody>
+                      </Table>
                     </div>
-                  )}
-
-                  <FormField
-                    control={studentForm.control}
-                    name="reason"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("reason")}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t("enter_reason_for_concession")} {...field} />
-                        </FormControl>
-                        <FormDescription>{t("briefly_explain_why_this_concession_is_being_applied")}</FormDescription>
-                        <FormMessage />
-                      </FormItem>
+                    {studentFeesStatuForClass && (
+                      <SaralPagination
+                        totalPages={studentFeesStatuForClass.meta.last_page}
+                        currentPage={studentFeesStatuForClass.meta.current_page}
+                        onPageChange={(page) =>
+                          getFilterClassFeesStatus({
+                            class_id: selectedDivision!.id,
+                            page: page,
+                            academic_session: CurrentAcademicSessionForSchool!.id,
+                            filter_by: "eligible_for_concession",
+                            value: concession.id,
+                          })
+                        }
+                      />
                     )}
-                  />
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
 
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setStudentDialogOpen(false)}
-                      disabled={isApplyingConcesson}
-                    >
-                      {t("cancel")}
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={
-                        isApplyingConcesson ||
-                        (concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0)
-                      }
-                    >
-                      {isApplyingConcesson ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Applying...
-                        </>
-                      ) : (
-                        "Apply Concession"
-                      )}                    
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-                    
-        </div>
-        </>  
-        )
-      }
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                {t("cancel")}
+              </Button>
+            </div>
+
+            {/* Student Concession Dialog */}
+            <Dialog open={studentDialogOpen} onOpenChange={setStudentDialogOpen}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>{t("apply_concession_to_student")}</DialogTitle>
+                  <DialogDescription>
+                    {selectedStudent && (
+                      <>
+                        Student: {selectedStudent.first_name} {selectedStudent.last_name} (GR: {selectedStudent.gr_no})
+                      </>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <Form {...studentForm}>
+                  <form
+                    onSubmit={studentForm.handleSubmit(handleSubmitForApplyConcessionToStudents)}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={studentForm.control}
+                      name="deduction_type"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>{t("deduction_type")}</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex flex-col space-y-1"
+                            >
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="percentage" />
+                                </FormControl>
+                                <FormLabel className="font-normal">{t("percentage")} (%)</FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="fixed_amount" />
+                                </FormControl>
+                                <FormLabel className="font-normal">{t("fixed_amount")} (₹)</FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {studentDeductionType === "percentage" ? (
+                      <FormField
+                        control={studentForm.control}
+                        name="percentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("percentage")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder={t("enter_percentage_value")}
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                              />
+                            </FormControl>
+                            <FormDescription>{t("enter_a_value_between_1_and_100")}</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={studentForm.control}
+                        name="fixed_amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("amount")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder={t("enter_amount_in_rupees")}
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                              />
+                            </FormControl>
+                            <FormDescription>{t("enter_the_fixed_amount_to_deduct")}</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* Fee Types selection for student concessions */}
+                    {concession.concessions_to === "fees_type" && (
+                      <div className="space-y-3">
+                        <FormLabel>{t("select_fee_types")}</FormLabel>
+                        <FormDescription>
+                          {t("choose_the_specific_fee_types_to_which_this_concession_will_be_applied")}
+                        </FormDescription>
+
+                        {isLoadingFilterFeeTypes ? (
+                          <div className="space-y-2">
+                            {Array(4)
+                              .fill(0)
+                              .map((_, index) => (
+                                <Skeleton key={`loading-${index}`} className="h-8 w-full" />
+                              ))}
+                          </div>
+                        ) : FilteredFeesType && FilteredFeesType.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-2 border rounded-md p-3">
+                            {FilteredFeesType.map((feeType) => (
+                              <div key={feeType.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`student-fee-type-${feeType.id}`}
+                                  checked={selectedStudentFeeTypes.includes(feeType.id)}
+                                  onCheckedChange={() => handleStudentFeeTypeSelect(feeType.id)}
+                                />
+                                <label
+                                  htmlFor={`student-fee-type-${feeType.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  {feeType.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">{t("no_fee_types_available")}</p>
+                        )}
+
+                        {concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0 && (
+                          <p className="text-sm text-red-500">{t("please_select_at_least_one_fee_type")}</p>
+                        )}
+                      </div>
+                    )}
+
+                    <FormField
+                      control={studentForm.control}
+                      name="reason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("reason")}</FormLabel>
+                          <FormControl>
+                            <Input placeholder={t("enter_reason_for_concession")} {...field} />
+                          </FormControl>
+                          <FormDescription>{t("briefly_explain_why_this_concession_is_being_applied")}</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setStudentDialogOpen(false)}
+                        disabled={isApplyingConcesson}
+                      >
+                        {t("cancel")}
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          isApplyingConcesson ||
+                          (concession.concessions_to === "fees_type" && selectedStudentFeeTypes.length === 0)
+                        }
+                      >
+                        {isApplyingConcesson ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          "Apply Concession"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </>
+      )}
     </div>
   )
 }

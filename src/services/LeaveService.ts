@@ -22,6 +22,44 @@ interface CreateLeaveRequestPayload {
   type: "sick" | "vacation" | "personal" | "other";
 }
 
+// Define the API response structure
+interface LeaveBalanceResponse {
+  policy: {
+    id: number
+    leave_type_id: number
+    leave_type_name: string
+    annual_quota: number
+    max_consecutive_days: number
+    can_carry_forward: number | boolean
+  }
+  balance: {
+    id: number
+    academic_session_id: number
+    staff_id: number
+    leave_type_id: number
+    academic_year: number
+    total_leaves: string | number
+    used_leaves: string | number
+    pending_leaves: string | number
+    carried_forward: string | number
+    available_balance: string | number
+  }
+}
+// Define the leave balance interface
+export interface LeaveBalance {
+  id: number
+  staff_id: number
+  leave_type_id: number
+  leave_type: LeaveType
+  academic_session_id: number
+  annual_quota: number
+  remaining_leaves: number
+  max_consecutive_days: number
+  can_carry_forward: boolean
+  max_carry_forward_days: number
+}
+
+
 interface UpdateLeaveRequestStatusPayload {
   requestId: string;
   newStatus: "approved" | "rejected";
@@ -260,6 +298,27 @@ export const LeaveApi = createApi({
         body: { status, remarks }, // Include remarks in the request body
       }),
     }),
+
+    getLeaveBalances: builder.query<LeaveBalanceResponse[], { staff_id: number; academic_session_id: number }>({
+      query: ({ staff_id, academic_session_id }) => ({
+        url: `/leave-balances/${staff_id}/?academic_session_id=${academic_session_id}`,
+        method: "GET",
+      }),
+    }),
+
+    withdrawLeaveApplication: builder.mutation<
+      { message: string; application: LeaveApplication },
+      {
+        application_id: string;
+        remarks: string;
+      }
+    >({
+      query: ({ application_id, remarks }) => ({
+        url: `/leave-application/withdraw/${application_id}`,
+        method: "PUT",
+        body: { remarks },
+      }),
+    }),
   }),
 });
 
@@ -281,4 +340,6 @@ export const {
   useLazyFetchLeaveApplicationOfTeachingStaffForAdminQuery,
   useLazyFetchLeaveApplicationOfOtherStaffForAdminQuery,
   useUpdateStatusForStaffLeaveApplicationMutation,
+  useGetLeaveBalancesQuery,
+  useWithdrawLeaveApplicationMutation,
 } = LeaveApi;

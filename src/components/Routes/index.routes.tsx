@@ -45,6 +45,7 @@ import EmployeeDetail from "../Payroll/EmployeeDetail"
 import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
 import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormForStaff"
 import PayRun from "../Payroll/Payrun"
+import StundetFeesStatus from "@/pages/StundetFeesStatus"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -157,6 +158,18 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_FEES]}
                 >
                   <Fees />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="fee/student/:student_id"
+              element={
+                <PrivateRoute
+                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
+                  allowedPermissions={[Permission.MANAGE_FEES]}
+                >
+                  <StundetFeesStatus />
                 </PrivateRoute>
               }
             />
