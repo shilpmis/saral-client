@@ -59,7 +59,7 @@ const store = configureStore({
       UserManagementApi.middleware,
       LeaveApi.middleware,
       AttendanceApi.middleware,
-      InquiryApi.middleware,
+      // InquiryApi.middleware,
       FeesApi.middleware,
       QuotaApi.middleware,
       InquiryApi.middleware,
