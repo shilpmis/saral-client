@@ -86,12 +86,17 @@ export const FeesApi = createApi({
     }),
     getFeesPlan: builder.query<
       { data: FeesPlan[]; meta: PageMeta },
-      { academic_session: number; page?: number }
+      {
+        academic_session: number;
+        status?: "All" | "Active" | "Inactive";
+        page?: number;
+      }
     >({
-      query: ({ academic_session, page = 1 }) => ({
-        url: `/feesplan?academic_session=${academic_session}&page=${page}`,
+      query: ({ academic_session, status = "All", page = 1 }) => ({
+        url: `/feesplan?academic_session=${academic_session}&status=${status}&page=${page}`,
         method: "GET",
       }),
+
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -140,6 +145,16 @@ export const FeesApi = createApi({
         url: `/feesplan`,
         method: "POST",
         body: { ...data, academic_session_id: academic_session },
+      }),
+    }),
+
+    updateFeesPlanStatus: builder.query<
+      FeesPlan,
+      { status: "Active" | "Inactive"; plan_id: number }
+    >({
+      query: ({ plan_id, status }) => ({
+        url: `/feesplan/status/${plan_id}/${status}`,
+        method: "GET",
       }),
     }),
 
@@ -345,6 +360,8 @@ export const {
   useLazyGetFeesPlanQuery,
   useLazyGetFilteredFeesPlanQuery,
   useLazyFetchDetailFeePlanQuery, // to fetch single fee plan
+
+  useLazyUpdateFeesPlanStatusQuery,
 
   useUpdateConcsessionAppliedToPlanMutation,
   useUpdateConcsessionAppliedToStudentMutation,
