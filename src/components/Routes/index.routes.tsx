@@ -3,7 +3,6 @@ import AdminLayout from "@/layouts/Admin/AdminLayout"
 import AuthLayout from "@/layouts/Auth/AuthLayout"
 import SettingsPage from "@/pages/Setting"
 import { Staff } from "@/pages/Staff"
-import { Payroll } from "@/pages/Payroll"
 import { UserManagement } from "@/pages/UserManagement"
 import { Fees } from "@/pages/Fees"
 import Login from "@/pages/LogIn"
@@ -35,6 +34,17 @@ import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
 import StaffProfilePage from "@/pages/StaffProfilePage" // Import the StaffProfilePage component
 import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
+import EmployeePayrollDashboard from "@/pages/EmployeePayrollDashboard"
+import EmployeePayrollDetail from "@/pages/EmployeePayrollDetail"
+import PayrollAnalytics from "@/pages/PayrollAnalytics"
+import SalaryComponentsManagement from "../Payroll/SalaryComponentsManagement"
+import PayScheduleManagement from "../Payroll/PayScheduleManagement"
+import SalaryTemplatesManagement from "../Payroll/SalaryTemplatesManagement"
+import EmployeeManagement from "../Payroll/EmployeeManagement"
+import EmployeeDetail from "../Payroll/EmployeeDetail"
+import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
+import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormForStaff"
+import PayRun from "../Payroll/Payrun"
 import StundetFeesStatus from "@/pages/StundetFeesStatus"
 
 export default function RootRoute() {
@@ -135,19 +145,6 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_STAFF]}
                 >
                   <StaffProfilePage />
-                </PrivateRoute>
-              }
-            />
-
-            {/* Payroll */}
-            <Route
-              path="payroll"
-              element={
-                <PrivateRoute
-                  allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.IT_ADMIN, UserRole.PRINCIPAL]}
-                  allowedPermissions={[Permission.MANAGE_PAYROLL]}
-                >
-                  <Payroll />
                 </PrivateRoute>
               }
             />
@@ -273,14 +270,70 @@ export default function RootRoute() {
               }
             />
 
-            {/* <Route
-              path="admissions/inquiry"
+            {/* Payroll */}
+
+            <Route
+              path="payroll/dahsboard"
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
-                  <InquiriesManagement />
+                  <EmployeePayrollDashboard />
                 </PrivateRoute>
               }
-            /> */}
+            />
+
+            <Route
+              path="payroll/employee"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <EmployeeManagement />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/payrun"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <PayRun />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/employee/:employeeId"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <EmployeeDetail />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/employee/:employeeId/salary/create"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryTemplateFormForStaff mode="create"/>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/employee/:employeeId/salary/edit"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <SalaryTemplateFormForStaff mode="edit" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="payroll/analytics"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
+                  <PayrollAnalytics />
+                </PrivateRoute>
+              }
+            />
 
             {/* Settings - nested routes */}
             <Route
@@ -363,6 +416,56 @@ export default function RootRoute() {
                   </PrivateRoute>
                 }
               />
+
+              {/* Salary Component */}
+
+              <Route
+                path="payroll/salary-components"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryComponentsManagement />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/payroll-schedual"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <PayScheduleManagement />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/salary-template"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryTemplatesManagement />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/salary-template/edit/:id"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryTemplateForm />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="payroll/salary-template/create"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SalaryTemplateForm />
+                  </PrivateRoute>
+                }
+              />
+
+
+
             </Route>
           </Route>
           <Route path="*" element={<NotFound />}></Route>

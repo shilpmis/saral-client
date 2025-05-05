@@ -9,7 +9,6 @@ import {
   UserStatus,
 } from "@/types/user";
 import { AcademicSession } from "@/types/user";
-import { AcademicClasses } from "@/types/academic";
 
 // Mapping from role_id (from your DB) to UserRole
 const roleMapping: Record<number, UserRole> = {

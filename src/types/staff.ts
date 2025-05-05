@@ -78,6 +78,8 @@ export interface StaffType {
   role: string;
   working_hours: number | null;
   assigend_classes: AssignedClasses[];
+  salary?: any;
+  role_type?: RoleType;
 }
 
 // export interface TeachingStaff {
