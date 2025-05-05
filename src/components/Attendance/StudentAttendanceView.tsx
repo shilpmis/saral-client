@@ -615,8 +615,7 @@ import { selectActiveAccademicSessionsForSchool, selectCurrentUser } from "@/red
 import {
   useLazyFetchAttendanceForDateQuery,
   useMarkAttendanceMutation,
-  useUpdateStudentAttendanceMutation,
-  useLazyCheckAttendanceStatusQuery,
+  // useUpdateStudentAttendanceMutation,
 } from "@/services/AttendanceServices"
 import type { AttendanceDetails, StudentAttendanceUpdate } from "@/types/attendance"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -650,8 +649,8 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
   const user = useAppSelector(selectCurrentUser)
   const [fetchAttendanceForDate, { data: attendanceData, isLoading }] = useLazyFetchAttendanceForDateQuery()
   const [markAttendanceForDate, { isLoading: isMarkingAttendance }] = useMarkAttendanceMutation()
-  const [updateStudentAttendance, { isLoading: isUpdatingAttendance }] = useUpdateStudentAttendanceMutation()
-  const [checkAttendanceStatus, { isLoading: isCheckingStatus }] = useLazyCheckAttendanceStatusQuery()
+  // const [updateStudentAttendance, { isLoading: isUpdatingAttendance }] = useUpdateStudentAttendanceMutation()
+  // const [fetchAttendanceForDate, { isLoading: isCheckingStatus }] = useLazyfetchAttendanceForDateQuery()
 
   const currentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
@@ -762,26 +761,22 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
         })
 
         // Refetch to verify attendance was marked
-        await checkAttendanceStatus({
-          class_id: Number(classId),
-          date: selectedDate.toISOString().split("T")[0],
-          academic_session: currentAcademicSessionForSchool!.id,
-        })
-          .unwrap()
-          .then((data : any) => {
-            setIsAttendanceMarked(data.is_marked)
-            setIsUpdateMode(data.is_marked)
-          })
-          .catch((error : any) => {
-            console.error("Failed to check attendance status:", error)
-          })
-
-        // Refetch attendance data to get the latest state
         await fetchAttendanceForDate({
           class_id: Number(classId),
           unix_date: Math.floor(selectedDate.getTime() / 1000),
           academic_session: currentAcademicSessionForSchool!.id,
         })
+          .unwrap()
+          .then((data: any) => {
+            setIsAttendanceMarked(data.is_marked)
+            setIsUpdateMode(data.is_marked)
+          })
+          .catch((error: any) => {
+            console.error("Failed to check attendance status:", error)
+          })
+
+        // Refetch attendance data to get the latest state
+
       }
       if ("error" in res) {
         toast({
@@ -809,52 +804,52 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
       return
     }
 
-    try {
-      // Create updates array for selected students only
-      const updates: StudentAttendanceUpdate[] = attendanceRecords.attendance_data
-        .filter((student) => selectedStudents.includes(student.student_id))
-        .map((student) => ({
-          student_id: student.student_id,
-          status: student.status,
-        }))
+    // try {
+    //   // Create updates array for selected students only
+    //   const updates: StudentAttendanceUpdate[] = attendanceRecords.attendance_data
+    //     .filter((student) => selectedStudents.includes(student.student_id))
+    //     .map((student) => ({
+    //       student_id: student.student_id,
+    //       status: student.status,
+    //     }))
 
-      const res = await updateStudentAttendance({
-        class_id: Number(classId),
-        date: selectedDate.toISOString().split("T")[0],
-        academic_session_id: currentAcademicSessionForSchool!.id,
-        updates,
-      })
+    //   const res = await updateStudentAttendance({
+    //     class_id: Number(classId),
+    //     date: selectedDate.toISOString().split("T")[0],
+    //     academic_session_id: currentAcademicSessionForSchool!.id,
+    //     updates,
+    //   })
 
-      if ("data" in res && res.data.success) {
-        toast({
-          variant: "default",
-          title: "Success",
-          description: `Updated attendance for ${updates.length} student(s)`,
-        })
+    //   if ("data" in res && res.data.success) {
+    //     toast({
+    //       variant: "default",
+    //       title: "Success",
+    //       description: `Updated attendance for ${updates.length} student(s)`,
+    //     })
 
-        // Refetch attendance data to get the latest state
-        await fetchAttendanceForDate({
-          class_id: Number(classId),
-          unix_date: Math.floor(selectedDate.getTime() / 1000),
-          academic_session: currentAcademicSessionForSchool!.id,
-        })
+    //     // Refetch attendance data to get the latest state
+    //     await fetchAttendanceForDate({
+    //       class_id: Number(classId),
+    //       unix_date: Math.floor(selectedDate.getTime() / 1000),
+    //       academic_session: currentAcademicSessionForSchool!.id,
+    //     })
 
-        // Clear selections after successful update
-        setSelectedStudents([])
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Update Failed",
-          description: "Failed to update student attendance records.",
-        })
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "System Error",
-        description: "An unexpected error occurred while updating attendance.",
-      })
-    }
+    //     // Clear selections after successful update
+    //     setSelectedStudents([])
+    //   } else {
+    //     toast({
+    //       variant: "destructive",
+    //       title: "Update Failed",
+    //       description: "Failed to update student attendance records.",
+    //     })
+    //   }
+    // } catch (error) {
+    //   toast({
+    //     variant: "destructive",
+    //     title: "System Error",
+    //     description: "An unexpected error occurred while updating attendance.",
+    //   })
+    // }
   }
 
   const refreshAttendanceData = async () => {
@@ -862,21 +857,23 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
 
     try {
       // Check if attendance is marked for this date
-      const statusResult = await checkAttendanceStatus({
-        class_id: Number(classId),
-        date: selectedDate.toISOString().split("T")[0],
-        academic_session: currentAcademicSessionForSchool.id,
-      }).unwrap()
-
-      setIsAttendanceMarked(statusResult.is_marked)
-      setIsUpdateMode(statusResult.is_marked)
-
-      // Fetch the attendance data
-      await fetchAttendanceForDate({
+      const statusResult = await fetchAttendanceForDate({
         class_id: Number(classId),
         unix_date: Math.floor(selectedDate.getTime() / 1000),
         academic_session: currentAcademicSessionForSchool.id,
-      })
+      }).unwrap()
+
+      if (statusResult) {
+        setIsAttendanceMarked(statusResult.is_marked)
+        setIsUpdateMode(statusResult.is_marked)
+      }
+
+      // Fetch the attendance data
+      // await fetchAttendanceForDate({
+      //   class_id: Number(classId),
+      //   unix_date: Math.floor(selectedDate.getTime() / 1000),
+      //   academic_session: currentAcademicSessionForSchool.id,
+      // })
     } catch (error) {
       toast({
         variant: "destructive",
@@ -953,9 +950,9 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
       ) {
         try {
           // First check if attendance is already marked
-          const statusResult = await checkAttendanceStatus({
+          const statusResult = await await fetchAttendanceForDate({
             class_id: Number(classId),
-            date: selectedDate.toISOString().split("T")[0],
+            unix_date: Math.floor(selectedDate.getTime() / 1000),
             academic_session: currentAcademicSessionForSchool.id,
           }).unwrap()
 
@@ -963,11 +960,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
           setIsUpdateMode(statusResult.is_marked)
 
           // Then fetch the attendance data
-          await fetchAttendanceForDate({
-            class_id: Number(classId),
-            unix_date: Math.floor(selectedDate.getTime() / 1000),
-            academic_session: currentAcademicSessionForSchool.id,
-          })
+
         } catch (error) {
           toast({
             title: "Failed to fetch attendance data",
@@ -983,7 +976,6 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
     selectedDate,
     classId,
     fetchAttendanceForDate,
-    checkAttendanceStatus,
     isSunday,
     isFutureDate,
     isHoliday,
@@ -1088,10 +1080,10 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                   variant="ghost"
                   size="icon"
                   onClick={refreshAttendanceData}
-                  disabled={isLoading || isCheckingStatus}
+                  disabled={isLoading}
                   className="ml-1"
                 >
-                  {isLoading || isCheckingStatus ? (
+                  {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <RefreshCw className="h-4 w-4" />
@@ -1121,7 +1113,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
               <AlertTitle>Future date</AlertTitle>
               <AlertDescription>You cannot mark attendance for future dates.</AlertDescription>
             </Alert>
-          ) : isLoading || isCheckingStatus ? (
+          ) : isLoading  ? (
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-10 w-[250px]" />
@@ -1229,7 +1221,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                       size="sm"
                       variant="outline"
                       className="border-green-200 bg-green-50 hover:bg-green-100 text-green-700"
-                      disabled={isUpdatingAttendance}
+                      disabled={true}
                       onClick={() => handleBulkStatusChange("present")}
                     >
                       <CheckCircle className="mr-1 h-4 w-4" />
@@ -1239,7 +1231,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                       size="sm"
                       variant="outline"
                       className="border-red-200 bg-red-50 hover:bg-red-100 text-red-700"
-                      disabled={isUpdatingAttendance}
+                      disabled={true}
                       onClick={() => handleBulkStatusChange("absent")}
                     >
                       <XCircle className="mr-1 h-4 w-4" />
@@ -1249,7 +1241,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                       size="sm"
                       variant="outline"
                       className="border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700"
-                      disabled={isUpdatingAttendance}
+                      disabled={true}
                       onClick={() => handleBulkStatusChange("late")}
                     >
                       <Clock className="mr-1 h-4 w-4" />
@@ -1259,7 +1251,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                       size="sm"
                       variant="outline"
                       className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700"
-                      disabled={isUpdatingAttendance}
+                      disabled={true}
                       onClick={() => handleBulkStatusChange("half_day")}
                     >
                       <CalendarClock className="mr-1 h-4 w-4" />
@@ -1330,7 +1322,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {isUpdateMode && (
+                          {/* {isUpdateMode && (
                             <TableHead className="w-[50px]">
                               <Checkbox
                                 checked={
@@ -1339,7 +1331,7 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                                 onCheckedChange={handleSelectAllStudents}
                               />
                             </TableHead>
-                          )}
+                          )} */}
                           <TableHead>Roll No.</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead className="w-[180px]">Attendance</TableHead>
@@ -1349,14 +1341,14 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                       <TableBody>
                         {filteredStudents.map((student) => (
                           <TableRow key={student.student_id}>
-                            {isUpdateMode && (
+                            {/* {isUpdateMode && (
                               <TableCell>
                                 <Checkbox
                                   checked={selectedStudents.includes(student.student_id)}
                                   onCheckedChange={(checked) => handleSelectStudent(student.student_id, !!checked)}
                                 />
                               </TableCell>
-                            )}
+                            )} */}
                             <TableCell className="font-medium">{student.roll_number}</TableCell>
                             <TableCell>{student.student_name}</TableCell>
                             <TableCell>
@@ -1466,10 +1458,10 @@ const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({ classId }
                 </p>
                 <Button
                   onClick={handleUpdateSelectedStudents}
-                  disabled={isUpdatingAttendance || selectedStudents.length === 0}
+                  disabled={false || selectedStudents.length === 0}
                   className="gap-2"
                 >
-                  {isUpdatingAttendance ? (
+                  {false ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Updating...

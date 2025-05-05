@@ -1,19 +1,3 @@
-import { Student } from "./student";
-
-// export interface AttendanceDetails {
-//   date: string;
-//   academic_session_id: number;
-//   is_marked: boolean;
-//   class_id: number;
-//   marked_by: number;
-//   attendance_data: {
-//     student_id: number;
-//     student_name: string;
-//     roll_number: number;
-//     status: "present" | "absent" | "late" | "half_day";
-//     remarks: string | null;
-//   }[];
-// }
 
 export interface AttendanceRecord {
   student_id: number;
@@ -28,7 +12,7 @@ export interface AttendanceDetails {
   class_id: number;
   date: string;
   marked_by: number;
-  is_marked?: boolean;
+  is_marked: boolean;
 }
 
 export interface DayStats {
@@ -85,23 +69,24 @@ export interface AttendanceRecord {
   status: "present" | "absent" | "late" | "half_day";
 }
 
-export interface AttendanceDetails {
-  attendance_data: AttendanceRecord[];
-  academic_session_id: number;
-  class_id: number;
-  date: string;
-  marked_by: number;
-  is_marked?: boolean;
-}
+// export interface AttendanceDetails {
+//   attendance_data: AttendanceRecord[];
+//   academic_session_id: number;
+//   class_id: number;
+//   date: string;
+//   marked_by: number;
+//   is_marked?: boolean;
+// }
 
 export interface StudentAttendanceUpdate {
+  attendance_master_id : number;
   student_id: number;
   status: "present" | "absent" | "late" | "half_day";
 }
 
 export interface AttendanceUpdatePayload {
-  class_id: number;
-  date: string;
-  academic_session_id: number;
+  // class_id: number;
+  // date: string;
+  // academic_session_id: number;
   updates: StudentAttendanceUpdate[];
 }

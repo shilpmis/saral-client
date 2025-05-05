@@ -43,6 +43,19 @@ export const AttendanceApi = createApi({
       //     }
       // }
     }),
+
+    updateAttendance: builder.mutation<
+      AttendanceDetails,
+      { payload: AttendanceDetails; class_id: number; unix_date: number }
+    >({
+      query: ({ payload, class_id , unix_date }) => ({
+        url: `attendance/${class_id}/${unix_date}`,
+        method: "PUT",
+        body: payload,
+      }),
+    }),
+
+
   }),
 });
 
