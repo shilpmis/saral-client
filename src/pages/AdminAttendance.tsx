@@ -123,7 +123,7 @@ const AdminAttendanceView: React.FC = () => {
   useEffect(() => {
     if (!isSunday && selectedDate && !isFutureDate && selectedClass && selectedDivision) {
       fetchAttendanceForDate({
-        class_id: Number(selectedClass),
+        class_id: Number(selectedDivision),
         unix_date: Math.floor(selectedDate.getTime() / 1000),
         academic_session: CurrentAcademicSessionForSchool!.id,
       })
@@ -221,7 +221,7 @@ const AdminAttendanceView: React.FC = () => {
                               (division:any, index:any) => (
                                 <SelectItem
                                   key={index}
-                                  value={division.division}
+                                  value={division.id.toString()}
                                 >
                                   {`${division.division} ${
                                     division.aliases
