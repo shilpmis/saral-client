@@ -15,9 +15,11 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import type { InstallmentBreakdown, AppliedConcessioinToStudent, FeePaymentRequest } from "@/types/fees"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { usePayMultipleInstallmentsMutation } from "@/services/feesService"
+import { useGetAllConcessionsQuery, usePayMultipleInstallmentsMutation } from "@/services/feesService"
 import { Switch } from "@/components/ui/switch"
 import NumberInput from "@/components/ui/NumberInput"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 // Extended interface for installment breakdown with additional fields
 interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
@@ -32,11 +34,11 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   transaction_reference?: string | null
   amount_paid_as_carry_forward?: string
   applied_concession?:
-    | {
-        concession_id: number
-        applied_amount: number
-      }[]
-    | null
+  | {
+    concession_id: number
+    applied_amount: number
+  }[]
+  | null
 }
 
 // Update the payment form schema to include cheque as a payment option
@@ -81,6 +83,14 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
 }) => {
   const { t } = useTranslation()
 
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+
+  // Fetch concession types from API
+  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
+    { academic_session_id: CurrentAcademicSessionForSchool!.id },
+    { skip: !CurrentAcademicSessionForSchool!.id },
+  )
+
   const [payInstallments, { isLoading: isPaymentProcessing }] = usePayMultipleInstallmentsMutation()
   const [discountedAmounts, setDiscountedAmounts] = useState<Record<number, number>>({})
   const [totalDiscountApplied, setTotalDiscountApplied] = useState(0)
@@ -101,6 +111,23 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
       pay_full_amount: true,
     },
   })
+
+
+  // Get concession name from ID using the API data
+  const getConcessionNameFromId = (concessionId: number): string => {
+    if (!concessionId) return t("unknown_concession")
+
+    // First check if we have the concession in our API data
+    if (concessionTypes && concessionTypes.length > 0) {
+      const concession = concessionTypes.find((type) => type.id === concessionId)
+      if (concession) {
+        return concession.name
+      }
+    }
+
+    // Fallback to a generic name with the ID
+    return `${t("concession")} ${concessionId}`
+  }
 
   // Watch for form field changes
   const applyConcession = form.watch("apply_concession")
@@ -253,7 +280,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
   const handleSubmit = async (values: z.infer<typeof feePaymentSchema>) => {
     try {
       // Create an array of payment objects for each installment
-      const installmentPayments: FeePaymentRequest[] = installments.map((installment : any) => {
+      const installmentPayments: FeePaymentRequest[] = installments.map((installment: any) => {
         // Get the original amount
         const originalAmount = Number(installment.installment_amount || 0)
 
@@ -563,39 +590,39 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
             {installments.some(
               (installment) => installment.is_paid && Number(installment.carry_forward_amount || 0) > 0,
             ) && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-base">{t("carry_forward_payment")}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>{t("carry_forward_payment")}</AlertTitle>
-                    <AlertDescription>
-                      {t("you_are_paying_carry_forward_amount_for_installments_that_have_already_been_paid")}
-                    </AlertDescription>
-                  </Alert>
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle className="text-base">{t("carry_forward_payment")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>{t("carry_forward_payment")}</AlertTitle>
+                      <AlertDescription>
+                        {t("you_are_paying_carry_forward_amount_for_installments_that_have_already_been_paid")}
+                      </AlertDescription>
+                    </Alert>
 
-                  <div className="space-y-3 mt-4">
-                    {installments
-                      .filter((installment) => installment.is_paid && Number(installment.carry_forward_amount || 0) > 0)
-                      .map((installment) => (
-                        <div key={installment.id} className="bg-blue-50 p-3 rounded-md">
-                          <p className="font-medium">
-                            {t("installment")} #{installment.installment_no}
-                          </p>
-                          <p className="text-sm text-blue-700">
-                            {t("carry_forward_amount")}: {formatCurrency(installment.carry_forward_amount)}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {t("this_amount_will_be_paid_as_carry_forward_for_future_installments")}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    <div className="space-y-3 mt-4">
+                      {installments
+                        .filter((installment) => installment.is_paid && Number(installment.carry_forward_amount || 0) > 0)
+                        .map((installment) => (
+                          <div key={installment.id} className="bg-blue-50 p-3 rounded-md">
+                            <p className="font-medium">
+                              {t("installment")} #{installment.installment_no}
+                            </p>
+                            <p className="text-sm text-blue-700">
+                              {t("carry_forward_amount")}: {formatCurrency(installment.carry_forward_amount)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {t("this_amount_will_be_paid_as_carry_forward_for_future_installments")}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             {!payFullAmount && (
               <Card>
                 <CardHeader>
@@ -722,7 +749,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                                   <div key={idx} className="flex items-center">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
                                     <span>
-                                      ID: {concession.concession_id} ({formatCurrency(concession.applied_amount)})
+                                      Concession: {getConcessionNameFromId(concession.concession_id)} ({formatCurrency(concession.applied_amount)})
                                     </span>
                                   </div>
                                 ))}
@@ -815,7 +842,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                           <div>
                             <div className="flex items-center gap-2">
                               <NumberInput
-                                decimal={true}                                                            
+                                decimal={true}
                                 placeholder="Amount to use"
                                 value={carryForwardAmounts[installment.id] !== undefined ? String(carryForwardAmounts[installment.id]) : ""}
                                 onChange={(value) => value && updateCarryForwardAmount(installment.id, value)}
