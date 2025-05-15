@@ -719,6 +719,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
     getClassesWithoutFeesPlan({ school_id: authState.user!.school_id })
     getAllFeesType({
       academic_session_id: CurrentAcademicSessionForSchool!.id,
+      applicable_to : 'plan' 
     })
   }, [plan_id])
 

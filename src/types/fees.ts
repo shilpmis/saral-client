@@ -7,6 +7,7 @@ export interface FeesType {
   academic_session_id: number;
   name: string;
   description: string;
+  applicable_to : "plan" | "student";
   status: "Active" | "Inactive";
   // is_concession_applicable: boolean,
 }
@@ -57,7 +58,7 @@ export interface ConcessionDetailForPlan {
 export interface FeesPlan {
   id: number;
   name: string;
-  division_id: number;
+  class_id: number;
   academic_session_id: number;
   description: string;
   total_amount: number;
@@ -92,7 +93,7 @@ export interface InstallmentBreakdowns {
 export interface DetailFeesPlan {}
 
 export interface ReqObjectForCreateFeesPlan {
-  fees_plan: Pick<FeesPlan, "division_id" | "name" | "description">;
+  fees_plan: Pick<FeesPlan, "class_id" | "name" | "description">;
   plan_details: {
     fees_type_id: number;
     installment_type: string;
@@ -208,83 +209,6 @@ export interface FeePlan {
   concession_for_plan: AppliedConcessioinToStudent[];
 }
 
-// export interface StudentFeeDetails {
-//   student: {
-//     id: number;
-//     first_name: string;
-//     middle_name: string;
-//     last_name: string;
-//     gr_no: number;
-//     roll_number: number;
-//     class_id: number;
-//     fees_status: FeeStatus & { id: number };
-//     provided_concession: AppliedConcessioinToStudent[];
-//     academic_class: {
-//       id: number;
-//       academic_session_id: number;
-//       division_id: number;
-//       student_id: number;
-//       quota_id: number | null;
-//       status: string;
-//       remarks: number | null;
-//       is_new_admission: boolean;
-//       promoted_by: null;
-//       class: {
-//         id: number;
-//         academic_session_id: number;
-//         class_id: number;
-//         division: string;
-//         aliases: string | null;
-//         class: {
-//           id: number;
-//           class: string;
-//         };
-//       };
-//     }[];
-//   };
-//   detail: {
-//     fees_details: FeePlanDetail[];
-//     fees_plan: FeePlan;
-//     paid_fees: StudentFeesInstallment[];
-//     wallet: {
-//       total_concession_for_student: number;
-//       total_concession_for_plan: number;
-//     };
-//   };
-//   installments: {
-//     id: number;
-//     fees_plan_id: number;
-//     fees_type_id: number;
-//     installment_type: string;
-//     total_installment: number;
-//     total_amount: string;
-//     paid_amount: string;
-//     discounted_amount: string;
-//     due_amount: string;
-//     concession_amount: null;
-//     installments_breakdown: {
-//       id: number;
-//       installment_no: number;
-//       installment_amount: string;
-//       due_date: string;
-//       payment_status: "Unpaid" | "Paid";
-//       is_paid: boolean;
-//       payment_date: string;
-//       remaining_amount: string;
-//       transaction_reference: string;
-//       discounted_amount: string;
-//       paid_amount: string;
-//       carry_forward_amount: string;
-//       amount_paid_as_carry_forward: string;
-//       repaid_installment: boolean;
-//       applied_concession: {
-//         concession_id: number;
-//         applied_amount: number;
-//       }[];
-//     }[];
-//   }[];
-// }
-
 export interface StudentFeeDetails {
   student: {
     id: number;
@@ -293,71 +217,44 @@ export interface StudentFeeDetails {
     last_name: string;
     gr_no: number;
     roll_number: number;
-    provided_concession?: Array<{
+    class_id: number;
+    fees_status: FeeStatus & { id: number };
+    provided_concession: AppliedConcessioinToStudent[];
+    academic_class: {
       id: number;
-      concession: {
-        name: string;
-        description: string;
-      };
-      deduction_type: string;
-      amount: string;
-      applied_discount: string;
-    }>;
-    fees_status?: {
-      total_amount: string;
-      discounted_amount: string;
-      paid_amount: string;
-      due_amount: string;
+      academic_session_id: number;
+      division_id: number;
+      student_id: number;
+      quota_id: number | null;
       status: string;
-      paid_fees?: Array<{
-        id: number;
-        installment_id: number;
-        paid_amount: string;
-        remaining_amount: string;
-        payment_mode: string;
-        payment_date: string;
-        status: string;
-        discounted_amount: string;
-        amount_paid_as_carry_forward: string;
-        applied_concessions: Array<any>;
-      }>;
-    };
-    academic_class: Array<{
+      remarks: number | null;
+      is_new_admission: boolean;
+      promoted_by: null;
       class: {
+        id: number;
+        academic_session_id: number;
+        class_id: number;
+        division: string;
+        aliases: string | null;
         class: {
+          id: number;
           class: string;
         };
-        division: string;
-        aliases: string;
       };
-    }>;
+    }[];
   };
-  detail?: {
-    fees_details?: Array<{
-      id: number;
-      fees_type_id: number;
-      installment_type: string;
-      total_installment: number;
-      total_amount: string;
-      installments_breakdown: Array<{
-        id: number;
-        installment_no: number;
-        installment_amount: string;
-        due_date: string;
-      }>;
-    }>;
-    fees_plan?: {
-      name: string;
-      description: string;
-      total_amount: string;
-    };
-    wallet?: {
+  detail: {
+    fees_details: FeePlanDetail[];
+    fees_plan: FeePlan;
+    paid_fees: StudentFeesInstallment[];
+    wallet: {
       total_concession_for_student: number;
       total_concession_for_plan: number;
     };
   };
-  installments?: Array<{
+  installments: {
     id: number;
+    fees_plan_id: number;
     fees_type_id: number;
     installment_type: string;
     total_installment: number;
@@ -365,21 +262,223 @@ export interface StudentFeeDetails {
     paid_amount: string;
     discounted_amount: string;
     due_amount: string;
-    installments_breakdown: Array<{
+    concession_amount: null;
+    installments_breakdown: {
       id: number;
       installment_no: number;
       installment_amount: string;
-      paid_amount: string;
-      discounted_amount: string;
-      remaining_amount: string;
       due_date: string;
-      payment_status: string;
+      payment_status: "Unpaid" | "Paid";
       is_paid: boolean;
-      payment_date: string | null;
+      payment_date: string;
+      remaining_amount: string;
+      transaction_reference: string;
+      discounted_amount: string;
+      paid_amount: string;
+      carry_forward_amount: string;
       amount_paid_as_carry_forward: string;
-    }>;
-  }>;
+      repaid_installment: boolean;
+      applied_concession: {
+        concession_id: number;
+        applied_amount: number;
+      }[];
+    }[];
+  }[];
 }
+
+// export interface StudentFeeDetails {
+//   student: {
+//     id: number
+//     first_name: string
+//     middle_name: string
+//     last_name: string
+//     gr_no: number
+//     roll_number: number
+//     provided_concession?: Array<{
+//       id: number
+//       concession: {
+//         name: string
+//         description: string
+//       }
+//       deduction_type: string
+//       amount: string
+//       applied_discount: string
+//     }>
+//     fees_status?: {
+//       total_amount: string
+//       discounted_amount: string
+//       paid_amount: string
+//       due_amount: string
+//       status: string
+//       paid_fees?: Array<{
+//         id: number
+//         installment_id: number
+//         paid_amount: string
+//         remaining_amount: string
+//         payment_mode: string
+//         payment_date: string
+//         status: string
+//         discounted_amount: string
+//         amount_paid_as_carry_forward: string
+//         applied_concessions: Array<any>
+//       }>
+//     }
+//     academic_class: Array<{
+//       class: {
+//         class: {
+//           class: string
+//         }
+//         division: string
+//         aliases: string
+//       }
+//     }>
+//   }
+//   detail?: {
+//     fees_details?: Array<{
+//       id: number
+//       fees_type_id: number
+//       installment_type: string
+//       total_installment: number
+//       total_amount: string
+//       installments_breakdown: Array<{
+//         id: number
+//         installment_no: number
+//         installment_amount: string
+//         due_date: string
+//       }>
+//     }>
+//     fees_plan?: {
+//       name: string
+//       description: string
+//       total_amount: string
+//     }
+//     wallet?: {
+//       total_concession_for_student: number
+//       total_concession_for_plan: number
+//     }
+//   }
+//   installments?: Array<{
+//     id: number
+//     fees_type_id: number
+//     installment_type: string
+//     total_installment: number
+//     total_amount: string
+//     paid_amount: string
+//     discounted_amount: string
+//     due_amount: string
+//     installments_breakdown: Array<{
+//       id: number
+//       installment_no: number
+//       installment_amount: string
+//       paid_amount: string
+//       discounted_amount: string
+//       remaining_amount: string
+//       due_date: string
+//       payment_status: string
+//       is_paid: boolean
+//       payment_date: string | null
+//       amount_paid_as_carry_forward: string
+//     }>
+//   }>
+// }
+
+// export interface StudentFeeDetails {
+//   student: {
+//     id: number;
+//     first_name: string;
+//     middle_name: string;
+//     last_name: string;
+//     gr_no: number;
+//     roll_number: number;
+//     provided_concession?: Array<{
+//       id: number;
+//       concession: {
+//         name: string;
+//         description: string;
+//       };
+//       deduction_type: string;
+//       amount: string;
+//       applied_discount: string;
+//     }>;
+//     fees_status?: {
+//       total_amount: string;
+//       discounted_amount: string;
+//       paid_amount: string;
+//       due_amount: string;
+//       status: string;
+//       paid_fees?: Array<{
+//         id: number;
+//         installment_id: number;
+//         paid_amount: string;
+//         remaining_amount: string;
+//         payment_mode: string;
+//         payment_date: string;
+//         status: string;
+//         discounted_amount: string;
+//         amount_paid_as_carry_forward: string;
+//         applied_concessions: Array<any>;
+//       }>;
+//     };
+//     academic_class: Array<{
+//       class: {
+//         class: {
+//           class: string;
+//         };
+//         division: string;
+//         aliases: string;
+//       };
+//     }>;
+//   };
+//   detail?: {
+//     fees_details?: Array<{
+//       id: number;
+//       fees_type_id: number;
+//       installment_type: string;
+//       total_installment: number;
+//       total_amount: string;
+//       installments_breakdown: Array<{
+//         id: number;
+//         installment_no: number;
+//         installment_amount: string;
+//         due_date: string;
+//       }>;
+//     }>;
+//     fees_plan?: {
+//       id : number;
+//       academic_session_id : number;
+//       name: string;
+//       description: string;
+//       total_amount: string;
+//     };
+//     wallet?: {
+//       total_concession_for_student: number;
+//       total_concession_for_plan: number;
+//     };
+//   };
+//   installments?: Array<{
+//     id: number;
+//     fees_type_id: number;
+//     installment_type: string;
+//     total_installment: number;
+//     total_amount: string;
+//     paid_amount: string;
+//     discounted_amount: string;
+//     due_amount: string;
+//     installments_breakdown: Array<{
+//       id: number;
+//       installment_no: number;
+//       installment_amount: string;
+//       paid_amount: string;
+//       discounted_amount: string;
+//       remaining_amount: string;
+//       due_date: string;
+//       payment_status: string;
+//       is_paid: boolean;
+//       payment_date: string | null;
+//       amount_paid_as_carry_forward: string;
+//     }>;
+//   }>;
+// }
 
 export interface FeePaymentRequest {
   fee_plan_details_id: number;
