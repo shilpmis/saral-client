@@ -16,15 +16,15 @@ export interface StudentEnrollment {
   division_id: number;
   student_id: number;
   quota_id: number | null;
-  status: "pursuing" | "permoted" | "failed" | "drop";
+  status: 'pursuing' | 'promoted' | 'failed' | 'drop' | 'migrated' | 'completed' | 'transfered' | 'suspended';
   is_new_admission: boolean;
   remarks: string | null;
   type: string;
-  class: Division; // here noted as class , actual
-  student: Student;
-  quota: Quota | null;
-  fees_status: FeeStatus;
-  provided_concession: AppliedConcessioinToStudent[];
+  class?: Division; // here noted as class , actual
+  student: Partial<Student>;
+  quota?: Quota | null;
+  fees_status?: FeeStatus;
+  provided_concession?: AppliedConcessioinToStudent[];
 }
 
 export interface StudentMeta {

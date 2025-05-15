@@ -629,7 +629,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0];
 
-
+      
       form.reset({
         first_name: initial_data?.first_name,
         last_name: initial_data?.last_name,
@@ -676,6 +676,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         class: CurrentDivision?.class_id.toString(),
         division: CurrentDivision?.id.toString(),
       })
+      
     } else if (form_type === "create" && initial_data && is_use_for_onBoarding) {
 
       /**
@@ -707,7 +708,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         first_name_in_guj: initial_data.first_name_in_guj || null,
         middle_name_in_guj: initial_data.middle_name_in_guj || null,
         last_name_in_guj: initial_data.last_name_in_guj || null,
-        gender: initial_data.gender || undefined,
+        gender: initial_data.gender ?? undefined,
         birth_date: initial_data.birth_date ? formatData(initial_data.birth_date) : "",
         gr_no: initial_data.gr_no,
         primary_mobile: initial_data.primary_mobile,
@@ -914,8 +915,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("gender")}</FormLabel>
                         <Select
+                          // onValueChange={field.onChange}
+                          // value={field.value}
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value ?? undefined}
                         >
                           <FormControl>
                             <SelectTrigger>

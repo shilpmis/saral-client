@@ -23,7 +23,7 @@ import {
   CheckCircle2,
   Eye,
 } from "lucide-react"
-import { useLazyGetStudentFeesDetailsQuery } from "@/services/feesService"
+import { useGetAllConcessionsQuery, useLazyGetStudentFeesDetailsQuery } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
 import InstallmentDetailView from "@/components/Fees/Reports/InstallmentDetailViewProps"
@@ -44,7 +44,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
-import { selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 // Extended interface for installment breakdown with additional fields
 interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
@@ -59,11 +59,11 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   transaction_reference?: string | null
   amount_paid_as_carry_forward?: string
   applied_concession?:
-    | {
-        concession_id: number
-        applied_amount: number
-      }[]
-    | null
+  | {
+    concession_id: number
+    applied_amount: number
+  }[]
+  | null
 }
 
 type StudentFeesPanelProps = {}
@@ -76,8 +76,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
-  const AcademicClasses = useAppSelector(selectAcademicClasses)
-  const AcademicDivisions = useAppSelector(selectAllAcademicClasses)
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
 
   const [activeTab, setActiveTab] = useState("due-fees")
@@ -95,6 +93,33 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = useState<any>(null)
   const [selectedInstallmentForReceipt, setSelectedInstallmentForReceipt] = useState<any>(null)
   const [selectedFeeTypeForReceipt, setSelectedFeeTypeForReceipt] = useState<any>(null)
+
+
+  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+
+  // Fetch concession types from API
+  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
+    { academic_session_id: CurrentAcademicSessionForSchool!.id },
+    { skip: !CurrentAcademicSessionForSchool!.id },
+  )
+
+
+  // Get concession name from ID using the API data
+  const getConcessionNameFromId = (concessionId: number): string => {
+    if (!concessionId) return t("unknown_concession")
+
+    // First check if we have the concession in our API data
+    if (concessionTypes && concessionTypes.length > 0) {
+      const concession = concessionTypes.find((type) => type.id === concessionId)
+      if (concession) {
+        return concession.name
+      }
+    }
+
+    // Fallback to a generic name with the ID
+    return `${t("concession")} ${concessionId}`
+  }
+
 
   // Format date to readable format
   const formatDate = (dateString: string | null | undefined) => {
@@ -192,8 +217,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const calculatePaymentProgress = () => {
     if (!studentFeeDetails) return 0
 
-    const totalAmount = Number(studentFeeDetails.student.fees_status.total_amount)
-    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount) + Number(studentFeeDetails.student.fees_status.discounted_amount) 
+    const totalAmount = Number(studentFeeDetails?.student.fees_status?.total_amount)
+    const paidAmount = Number(studentFeeDetails?.student.fees_status?.paid_amount) + Number(studentFeeDetails?.student.fees_status?.discounted_amount)
 
     return Math.round((paidAmount / totalAmount) * 100)
   }
@@ -215,62 +240,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsDetailViewOpen(true)
   }
 
-  // Add a function to handle generating fee receipt
-  // const handleGenerateReceipt = (payment: any) => {
-  //   // Find the corresponding installment and fee type
-  //   let foundInstallment = null
-  //   let foundFeeType = null
-
-  //   studentFeeDetails.installments.forEach((feeType) => {
-  //     feeType.installments_breakdown.forEach((installment) => {
-  //       if (installment.id === payment.installment_id) {
-  //         foundInstallment = installment
-  //         foundFeeType = feeType
-  //       }
-  //     })
-  //   })
-
-  //   if (foundInstallment && foundFeeType) {
-  //     setSelectedPaymentForReceipt(payment)
-  //     setSelectedInstallmentForReceipt(foundInstallment)
-  //     setSelectedFeeTypeForReceipt(foundFeeType)
-  //     setIsReceiptGeneratorOpen(true)
-  //   } else {
-  //     toast({
-  //       variant: "destructive",
-  //       title: "Error",
-  //       description: "Could not find installment details for this payment",
-  //     })
-  //   }
-  // }
-
-  // Add a function to handle viewing payment details
-  // const handleViewPayment = (payment: any) => {
-  //   // Find the corresponding installment and fee type
-  //   let foundInstallment = null
-  //   let foundFeeType = null
-
-  //   studentFeeDetails.installments.forEach((feeType) => {
-  //     feeType.installments_breakdown.forEach((installment) => {
-  //       if (installment.id === payment.installment_id) {
-  //         foundInstallment = installment
-  //         foundFeeType = feeType
-  //       }
-  //     })
-  //   })
-
-  //   if (foundInstallment && foundFeeType) {
-  //     setSelectedInstallmentForView(foundInstallment)
-  //     setSelectedFeeTypeForView(feeType)
-  //     setIsDetailViewOpen(true)
-  //   } else {
-  //     toast({
-  //       variant: "destructive",
-  //       title: "Error",
-  //       description: "Could not find installment details for this payment",
-  //     })
-  //   }
-  // }
 
   //   // Add a function to handle generating fee receipt
   const handleGenerateReceipt = (payment: any) => {
@@ -278,11 +247,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     let foundInstallment = null
     let foundFeeType = null
 
-    if(!studentFeeDetails){
+    if (!studentFeeDetails) {
       alert("studentFeeDetails is undefined , Something went wrong !")
     }
 
-    studentFeeDetails && studentFeeDetails.installments.forEach((feeType) => {
+    studentFeeDetails && studentFeeDetails?.installments?.forEach((feeType) => {
       feeType.installments_breakdown.forEach((installment) => {
         if (installment.id === payment.installment_id) {
           foundInstallment = installment
@@ -311,10 +280,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     let foundInstallment = null
     let foundFeeType = null
 
-    console.log("payment" ,payment)
+    console.log("payment", payment)
 
-    studentFeeDetails?.student.fees_status.paid_fees.forEach((paid_fees) => {
-      if(paid_fees.installment_id === payment.installment_id){
+    studentFeeDetails?.student.fees_status?.paid_fees?.forEach((paid_fees) => {
+      if (paid_fees.installment_id === payment.installment_id) {
         foundInstallment = paid_fees
         foundFeeType = {}
         return;
@@ -345,7 +314,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const calculateAvailableConcessionBalance = () => {
     if (!studentFeeDetails) return { student_concession: 0, plan_concession: 0 }
 
-    const wallet = studentFeeDetails.detail.wallet || { total_concession_for_student: 0, total_concession_for_plan: 0 }
+    const wallet = studentFeeDetails?.detail?.wallet || { total_concession_for_student: 0, total_concession_for_plan: 0 }
 
     return {
       student_concession: Number(wallet.total_concession_for_student || 0),
@@ -414,19 +383,18 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             <p><strong>Name:</strong> ${student.first_name} ${student.middle_name || ""} ${student.last_name}</p>
             <p><strong>GR Number:</strong> ${student.gr_no}</p>
             <p><strong>Roll Number:</strong> ${student.roll_number}</p>
-            <p><strong>Fee Plan:</strong> ${studentFeeDetails.detail.fees_plan.name}</p>
-            <p><strong>Academic Year:</strong> ${studentFeeDetails.detail.fees_plan.academic_session_id}</p>
+            <p><strong>Fee Plan:</strong> ${studentFeeDetails?.detail?.fees_plan?.name}</p>
           </div>
         </div>
         
         <div class="section">
           <div class="section-title">Fee Summary</div>
           <div class="summary-box">
-            <p><strong>Total Fees:</strong> ${formatCurrency(feesStatus.total_amount)}</p>
-            <p><strong>Paid Amount:</strong> ${formatCurrency(feesStatus.paid_amount)}</p>
-            <p><strong>Discounted Amount:</strong> ${formatCurrency(feesStatus.discounted_amount)}</p>
-            <p><strong>Due Amount:</strong> ${formatCurrency(feesStatus.due_amount)}</p>
-            <p><strong>Payment Status:</strong> ${feesStatus.status}</p>
+            <p><strong>Total Fees:</strong> ${formatCurrency(feesStatus?.total_amount)}</p>
+            <p><strong>Paid Amount:</strong> ${formatCurrency(feesStatus?.paid_amount)}</p>
+            <p><strong>Discounted Amount:</strong> ${formatCurrency(feesStatus?.discounted_amount)}</p>
+            <p><strong>Due Amount:</strong> ${formatCurrency(feesStatus?.due_amount)}</p>
+            <p><strong>Payment Status:</strong> ${feesStatus?.status}</p>
             <p><strong>Payment Progress:</strong> ${calculatePaymentProgress()}%</p>
           </div>
         </div>
@@ -446,11 +414,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </tr>
             </thead>
             <tbody>
-              ${studentFeeDetails.installments
-                .map((feeType) =>
-                  feeType.installments_breakdown
-                    .map(
-                      (installment) => `
+              ${studentFeeDetails?.installments?.map((feeType) =>
+      feeType.installments_breakdown
+        .map(
+          (installment) => `
                   <tr>
                     <td>${getFeeTypeName(feeType.fees_type_id, studentFeeDetails)}</td>
                     <td>${feeType.installment_type} - ${installment.installment_no}</td>
@@ -461,21 +428,20 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${installment.payment_status || "Unpaid"}</td>
                   </tr>
                 `,
-                    )
-                    .join(""),
-                )
-                .join("")}
+        )
+        .join(""),
+    )
+        .join("")}
             </tbody>
           </table>
         </div>
         
         <div class="section">
           <div class="section-title">Payment History</div>
-          ${
-            !studentFeeDetails.student.fees_status.paid_fees ||
-            studentFeeDetails.student.fees_status.paid_fees.length === 0
-              ? `<p>No payment history found.</p>`
-              : `<table>
+          ${!studentFeeDetails?.student.fees_status?.paid_fees ||
+        studentFeeDetails?.student.fees_status?.paid_fees.length === 0
+        ? `<p>No payment history found.</p>`
+        : `<table>
               <thead>
                 <tr>
                   <th>Payment ID</th>
@@ -489,9 +455,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </tr>
               </thead>
               <tbody>
-                ${studentFeeDetails.student.fees_status.paid_fees
-                  .map(
-                    (payment) => `
+                ${studentFeeDetails?.student.fees_status?.paid_fees
+          .map(
+            (payment) => `
                   <tr>
                     <td>#${payment.id}</td>
                     <td>${formatDate(payment.payment_date)}</td>
@@ -503,11 +469,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${payment.status}</td>
                   </tr>
                 `,
-                  )
-                  .join("")}
+          )
+          .join("")}
               </tbody>
             </table>`
-          }
+      }
         </div>
         
         <div class="footer">
@@ -538,7 +504,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        params.student_id && (await getStudentFeesDetails(Number.parseInt(params.student_id)))
+        params.student_id && (await getStudentFeesDetails({ student_id: Number.parseInt(params.student_id), academic_session_id: CurrentAcademicSessionForSchool!.id }))
       } catch (error) {
         console.error("Error fetching student fees details:", error)
         toast({
@@ -674,7 +640,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardFooter>
             <Button
               variant="outline"
-              onClick={() => params.student_id && getStudentFeesDetails(Number.parseInt(params.student_id))}
+              onClick={() => params.student_id && getStudentFeesDetails({ student_id: Number.parseInt(params.student_id), academic_session_id: CurrentAcademicSessionForSchool!.id })}
             >
               {t("retry")}
             </Button>
@@ -736,8 +702,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             {student.first_name} {student.middle_name} {student.last_name}
           </CardTitle>
           <CardDescription>
-            {t("student_fee_details_for_academic_year")} 
-            {AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === studentFeeDetails.detail.fees_plan.academic_session_id)?.session_name}
+            {t("student_fee_details_for_academic_year")}
+            {AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === studentFeeDetails?.detail?.fees_plan?.academic_session_id)?.session_name}
             {/* {studentFeeDetails.detail.fees_plan.academic_session_id} */}
           </CardDescription>
         </CardHeader>
@@ -753,12 +719,12 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("fee_plan")}</p>
-              <p className="text-lg font-semibold">{studentFeeDetails.detail.fees_plan.name}</p>
+              <p className="text-lg font-semibold">{studentFeeDetails?.detail?.fees_plan?.name}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("payment_status")}</p>
-              <Badge variant={getStatusBadgeVariant(feesStatus.status)} className="text-sm">
-                {feesStatus.status}
+              <Badge variant={getStatusBadgeVariant(feesStatus!.status)} className="text-sm">
+                {feesStatus!.status}
               </Badge>
             </div>
           </div>
@@ -857,7 +823,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {studentFeeDetails.installments.length === 0 ? (
+              {studentFeeDetails?.installments?.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
                 </div>
@@ -946,7 +912,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     )}
 
                   {/* Fee Type Sections */}
-                  {studentFeeDetails.installments.map((feeType) => (
+                  {studentFeeDetails?.installments?.map((feeType) => (
                     <div key={feeType.id} className="mb-6">
                       <div className="bg-gray-50 p-3 border-b">
                         <h3 className="font-medium flex items-center">
@@ -1080,10 +1046,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                         }
                                       >
                                         {installment.is_paid &&
-                                        hasCarryForwardToPay({
-                                          carry_forward_amount: Number(installment.carry_forward_amount),
-                                          is_paid: installment.is_paid,
-                                        })
+                                          hasCarryForwardToPay({
+                                            carry_forward_amount: Number(installment.carry_forward_amount),
+                                            is_paid: installment.is_paid,
+                                          })
                                           ? "Pay Carry Forward"
                                           : "Pay Now"}
                                       </Button>
@@ -1110,8 +1076,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardTitle>Payment History</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {!studentFeeDetails.student.fees_status.paid_fees ||
-              studentFeeDetails.student.fees_status.paid_fees.length === 0 ? (
+              {!studentFeeDetails?.student.fees_status?.paid_fees ||
+                studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                 </div>
@@ -1132,13 +1098,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {studentFeeDetails.student.fees_status.paid_fees.map((payment) => {
+                    {studentFeeDetails?.student.fees_status?.paid_fees.map((payment) => {
                       // Find the corresponding installment details
                       let installmentDetails = { type: "Unknown", number: "-", feeType: "Unknown" }
                       let foundInstallment = null
                       let foundFeeType = null
 
-                      studentFeeDetails.installments.forEach((feeType) => {
+                      studentFeeDetails?.installments?.forEach((feeType) => {
                         feeType.installments_breakdown.forEach((installment) => {
                           if (installment.id === payment.installment_id) {
                             installmentDetails = {
@@ -1228,8 +1194,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </CardHeader>
             <CardContent className="p-0">
               {(student.provided_concession && student.provided_concession.length > 0) ||
-              (studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
+                (studentFeeDetails.detail.fees_plan.concession_for_plan &&
+                  studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
                 <>
                   <div className="p-4 bg-blue-50">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">{t("concession_summary")}</h3>
@@ -1329,7 +1295,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
                               <TableRow key={concession.id}>
                                 <TableCell className="font-medium">
-                                  {concession.concession?.name || `Concession #${concession.concession_id}`}
+                                  {concession.concession?.name || `Concession #${getConcessionNameFromId(concession.concession_id)}`}
                                 </TableCell>
                                 <TableCell>
                                   {concession.fees_type_id
@@ -1384,7 +1350,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           onSuccessfulSubmit={() => {
             setIsPayFeesDialogOpen(false)
             setSelectedInstallments([]) // Clear selected installments after successful payment
-            getStudentFeesDetails(Number.parseInt(params.student_id!))
+            getStudentFeesDetails({ student_id: Number.parseInt(params.student_id!), academic_session_id: CurrentAcademicSessionForSchool!.id })
           }}
           installments={selectedInstallmentForPayment ? [selectedInstallmentForPayment] : selectedInstallments}
           studentId={Number.parseInt(params.student_id)}

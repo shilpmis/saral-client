@@ -33,7 +33,7 @@ import InquiriesManagement from "../Admission/Inquiries"
 import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
 import StaffProfilePage from "@/pages/StaffProfilePage" // Import the StaffProfilePage component
-import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
+import { StudentPromotionManagement } from "../Settings/StudentManagement/StudentPromotionManagement"
 import EmployeePayrollDashboard from "@/pages/EmployeePayrollDashboard"
 import EmployeePayrollDetail from "@/pages/EmployeePayrollDetail"
 import PayrollAnalytics from "@/pages/PayrollAnalytics"
@@ -46,6 +46,7 @@ import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
 import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormForStaff"
 import PayRun from "../Payroll/Payrun"
 import StundetFeesStatus from "@/pages/StundetFeesStatus"
+import ManageStudents from "../Settings/StudentManagement/StudentManagement"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -312,7 +313,7 @@ export default function RootRoute() {
               path="payroll/employee/:employeeId/salary/create"
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
-                  <SalaryTemplateFormForStaff mode="create"/>
+                  <SalaryTemplateFormForStaff mode="create" />
                 </PrivateRoute>
               }
             />
@@ -369,7 +370,15 @@ export default function RootRoute() {
                 }
               />
               <Route
-                path="student"
+                path="manage/students"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <ManageStudents />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="manage/students/promotion"
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <StudentPromotionManagement />
@@ -475,4 +484,3 @@ export default function RootRoute() {
     </SearchProvider>
   )
 }
-  

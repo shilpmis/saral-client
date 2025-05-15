@@ -23,6 +23,7 @@ import { QuotaApi } from "@/services/QuotaService";
 import { DashboardApi } from "@/services/dashboardServices";
 import { PromotionApi } from "@/services/PromotionService";
 import { PayrollApi } from "@/services/PayrollService";
+import { StudentManagementApi } from "@/services/StudentManagementService";
 
 const store = configureStore({
   reducer: {
@@ -39,6 +40,7 @@ const store = configureStore({
     [AcademicApi.reducerPath]: AcademicApi.reducer,
     [StaffApi.reducerPath]: StaffApi.reducer,
     [StudentApi.reducerPath]: StudentApi.reducer,
+    [StudentManagementApi.reducerPath] : StudentManagementApi.reducer,
     [UserManagementApi.reducerPath]: UserManagementApi.reducer,
     [LeaveApi.reducerPath]: LeaveApi.reducer,
     [AttendanceApi.reducerPath]: AttendanceApi.reducer,
@@ -56,6 +58,7 @@ const store = configureStore({
       AcademicApi.middleware,
       StaffApi.middleware,
       StudentApi.middleware,
+      StudentManagementApi.middleware,
       UserManagementApi.middleware,
       LeaveApi.middleware,
       AttendanceApi.middleware,
