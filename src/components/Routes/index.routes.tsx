@@ -47,6 +47,8 @@ import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormFo
 import PayRun from "../Payroll/Payrun"
 import StundetFeesStatus from "@/pages/StundetFeesStatus"
 import ManageStudents from "../Settings/StudentManagement/StudentManagement"
+import SubjectSettings from "../Settings/AcademicSettings/SubjectSettings"
+import SubjectAssignment from "@/pages/SubjectAssignment"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -146,6 +148,15 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_STAFF]}
                 >
                   <StaffProfilePage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="subjects"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK ]}>
+                  <SubjectAssignment />
                 </PrivateRoute>
               }
             />
@@ -366,6 +377,14 @@ export default function RootRoute() {
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <AcademicSettings />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="academic/subjects"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SubjectSettings />
                   </PrivateRoute>
                 }
               />
