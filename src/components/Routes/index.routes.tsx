@@ -49,6 +49,8 @@ import StundetFeesStatus from "@/pages/StundetFeesStatus"
 import ManageStudents from "../Settings/StudentManagement/StudentManagement"
 import SubjectSettings from "../Settings/AcademicSettings/SubjectSettings"
 import SubjectAssignment from "@/pages/SubjectAssignment"
+import TimetableConfig from "../Settings/AcademicSettings/TimetableConfig"
+import TimetableManagement from "@/pages/TimeTable"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -155,8 +157,17 @@ export default function RootRoute() {
             <Route
               path="subjects"
               element={
-                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK ]}>
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK]}>
                   <SubjectAssignment />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="timetable"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK]}>
+                  <TimetableManagement />
                 </PrivateRoute>
               }
             />
@@ -385,6 +396,14 @@ export default function RootRoute() {
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <SubjectSettings />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="academic/timetable"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <TimetableConfig />
                   </PrivateRoute>
                 }
               />
