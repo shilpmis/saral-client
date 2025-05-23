@@ -39,12 +39,13 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { type AcademicSession, UserRole } from "@/types/user"
 import { toast } from "@/hooks/use-toast"
-import { useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
+import { useLazyGetAllClassesWithOutFeesPlanQuery } from "@/services/AcademicService"
 import { Label } from "@/components/ui/label"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { AcademicClasses } from "@/types/academic"
 
 type StatusFilter = "All" | "Active" | "Inactive"
 type ConfirmationDialogProps = {
@@ -110,7 +111,7 @@ export const FeePlanManagement: React.FC = () => {
   const [getFeePlanInDetail, { data: detailedFeePlan, isLoading: isLoadingDetailedPlan }] =
     useLazyFetchDetailFeePlanQuery()
   const [getClassesWithoutFeesPlan, { data: classesWithoutFeesPlan, isLoading: isLoadingClasses }] =
-    useLazyGetAllClassesWithOuutFeesPlanQuery()
+    useLazyGetAllClassesWithOutFeesPlanQuery()
 
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -256,7 +257,7 @@ export const FeePlanManagement: React.FC = () => {
           fees_plan: {
             name: `${detailedFeePlan.fees_plan.name} (Clone)`,
             description: detailedFeePlan.fees_plan.description,
-            division_id: values.division_id,
+            class_id: values.division_id,
           },
           plan_details: detailedFeePlan.fees_types.map((feeType) => ({
             fees_type_id: feeType.fees_type.fees_type_id,
@@ -389,6 +390,7 @@ export const FeePlanManagement: React.FC = () => {
     }
     getAllFeesType({
       academic_session_id: CurrentAcademicSessionForSchool!.id,
+      applicable_to : "plan",      
     })
   }, [])
 
@@ -512,16 +514,15 @@ export const FeePlanManagement: React.FC = () => {
                       <TableRow key={feePlan.id}>
                         <TableCell className="font-medium">{feePlan.name}</TableCell>
                         <TableCell>
-                          {AcademicDivision && AcademicClassesForSchool ? (
+                          {AcademicClassesForSchool ? (
                             (() => {
-                              const division = AcademicDivision.find((div) => div.id === feePlan.division_id)
-                              if (!division) return "N/A"
+                              const clas = AcademicClassesForSchool.find((cls) => cls.id === feePlan.class_id)
+                              if (!clas) return "N/A"
 
-                              const classInfo = AcademicClassesForSchool.find((cls) => cls.id === division.class_id)
+                              // const classInfo = AcademicClassesForSchool.find((cls) => cls.id === division.class_id)
                               return (
                                 <span>
-                                  {classInfo?.class || ""} - {division.division || ""}{" "}
-                                  {division.aliases ? `- ${division.aliases}` : ""}
+                                  Class - {clas.class}
                                 </span>
                               )
                             })()
@@ -717,18 +718,14 @@ export const FeePlanManagement: React.FC = () => {
                     <div>
                       <Label>{t("original_class")}</Label>
                       <div className="p-2 border rounded-md mt-1 bg-muted/50">
-                        {AcademicDivision && AcademicClassesForSchool
+                        { AcademicClassesForSchool
                           ? (() => {
-                              const division = AcademicDivision.find(
-                                (div) => div.id === detailedFeePlan.fees_plan.division_id,
-                              )
-                              if (!division) return "N/A"
+                              const classInfo = AcademicClassesForSchool.find((cls) => cls.id === detailedFeePlan.fees_plan.class_id)
+                              if (!classInfo) return "N/A"
 
-                              const classInfo = AcademicClassesForSchool.find((cls) => cls.id === division.class_id)
                               return (
                                 <span>
-                                  {classInfo?.class || ""} - {division.division || ""}{" "}
-                                  {division.aliases ? `- ${division.aliases}` : ""}
+                                  {classInfo?.class || ""}
                                 </span>
                               )
                             })()
@@ -772,10 +769,11 @@ export const FeePlanManagement: React.FC = () => {
                           </FormControl>
                           <SelectContent>
                             {classesWithoutFeesPlan &&
-                              classesWithoutFeesPlan.map((cls) => (
+                              classesWithoutFeesPlan.map((cls : AcademicClasses) => (
                                 <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
-                                  {AcademicClassesForSchool && AcademicClassesForSchool.find((clas) => clas.id === cls.class_id)?.class}
-                                  -{cls.division} {cls.aliases}
+                                  {/* {AcademicClassesForSchool && AcademicClassesForSchool.find((clas) => clas.id === cls.class_id)?.class}
+                                  -{cls.division} {cls.aliases} */}
+                                  Class {cls.class}
                                 </SelectItem>
                               ))}
                             {isLoadingClasses && (

@@ -36,9 +36,9 @@ export const StaffApi = createApi({
         method: "GET",
       }),
     }),
-    getAllTeachingStaff: builder.query<StaffType[], { school_id: number }>({
-      query: ({ school_id }) => ({
-        url: `teachers/all/${school_id}`,
+    getAllTeachingStaff: builder.query<StaffType[],{ academic_sessions: number;}>({
+      query: ({ academic_sessions }) => ({
+        url: `staff?type=${"teaching"}&academic_sessions=${academic_sessions}&alldata=true`,
         method: "GET",
       }),
     }),
@@ -140,6 +140,7 @@ export const {
   useLazySearchStaffQuery,
   useGetStaffByIdQuery,
   useLazyGetStaffByIdQuery,
+  useLazyGetAllTeachingStaffQuery
 } = StaffApi
 
 export const createStaffRole = createAsyncThunk(

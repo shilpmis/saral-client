@@ -4,6 +4,8 @@ import {
   Concession,
   ConcessionDetails,
   DetailedFeesPlan,
+  ExtraFeesAppliedToStudent,
+  FeePaymentReqForExtraFees,
   FeePaymentRequest,
   FeesPlan,
   FeesType,
@@ -11,6 +13,7 @@ import {
   ReqBodyForApplyConsessionToStudent,
   ReqObjectForCreateFeesPlan,
   ReqObjectForUpdateFeesPlan,
+  RequestForApplyExtraFees,
   StudentFeeDetails,
   StudentWithFeeStatus,
 } from "@/types/fees";
@@ -35,16 +38,16 @@ export const FeesApi = createApi({
   endpoints: (builder) => ({
     getFeesType: builder.query<
       { data: FeesType[]; meta: PageMeta },
-      { page?: number; academic_session: number }
+      { page?: number; academic_session: number, applicable_to: "All" | "student" | "plan", status?: "Active" | "Inactive" }
     >({
-      query: ({ page = 1, academic_session }) => ({
-        url: `/feestype?page=${page}&academic_session=${academic_session}`,
+      query: ({ page = 1, academic_session, applicable_to = 'All', status = 'Active' }) => ({
+        url: `/feestype?page=${page}&academic_session=${academic_session}&type=${applicable_to}&status=${status}`,
         method: "GET",
       }),
     }),
-    getAllFeesType: builder.query<FeesType[], { academic_session_id: number }>({
-      query: ({ academic_session_id }) => ({
-        url: `/feestype?all=true&academic_session=${academic_session_id}`,
+    getAllFeesType: builder.query<FeesType[], { academic_session_id: number, applicable_to: "All" | "student" | "plan", status?: "Active" | "Inactive" }>({
+      query: ({ academic_session_id, applicable_to = 'All', status = 'Active' }) => ({
+        url: `/feestype?all=true&academic_session=${academic_session_id}&type=${applicable_to}&status=${status}`,
         method: "GET",
       }),
     }),
@@ -195,10 +198,21 @@ export const FeesApi = createApi({
       }),
     }),
 
-    getStudentFeesDetails: builder.query<StudentFeeDetails, number>({
-      query: (student_id) => ({
-        url: `/fees/status/student/${student_id}`,
+    getStudentFeesDetails: builder.query<StudentFeeDetails, { student_id: number, academic_session_id: number }>({
+      query: ({ student_id, academic_session_id }) => ({
+        url: `/fees/status/student/${student_id}?academic_session=${academic_session_id}`,
         method: "GET",
+      }),
+    }),
+
+    applyExtraFeesPlanOnStudentFeesPlan: builder.mutation<
+      ExtraFeesAppliedToStudent,
+      { payload : RequestForApplyExtraFees }
+    >({
+      query: ({ payload }) => ({
+        url: `/feesplan/applyextrafees`,
+        method: "POST",
+        body: payload,
       }),
     }),
 
@@ -226,6 +240,19 @@ export const FeesApi = createApi({
         },
       }),
     }),
+
+
+    payMultipleInstallmentsForExtraFees: builder.mutation<
+      any,
+      { payload: FeePaymentReqForExtraFees }
+    >({
+      query: ({ payload }) => ({
+        url: `/fees/pay/extra/installments`,
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     updatePaymentStatus: builder.mutation<
       any,
       { payload: { status: string; remarks: string }; transaction_id: number }
@@ -243,6 +270,16 @@ export const FeesApi = createApi({
     >({
       query: ({ page = 1, academic_session }) => ({
         url: `/concessions?academic_session=${academic_session}&page=${page}`,
+        method: "GET",
+      }),
+    }),
+
+    getAllConcessions: builder.query<
+      Concession[],
+      { academic_session_id: number }
+    >({
+      query: ({ academic_session_id }) => ({
+        url: `/concessions/all?academic_session=${academic_session_id}`,
         method: "GET",
       }),
     }),
@@ -352,6 +389,7 @@ export const {
   useGetFeesTypeQuery,
   useLazyGetFeesTypeQuery,
   useLazyGetAllFeesTypeQuery,
+  useGetAllFeesTypeQuery,
   useLazyGetFilterFeesTypeQuery,
   useCreateFeesTypeMutation,
   useUpdateFeesTypeMutation,
@@ -362,6 +400,8 @@ export const {
   useLazyFetchDetailFeePlanQuery, // to fetch single fee plan
 
   useLazyUpdateFeesPlanStatusQuery,
+
+  useGetAllConcessionsQuery,
 
   useUpdateConcsessionAppliedToPlanMutation,
   useUpdateConcsessionAppliedToStudentMutation,
@@ -382,4 +422,7 @@ export const {
   useLazyGetConcessionsInDetailQuery,
   useApplyConcessionsToPlanMutation,
   useApplyConcessionsToStudentMutation,
+
+  useApplyExtraFeesPlanOnStudentFeesPlanMutation,
+  usePayMultipleInstallmentsForExtraFeesMutation
 } = FeesApi;

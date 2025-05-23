@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -21,64 +21,32 @@ import {
   Info,
   CheckCircle2,
   Eye,
-  Plus,
-  AlertCircle,
 } from "lucide-react"
-import {
-  useGetAllConcessionsQuery,
-  useLazyGetStudentFeesDetailsQuery,
-  useGetAllFeesTypeQuery,
-} from "@/services/feesService"
+import { useLazyGetStudentFeesDetailsQuery, useGetAllFeesTypeQuery, useGetAllConcessionsQuery } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
 import InstallmentDetailView from "@/components/Fees/Reports/InstallmentDetailViewProps"
 import PaymentReceiptGenerator from "@/components/Fees/Reports/PaymentReceiptGenerator"
-import type { InstallmentBreakdown } from "@/types/fees"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type { InstallmentBreakdown, StudentFeeDetails } from "@/types/fees"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
-import ApplyExtraFeesDialog from "@/components/Fees/StudentFee/ApplyExtraFeesDialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import PayExtraFeesDialog from "@/components/Fees/PayFees/PayExtraFeesDialog"
-import type { ExtraFeesAppliedToStudent } from "@/types/fees"
-
-// Create a cache for fee types to avoid repeated lookups
-const feeTypeCache = new Map<number, any>()
-
-// Format currency as Indian Rupees
-const formatCurrency = (amount: string | number | null | undefined) => {
-  if (amount === null || amount === undefined || isNaN(Number(amount))) return "₹0.00"
-  return `₹${Number(amount).toLocaleString("en-IN", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-  })}`
-}
-
-// Get fee type by ID from cache or API data
-const getFeeTypeById = (feeTypeId: number, feeTypes: any[]): any => {
-  // First check the cache
-  if (feeTypeCache.has(feeTypeId)) {
-    return feeTypeCache.get(feeTypeId)
-  }
-
-  // If not in cache, check the API data
-  if (feeTypes && feeTypes.length > 0) {
-    const feeType = feeTypes.find((type) => type.id === feeTypeId)
-    if (feeType) {
-      // Store in cache for future use
-      feeTypeCache.set(feeTypeId, feeType)
-      return feeType
-    }
-  }
-
-  // Return null if not found
-  return null
-}
+import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
+import { selectAccademicSessionsForSchool, selectCurrentSchool } from "@/redux/slices/authSlice"
 
 // Extended interface for installment breakdown with additional fields
-interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
+interface ExtendedInstallmentBreakdown extends Omit<InstallmentBreakdown, "fee_plan_details_id"> {
   original_amount?: string
   discounted_amount?: string
   paid_amount?: string
@@ -89,51 +57,121 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   payment_date?: string | null
   transaction_reference?: string | null
   amount_paid_as_carry_forward?: string
+  fee_plan_details_id: number
+  status: "Paid" | "Unpaid" | "Partially Paid" | "Overdue" | "Failed"
   applied_concession?:
-    | {
-        concession_id: number
-        applied_amount: number
-      }[]
-    | null
+  | {
+    concession_id: number
+    applied_amount: number
+    concession?: {
+      id: number
+      name: string
+    }
+  }[]
+  | null
 }
 
-type StudentFeesPanelProps = {}
+// Fee type interface
+interface FeesType {
+  id: number
+  name: string
+  description?: string
+  academic_session_id: number
+  status?: string
+}
 
-const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
+// Academic session interface (simplified)
+interface AcademicSession {
+  id: number
+  session_name: string
+  // Add other properties as needed
+}
+
+// School info interface
+interface SchoolInfo {
+  name: string
+  address: string
+  logo?: string
+  // Add other properties as needed
+}
+
+// Component props
+interface StudentFeesPanelProps {
+  // For standalone mode (via URL)
+  studentId?: number
+
+  // For dialog mode (passed from parent)
+  studentFeeDetails?: StudentFeeDetails
+  isLoading?: boolean
+  onClose?: () => void
+  academicSession?: AcademicSession
+  schoolInfo?: SchoolInfo
+  showBackButton?: boolean
+}
+
+const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
+  studentId: propStudentId,
+  studentFeeDetails: propStudentFeeDetails,
+  isLoading: propIsLoading,
+  onClose,
+  academicSession: propAcademicSession,
+  schoolInfo: propSchoolInfo,
+  showBackButton = true,
+}) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
+  const [getStudentFeesDetails, { data: fetchedStudentFeeDetails, isLoading: isFetchLoading, isError, isFetching }] =
     useLazyGetStudentFeesDetailsQuery()
+
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
-  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  // Determine if we're in standalone mode or dialog mode
+  const isStandaloneMode = !propStudentFeeDetails || !!params.student_id
+
+  // Determine student ID from props or URL params
+  const effectiveStudentId = useMemo(() => {
+    if (propStudentId) return propStudentId
+    if (params.student_id) return Number.parseInt(params.student_id)
+    return null
+  }, [propStudentId, params.student_id])
+
+  // Selectors for standalone mode
+  const academicClasses = useAppSelector(selectAcademicClasses)
+  const academicDivisions = useAppSelector(selectAllAcademicClasses)
+  const academicSessions = useAppSelector(selectAccademicSessionsForSchool)
+  const schoolDetails = useAppSelector(selectCurrentSchool)
+
+  // Use passed data or fetched data
+  const studentFeeDetails = useMemo(() => {
+    return propStudentFeeDetails || fetchedStudentFeeDetails
+  }, [propStudentFeeDetails, fetchedStudentFeeDetails])
+
+  // Use passed loading state or fetch loading state
+  const isLoading = useMemo(() => {
+    return propIsLoading !== undefined ? propIsLoading : isFetchLoading || isFetching || isInitialLoading
+  }, [propIsLoading, isFetchLoading, isFetching, isInitialLoading])
+
+  // Use passed academic session or selector
+  const effectiveAcademicSession = useMemo(() => {
+    return propAcademicSession || (academicSessions?.length ? academicSessions[0] : undefined)
+  }, [propAcademicSession, academicSessions])
+
+  // Use passed school info or selector
+  const effectiveSchoolInfo = useMemo(() => {
+    if (propSchoolInfo) return propSchoolInfo
+    return {
+      name: schoolDetails?.name || "School Management System",
+      address: schoolDetails?.address || "",
+      logo: "",
+    }
+  }, [propSchoolInfo, schoolDetails])
 
   const [activeTab, setActiveTab] = useState("due-fees")
   const [isPayFeesDialogOpen, setIsPayFeesDialogOpen] = useState(false)
-  const [isConcessionDialogOpen, setIsConcessionDialogOpen] = useState(false)
-  const [isApplyExtraFeesDialogOpen, setIsApplyExtraFeesDialogOpen] = useState(false)
   const [selectedInstallments, setSelectedInstallments] = useState<ExtendedInstallmentBreakdown[]>([])
   const [selectedInstallmentForPayment, setSelectedInstallmentForPayment] =
     useState<ExtendedInstallmentBreakdown | null>(null)
-
-  // Keep the state for extra fees selection
-  const [selectedExtraFees, setSelectedExtraFees] = useState<
-    {
-      key: string
-      extraFeeId: number
-      installmentId: number
-      fees_type_id: number
-      amount: number
-      installment_no: number
-    }[]
-  >([])
-
-  // State for extra fees
-  const [selectedExtraFeeForPayment, setSelectedExtraFeeForPayment] = useState<ExtraFeesAppliedToStudent | null>(null)
-  const [isPayExtraFeesDialogOpen, setIsPayExtraFeesDialogOpen] = useState(false)
-  const [isExtraFeeDetailViewOpen, setIsExtraFeeDetailViewOpen] = useState(false)
-  const [selectedExtraFeeForView, setSelectedExtraFeeForView] = useState<ExtraFeesAppliedToStudent | null>(null)
 
   // States for detail view and receipt generator
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
@@ -144,30 +182,89 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const [selectedInstallmentForReceipt, setSelectedInstallmentForReceipt] = useState<any>(null)
   const [selectedFeeTypeForReceipt, setSelectedFeeTypeForReceipt] = useState<any>(null)
 
-  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  // State for payment status update
+  const [isUpdateStatusDialogOpen, setIsUpdateStatusDialogOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<any>(null)
 
-  const { data: feeTypes } = useGetAllFeesTypeQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool?.id || 0, applicable_to: "All" },
-    { skip: !CurrentAcademicSessionForSchool?.id },
+  // Get academic session ID for fee types query
+  const academicSessionId = useMemo(() => {
+    if (studentFeeDetails?.detail?.fees_plan?.academic_session_id) {
+      return studentFeeDetails.detail.fees_plan.academic_session_id
+    }
+    // Fallback to effective academic session if needed
+    return effectiveAcademicSession?.id
+  }, [studentFeeDetails?.detail?.fees_plan?.academic_session_id, effectiveAcademicSession])
+
+  // Fetch fee types from API
+  const { data: feeTypes, isLoading: isLoadingFeeTypes } = useGetAllFeesTypeQuery(
+    { academic_session_id: academicSessionId! , applicable_to : "All" },
+    { skip: !academicSessionId },
   )
 
-  // Get fee type name from ID
-  const getFeeTypeName = (feeTypeId: number): string => {
-    if (!feeTypeId) return t("unknown_fee_type")
+  // Fetch cooncrssion types from API
+  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
+    { academic_session_id: academicSessionId || 0 },
+    { skip: !academicSessionId },
+  )
 
-    const feeType = getFeeTypeById(feeTypeId, feeTypes || [])
-    if (feeType) {
-      return feeType.name
-    }
-
-    return `${t("fee_type")} ${feeTypeId}`
+  // Format date to readable format
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
   }
 
-  // Fetch concession types from API
-  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool!.id },
-    { skip: !CurrentAcademicSessionForSchool!.id },
-  )
+  // Format currency
+  const formatCurrency = (amount: string | number | null | undefined) => {
+    if (amount === null || amount === undefined) return "₹0.00"
+    return `₹${Number(amount).toLocaleString("en-IN", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    })}`
+  }
+
+  // Get status badge variant based on status
+  const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
+    switch (status) {
+      case "Paid":
+        return "default"
+      case "Partially Paid":
+        return "outline"
+      case "Overdue":
+        return "destructive"
+      default:
+        return "secondary"
+    }
+  }
+
+  // Get fee type name from ID using the API data
+  const getFeeTypeName = (feeTypeId: number, studentData?: StudentFeeDetails): string => {
+    if (!feeTypeId) return t("unknown_fee_type")
+
+    // First check if we have the fee type in our API data
+    if (feeTypes && feeTypes.length > 0) {
+      const feeType = feeTypes.find((type) => type.id === feeTypeId)
+      if (feeType) {
+        return feeType.name
+      }
+    }
+
+    // Then try to find it in the installments data
+    if (studentData?.installments) {
+      const feeType = studentData.installments.find((installment) => installment.fees_type_id === feeTypeId)
+
+      if (feeType?.installment_type) {
+        return `${feeType.installment_type} ${t("fee")}`
+      }
+    }
+
+    // Fallback to a generic name with the ID
+    return `${t("fee_type")} ${feeTypeId}`
+  }
 
   // Get concession name from ID using the API data
   const getConcessionNameFromId = (concessionId: number): string => {
@@ -185,30 +282,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     return `${t("concession")} ${concessionId}`
   }
 
-  // Format date to readable format
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "-"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
+  // Get concession name with proper fallback
+  // const getConcessionName = (concession: any): string => {
+  //   if (concession?.concession?.name) {
+  //     return concession.concession.name
+  //   }
 
-  // Get status badge variant based on status
-  const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
-    switch (status) {
-      case "Paid":
-        return "default"
-      case "Partially Paid":
-        return "outline"
-      case "Overdue":
-        return "destructive"
-      default:
-        return "secondary"
-    }
-  }
+  //   return `${t("concession")} #${concession?.concession_id || "Unknown"}`
+  // }
 
   // Toggle installment selection
   const toggleInstallmentSelection = (installment: ExtendedInstallmentBreakdown) => {
@@ -219,78 +300,18 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
-  // Keep the toggleExtraFeeSelection function
-  const toggleExtraFeeSelection = (extraFee: ExtraFeesAppliedToStudent, installmentId: number) => {
-    const key = `${extraFee.id}-${installmentId}`
-
-    if (selectedExtraFees.some((item) => item.key === key)) {
-      setSelectedExtraFees(selectedExtraFees.filter((item) => item.key !== key))
-    } else {
-      // Find the specific installment
-      const installment = extraFee.installment_breakdown.find((inst) => inst.id === installmentId)
-      if (installment) {
-        setSelectedExtraFees([
-          ...selectedExtraFees,
-          {
-            key,
-            extraFeeId: extraFee.id,
-            installmentId,
-            fees_type_id: extraFee.fees_type_id,
-            amount: installment.installment_amount,
-            installment_no: installment.installment_no,
-          },
-        ])
-      }
-    }
-  }
-
   // Handle pay fees button click for multiple installments
   const handlePayFees = () => {
     if (selectedInstallments.length === 0) {
       toast({
         variant: "destructive",
-        title: "No installments selected",
-        description: "Please select at least one installment to pay",
+        title: t("no_installments_selected"),
+        description: t("please_select_at_least_one_installment_to_pay"),
       })
       return
     }
 
     setIsPayFeesDialogOpen(true)
-  }
-
-  // Keep the handlePayExtraFees function
-  const handlePayExtraFees = () => {
-    if (selectedExtraFees.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No extra fees selected",
-        description: "Please select at least one extra fee installment to pay",
-      })
-      return
-    }
-
-    // Group selected installments by extra fee ID
-    const groupedByExtraFee = selectedExtraFees.reduce(
-      (acc, item) => {
-        if (!acc[item.extraFeeId]) {
-          acc[item.extraFeeId] = []
-        }
-        acc[item.extraFeeId].push(item)
-        return acc
-      },
-      {} as Record<number, any[]>,
-    )
-
-    // If only one extra fee is selected, set it as the selected one
-    if (Object.keys(groupedByExtraFee).length === 1) {
-      const extraFeeId = Number(Object.keys(groupedByExtraFee)[0])
-      const extraFee = extraFees.find((fee) => fee.id === extraFeeId)
-      if (extraFee) {
-        setSelectedExtraFeeForPayment(extraFee)
-      }
-    }
-
-    setIsPayExtraFeesDialogOpen(true)
   }
 
   // Handle pay single installment
@@ -299,18 +320,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsPayFeesDialogOpen(true)
   }
 
-  // Handle pay single extra fee
-  const handlePaySingleExtraFee = (extraFee: ExtraFeesAppliedToStudent) => {
-    setSelectedExtraFeeForPayment(extraFee)
-    setIsPayExtraFeesDialogOpen(true)
-  }
-
   // Handle back to list button click
   const handleBackToList = () => {
-    navigate(-1)
+    if (onClose) {
+      onClose()
+    } else {
+      navigate(-1)
+    }
   }
 
-  // Calculate total selected amount for regular installments
+  // Calculate total selected amount
   const calculateTotalSelectedAmount = () => {
     if (selectedInstallmentForPayment) {
       // For single installment payment
@@ -327,28 +346,31 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
-  // Keep the calculateTotalSelectedExtraFeesAmount function
-  const calculateTotalSelectedExtraFeesAmount = () => {
-    return selectedExtraFees.reduce((total, item) => {
-      return total + Number(item.amount || 0)
-    }, 0)
-  }
-
   // Calculate payment progress percentage
   const calculatePaymentProgress = () => {
-    if (!studentFeeDetails) return 0
+    if (!studentFeeDetails?.student?.fees_status) return 0
 
-    const totalAmount = Number(studentFeeDetails?.student.fees_status?.total_amount)
-    const paidAmount =
-      Number(studentFeeDetails?.student.fees_status?.paid_amount) +
-      Number(studentFeeDetails?.student.fees_status?.discounted_amount)
+    const totalAmount = Number(studentFeeDetails.student.fees_status.total_amount || 0)
+    if (totalAmount === 0) return 0
 
-    return Math.round((paidAmount / totalAmount) * 100)
+    const paidAmount = Number(studentFeeDetails.student.fees_status.paid_amount || 0)
+    const discountedAmount = Number(studentFeeDetails.student.fees_status.discounted_amount || 0)
+
+    return Math.round(((paidAmount + discountedAmount) / totalAmount) * 100)
   }
 
-  // First, add a new state for the fee status update dialog
-  const [isUpdateStatusDialogOpen, setIsUpdateStatusDialogOpen] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<any>(null)
+  // Check if an installment has carry-forward amount that needs to be paid
+  const hasCarryForwardToPay = (installment: {
+    carry_forward_amount?: string | number
+    is_paid?: boolean
+  }): boolean => {
+    // Check if the installment has carry-forward amount
+    const carryForwardAmount = Number(installment.carry_forward_amount || 0)
+
+    // If there's carry-forward amount and the installment is marked as paid
+    // but still has carry-forward to be paid, return true
+    return carryForwardAmount > 0 && !!installment.is_paid
+  }
 
   // Add a function to handle opening the update status dialog
   const handleUpdateStatus = (payment: any) => {
@@ -363,12 +385,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsDetailViewOpen(true)
   }
 
-  // Add a function to handle viewing extra fee details
-  const handleViewExtraFeeDetails = (extraFee: ExtraFeesAppliedToStudent) => {
-    setSelectedExtraFeeForView(extraFee)
-    setIsExtraFeeDetailViewOpen(true)
-  }
-
   // Add a function to handle generating fee receipt
   const handleGenerateReceipt = (payment: any) => {
     // Find the corresponding installment and fee type
@@ -378,8 +394,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     if (!studentFeeDetails) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Student fee details not available",
+        title: t("error"),
+        description: t("student_fee_details_not_available"),
       })
       return
     }
@@ -401,8 +417,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not find installment details for this payment",
+        title: t("error"),
+        description: t("could_not_find_installment_details_for_this_payment"),
       })
     }
   }
@@ -413,12 +429,22 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     let foundInstallment = null
     let foundFeeType = null
 
-    studentFeeDetails?.student.fees_status?.paid_fees?.forEach((paid_fees) => {
-      if (paid_fees.installment_id === payment.installment_id) {
-        foundInstallment = paid_fees
-        foundFeeType = {}
-        return
-      }
+    if (!studentFeeDetails?.student?.fees_status?.paid_fees) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("payment_history_not_available"),
+      })
+      return
+    }
+
+    studentFeeDetails.installments?.forEach((feeType) => {
+      feeType.installments_breakdown.forEach((installment) => {
+        if (installment.id === payment.installment_id) {
+          foundInstallment = installment
+          foundFeeType = feeType
+        }
+      })
     })
 
     if (foundInstallment && foundFeeType) {
@@ -428,17 +454,17 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not find installment details for this payment",
+        title: t("error"),
+        description: t("could_not_find_installment_details_for_this_payment"),
       })
     }
   }
 
   // Calculate available concession balance
   const calculateAvailableConcessionBalance = () => {
-    if (!studentFeeDetails) return { student_concession: 0, plan_concession: 0 }
+    if (!studentFeeDetails?.detail?.wallet) return { student_concession: 0, plan_concession: 0 }
 
-    const wallet = studentFeeDetails?.detail?.wallet || {
+    const wallet = studentFeeDetails.detail.wallet || {
       total_concession_for_student: 0,
       total_concession_for_plan: 0,
     }
@@ -447,16 +473,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       student_concession: Number(wallet.total_concession_for_student || 0),
       plan_concession: Number(wallet.total_concession_for_plan || 0),
     }
-  }
-
-  // Check if an installment has carry-forward amount that needs to be paid
-  const hasCarryForwardToPay = (installment: { carry_forward_amount: number; is_paid: boolean }): boolean => {
-    // Check if the installment has carry-forward amount
-    const carryForwardAmount = Number(installment.carry_forward_amount || 0)
-
-    // If there's carry-forward amount and the installment is marked as paid
-    // but still has carry-forward to be paid, return true
-    return carryForwardAmount > 0 && installment.is_paid
   }
 
   // Handle print all details
@@ -468,186 +484,319 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     if (!printWindow) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not open print window. Please check your popup blocker settings.",
+        title: t("error"),
+        description: t("could_not_open_print_window_please_check_your_popup_blocker_settings"),
       })
       return
     }
 
     // Generate HTML content for printing
-    const student = studentFeeDetails.student
-    const feesStatus = student.fees_status
-    const extraFees = studentFeeDetails.detail?.extra_fees || []
+    const studentData = studentFeeDetails.student
+    const feesStatus = studentData.fees_status || {
+      total_amount: "0",
+      paid_amount: "0",
+      discounted_amount: "0",
+      due_amount: "0",
+      status: "Unknown",
+    }
+    const paymentProgress = calculatePaymentProgress()
 
     const printContent = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Student Fee Details</title>
+        <title>${t("student_fee_details")}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .section { margin-bottom: 20px; }
-          .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; }
-          .summary-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            color: #333;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+          }
+          .school-logo {
+            max-width: 100px;
+            max-height: 100px;
+            margin-bottom: 10px;
+          }
+          .school-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .school-address {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+          }
+          .report-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: #444;
+          }
+          .section { 
+            margin-bottom: 25px; 
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+          }
+          .section-title { 
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: #444;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px;
+          }
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #f5f5f5; 
+            font-weight: bold;
+          }
+          tr:nth-child(even) {
+            background-color: #f9f9f9;
+          }
+          .summary-box { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 5px;
+            background-color: #f9f9f9;
+          }
+          .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          }
+          .summary-label {
+            font-weight: bold;
+            color: #555;
+          }
+          .summary-value {
+            text-align: right;
+          }
+          .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+          }
+          .progress-bar {
+            height: 20px;
+            background-color: #4caf50;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+          }
+          .footer { 
+            margin-top: 30px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #666; 
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+          }
+          .print-button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 20px auto;
+            cursor: pointer;
+            border-radius: 5px;
+          }
           @media print {
-            button { display: none; }
+            .print-button { display: none; }
+            body { margin: 0; padding: 15px; }
+            .section { break-inside: avoid; }
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>Student Fee Details</h1>
-          <p>Generated on ${new Date().toLocaleDateString()}</p>
+          ${effectiveSchoolInfo.logo ? `<img src="${effectiveSchoolInfo.logo}" class="school-logo" alt="School Logo" />` : ""}
+          <div class="school-name">${effectiveSchoolInfo.name}</div>
+          <div class="school-address">${effectiveSchoolInfo.address || ""}</div>
+          <div class="report-title">${t("student_fee_details")}</div>
+          <p>${t("generated_on")} ${new Date().toLocaleDateString()}</p>
         </div>
         
         <div class="section">
-          <div class="section-title">Student Information</div>
+          <div class="section-title">${t("student_information")}</div>
           <div class="summary-box">
-            <p><strong>Name:</strong> ${student.first_name} ${student.middle_name || ""} ${student.last_name}</p>
-            <p><strong>GR Number:</strong> ${student.gr_no}</p>
-            <p><strong>Roll Number:</strong> ${student.roll_number}</p>
-            <p><strong>Fee Plan:</strong> ${studentFeeDetails?.detail?.fees_plan?.name}</p>
+            <div class="summary-item">
+              <span class="summary-label">${t("name")}:</span>
+              <span class="summary-value">${studentData.first_name} ${studentData.middle_name || ""} ${studentData.last_name}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("gr_number")}:</span>
+              <span class="summary-value">${studentData.gr_no}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("roll_number")}:</span>
+              <span class="summary-value">${studentData.roll_number}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("fee_plan")}:</span>
+              <span class="summary-value">${studentFeeDetails.detail?.fees_plan?.name || "-"}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("academic_year")}:</span>
+              <span class="summary-value">${effectiveAcademicSession?.session_name ||
+      studentFeeDetails.detail?.fees_plan?.academic_session_id ||
+      "-"
+      }</span>
+            </div>
           </div>
         </div>
         
         <div class="section">
-          <div class="section-title">Fee Summary</div>
+          <div class="section-title">${t("fee_summary")}</div>
           <div class="summary-box">
-            <p><strong>Total Fees:</strong> ${formatCurrency(feesStatus?.total_amount)}</p>
-            <p><strong>Paid Amount:</strong> ${formatCurrency(feesStatus?.paid_amount)}</p>
-            <p><strong>Discounted Amount:</strong> ${formatCurrency(feesStatus?.discounted_amount)}</p>
-            <p><strong>Due Amount:</strong> ${formatCurrency(feesStatus?.due_amount)}</p>
-            <p><strong>Payment Status:</strong> ${feesStatus?.status}</p>
-            <p><strong>Payment Progress:</strong> ${calculatePaymentProgress()}%</p>
+            <div class="summary-item">
+              <span class="summary-label">${t("total_fees")}:</span>
+              <span class="summary-value">${formatCurrency(feesStatus?.total_amount)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("paid_amount")}:</span>
+              <span class="summary-value">${formatCurrency(feesStatus?.paid_amount)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("discounted_amount")}:</span>
+              <span class="summary-value">${formatCurrency(feesStatus?.discounted_amount)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("due_amount")}:</span>
+              <span class="summary-value">${formatCurrency(feesStatus?.due_amount)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("payment_status")}:</span>
+              <span class="summary-value">${feesStatus?.status || "-"}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">${t("payment_progress")}:</span>
+              <span class="summary-value">${paymentProgress}%</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" style="width: ${paymentProgress}%">
+                ${paymentProgress}%
+              </div>
+            </div>
           </div>
         </div>
         
         <div class="section">
-          <div class="section-title">Installment Details</div>
+          <div class="section-title">${t("installment_details")}</div>
           <table>
             <thead>
               <tr>
-                <th>Fee Type</th>
-                <th>Installment</th>
-                <th>Due Date</th>
-                <th>Amount</th>
-                <th>Discount</th>
-                <th>Payable</th>
-                <th>Status</th>
+                <th>${t("fee_type")}</th>
+                <th>${t("installment")}</th>
+                <th>${t("due_date")}</th>
+                <th>${t("amount")}</th>
+                <th>${t("discount")}</th>
+                <th>${t("payable")}</th>
+                <th>${t("status")}</th>
               </tr>
             </thead>
             <tbody>
-              ${studentFeeDetails?.installments
-                ?.map((feeType) =>
-                  feeType.installments_breakdown
-                    .map(
-                      (installment) => `
+              ${studentFeeDetails.installments
+        ?.map((feeType) =>
+          feeType.installments_breakdown
+            .map(
+              (installment) => `
                   <tr>
-                    <td>${getFeeTypeName(feeType.fees_type_id)}</td>
+                    <td>${getFeeTypeName(feeType.fees_type_id, studentFeeDetails)}</td>
                     <td>${feeType.installment_type} - ${installment.installment_no}</td>
                     <td>${formatDate(installment.due_date)}</td>
                     <td>${formatCurrency(installment.installment_amount)}</td>
                     <td>${formatCurrency(installment.discounted_amount)}</td>
-                    <td>${formatCurrency(Number(installment.installment_amount) - Number(installment.discounted_amount))}</td>
-                    <td>${installment.payment_status || "Unpaid"}</td>
+                    <td>${formatCurrency(
+                Number(installment.installment_amount || 0) - Number(installment.discounted_amount || 0),
+              )}</td>
+                    <td>${installment.payment_status || t("unpaid")}</td>
                   </tr>
                 `,
-                    )
-                    .join(""),
-                )
-                .join("")}
+            )
+            .join(""),
+        )
+        .join("") || `<tr><td colspan="7" style="text-align: center">${t("no_installments_found")}</td></tr>`
+      }
             </tbody>
           </table>
         </div>
         
-        ${
-          extraFees.length > 0
-            ? `
         <div class="section">
-          <div class="section-title">Extra Fees</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Fee Type</th>
-                <th>Due Date</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${extraFees
-                .map(
-                  (extraFee: any) => `
-                <tr>
-                  <td>${getFeeTypeName(extraFee.fees_type_id)}</td>
-                  <td>${formatDate(extraFee.due_date)}</td>
-                  <td>${formatCurrency(extraFee.amount)}</td>
-                  <td>${extraFee.status || "Unpaid"}</td>
-                  <td>${extraFee.description || "-"}</td>
-                </tr>
-              `,
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-        `
-            : ""
-        }
-        
-        <div class="section">
-          <div class="section-title">Payment History</div>
-          ${
-            !studentFeeDetails?.student.fees_status?.paid_fees ||
-            studentFeeDetails?.student.fees_status?.paid_fees.length === 0
-              ? `<p>No payment history found.</p>`
-              : `<table>
+          <div class="section-title">${t("payment_history")}</div>
+          ${!studentFeeDetails.student.fees_status?.paid_fees ||
+        studentFeeDetails.student.fees_status.paid_fees.length === 0
+        ? `<p style="text-align: center">${t("no_payment_history_found")}</p>`
+        : `<table>
               <thead>
                 <tr>
-                  <th>Payment ID</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Discount</th>
-                  <th>Carry Forward</th>
-                  <th>Remaining</th>
-                  <th>Mode</th>
-                  <th>Status</th>
+                  <th>${t("payment_id")}</th>
+                  <th>${t("date")}</th>
+                  <th>${t("amount")}</th>
+                  <th>${t("discount")}</th>
+                  <th>${t("carry_forward")}</th>
+                  <th>${t("remaining")}</th>
+                  <th>${t("mode")}</th>
+                  <th>${t("status")}</th>
                 </tr>
               </thead>
               <tbody>
-                ${studentFeeDetails?.student.fees_status?.paid_fees
-                  .map(
-                    (payment) => `
+                ${studentFeeDetails.student.fees_status.paid_fees
+          .map(
+            (payment) => `
                   <tr>
                     <td>#${payment.id}</td>
                     <td>${formatDate(payment.payment_date)}</td>
                     <td>${formatCurrency(payment.paid_amount)}</td>
                     <td>${formatCurrency(payment.discounted_amount)}</td>
-                    <td>${Number(payment.amount_paid_as_carry_forward) > 0 ? formatCurrency(payment.amount_paid_as_carry_forward) : "-"}</td>
-                    <td>${Number(payment.remaining_amount) > 0 ? formatCurrency(payment.remaining_amount) : "-"}</td>
-                    <td>${payment.payment_mode}</td>
-                    <td>${payment.status}</td>
+                    <td>${Number(payment.amount_paid_as_carry_forward || 0) > 0
+                ? formatCurrency(payment.amount_paid_as_carry_forward)
+                : "-"
+              }</td>
+                    <td>${Number(payment.remaining_amount || 0) > 0 ? formatCurrency(payment.remaining_amount) : "-"
+              }</td>
+                    <td>${payment.payment_mode || "-"}</td>
+                    <td>${payment.status || "-"}</td>
                   </tr>
                 `,
-                  )
-                  .join("")}
+          )
+          .join("")}
               </tbody>
             </table>`
-          }
+      }
         </div>
         
         <div class="footer">
-          <p>This is a computer-generated report and does not require a signature.</p>
+          <p>${t("this_is_a_computer_generated_report_and_does_not_require_a_signature")}</p>
+          <p>${effectiveSchoolInfo.name} &copy; ${new Date().getFullYear()}</p>
         </div>
         
         <div style="text-align: center; margin-top: 20px;">
-          <button onclick="window.print()">Print Report</button>
+          <button class="print-button" onclick="window.print()">${t("print_report")}</button>
         </div>
       </body>
       </html>
@@ -661,41 +810,39 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     // Trigger print after content is loaded
     printWindow.onload = () => {
       printWindow.focus()
-      // Uncomment to automatically print
-      // printWindow.print()
     }
   }
 
   // Fetch student fees details on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        params.student_id &&
-          (await getStudentFeesDetails({
-            student_id: Number.parseInt(params.student_id),
-            academic_session_id: CurrentAcademicSessionForSchool!.id,
-          }))
-      } catch (error) {
-        console.error("Error fetching student fees details:", error)
-        toast({
-          variant: "destructive",
-          title: "Failed to load student fees",
-          description: "There was an error loading the fee details. Please try again.",
-        })
-      } finally {
-        setIsInitialLoading(false)
+    // Only fetch if we're in standalone mode and not receiving props
+    if (isStandaloneMode && effectiveStudentId) {
+      const fetchData = async () => {
+        try {
+          await getStudentFeesDetails({ student_id : effectiveStudentId , academic_session_id : academicSessionId! })
+        } catch (error) {
+          console.error("Error fetching student fees details:", error)
+          toast({
+            variant: "destructive",
+            title: t("failed_to_load_student_fees"),
+            description: t("there_was_an_error_loading_the_fee_details_please_try_again"),
+          })
+        } finally {
+          setIsInitialLoading(false)
+        }
       }
-    }
 
-    if (params.student_id) fetchData()
-  }, [params, getStudentFeesDetails, CurrentAcademicSessionForSchool])
+      fetchData()
+    } else {
+      // If we're in dialog mode with props, no need to fetch
+      setIsInitialLoading(false)
+    }
+  }, [effectiveStudentId, getStudentFeesDetails, isStandaloneMode, t])
 
   // Reset selected installments when tab changes
   useEffect(() => {
     setSelectedInstallments([])
     setSelectedInstallmentForPayment(null)
-    setSelectedExtraFees([])
-    setSelectedExtraFeeForPayment(null)
   }, [activeTab])
 
   // Reset selected single installment when dialog closes
@@ -705,19 +852,24 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }, [isPayFeesDialogOpen])
 
-  // Reset selected single extra fee when dialog closes
+  // Reset selected tab when component mounts
   useEffect(() => {
-    if (!isPayExtraFeesDialogOpen) {
-      setSelectedExtraFeeForPayment(null)
-    }
-  }, [isPayExtraFeesDialogOpen])
+    setActiveTab("due-fees")
+  }, [])
 
-  if (isInitialLoading || isLoading || isFetching) {
+  // Debug log to check if studentFeeDetails is actually available
+  useEffect(() => {
+    if (studentFeeDetails) {
+      console.log("Student fee details loaded:", studentFeeDetails)
+    }
+  }, [studentFeeDetails])
+
+  if (isLoading) {
     return (
       <div className="p-6 space-y-6">
         <div className="flex items-center">
           <Button variant="outline" className="mr-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            <ArrowLeft className="mr-2 h-4 w-4" /> {t("back")}
           </Button>
           <Skeleton className="h-8 w-64" />
         </div>
@@ -757,12 +909,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <TableRow>
                       <TableHead>
                         <Skeleton className="h-4 w-8" />
-                      </TableHead>
-                      <TableHead>
-                        <Skeleton className="h-4 w-24" />
-                      </TableHead>
-                      <TableHead>
-                        <Skeleton className="h-4 w-24" />
                       </TableHead>
                       <TableHead>
                         <Skeleton className="h-4 w-24" />
@@ -813,20 +959,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {t("there_was_a_problem_loading_the_fee_details_for_this_student_please_try_again_later")}
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button
-              variant="outline"
-              onClick={() =>
-                params.student_id &&
-                getStudentFeesDetails({
-                  student_id: Number.parseInt(params.student_id),
-                  academic_session_id: CurrentAcademicSessionForSchool!.id,
-                })
-              }
-            >
+            <Button variant="outline" onClick={() => effectiveStudentId && getStudentFeesDetails({ student_id : effectiveStudentId , academic_session_id : academicSessionId! })}>
               {t("retry")}
             </Button>
           </CardFooter>
@@ -835,52 +972,80 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     )
   }
 
-  if (!studentFeeDetails) {
+  // Fix for "no_fee_details_found_for_this_student" error
+  // Check if studentFeeDetails exists but might be empty or missing required properties
+  const hasValidData =
+    studentFeeDetails &&
+    studentFeeDetails.student &&
+    studentFeeDetails.student.fees_status &&
+    studentFeeDetails.installments
+
+  if (!hasValidData) {
     return (
       <div className="p-6">
-        <Button variant="outline" onClick={handleBackToList} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
-        </Button>
+        {showBackButton && (
+          <Button variant="outline" onClick={handleBackToList} className="mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
+          </Button>
+        )}
 
         <Card>
           <CardHeader>
             <CardTitle>{t("no_data_available")}</CardTitle>
-            <CardDescription>{t("no_fee_details_found_for_this_student.")}</CardDescription>
+            <CardDescription>
+              {studentFeeDetails
+                ? t("incomplete_fee_details_for_this_student")
+                : t("no_fee_details_found_for_this_student")}
+            </CardDescription>
           </CardHeader>
+          <CardContent>
+            {studentFeeDetails && (
+              <div className="text-sm text-muted-foreground">
+                <p>{t("the_student_record_exists_but_some_fee_details_are_missing")}</p>
+                <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
+                  {JSON.stringify(
+                    {
+                      hasStudent: !!studentFeeDetails.student,
+                      hasFeesStatus: !!(studentFeeDetails.student && studentFeeDetails.student.fees_status),
+                      hasInstallments: !!studentFeeDetails.installments,
+                      hasDetail: !!studentFeeDetails.detail,
+                      studentDetailsObject: studentFeeDetails,
+                    },
+                    null,
+                    2,
+                  )}
+                </pre>
+              </div>
+            )}
+          </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={handleBackToList}>
+            <Button variant="outline" onClick={handleBackToList} className="mr-2">
               {t("return_to_fee_list")}
             </Button>
+            {isStandaloneMode && effectiveStudentId && (
+              <Button onClick={() => getStudentFeesDetails({ student_id : effectiveStudentId , academic_session_id : academicSessionId! })}>{t("retry_loading")}</Button>
+            )}
           </CardFooter>
         </Card>
       </div>
     )
   }
 
-  const student = studentFeeDetails.student
-  const feesStatus = student.fees_status
-  const installments = studentFeeDetails.installments || []
-  const extraFees = studentFeeDetails.detail?.extra_fees || []
+  // Now we know studentFeeDetails is valid, we can safely use it
+  const studentData = studentFeeDetails.student
+  const feesStatus = studentData.fees_status
   const paymentProgress = calculatePaymentProgress()
   const concessionBalance = calculateAvailableConcessionBalance()
   const totalConcessionBalance = concessionBalance.student_concession + concessionBalance.plan_concession
 
-  // Calculate total extra fees amount
-  const totalExtraFeesAmount = extraFees.reduce((total, fee) => {
-    return total + Number(fee.total_amount || 0)
-  }, 0)
-
-  // Calculate unpaid extra fees amount
-  const unpaidExtraFeesAmount = extraFees.reduce((total, fee) => {
-    return total + (Number(fee.total_amount || 0) - Number(fee.paid_amount || 0))
-  }, 0)
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Button variant="outline" onClick={handleBackToList} className="flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
-        </Button>
+        {showBackButton && (
+          <Button variant="outline" onClick={handleBackToList} className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> {t("back_to_list")}
+          </Button>
+        )}
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
@@ -889,38 +1054,35 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border-gray-200">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-          <CardTitle className="flex items-center text-2xl text-gray-800">
-            <User className="mr-2 h-5 w-5 text-primary" />
-            {student.first_name} {student.middle_name} {student.last_name}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl">
+            <User className="mr-2 h-5 w-5" />
+            {studentData.first_name} {studentData.middle_name} {studentData.last_name}
           </CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription>
             {t("student_fee_details_for_academic_year")}{" "}
-            {AcademicSessionsForSchool &&
-              AcademicSessionsForSchool.find(
-                (session) => session.id === studentFeeDetails?.detail?.fees_plan?.academic_session_id,
-              )?.session_name}
+            {effectiveAcademicSession?.session_name || studentFeeDetails.detail?.fees_plan?.academic_session_id}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("gr_number")}</p>
-              <p className="text-lg font-semibold">{student.gr_no}</p>
+              <p className="text-lg font-semibold">{studentData.gr_no}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("roll_number")}</p>
-              <p className="text-lg font-semibold">{student.roll_number}</p>
+              <p className="text-lg font-semibold">{studentData.roll_number}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("fee_plan")}</p>
-              <p className="text-lg font-semibold">{studentFeeDetails?.detail?.fees_plan?.name}</p>
+              <p className="text-lg font-semibold">{studentFeeDetails.detail?.fees_plan?.name}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("payment_status")}</p>
-              <Badge variant={getStatusBadgeVariant(feesStatus!.status)} className="text-sm">
-                {feesStatus!.status}
+              <Badge variant={getStatusBadgeVariant(feesStatus?.status || "")} className="text-sm">
+                {feesStatus?.status || t("unknown")}
               </Badge>
             </div>
           </div>
@@ -936,12 +1098,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-blue-700">{formatCurrency(feesStatus.total_amount)}</p>
-                {extraFees.length > 0 && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    {t("extra_fees")}: {formatCurrency(totalExtraFeesAmount)}
-                  </p>
-                )}
+                <p className="text-2xl font-bold text-blue-700">{formatCurrency(feesStatus?.total_amount)}</p>
               </CardContent>
             </Card>
 
@@ -953,7 +1110,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-700">{formatCurrency(feesStatus.paid_amount)}</p>
+                <p className="text-2xl font-bold text-green-700">{formatCurrency(feesStatus?.paid_amount)}</p>
               </CardContent>
             </Card>
 
@@ -965,7 +1122,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-700">{formatCurrency(feesStatus.discounted_amount)}</p>
+                <p className="text-2xl font-bold text-amber-700">{formatCurrency(feesStatus?.discounted_amount)}</p>
                 {totalConcessionBalance > 0 && (
                   <p className="text-xs text-amber-600 mt-1">
                     {t("available")}: {formatCurrency(totalConcessionBalance)}
@@ -982,12 +1139,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-red-700">{formatCurrency(feesStatus.due_amount)}</p>
-                {unpaidExtraFeesAmount > 0 && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {t("extra_fees_due")}: {formatCurrency(unpaidExtraFeesAmount)}
-                  </p>
-                )}
+                <p className="text-2xl font-bold text-red-700">{formatCurrency(feesStatus?.due_amount)}</p>
               </CardContent>
             </Card>
           </div>
@@ -1003,17 +1155,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="due-fees" className="flex items-center">
             <Calendar className="mr-2 h-4 w-4" /> {t("due_fees")}
-          </TabsTrigger>
-          <TabsTrigger value="extra-fees" className="flex items-center">
-            <AlertCircle className="mr-2 h-4 w-4" /> {t("extra_fees")}
-            {extraFees.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {extraFees.length}
-              </Badge>
-            )}
           </TabsTrigger>
           <TabsTrigger value="paid-fees" className="flex items-center">
             <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
@@ -1025,38 +1169,23 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </TabsList>
 
         <TabsContent value="due-fees">
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t("due_installments")}</CardTitle>
               <div className="flex gap-2">
-                {studentFeeDetails?.detail?.fees_plan && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button onClick={() => setIsApplyExtraFeesDialogOpen(true)} variant="outline">
-                          <Plus className="mr-2 h-4 w-4" />
-                          {t("apply_extra_fees")}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Apply additional charges like fines, special fees, etc.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <Button
+                {/* <Button
                   onClick={handlePayFees}
                   disabled={selectedInstallments.length === 0}
                   className="bg-primary hover:bg-primary/90"
                 >
                   {t("pay_selected")} ({selectedInstallments.length})
-                </Button>
+                </Button> */}
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {installments.length === 0 ? (
+              {!studentFeeDetails.installments || studentFeeDetails.installments.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
+                  <p className="text-muted-foreground">{t("no_due_installments_found")}</p>
                 </div>
               ) : (
                 <>
@@ -1093,53 +1222,82 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     </Alert>
                   )}
 
-                  {student.provided_concession && student.provided_concession.length > 0 && (
+                  {studentData.provided_concession && studentData.provided_concession.length > 0 && (
                     <div className="p-4 bg-green-50 border-b border-green-100">
                       <div className="flex items-center mb-2">
                         <Tag className="h-4 w-4 mr-2 text-green-600" />
                         <p className="text-sm font-medium text-green-700">{t("student_concessions_applied")}</p>
                       </div>
                       <ul className="text-xs text-green-700 space-y-1 ml-6">
-                        {student.provided_concession.map((concession) => (
+                        {studentData.provided_concession.map((concession) => (
                           <li key={concession.id}>
-                            <span className="font-medium">
-                              {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}:
-                            </span>{" "}
+                            <span className="font-medium">{getConcessionNameFromId(concession.id)}:</span>{" "}
                             {concession.deduction_type === "percentage"
-                              ? `${concession.percentage}% discount`
-                              : `${formatCurrency(concession.amount || 0)} fixed discount`}
+                              ? `${concession.percentage}% ${t("discount")}`
+                              : `${formatCurrency(concession.amount || 0)} ${t("fixed_discount")}`}
                             {concession.fees_type_id
-                              ? ` on ${getFeeTypeName(concession.fees_type_id)}`
-                              : ` on all fees`}
+                              ? ` ${t("on")} ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
+                              : ` ${t("on_all_fees")}`}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
+                  {studentFeeDetails.detail?.fees_plan?.concession_for_plan &&
+                    studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0 && (
+                      <div className="p-4 bg-blue-50 border-b border-blue-100">
+                        <div className="flex items-center mb-2">
+                          <Tag className="h-4 w-4 mr-2 text-blue-600" />
+                          <p className="text-sm font-medium text-blue-700">{t("plan_concessions_applied")}</p>
+                        </div>
+                        <ul className="text-xs text-blue-700 space-y-1 ml-6">
+                          {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
+                            <li key={concession.id}>
+                              <span className="font-medium">{getConcessionNameFromId(concession.id)}:</span>{" "}
+                              {concession.deduction_type === "percentage"
+                                ? `${concession.percentage}% ${t("discount")}`
+                                : `${formatCurrency(concession.amount || 0)} ${t("fixed_discount")}`}
+                              {concession.fees_type_id
+                                ? ` ${t("on")} ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
+                                : ` ${t("on_all_fees")}`}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                   {/* Fee Type Sections */}
-                  {installments.map((feeType) => (
+                  {studentFeeDetails.installments.map((feeType) => (
                     <div key={feeType.id} className="mb-6">
                       <div className="bg-gray-50 p-3 border-b">
                         <h3 className="font-medium flex items-center">
                           <Tag className="h-4 w-4 mr-2" />
-                          {getFeeTypeName(feeType.fees_type_id)} - {feeType.installment_type}
+                          {getFeeTypeName(feeType.fees_type_id, studentFeeDetails)} - {feeType.installment_type}
                           <Badge variant="outline" className="ml-2">
-                            {feeType.total_installment} installments
+                            {feeType.total_installment} {t("installments")}
                           </Badge>
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs text-muted-foreground">
                           <div>
-                            <span>Total: {formatCurrency(feeType.total_amount)}</span>
+                            <span>
+                              {t("total")}: {formatCurrency(feeType.total_amount)}
+                            </span>
                           </div>
                           <div>
-                            <span>Paid: {formatCurrency(feeType.paid_amount)}</span>
+                            <span>
+                              {t("paid")}: {formatCurrency(feeType.paid_amount)}
+                            </span>
                           </div>
                           <div>
-                            <span>Discounted: {formatCurrency(feeType.discounted_amount)}</span>
+                            <span>
+                              {t("discounted")}: {formatCurrency(feeType.discounted_amount)}
+                            </span>
                           </div>
                           <div>
-                            <span>Due: {formatCurrency(feeType.due_amount)}</span>
+                            <span>
+                              {t("due")}: {formatCurrency(feeType.due_amount)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1147,7 +1305,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[50px]">{t("select")}</TableHead>
+                            {/* <TableHead className="w-[50px]">{t("select")}</TableHead> */}
                             <TableHead>{t("installment")}</TableHead>
                             <TableHead>{t("due_date")}</TableHead>
                             <TableHead>{t("amount")}</TableHead>
@@ -1163,7 +1321,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             if (
                               !installment.is_paid ||
                               hasCarryForwardToPay({
-                                carry_forward_amount: Number(installment.carry_forward_amount),
+                                carry_forward_amount: installment.carry_forward_amount,
                                 is_paid: installment.is_paid,
                               })
                             ) {
@@ -1179,9 +1337,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                   className={`hover:bg-gray-50 
                                   ${hasDiscount ? "bg-green-50" : ""} 
                                   ${hasCarryForward ? "bg-blue-50" : ""} 
-                                  ${installment.is_paid && hasCarryForwardToPay({ carry_forward_amount: Number(installment.carry_forward_amount), is_paid: installment.is_paid }) ? "border-l-4 border-blue-500" : ""}`}
+                                  ${installment.is_paid &&
+                                      hasCarryForwardToPay({
+                                        carry_forward_amount: installment.carry_forward_amount,
+                                        is_paid: installment.is_paid,
+                                      })
+                                      ? "border-l-4 border-blue-500"
+                                      : ""
+                                    }`}
                                 >
-                                  <TableCell>
+                                  {/* <TableCell>
                                     <input
                                       type="checkbox"
                                       checked={selectedInstallments.some((item) => item.id === installment.id)}
@@ -1189,12 +1354,12 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                         toggleInstallmentSelection({
                                           ...installment,
                                           fee_plan_details_id: feeType.id,
-                                          status: installment.payment_status,
+                                          status: installment.payment_status as any,
                                         })
                                       }
                                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                     />
-                                  </TableCell>
+                                  </TableCell> */}
                                   <TableCell>
                                     {feeType.installment_type} - {installment.installment_no}
                                   </TableCell>
@@ -1210,8 +1375,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                           <div key={idx} className="flex items-center">
                                             <CheckCircle2 className="h-3 w-3 mr-1" />
                                             <span>
-                                              {getConcessionNameFromId(concession.concession_id)} (
-                                              {formatCurrency(concession.applied_amount)})
+                                              { getConcessionNameFromId(concession.concession_id) }{" "}
+                                              ({formatCurrency(concession.applied_amount)})
                                             </span>
                                           </div>
                                         ))}
@@ -1222,13 +1387,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                     {formatCurrency(payableAmount)}
                                     {hasCarryForward && (
                                       <div className="text-xs text-blue-600 mt-1">
-                                        Carry Forward: {formatCurrency(installment.carry_forward_amount)}
+                                        {t("carry_forward")}: {formatCurrency(installment.carry_forward_amount)}
                                       </div>
                                     )}
                                   </TableCell>
                                   <TableCell>
                                     <Badge variant={getStatusBadgeVariant(installment.payment_status || "Unpaid")}>
-                                      {installment.payment_status || "Unpaid"}
+                                      {installment.payment_status || t("unpaid")}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
@@ -1240,25 +1405,25 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                       >
                                         <Eye className="mr-1 h-3 w-3" /> {t("view")}
                                       </Button>
-                                      <Button
+                                      {/* <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
                                           handlePaySingleInstallment({
                                             ...installment,
                                             fee_plan_details_id: feeType.id,
-                                            status: installment.payment_status,
+                                            status: installment.payment_status as any,
                                           })
                                         }
                                       >
                                         {installment.is_paid &&
                                         hasCarryForwardToPay({
-                                          carry_forward_amount: Number(installment.carry_forward_amount),
+                                          carry_forward_amount: installment.carry_forward_amount,
                                           is_paid: installment.is_paid,
                                         })
-                                          ? "Pay Carry Forward"
-                                          : "Pay Now"}
-                                      </Button>
+                                          ? t("pay_carry_forward")
+                                          : t("pay_now")}
+                                    </Button> */}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -1276,176 +1441,15 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           </Card>
         </TabsContent>
 
-        {/* Extra Fees Tab content with selection functionality */}
-        <TabsContent value="extra-fees">
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b">
-              <CardTitle>{t("extra_fees")}</CardTitle>
-              <div className="flex gap-2">
-                {studentFeeDetails?.detail?.fees_plan && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button onClick={() => setIsApplyExtraFeesDialogOpen(true)} variant="outline">
-                          <Plus className="mr-2 h-4 w-4" />
-                          {t("apply_extra_fees")}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Apply additional charges like fines, special fees, etc.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <Button
-                  onClick={handlePayExtraFees}
-                  disabled={selectedExtraFees.length === 0}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  {t("pay_selected")} ({selectedExtraFees.length})
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {extraFees.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground">{t("no_extra_fees_found")}</p>
-                </div>
-              ) : (
-                <>
-                  {selectedExtraFees.length > 0 && (
-                    <div className="p-4 bg-blue-50 border-b border-blue-100">
-                      <p className="text-sm text-blue-700">
-                        {t("selected_amount")}:{" "}
-                        <span className="font-bold">{formatCurrency(calculateTotalSelectedExtraFeesAmount())}</span>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Extra Fee Type Sections */}
-                  {extraFees.map((extraFee) => (
-                    <div key={extraFee.id} className="mb-6">
-                      <div className="bg-gray-50 p-3 border-b">
-                        <h3 className="font-medium flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          {getFeeTypeName(extraFee.fees_type_id)}
-                          <Badge variant="outline" className="ml-2">
-                            {extraFee.installment_breakdown.length} installments
-                          </Badge>
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs text-muted-foreground">
-                          <div>
-                            <span>Total: {formatCurrency(extraFee.total_amount)}</span>
-                          </div>
-                          <div>
-                            <span>Paid: {formatCurrency(extraFee.paid_amount)}</span>
-                          </div>
-                          <div>
-                            <span>
-                              Due:{" "}
-                              {formatCurrency(Number(extraFee.total_amount || 0) - Number(extraFee.paid_amount || 0))}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px]">{t("select")}</TableHead>
-                            <TableHead>{t("installment")}</TableHead>
-                            <TableHead>{t("due_date")}</TableHead>
-                            <TableHead>{t("amount")}</TableHead>
-                            <TableHead>{t("status")}</TableHead>
-                            <TableHead>{t("actions")}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {extraFee.installment_breakdown.map((installment) => {
-                            // Check if this installment is already paid
-                            const isPaid =
-                              extraFee.paid_installment?.some((paid) => paid.installment_id === installment.id) ||
-                              installment.status === "Inactive"
-
-                            const isSelected = selectedExtraFees.some(
-                              (item) => item.key === `${extraFee.id}-${installment.id}`,
-                            )
-
-                            return (
-                              <TableRow
-                                key={`${extraFee.id}-${installment.id}`}
-                                className={`hover:bg-gray-50 ${isPaid ? "bg-green-50" : ""} ${isSelected ? "bg-blue-50" : ""}`}
-                              >
-                                <TableCell>
-                                  {!isPaid && (
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() => toggleExtraFeeSelection(extraFee, installment.id)}
-                                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {t("installment")} {installment.installment_no}
-                                </TableCell>
-                                <TableCell>{formatDate(installment.due_date)}</TableCell>
-                                <TableCell className="font-medium">
-                                  {formatCurrency(installment.installment_amount)}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant={getStatusBadgeVariant(installment.status === "Active" ? "Unpaid" : "Paid")}
-                                  >
-                                    {installment.status === "Active" ? "Unpaid" : "Paid"}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleViewExtraFeeDetails(extraFee)}
-                                    >
-                                      <Eye className="mr-1 h-3 w-3" /> {t("view")}
-                                    </Button>
-                                    {!isPaid && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedExtraFeeForPayment(extraFee)
-                                          setIsPayExtraFeesDialogOpen(true)
-                                        }}
-                                      >
-                                        {t("pay_now")}
-                                      </Button>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ))}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="paid-fees">
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="bg-gray-50 border-b">
-              <CardTitle>Payment History</CardTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("payment_history")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {!studentFeeDetails?.student.fees_status?.paid_fees ||
-              studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
+              {!feesStatus?.paid_fees || feesStatus.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
+                  <p className="text-muted-foreground">{t("no_payment_history_found")}</p>
                 </div>
               ) : (
                 <Table>
@@ -1464,19 +1468,19 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {studentFeeDetails?.student.fees_status?.paid_fees.map((payment) => {
+                    {feesStatus.paid_fees.map((payment) => {
                       // Find the corresponding installment details
                       let installmentDetails = { type: "Unknown", number: "-", feeType: "Unknown" }
                       let foundInstallment = null
                       let foundFeeType = null
 
-                      studentFeeDetails?.installments?.forEach((feeType) => {
+                      studentFeeDetails.installments?.forEach((feeType) => {
                         feeType.installments_breakdown.forEach((installment) => {
                           if (installment.id === payment.installment_id) {
                             installmentDetails = {
                               type: feeType.installment_type,
                               number: installment.installment_no.toString(),
-                              feeType: getFeeTypeName(feeType.fees_type_id),
+                              feeType: getFeeTypeName(feeType.fees_type_id, studentFeeDetails),
                             }
                             foundInstallment = installment
                             foundFeeType = feeType
@@ -1484,9 +1488,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         })
                       })
 
-                      const hasDiscount = Number(payment.discounted_amount) > 0
-                      const hasCarryForward = Number(payment.amount_paid_as_carry_forward) > 0
-                      const hasRemaining = Number(payment.remaining_amount) > 0
+                      const hasDiscount = Number(payment.discounted_amount || 0) > 0
+                      const hasCarryForward = Number(payment.amount_paid_as_carry_forward || 0) > 0
+                      const hasRemaining = Number(payment.remaining_amount || 0) > 0
 
                       return (
                         <TableRow
@@ -1530,13 +1534,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                     : "secondary"
                               }
                             >
-                              {payment.status}
+                              {payment.status || t("unknown")}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
                                 <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
+                                <Eye className="mr-1 h-3 w-3" /> {t("view")}
                               </Button>
                             </div>
                           </TableCell>
@@ -1551,14 +1558,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </TabsContent>
 
         <TabsContent value="concessions">
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="bg-gray-50 border-b">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t("applied_concessions")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {(student.provided_concession && student.provided_concession.length > 0) ||
-              (studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
+              {(studentData.provided_concession && studentData.provided_concession.length > 0) ||
+                (studentFeeDetails.detail?.fees_plan?.concession_for_plan &&
+                  studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
                 <>
                   <div className="p-4 bg-blue-50">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">{t("concession_summary")}</h3>
@@ -1567,7 +1574,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         <div className="flex justify-between">
                           <span className="text-sm text-blue-600">{t("total_concession_applied")}:</span>
                           <span className="text-sm font-medium text-blue-700">
-                            {formatCurrency(feesStatus.discounted_amount)}
+                            {formatCurrency(feesStatus?.discounted_amount)}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -1594,7 +1601,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     </div>
                   </div>
 
-                  {student.provided_concession && student.provided_concession.length > 0 && (
+                  {studentData.provided_concession && studentData.provided_concession.length > 0 && (
                     <div className="mt-4">
                       <h3 className="px-4 text-base font-medium mb-2">{t("student_concessions")}</h3>
                       <Table>
@@ -1609,15 +1616,15 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {student.provided_concession.map((concession) => (
+                          {studentData.provided_concession.map((concession) => (
                             <TableRow key={concession.id}>
-                              <TableCell className="font-medium">
-                                {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}
-                              </TableCell>
+                              <TableCell className="font-medium">{getConcessionNameFromId(concession.id)}</TableCell>
                               <TableCell>
-                                {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
+                                {concession.fees_type_id
+                                  ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
+                                  : t("all_fees")}
                               </TableCell>
-                              <TableCell className="capitalize">{concession.deduction_type}</TableCell>
+                              <TableCell className="capitalize">{t(concession.deduction_type)}</TableCell>
                               <TableCell>
                                 {concession.deduction_type === "percentage"
                                   ? `${concession.percentage}%`
@@ -1628,7 +1635,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               </TableCell>
                               <TableCell>
                                 <Badge variant={concession.status === "Active" ? "default" : "outline"}>
-                                  {concession.status}
+                                  {t(concession.status || "inactive")}
                                 </Badge>
                               </TableCell>
                             </TableRow>
@@ -1637,14 +1644,55 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       </Table>
                     </div>
                   )}
+
+                  {studentFeeDetails.detail?.fees_plan?.concession_for_plan &&
+                    studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0 && (
+                      <div className="mt-4">
+                        <h3 className="px-4 text-base font-medium mb-2">{t("plan_concessions")}</h3>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>{t("concession_name")}</TableHead>
+                              <TableHead>{t("applied_to")}</TableHead>
+                              <TableHead>{t("deduction_type")}</TableHead>
+                              <TableHead>{t("value")}</TableHead>
+                              <TableHead>{t("status")}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
+                              <TableRow key={concession.id}>
+                                <TableCell className="font-medium">{getConcessionNameFromId(concession.id)}</TableCell>
+                                <TableCell>
+                                  {concession.fees_type_id
+                                    ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
+                                    : t("all_fees")}
+                                </TableCell>
+                                <TableCell className="capitalize">{t(concession.deduction_type)}</TableCell>
+                                <TableCell>
+                                  {concession.deduction_type === "percentage"
+                                    ? `${concession.percentage}%`
+                                    : formatCurrency(concession.amount || 0)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={concession.status === "Active" ? "default" : "outline"}>
+                                    {t(concession.status || "inactive")}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
                 </>
               ) : (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">{t("no_concessions_have_been_applied_yet.")}</p>
+                  <p className="text-muted-foreground">{t("no_concessions_have_been_applied_yet")}</p>
                 </div>
               )}
 
-              {feesStatus.discounted_amount > 0 && (
+              {feesStatus?.discounted_amount > 0 && (
                 <div className="p-4 bg-green-50 border-t border-green-100">
                   <div className="flex justify-between items-center">
                     <p className="text-green-700 font-medium">{t("total_discount_applied")}:</p>
@@ -1658,7 +1706,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       </Tabs>
 
       {/* Payment Dialog */}
-      {params.student_id && (
+      {effectiveStudentId && (
         <PayFeesDialog
           isOpen={isPayFeesDialogOpen}
           onClose={() => {
@@ -1668,124 +1716,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           onSuccessfulSubmit={() => {
             setIsPayFeesDialogOpen(false)
             setSelectedInstallments([]) // Clear selected installments after successful payment
-            getStudentFeesDetails({
-              student_id: Number.parseInt(params.student_id!),
-              academic_session_id: CurrentAcademicSessionForSchool!.id,
-            })
+            if (isStandaloneMode && effectiveStudentId) {
+              getStudentFeesDetails({ student_id : effectiveStudentId , academic_session_id : academicSessionId! })
+            }
           }}
           installments={selectedInstallmentForPayment ? [selectedInstallmentForPayment] : selectedInstallments}
-          studentId={Number.parseInt(params.student_id)}
+          studentId={effectiveStudentId}
           totalAmount={calculateTotalSelectedAmount()}
-          studentConcessions={student.provided_concession}
-          planConcessions={studentFeeDetails.detail.fees_plan.concession_for_plan}
+          studentConcessions={studentData.provided_concession}
+          planConcessions={studentFeeDetails.detail?.fees_plan?.concession_for_plan}
           availableConcessionBalance={concessionBalance}
-        />
-      )}
-
-      {/* Pay Extra Fees Dialog */}
-      {params.student_id && selectedExtraFeeForPayment && (
-        <PayExtraFeesDialog
-          isOpen={isPayExtraFeesDialogOpen}
-          onClose={() => {
-            setIsPayExtraFeesDialogOpen(false)
-            setSelectedExtraFees([])
-            setSelectedExtraFeeForPayment(null)
-          }}
-          onSuccessfulSubmit={() => {
-            setIsPayExtraFeesDialogOpen(false)
-            setSelectedExtraFees([])
-            setSelectedExtraFeeForPayment(null)
-            // Refresh data
-            params.student_id &&
-              getStudentFeesDetails({
-                student_id: Number.parseInt(params.student_id),
-                academic_session_id: CurrentAcademicSessionForSchool!.id,
-              })
-          }}
-          student_fees_master_id={student.fees_status.id}
-          extraFee={selectedExtraFeeForPayment}
-          studentId={Number.parseInt(params.student_id)}
-          studentName={`${student.first_name} ${student.middle_name || ""} ${student.last_name}`}
-          selectedInstallments={selectedExtraFees}
-        />
-      )}
-
-      {/* Extra Fee Detail View Dialog */}
-      <Dialog open={isExtraFeeDetailViewOpen} onOpenChange={setIsExtraFeeDetailViewOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Extra Fee Details</DialogTitle>
-          </DialogHeader>
-          {selectedExtraFeeForView && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Fee Type</p>
-                  <p className="font-medium">{getFeeTypeName(selectedExtraFeeForView.fees_type_id)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="font-medium">{formatCurrency(selectedExtraFeeForView.total_amount)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Paid Amount</p>
-                  <p className="font-medium">{formatCurrency(selectedExtraFeeForView.paid_amount)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge
-                    variant={getStatusBadgeVariant(selectedExtraFeeForView.status === "Active" ? "Unpaid" : "Paid")}
-                  >
-                    {selectedExtraFeeForView.status === "Active" ? "Unpaid" : "Paid"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Installments</p>
-                <div className="mt-2 space-y-2">
-                  {selectedExtraFeeForView.installment_breakdown.map((installment) => (
-                    <div key={installment.id} className="flex justify-between p-2 border rounded">
-                      <span>Installment {installment.installment_no}</span>
-                      <span>{formatCurrency(installment.installment_amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsExtraFeeDetailViewOpen(false)}>
-              Close
-            </Button>
-            {selectedExtraFeeForView && selectedExtraFeeForView.status === "Active" && (
-              <Button
-                onClick={() => {
-                  setIsExtraFeeDetailViewOpen(false)
-                  handlePaySingleExtraFee(selectedExtraFeeForView)
-                }}
-              >
-                Pay Now
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Apply Extra Fees Dialog */}
-      {studentFeeDetails.detail?.fees_plan && params.student_id && (
-        <ApplyExtraFeesDialog
-          isOpen={isApplyExtraFeesDialogOpen}
-          onClose={() => setIsApplyExtraFeesDialogOpen(false)}
-          onSuccess={() => {
-            setIsApplyExtraFeesDialogOpen(false)
-            getStudentFeesDetails({
-              student_id: Number.parseInt(params.student_id!),
-              academic_session_id: CurrentAcademicSessionForSchool!.id,
-            })
-          }}
-          studentId={Number.parseInt(params.student_id)}
-          feesPlanId={studentFeeDetails.detail.fees_plan.id}
         />
       )}
 
@@ -1800,6 +1740,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         formatDate={formatDate}
         getStatusBadgeVariant={getStatusBadgeVariant}
         getFeeTypeName={getFeeTypeName}
+      // schoolInfo={effectiveSchoolInfo}
       />
 
       {/* Payment Receipt Generator Dialog */}
@@ -1814,9 +1755,75 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         formatDate={formatDate}
         getStatusBadgeVariant={getStatusBadgeVariant}
         getFeeTypeName={getFeeTypeName}
+      // schoolInfo=""
       />
+
+      {/* Update Status Dialog */}
+      <Dialog
+        open={isUpdateStatusDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsUpdateStatusDialogOpen(false)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("update_payment_status")}</DialogTitle>
+            <DialogDescription>
+              {t("change_the_status_of_payment")} #{selectedPayment?.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">
+                {t("status")}
+              </Label>
+              <Select defaultValue={selectedPayment?.status}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={t("select_status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Paid">{t("paid")}</SelectItem>
+                  <SelectItem value="Pending">{t("pending")}</SelectItem>
+                  <SelectItem value="Overdue">{t("overdue")}</SelectItem>
+                  <SelectItem value="Cancelled">{t("cancelled")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="remarks" className="text-right">
+                {t("remarks")}
+              </Label>
+              <Input
+                id="remarks"
+                defaultValue={selectedPayment?.remarks}
+                className="col-span-3"
+                placeholder={t("add_remarks_about_this_status_change")}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              onClick={() => {
+                toast({
+                  title: t("status_updated"),
+                  description: t("payment_status_has_been_updated_successfully"),
+                })
+                setIsUpdateStatusDialogOpen(false)
+                // Implement actual status update logic here
+              }}
+            >
+              {t("update_status")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-export default StudentFeesPanel
+export default StudentFeesDetailView
+

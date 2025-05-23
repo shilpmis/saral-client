@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { PageMeta } from "@/types/global";
 import baseUrl from "@/utils/base-urls";
-import { StudentEntry } from "@/types/student";
+import { ReqBodyForOnBoardingStudent, StudentEntry } from "@/types/student";
 
 // Define the Inquiry type based on the API response
 export interface Inquiry {
@@ -140,7 +140,7 @@ export const InquiryApi = createApi({
 
     convertQueryToStudent: builder.mutation<
       any,
-      { inquiry_id: number; payload: StudentEntry }
+      { inquiry_id: number; payload: ReqBodyForOnBoardingStudent }
     >({
       query: ({ inquiry_id, payload }) => ({
         url: `/inquiry/convert/${inquiry_id}`,

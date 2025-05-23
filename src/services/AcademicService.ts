@@ -48,8 +48,8 @@ export const AcademicApi = createApi({
         }
       },
     }),
-    getAllClassesWithOuutFeesPlan: builder.query<
-      Division[],
+    getAllClassesWithOutFeesPlan: builder.query<
+      AcademicClasses[],
       { school_id: number }
     >({
       query: ({ school_id }) => ({
@@ -96,7 +96,7 @@ export const {
   useCreateAcademicSessionMutation,
   useSetActiveSessionMutation,
   useDeleteAcademicSessionMutation,
-  useLazyGetAllClassesWithOuutFeesPlanQuery,
+  useLazyGetAllClassesWithOutFeesPlanQuery,
 } = AcademicApi;
 
 /**

@@ -379,7 +379,7 @@ const StudentDetailsPDF: React.FC<StudentPDFProps> = ({ student, currentUser }) 
               <View style={styles.column}>
                 <Text style={styles.label}>Class</Text>
                 <Text style={styles.value}>
-                  {student.class.class.class}-{student.class.division}
+                  {student.class?.class.class}-{student.class?.division}
                 </Text>
               </View>
               <View style={styles.column}>
@@ -411,7 +411,7 @@ const StudentDetailsPDF: React.FC<StudentPDFProps> = ({ student, currentUser }) 
           <View style={styles.row}>
             <View style={styles.column}>
               <Text style={styles.label}>Date of Birth</Text>
-              <Text style={styles.value}>{formatDate(student.student.birth_date)}</Text>
+              <Text style={styles.value}>{student.student?.birth_date ? formatDate(student.student?.birth_date) : "N/A"}</Text>
             </View>
             <View style={styles.column}>
               <Text style={styles.label}>Birth Place</Text>

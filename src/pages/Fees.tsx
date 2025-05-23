@@ -24,8 +24,8 @@ export const Fees: React.FC = () => {
           <TabsTrigger value="student-fees">{t("student_fees")}</TabsTrigger>
           {/* <TabsTrigger value="reports">{t("reports")}</TabsTrigger> */}
         </TabsList>
-{/* 
-        <TabsContent value="dashboard">
+
+        {/* <TabsContent value="dashboard">
           <FeeDashboard />
         </TabsContent> */}
 
@@ -47,7 +47,7 @@ export const Fees: React.FC = () => {
 
         {/* <TabsContent value="reports">
           <ReportGeneration />
-        </TabsContent>   */}
+        </TabsContent>     */}
       </Tabs>
     </div>
   )

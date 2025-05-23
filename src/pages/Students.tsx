@@ -40,6 +40,12 @@ type ValidationResult = {
   rawData: any
 }
 
+// Session storage keys for this page
+const SESSION_SELECTED_CLASS_KEY = "students_selected_class_id"
+const SESSION_SELECTED_DIVISION_KEY = "students_selected_division_id"
+const SESSION_SELECTED_PAGE_KEY = "students_selected_page"
+const SESSION_SELECTED_SESSION_KEY = "students_selected_academic_session_id"
+
 // Custom CSV parser function
 const parseCSV = (file: File): Promise<any[]> => {
   return new Promise((resolve, reject) => {
@@ -145,6 +151,7 @@ export const Students: React.FC = () => {
   const [bulkUploadStudents] = useBulkUploadStudentsMutation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const [hasRestoredSession, setHasRestoredSession] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dialogOpenForBulkUpload, setDialogOpenForBulkUpload] = useState(false)
   const [dialogOpenForDownLoadExcel, setDialogOpenForDownLoadExcel] = useState(false)
@@ -156,6 +163,10 @@ export const Students: React.FC = () => {
   const handleClassChange = useCallback((value: string) => {
     setSelectedClass(value)
     setSelectedDivision(null) // Reset division when class changes
+    setCurrentPage(1)
+    sessionStorage.setItem(SESSION_SELECTED_CLASS_KEY, value)
+    sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, "")
+    sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, "1")
   }, [])
 
   const handleDivisionChange = useCallback(
@@ -168,11 +179,15 @@ export const Students: React.FC = () => {
 
           if (selectedDiv) {
             setSelectedDivision(selectedDiv)
+            setCurrentPage(1)
+            sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, value)
+            sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, "1")
 
             // Fetch students for the selected division and session
             await getStudentForClass({
               class_id: selectedDiv.id,
               academic_session: SelectedSession,
+              page: 1,
             })
           }
         }
@@ -184,6 +199,7 @@ export const Students: React.FC = () => {
   const handleAcademicSessionChange = useCallback(
     async (value: number) => {
       setSelectedSession(value)
+      sessionStorage.setItem(SESSION_SELECTED_SESSION_KEY, value.toString())
 
       // Fetch students for the selected division and session if both are selected
       if (selectedDivision) {
@@ -215,10 +231,21 @@ export const Students: React.FC = () => {
 
   const handleAddEditStudent = useCallback(
     async (student_id: number) => {
+      // Always use a valid session id
+      const sessionToUse = SelectedSession ?? CurrentAcademicSessionForSchool?.id
+      if (!sessionToUse) {
+        toast({
+          variant: "destructive",
+          title: "No academic session selected",
+          description: "Please select an academic session first.",
+        })
+        return
+      }
       try {
         const response = await getSingleStudent({
           student_id: student_id,
           student_meta: true,
+          academic_session_id: sessionToUse,
         })
 
         if (response.data) {
@@ -237,7 +264,7 @@ export const Students: React.FC = () => {
         })
       }
     },
-    [getSingleStudent, authState.user, toast],
+    [getSingleStudent, authState.user, toast, SelectedSession, CurrentAcademicSessionForSchool],
   )
 
   const handleChooseFile = useCallback(() => {
@@ -465,6 +492,7 @@ export const Students: React.FC = () => {
   const handlePageChange = useCallback(
     async (page: number) => {
       setCurrentPage(page)
+      sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, page.toString())
       if (selectedDivision && SelectedSession) {
         await getStudentForClass({ class_id: selectedDivision.id, page: page, academic_session: SelectedSession }).then(
           (response) => {
@@ -473,7 +501,7 @@ export const Students: React.FC = () => {
         )
       }
     },
-    [setCurrentPage, selectedDivision, getStudentForClass],
+    [setCurrentPage, selectedDivision, getStudentForClass, SelectedSession],
   )
 
   // Get all unique fields from the parsed data
@@ -496,29 +524,78 @@ export const Students: React.FC = () => {
   }, [uploadResults])
 
   useEffect(() => {
-    // Auto-select first class and division when AcademicClasses are loaded
-    if (AcademicClasses && AcademicClasses.length > 0 && !selectedClass && SelectedSession) {
-      // Find first class with divisions
-      const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
-      if (firstClassWithDivisions) {
-        // Set the first class
-        setSelectedClass(firstClassWithDivisions.id.toString())
+    // Restore class/division/page/session from sessionStorage after AcademicClasses are loaded
+    if (!AcademicClasses || AcademicClasses.length === 0 || hasRestoredSession) return
+    const savedClass = sessionStorage.getItem(SESSION_SELECTED_CLASS_KEY)
+    const savedDivision = sessionStorage.getItem(SESSION_SELECTED_DIVISION_KEY)
+    const savedPage = sessionStorage.getItem(SESSION_SELECTED_PAGE_KEY)
+    const savedSession = sessionStorage.getItem(SESSION_SELECTED_SESSION_KEY)
 
-        // Set the first division of that class
-        if (firstClassWithDivisions.divisions.length > 0) {
-          const firstDivision = firstClassWithDivisions.divisions[0]
-          setSelectedDivision(firstDivision)
+    let classToSet = ""
+    let divisionToSet: Division | null = null
+    let pageToSet = 1
+    let sessionToSet: number | null = null
 
-          // Fetch students for this division
-          getStudentForClass({ class_id: firstDivision.id, academic_session: SelectedSession })
+    if (savedSession && !isNaN(Number(savedSession))) {
+      sessionToSet = Number(savedSession)
+      setSelectedSession(sessionToSet)
+    }
+
+    if (savedClass && AcademicClasses.some((cls) => cls.id.toString() === savedClass)) {
+      classToSet = savedClass
+      const classObj = AcademicClasses.find((cls) => cls.id.toString() === savedClass)
+      if (classObj && savedDivision) {
+        const division = classObj.divisions.find((div) => div.id.toString() === savedDivision)
+        if (division) {
+          divisionToSet = division
         }
       }
+      if (savedPage && !isNaN(Number(savedPage))) {
+        pageToSet = Number(savedPage)
+      }
+    } else {
+      // fallback to first class/division
+      const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
+      if (firstClassWithDivisions) {
+        classToSet = firstClassWithDivisions.id.toString()
+        divisionToSet = firstClassWithDivisions.divisions[0]
+      }
     }
-  }, [AcademicClasses, selectedClass, getStudentForClass, SelectedSession])
+
+    setSelectedClass(classToSet)
+    setSelectedDivision(divisionToSet)
+    setCurrentPage(pageToSet)
+    setHasRestoredSession(true)
+
+    // Fetch students for this division and session if both are set
+    const sessionId = sessionToSet || SelectedSession
+    if (divisionToSet && sessionId) {
+      getStudentForClass({ class_id: divisionToSet.id, academic_session: sessionId, page: pageToSet })
+    }
+  }, [AcademicClasses, SelectedSession, hasRestoredSession])
+
+  // Only auto-select first class/division if session restore has NOT happened
+  useEffect(() => {
+    if (
+      AcademicClasses &&
+      AcademicClasses.length > 0 &&
+      !selectedClass &&
+      !hasRestoredSession &&
+      SelectedSession
+    ) {
+      const firstClassWithDivisions = AcademicClasses.find((cls) => cls.divisions.length > 0)
+      if (firstClassWithDivisions) {
+        setSelectedClass(firstClassWithDivisions.id.toString())
+        setSelectedDivision(firstClassWithDivisions.divisions[0])
+        getStudentForClass({ class_id: firstClassWithDivisions.divisions[0].id, academic_session: SelectedSession })
+      }
+    }
+  }, [AcademicClasses, selectedClass, getStudentForClass, SelectedSession, hasRestoredSession])
 
   useEffect(() => {
     if (CurrentAcademicSessionForSchool) {
       setSelectedSession(CurrentAcademicSessionForSchool.id)
+      sessionStorage.setItem(SESSION_SELECTED_SESSION_KEY, CurrentAcademicSessionForSchool.id.toString())
       // setSelectedSessionForDownloadExcel(CurrentAcademicSessionForSchool.id);
     }
   }, [CurrentAcademicSessionForSchool])
@@ -1021,6 +1098,7 @@ export const Students: React.FC = () => {
         )}
         {studentDataForSelectedClass && listedStudentForSelectedClass && (
           <StudentTable
+            selectd_academic_session={SelectedSession!}
             selectedClass={selectedClass}
             selectedDivision={selectedDivision}
             PageDetailsForStudents={paginationDataForSelectedClass}

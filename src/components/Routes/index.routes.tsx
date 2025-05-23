@@ -33,7 +33,7 @@ import InquiriesManagement from "../Admission/Inquiries"
 import { WelcomeDashboard } from "@/pages/WelcomeDashBoard"
 import StudentProfilePage from "@/pages/StudentProfilePage"
 import StaffProfilePage from "@/pages/StaffProfilePage" // Import the StaffProfilePage component
-import { StudentPromotionManagement } from "../Settings/StudentPermotionSettings/StudentPromotionManagement"
+import { StudentPromotionManagement } from "../Settings/StudentManagement/StudentPromotionManagement"
 import EmployeePayrollDashboard from "@/pages/EmployeePayrollDashboard"
 import EmployeePayrollDetail from "@/pages/EmployeePayrollDetail"
 import PayrollAnalytics from "@/pages/PayrollAnalytics"
@@ -46,6 +46,11 @@ import SalaryTemplateForm from "../Payroll/SalaryTemplateForm"
 import SalaryTemplateFormForStaff from "../Payroll/Employee/SalaryTemplateFormForStaff"
 import PayRun from "../Payroll/Payrun"
 import StundetFeesStatus from "@/pages/StundetFeesStatus"
+import ManageStudents from "../Settings/StudentManagement/StudentManagement"
+import SubjectSettings from "../Settings/AcademicSettings/SubjectSettings"
+import SubjectAssignment from "@/pages/SubjectAssignment"
+import TimetableConfig from "../Settings/AcademicSettings/TimetableConfig"
+import TimetableManagement from "@/pages/TimeTable"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -145,6 +150,24 @@ export default function RootRoute() {
                   allowedPermissions={[Permission.MANAGE_STAFF]}
                 >
                   <StaffProfilePage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="subjects"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK]}>
+                  <SubjectAssignment />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="timetable"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.CLERK]}>
+                  <TimetableManagement />
                 </PrivateRoute>
               }
             />
@@ -312,7 +335,7 @@ export default function RootRoute() {
               path="payroll/employee/:employeeId/salary/create"
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.CLERK, UserRole.PRINCIPAL]}>
-                  <SalaryTemplateFormForStaff mode="create"/>
+                  <SalaryTemplateFormForStaff mode="create" />
                 </PrivateRoute>
               }
             />
@@ -369,7 +392,31 @@ export default function RootRoute() {
                 }
               />
               <Route
-                path="student"
+                path="subjects"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <SubjectSettings />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="academic/timetable"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <TimetableConfig />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="manage/students"
+                element={
+                  <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
+                    <ManageStudents />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="manage/promotion"
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <StudentPromotionManagement />
@@ -475,4 +522,3 @@ export default function RootRoute() {
     </SearchProvider>
   )
 }
-  

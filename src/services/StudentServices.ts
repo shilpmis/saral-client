@@ -1,6 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type {
   AddStudentsRequest,
+  ReqBodyForDropStudent,
+  ReqBodyForStudentCompletion,
+  ReqBodyForStudentSuspension,
+  ReqBodyForStundetMigration,
   Student,
   StudentEnrollment,
   StudentEntry,
@@ -49,10 +53,10 @@ export const StudentApi = createApi({
 
     fetchSingleStundet: builder.query<
       Student,
-      { student_id: number; student_meta?: boolean }
+      { student_id: number; academic_session_id : number , student_meta?: boolean }
     >({
-      query: ({ student_id, student_meta = true }) => ({
-        url: `student/${student_id}?student_meta=${student_meta}`,
+      query: ({ student_id, student_meta = true , academic_session_id  }) => ({
+        url: `student/${student_id}?student_meta=${student_meta}&academic_session=${academic_session_id}`,
         method: "GET",
       }),
     }),
@@ -120,8 +124,8 @@ export const StudentApi = createApi({
       {
         class_id: number;
         academic_session: number;
-        payload: { 
-          students: string[]; 
+        payload: {
+          students: string[];
           student_meta: string[];
           headers?: Record<string, string>;  // Add headers mapping
         };
@@ -176,6 +180,13 @@ export const StudentApi = createApi({
         };
       },
     }),
+    // Management apis 
+
+
+
+
+
+
   }),
 });
 
@@ -191,7 +202,8 @@ export const {
   useDownloadExcelTemplateMutation,
   useSearchStudentsQuery,
   useLazySearchStudentsQuery,
-  usePrefetch,
+  usePrefetch
+
 } = StudentApi;
 
 /**

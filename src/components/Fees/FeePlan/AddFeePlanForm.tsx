@@ -29,7 +29,7 @@ import {
   selectAuthState,
   selectCurrentUser,
 } from "@/redux/slices/authSlice"
-import { useGetAcademicClassesQuery, useLazyGetAllClassesWithOuutFeesPlanQuery } from "@/services/AcademicService"
+import { useGetAcademicClassesQuery, useLazyGetAllClassesWithOutFeesPlanQuery } from "@/services/AcademicService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import NumberInput from "@/components/ui/NumberInput"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
@@ -222,7 +222,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       isLoading: isClassWithOutFeesPlanLoading,
       error: ErrorWhilwFetchingClassWithOutFeesPlan,
     },
-  ] = useLazyGetAllClassesWithOuutFeesPlanQuery()
+  ] = useLazyGetAllClassesWithOutFeesPlanQuery()
 
   const {
     data: classesData = [],
@@ -474,7 +474,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
           fees_plan: {
             name: values.fees_plan.name,
             description: values.fees_plan.description ?? "",
-            division_id: values.fees_plan.class_id,
+            class_id: values.fees_plan.class_id,
           },
           plan_details: values.fees_types.map((detail) => ({
             fees_type_id: detail.fees_type_id,
@@ -617,7 +617,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
         fees_plan: {
           name: fees_plan.name,
           description: fees_plan.description,
-          class_id: fees_plan.division_id,
+          class_id: fees_plan.class_id,
         },
         fees_types: [], // Start with empty array, we'll populate it manually
       })
@@ -719,6 +719,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
     getClassesWithoutFeesPlan({ school_id: authState.user!.school_id })
     getAllFeesType({
       academic_session_id: CurrentAcademicSessionForSchool!.id,
+      applicable_to : 'plan' 
     })
   }, [plan_id])
 
@@ -772,9 +773,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                               {ClassesWithOutFeesPlan &&
                                 ClassesWithOutFeesPlan.map((cls) => (
                                   <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
-                                    {AcademicClassesForSchool &&
-                                      AcademicClassesForSchool.find((clas) => clas.id === cls.class_id)?.class}
-                                    -{cls.division} {cls.aliases}
+                                    Class {cls.class} 
                                   </SelectItem>
                                 ))}
                               {(isClassWithOutFeesPlanLoading || !ClassesWithOutFeesPlan) && (

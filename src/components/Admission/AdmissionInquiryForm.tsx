@@ -18,10 +18,12 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useGetQuotasQuery } from "@/services/QuotaService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { Loader2, CheckCircle } from "lucide-react"
 import NumberInput from "@/components/ui/NumberInput"
 import { format } from "date-fns"
 import { formSchema, type FormValues } from "./AdmissionFormSchema"
+import { skipToken } from "@reduxjs/toolkit/query"
 
 // Define the props for the component
 interface AdmissionInquiryFormProps {
@@ -72,20 +74,11 @@ export default function AdmissionInquiryForm({
   // Get all academic sessions
   const academicSessions = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
 
   // API hooks
   const [addInquiry, { isLoading: isAddLoading }] = useAddInquiryMutation()
   const [updateInquiry, { isLoading: isUpdateLoading }] = useUpdateInquiryMutation()
-
-  // Fetch available classes
-  const { data: classSeats, isLoading: isLoadingSeats } = useGetClassSeatAvailabilityQuery()
-
-  // Fetch available quotas
-  const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery({
-    academic_session_id: CurrentacademicSessions!.id,
-  })
-
-  const isLoading = isAddLoading || isUpdateLoading
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<FormValues>({
@@ -133,6 +126,21 @@ export default function AdmissionInquiryForm({
         },
     mode: "onChange",
   })
+
+  // Watch for selected academic session in the form
+  const selectedAcademicSessionId = form.watch("academic_session_id")
+
+  // Fetch available classes based on selected academic session
+  const { data: classSeats, isLoading: isLoadingSeats } = useGetClassSeatAvailabilityQuery(
+    selectedAcademicSessionId ? { acadamic_session_id: selectedAcademicSessionId } : skipToken
+  )
+
+  // Fetch available quotas
+  const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery({
+    academic_session_id: CurrentacademicSessions!.id,
+  })
+
+  const isLoading = isAddLoading || isUpdateLoading
 
   // Update academic session when prop changes
   useEffect(() => {
@@ -380,14 +388,12 @@ export default function AdmissionInquiryForm({
       <FormField
         control={form.control}
         name="academic_session_id"
-        disabled
         render={({ field }) => (
           <FormItem className="w-full">
             <FormLabel>{t("academic_session")}</FormLabel>
             <Select
               onValueChange={(value) => field.onChange(Number.parseInt(value))}
               defaultValue={field.value?.toString()}
-              disabled={true}
             >
               <FormControl>
                 <SelectTrigger>
@@ -540,49 +546,61 @@ export default function AdmissionInquiryForm({
       />
 
       {/* Class Applying For */}
-      <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-        {`Only shows the classes which have seat allocation for  
-           ${academicSessionId ? academicSessions?.find((session) => session.id == academicSessionId)?.session_name : t("please_select_an_academic_year")}
-           academic session and are open for admissions by admin.`}
-      </div>
+      {Array.isArray(classSeats) && classSeats.length === 0 ? (
+        <div className="text-sm text-destructive bg-destructive/10 p-4 rounded-lg mb-2">
+          No class capacity has been set for any class in the selected academic session. Please contact the administrator to configure class capacities for this academic year.
+        </div>
+      ) : (
+        <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg mb-2">
+          Only classes for which capacity has been set are visible for the selected academic session.
+        </div>
+      )}
       <FormField
         control={form.control}
         name="inquiry_for_class"
-        render={({ field }) => (
-          <FormItem className="w-full">
-            <FormLabel>
-              {t("inquiry_for_class")} <span className="text-destructive">*</span>
-            </FormLabel>
-            <Select
-              onValueChange={(value) => field.onChange(Number.parseInt(value))}
-              defaultValue={field.value?.toString()}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("select_class")} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {isLoadingSeats ? (
-                  <SelectItem value="loading" disabled>
-                    {t("loading...")}
-                  </SelectItem>
-                ) : classSeats && classSeats.length > 0 ? (
-                  classSeats.map((seat) => (
-                    <SelectItem key={seat.class_id} value={seat.class_id.toString()}>
-                      Class {seat.class.class} {seat.class.division}
+        render={({ field }) => {
+          // Get enabled class IDs from classSeats
+          const enabledClassIds = Array.isArray(classSeats) ? classSeats.map(seat => seat.class_id) : [];
+          return (
+            <FormItem className="w-full">
+              <FormLabel>
+                {t("inquiry_for_class")} <span className="text-destructive">*</span>
+              </FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                defaultValue={field.value?.toString()}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("select_class")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {isLoadingSeats ? (
+                    <SelectItem value="loading" disabled>
+                      {t("loading...")}
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="none" disabled>
-                    {t("no_classes_available")}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
+                  ) : AcademicClasses && AcademicClasses.length > 0 ? (
+                    AcademicClasses.map((cls) => (
+                      <SelectItem
+                        key={cls.id}
+                        value={cls.id.toString()}
+                        disabled={!enabledClassIds.includes(cls.id)}
+                      >
+                        Class {cls.class}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      {t("no_classes_available")}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )
+        }}
       />
     </>
   )
