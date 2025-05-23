@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ import PaymentReceiptGenerator from "@/components/Fees/Reports/PaymentReceiptGen
 import type { InstallmentBreakdown } from "@/types/fees"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useLocation } from "react-router-dom"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import ApplyExtraFeesDialog from "@/components/Fees/StudentFee/ApplyExtraFeesDialog"
@@ -102,9 +102,13 @@ type StudentFeesPanelProps = {}
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
+  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess , error}] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
+  const location = useLocation()
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+  const sessionIdFromQuery = searchParams.get("session_id")
+  console.log("params", params)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
@@ -145,10 +149,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const [selectedFeeTypeForReceipt, setSelectedFeeTypeForReceipt] = useState<any>(null)
 
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  const effectiveAcademicSessionId = sessionIdFromQuery ? Number(sessionIdFromQuery) : (CurrentAcademicSessionForSchool?.id ?? 0)
 
   const { data: feeTypes } = useGetAllFeesTypeQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool?.id || 0, applicable_to: "All" },
-    { skip: !CurrentAcademicSessionForSchool?.id },
+    { academic_session_id: effectiveAcademicSessionId, applicable_to: "All" },
+    { skip: !effectiveAcademicSessionId },
   )
 
   // Get fee type name from ID
@@ -165,8 +170,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
   // Fetch concession types from API
   const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool!.id },
-    { skip: !CurrentAcademicSessionForSchool!.id },
+    { academic_session_id: effectiveAcademicSessionId },
+    { skip: !effectiveAcademicSessionId },
   )
 
   // Get concession name from ID using the API data
@@ -673,7 +678,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         params.student_id &&
           (await getStudentFeesDetails({
             student_id: Number.parseInt(params.student_id),
-            academic_session_id: CurrentAcademicSessionForSchool!.id,
+            academic_session_id: effectiveAcademicSessionId,
           }))
       } catch (error) {
         console.error("Error fetching student fees details:", error)
@@ -687,8 +692,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       }
     }
 
-    if (params.student_id) fetchData()
-  }, [params, getStudentFeesDetails, CurrentAcademicSessionForSchool])
+    if (params.student_id && effectiveAcademicSessionId) fetchData()
+  }, [params, getStudentFeesDetails, effectiveAcademicSessionId])
 
   // Reset selected installments when tab changes
   useEffect(() => {
@@ -813,7 +818,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {
+                (error as any)?.data?.message ||
+                t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")
+              }
+              {/* {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")} */}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -823,7 +832,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 params.student_id &&
                 getStudentFeesDetails({
                   student_id: Number.parseInt(params.student_id),
-                  academic_session_id: CurrentAcademicSessionForSchool!.id,
+                  academic_session_id: effectiveAcademicSessionId,
                 })
               }
             >
@@ -1670,7 +1679,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             setSelectedInstallments([]) // Clear selected installments after successful payment
             getStudentFeesDetails({
               student_id: Number.parseInt(params.student_id!),
-              academic_session_id: CurrentAcademicSessionForSchool!.id,
+              academic_session_id: effectiveAcademicSessionId,
             })
           }}
           installments={selectedInstallmentForPayment ? [selectedInstallmentForPayment] : selectedInstallments}
@@ -1699,7 +1708,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             params.student_id &&
               getStudentFeesDetails({
                 student_id: Number.parseInt(params.student_id),
-                academic_session_id: CurrentAcademicSessionForSchool!.id,
+                academic_session_id: effectiveAcademicSessionId,
               })
           }}
           student_fees_master_id={student.fees_status.id}
@@ -1781,7 +1790,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             setIsApplyExtraFeesDialogOpen(false)
             getStudentFeesDetails({
               student_id: Number.parseInt(params.student_id!),
-              academic_session_id: CurrentAcademicSessionForSchool!.id,
+              academic_session_id: effectiveAcademicSessionId,
             })
           }}
           studentId={Number.parseInt(params.student_id)}

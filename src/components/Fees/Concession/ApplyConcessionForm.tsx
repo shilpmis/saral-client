@@ -157,7 +157,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
   const filteredStudents = studentFeesStatuForClass
     ? studentFeesStatuForClass.data.filter((student) => {
         const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
-        const grNumber = student.gr_no.toString()
+        const grNumber = student.gr_no != null ? student.gr_no.toString() : ""
         return fullName.includes(searchTermStudent.toLowerCase()) || grNumber.includes(searchTermStudent.toLowerCase())
       })
     : []
@@ -361,7 +361,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
     }
 
     // Always fetch fee types for both concession types
-    getAllFeesType({ academic_session_id: CurrentAcademicSessionForSchool!.id })
+    getAllFeesType({ 
+      academic_session_id: CurrentAcademicSessionForSchool!.id,
+      applicable_to : "plan",      
+     })
   }, [])
 
   // Auto-select first class and division when academicClasses are loaded
