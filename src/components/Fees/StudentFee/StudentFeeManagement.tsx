@@ -161,7 +161,7 @@ const StudentFeesManagement: React.FC = () => {
 
     return students.filter((student) => {
       const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
-      const grNumber = student.gr_no.toString()
+      const grNumber = student.gr_no != null ? student.gr_no.toString() : ""
 
       return fullName.includes(searchTerm.toLowerCase()) || grNumber.includes(searchTerm.toLowerCase())
     })

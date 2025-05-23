@@ -626,7 +626,7 @@ export function StudentPromotionManagement() {
 
       return (
         fullName.includes(searchLower) ||
-        (student.student.gr_no && student.student.gr_no.toString().includes(searchTerm)) ||
+        (student.student.gr_no != null && student.student.gr_no.toString().includes(searchTerm)) ||
         (student.student.roll_number && student.student.roll_number.toString().includes(searchTerm))
       )
     })

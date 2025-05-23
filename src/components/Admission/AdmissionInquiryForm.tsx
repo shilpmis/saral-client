@@ -28,7 +28,7 @@ import { skipToken } from "@reduxjs/toolkit/query"
 // Define the props for the component
 interface AdmissionInquiryFormProps {
   isEditing?: boolean
-  initialData?: Omit<Inquiry, "school_id" | "status" | "admin_notes" | "created_by" | "is_converted_to_student"> | null
+  initialData?: Omit<Inquiry, "school_id" | "status" | "admin_notes" | "created_by" | "is_converted_to_student" | "student_enrollments_id" | "student_enrollment"> | null
   inquiryId?: number
   onSuccess?: () => void
   onCancel?: () => void

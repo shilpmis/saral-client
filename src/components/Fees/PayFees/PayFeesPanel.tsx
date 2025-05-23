@@ -164,7 +164,7 @@ const PayFeesPanel: React.FC = () => {
 
     return students.filter((student) => {
       const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
-      const grNumber = student.gr_no.toString()
+      const grNumber = student.gr_no != null ? student.gr_no.toString() : ""
 
       return fullName.includes(searchTerm.toLowerCase()) || grNumber.includes(searchTerm.toLowerCase())
     })
@@ -224,7 +224,7 @@ const PayFeesPanel: React.FC = () => {
 
   // Handle direct navigation to student fees page
   const handleNavigateToStudentFees = (studentId: number) => {
-    navigate(`${studentId}`)
+    navigate(`${studentId}?session_id=${selectedSession}`)
   }
 
   // Get status badge variant based on fee status
@@ -515,20 +515,20 @@ const PayFeesPanel: React.FC = () => {
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
                           <Button 
-                            variant="outline" 
+                            className="bg-primary hover:bg-primary/90"
                             size="sm"
                             onClick={() => handleNavigateToStudentFees(student.id)}
                             title={t("view_full_details")}
                           >
-                            {t("details")}
+                            {t("fees_details")}
                           </Button>
-                          <Button
+                          {/* <Button
                             onClick={() => handleViewDetails(student.id)}
                             className="bg-primary hover:bg-primary/90"
                             size="sm"
                           >
                             {t("pay_fees")}
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>
