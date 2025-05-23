@@ -26,7 +26,7 @@ import {
 import { UserRole, type AcademicSession } from "@/types/user"
 import { Skeleton } from "@/components/ui/skeleton"
 
-type ApplicableToFilter = "all" | "student" | "plan"
+type ApplicableToFilter = "All" | "student" | "plan"
 type StatusFilter =  "Active" | "Inactive"
 
 export const FeeTypeManagement: React.FC = () => {
@@ -45,7 +45,7 @@ export const FeeTypeManagement: React.FC = () => {
     CurrentAcademicSessionForSchool ? CurrentAcademicSessionForSchool?.id.toString() : "",
   )
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("Active")
-  const [applicableToFilter, setApplicableToFilter] = useState<ApplicableToFilter>("all")
+  const [applicableToFilter, setApplicableToFilter] = useState<ApplicableToFilter>("All")
   const [currentPage, setCurrentPage] = useState(1)
 
   const [DialogForFeeType, setDialogForFeeType] = useState<{
@@ -237,7 +237,7 @@ export const FeeTypeManagement: React.FC = () => {
                 <SelectValue placeholder={t("applicable_to")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="All">{t("all")}</SelectItem>
                 <SelectItem value="student">{t("student")}</SelectItem>
                 <SelectItem value="plan">{t("plan")}</SelectItem>
               </SelectContent>
@@ -335,7 +335,7 @@ export const FeeTypeManagement: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">{t("no_fee_types_found")}</h3>
                   <p className="text-gray-500 max-w-md mx-auto mb-4">
-                    {searchTerm || applicableToFilter !== "all"
+                    {searchTerm || applicableToFilter !== "All"
                       ? t("try_adjusting_your_filters")
                       : t("you_need_to_create_fee_types_before_you_can_create_fee_plans")}
                   </p>

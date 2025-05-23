@@ -65,18 +65,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const customStudentSchema = studentSchema
-    // .refine(
-    //   (data) => {
-    //     if (data.admission_class && data.class) {
-    //       return Number.parseInt(data.admission_class) <= Number.parseInt(data.class)
-    //     }
-    //     return true
-    //   },
-    //   {
-    //     message: "Admission class should not be greater than the current class",
-    //     path: ["admission_class"], // Specify the path to the field that should show the error
-    //   },
-    // )
+  
     .refine(
       (data) => {
         if (data.class) {
@@ -89,21 +78,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         path: ["division"], // Specify the path to the field that should show the error
       },
     )
-    // .refine(
-    //   (data) => {
-    //     if (data.admission_class) {
-    //       return (
-    //         data.admission_division !== undefined && data.admission_division !== null && data.admission_division !== ""
-    //       )
-    //     }
-    //     return true
-    //   },
-    //   {
-    //     message: "Admission division cannot be null if admission class is selected",
-    //     path: ["admission_division"], // Specify the path to the field that should show the error
-    //   },
-    // )
-
+  
   const form = useForm<StudentFormData>({
     resolver: zodResolver(customStudentSchema),
     defaultValues: {
@@ -368,22 +343,23 @@ const StudentForm: React.FC<StudentFormProps> = ({
           return
         }
           try {
-            const res = await convertInquiryToStudent({
-              inquiry_id: inquiry_id,
-              payload: payload,
-            }).unwrap()
+            // const res = await convertInquiryToStudent({
+            //   inquiry_id: inquiry_id,
+            //   payload: payload,
+            // }).unwrap()
 
-            if (onSubmitSuccess) {
-              onSubmitSuccess({...res , class_id :payload.students_data.class_id})
-            } else {
-              onClose()
-            }
+            // if (onSubmitSuccess) {
+            //   onSubmitSuccess({...res , class_id :payload.students_data.class_id})
+            // } else {
+            //   onClose()
+            // }
 
           } catch (error) {
             console.log("Error while converting inquiry to student:", error)  
             onSubmitError && onSubmitError(error);
           }
-      }else {
+      }
+      else {
         try {
           const response = await createStudent({
             payload: payload,

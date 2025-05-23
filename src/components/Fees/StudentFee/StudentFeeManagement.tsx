@@ -22,6 +22,12 @@ import { SaralPagination } from "@/components/ui/common/SaralPagination"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import type { StudentFeeDetails } from "@/types/fees"
 import StudentFeesDetailView from "./StudentFeesDetailView" 
+import StudentFeesDetailPage from "./StudentFeesDetailPage"
+
+// Session storage keys for this page
+const SESSION_SELECTED_CLASS_KEY = "studentFeeMgmt_selected_class_id"
+const SESSION_SELECTED_DIVISION_KEY = "studentFeeMgmt_selected_division_id"
+const SESSION_SELECTED_PAGE_KEY = "studentFeeMgmt_selected_page"
 
 const StudentFeesManagement: React.FC = () => {
   const navigate = useNavigate()
@@ -48,56 +54,62 @@ const StudentFeesManagement: React.FC = () => {
   // State for student details dialog
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [hasRestoredSession, setHasRestoredSession] = useState(false)
 
-  // Load state from sessionStorage
+
+  // Load state from sessionStorage ONLY after academicClasses are loaded
   useEffect(() => {
-    const loadStateFromSessionStorage = () => {
-      const savedClass = sessionStorage.getItem("feesManagementSelectedClass")
-      const savedDivision = sessionStorage.getItem("feesManagementSelectedDivision")
-      const savedPage = sessionStorage.getItem("feesManagementCurrentPage")
+    if (!academicClasses || academicClasses.length === 0 || hasRestoredSession) return;
+    const savedClass = sessionStorage.getItem(SESSION_SELECTED_CLASS_KEY)
+    const savedDivision = sessionStorage.getItem(SESSION_SELECTED_DIVISION_KEY)
+    const savedPage = sessionStorage.getItem(SESSION_SELECTED_PAGE_KEY)
 
-      return {
-        savedClass: savedClass || "",
-        savedDivision: savedDivision || "",
-        savedPage: savedPage ? Number.parseInt(savedPage) : 1,
+    let classToSet = ""
+    let divisionToSet: Division | null = null
+    let pageToSet = 1
+
+    if (savedClass && academicClasses.some((cls) => cls.class.toString() === savedClass)) {
+      classToSet = savedClass
+      const classObj = academicClasses.find((cls) => cls.class.toString() === savedClass)
+      if (classObj && savedDivision) {
+        const division = classObj.divisions.find((div) => div.id.toString() === savedDivision)
+        if (division) {
+          divisionToSet = division
+        }
+      }
+      if (savedPage && !isNaN(Number(savedPage))) {
+        pageToSet = Number(savedPage)
+      }
+    } else {
+      // fallback to first class/division
+      const firstClassWithDivisions = academicClasses.find((cls) => cls.divisions.length > 0)
+      if (firstClassWithDivisions) {
+        classToSet = firstClassWithDivisions.class.toString()
+        divisionToSet = firstClassWithDivisions.divisions[0]
       }
     }
 
-    const { savedClass, savedDivision, savedPage } = loadStateFromSessionStorage()
+    setSelectedClass(classToSet)
+    setSelectedDivision(divisionToSet)
+    setCurrentPage(pageToSet)
+    setHasRestoredSession(true)
 
-    if (savedClass && academicClasses) {
-      // Check if the saved class exists in the available classes
-      const classExists = academicClasses.some((cls) => cls.class.toString() === savedClass)
-      if (classExists) {
-        setSelectedClass(savedClass)
-
-        // If we have a saved division, check if it exists for this class
-        if (savedDivision) {
-          const classObj = academicClasses.find((cls) => cls.class.toString() === savedClass)
-          if (classObj) {
-            const divisionExists = classObj.divisions.some((div) => div.id.toString() === savedDivision)
-            if (divisionExists) {
-              const division = classObj.divisions.find((div) => div.id.toString() === savedDivision)
-              if (division) {
-                setSelectedDivision(division)
-              }
-            }
-          }
-        }
-
-        // Set the saved page if it exists
-        if (savedPage) {
-          setCurrentPage(savedPage)
-        }
-      }
+    // Fetch data if both class and division are set
+    if (classToSet && divisionToSet && currentAcademicSession) {
+      getClassFeesStatus({
+        class_id: divisionToSet.id,
+        academic_session: currentAcademicSession.id,
+        page: pageToSet,
+      })
     }
-  }, [academicClasses])
+  // eslint-disable-next-line
+  }, [academicClasses, currentAcademicSession, hasRestoredSession])
 
   // Save state to sessionStorage
   const saveStateToSessionStorage = (classId: string, divisionId: string | number | null, page: number) => {
-    sessionStorage.setItem("feesManagementSelectedClass", classId)
-    sessionStorage.setItem("feesManagementSelectedDivision", divisionId ? divisionId.toString() : "")
-    sessionStorage.setItem("feesManagementCurrentPage", page.toString())
+    sessionStorage.setItem(SESSION_SELECTED_CLASS_KEY, classId)
+    sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, divisionId ? divisionId.toString() : "")
+    sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, page.toString())
   }
 
   // Get available divisions for selected class
@@ -372,30 +384,26 @@ const StudentFeesManagement: React.FC = () => {
     }
   }, [academicClasses, authState.user, getAcademicClasses])
 
-  // Auto-select first class and division when academicClasses are loaded
+  // Only auto-select first class/division if session restore has NOT happened
   useEffect(() => {
-    if (academicClasses && academicClasses.length > 0 && !selectedClass) {
-      // Find first class with divisions
+    if (
+      academicClasses &&
+      academicClasses.length > 0 &&
+      !selectedClass &&
+      !hasRestoredSession
+    ) {
       const firstClassWithDivisions = academicClasses.find((cls) => cls.divisions.length > 0)
-
       if (firstClassWithDivisions) {
-        // Set the first class
         setSelectedClass(firstClassWithDivisions.class.toString())
-
-        // Set the first division of that class
-        if (firstClassWithDivisions.divisions.length > 0) {
-          const firstDivision = firstClassWithDivisions.divisions[0]
-          setSelectedDivision(firstDivision)
-
-          // Fetch fees data for this class and division
-          getClassFeesStatus({
-            class_id: firstDivision.id,
-            academic_session: currentAcademicSession!.id,
-          })
-        }
+        setSelectedDivision(firstClassWithDivisions.divisions[0])
+        getClassFeesStatus({
+          class_id: firstClassWithDivisions.divisions[0].id,
+          academic_session: currentAcademicSession!.id,
+        })
       }
     }
-  }, [academicClasses, selectedClass, currentAcademicSession, getClassFeesStatus])
+  // eslint-disable-next-line
+  }, [academicClasses, selectedClass, currentAcademicSession, hasRestoredSession])
 
   // Update students when fees data changes
   useEffect(() => {
@@ -648,16 +656,20 @@ const StudentFeesManagement: React.FC = () => {
       >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           {selectedStudentId && studentFeeDetails ? (
-            <StudentFeesDetailView
-              studentFeeDetails={studentFeeDetails as StudentFeeDetails}
-              isLoading={isLoadingDetails}
+            // <StudentFeesDetailView
+            //   studentFeeDetails={studentFeeDetails as StudentFeeDetails}
+            //   isLoading={isLoadingDetails}
+            //   onClose={() => setIsDetailsDialogOpen(false)}
+            //   academicSession={currentAcademicSession!}
+            //   schoolInfo={{
+            //     name: authState.user?.school?.name || "School Management System",
+            //     address: authState.user?.school?.address || "",
+            //   }}
+            //   showBackButton={false}
+            // />
+            <StudentFeesDetailPage
+              studentId={selectedStudentId}
               onClose={() => setIsDetailsDialogOpen(false)}
-              academicSession={currentAcademicSession!}
-              schoolInfo={{
-                name: authState.user?.school?.name || "School Management System",
-                address: authState.user?.school?.address || "",
-              }}
-              showBackButton={false}
             />
           ) : (
             <div className="p-6 space-y-4">

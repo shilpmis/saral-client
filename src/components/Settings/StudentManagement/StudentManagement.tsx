@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,29 +44,35 @@ import {
   Ban,
   Check,
   AlertCircle,
+  Info,
 } from "lucide-react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "@/hooks/use-toast"
-import { useFetchStudentEnrollmentsForDivisionQuery } from "@/services/StudentManagementService"
+import {
+  useFetchStudentEnrollmentsForDivisionQuery,
+  useMigrateStudentMutation,
+  useDropStudentMutation,
+  useUpdaeStudentStatusToCompleteMutation,
+  useSuspensendStudentMutation,
+} from "@/services/StudentManagementService"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { useNavigate } from "react-router-dom"
-import { StudentEnrollment } from "@/types/student"
-
-// Mock API call to update student status
-const updateStudentStatus = async (id: number, status: string, remarks?: string) => {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return { success: true }
-}
+import type { StudentEnrollment } from "@/types/student"
+import type {
+  ReqBodyForStundetMigration,
+  ReqBodyForDropStudent,
+  ReqBodyForStudentCompletion,
+  ReqBodyForStudentSuspension,
+} from "@/types/student"
 
 // Define form schema for status update
 const statusUpdateSchema = z.object({
   status: z.enum(["pursuing", "drop", "migrated", "completed", "suspended"]),
-  remarks: z.string().optional(),
+  remarks: z.string().min(1, "Remarks are required").max(500, "Remarks must be less than 500 characters"),
   new_division_id: z.number().optional(),
 })
 
@@ -74,6 +82,36 @@ const removeSuspensionSchema = z.object({
   remarks: z.string().min(1, "Remarks are required when changing from suspension"),
 })
 
+// Define migration form schema
+const migrationSchema = z.object({
+  status: z.literal("migrated"),
+  remarks: z.string().min(1, "Remarks are required for migration").max(500, "Remarks must be less than 500 characters"),
+  class_id: z.number().min(1, "Class selection is required"),
+  new_division_id: z.number().min(1, "Division selection is required"),
+  is_migration_for_class: z.number().default(1),
+})
+
+// Define drop student form schema
+const dropStudentSchema = z.object({
+  remarks: z
+    .string()
+    .min(1, "Reason is required for dropping a student")
+    .max(500, "Reason must be less than 500 characters"),
+})
+
+// Define complete student form schema
+const completeStudentSchema = z.object({
+  remarks: z
+    .string()
+    .min(1, "Reason is required for completing a student")
+    .max(500, "Reason must be less than 500 characters"),
+})
+
+// Define suspension form schema
+const suspensionSchema = z.object({
+  remarks: z.string().min(1, "Reason is required for suspension").max(500, "Reason must be less than 500 characters"),
+  status: z.enum(["suspended", "remove_suspension"]),
+})
 
 const ManageStudents: React.FC = () => {
   const { t } = useTranslation()
@@ -98,13 +136,21 @@ const ManageStudents: React.FC = () => {
   const [showMigrationDialog, setShowMigrationDialog] = useState(false)
   const [showSuspensionDialog, setShowSuspensionDialog] = useState(false)
   const [showRemoveSuspensionDialog, setShowRemoveSuspensionDialog] = useState(false)
+  const [showDropDialog, setShowDropDialog] = useState(false)
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false)
   const [showAlertDialog, setShowAlertDialog] = useState(false)
   const [alertDialogMessage, setAlertDialogMessage] = useState("")
   const [alertDialogTitle, setAlertDialogTitle] = useState("")
 
-  // Add these state variables after the other dialog states
+  // Migration state variables
   const [migrationSelectedClass, setMigrationSelectedClass] = useState<string>("")
   const [migrationAvailableDivisions, setMigrationAvailableDivisions] = useState<any[]>([])
+
+  // API mutation hooks
+  const [migrateStudent, { isLoading: isMigratingStudent }] = useMigrateStudentMutation()
+  const [dropStudent, { isLoading: isDroppingStudent }] = useDropStudentMutation()
+  const [completeStudent, { isLoading: isCompletingStudent }] = useUpdaeStudentStatusToCompleteMutation()
+  const [suspendStudent, { isLoading: isSuspendingStudent }] = useSuspensendStudentMutation()
 
   // Redux & API hooks
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
@@ -118,31 +164,40 @@ const ManageStudents: React.FC = () => {
     },
   })
 
-  // Update the migrationForm schema to include class_id
-  const migrationForm = useForm({
-    resolver: zodResolver(
-      statusUpdateSchema.extend({
-        class_id: z.number(),
-        new_division_id: z.number(),
-      }),
-    ),
+  const migrationForm = useForm<z.infer<typeof migrationSchema>>({
+    resolver: zodResolver(migrationSchema),
     defaultValues: {
       status: "migrated",
       remarks: "",
       class_id: 0,
       new_division_id: 0,
+      is_migration_for_class: 1,
     },
   })
 
-  const suspensionForm = useForm({
-    resolver: zodResolver(statusUpdateSchema),
+  const dropStudentForm = useForm<z.infer<typeof dropStudentSchema>>({
+    resolver: zodResolver(dropStudentSchema),
+    defaultValues: {
+      remarks: "",
+    },
+  })
+
+  const completeStudentForm = useForm<z.infer<typeof completeStudentSchema>>({
+    resolver: zodResolver(completeStudentSchema),
+    defaultValues: {
+      remarks: "",
+    },
+  })
+
+  const suspensionForm = useForm<z.infer<typeof suspensionSchema>>({
+    resolver: zodResolver(suspensionSchema),
     defaultValues: {
       status: "suspended",
       remarks: "",
     },
   })
 
-  const removeSuspensionForm = useForm({
+  const removeSuspensionForm = useForm<z.infer<typeof removeSuspensionSchema>>({
     resolver: zodResolver(removeSuspensionSchema),
     defaultValues: {
       status: "pursuing",
@@ -240,6 +295,20 @@ const ManageStudents: React.FC = () => {
     setCurrentPage(page)
   }
 
+  // Function to check if a class is the highest grade
+  const isHighestGradeClass = (classId: number): boolean => {
+    if (!AcademicClasses || AcademicClasses.length === 0) return false
+
+    // Find the highest class grade
+    const highestClass = Math.max(...AcademicClasses.map((cls) => Number(cls.class)))
+
+    // Find the class object for the given classId
+    const classObj = AcademicClasses.find((cls) => cls.id === classId)
+
+    // Check if this class has the highest grade
+    return classObj ? Number(classObj.class) === highestClass : false
+  }
+
   // Handle status update
   const handleStatusUpdate = async (student: StudentEnrollment, newStatus: string) => {
     // Check for restrictions
@@ -257,9 +326,18 @@ const ManageStudents: React.FC = () => {
       return
     }
 
+    // Check if student is already dropped
     if (student.status === "drop") {
       setAlertDialogTitle(t("action_not_allowed"))
       setAlertDialogMessage(t("students_with_drop_status_cannot_be_updated"))
+      setShowAlertDialog(true)
+      return
+    }
+
+    // Check if student is already completed
+    if (student.status === "completed") {
+      setAlertDialogTitle(t("action_not_allowed"))
+      setAlertDialogMessage(t("students_with_completed_status_cannot_be_updated"))
       setShowAlertDialog(true)
       return
     }
@@ -274,6 +352,7 @@ const ManageStudents: React.FC = () => {
         remarks: "",
         class_id: 0,
         new_division_id: 0,
+        is_migration_for_class: 1,
       })
 
       setMigrationSelectedClass("")
@@ -284,7 +363,39 @@ const ManageStudents: React.FC = () => {
     }
 
     if (newStatus === "suspended") {
+      suspensionForm.reset({
+        status: "suspended",
+        remarks: "",
+      })
       setShowSuspensionDialog(true)
+      return
+    }
+
+    if (newStatus === "drop") {
+      dropStudentForm.reset({
+        remarks: "",
+      })
+      setShowDropDialog(true)
+      return
+    }
+
+    if (newStatus === "completed") {
+      // Find the student's current class
+      const studentDivision = AcademicDivisions?.find((div) => div.id === student.division_id)
+      const studentClassId = studentDivision ? studentDivision.class_id : null
+
+      // Check if the student is in the highest grade class
+      if (studentClassId && !isHighestGradeClass(studentClassId)) {
+        setAlertDialogTitle(t("action_not_allowed"))
+        setAlertDialogMessage(t("completed_status_can_only_be_applied_to_students_in_the_highest_grade"))
+        setShowAlertDialog(true)
+        return
+      }
+
+      completeStudentForm.reset({
+        remarks: "",
+      })
+      setShowCompleteDialog(true)
       return
     }
 
@@ -299,78 +410,27 @@ const ManageStudents: React.FC = () => {
     setShowStatusDialog(true)
   }
 
-  // Handle general status update submission
-  const onStatusUpdateSubmit = async (data: z.infer<typeof statusUpdateSchema>) => {
-    if (!selectedStudent) return
-
-    try {
-      await updateStudentStatus(selectedStudent.id, data.status, data.remarks)
-      toast({
-        title: t("status_updated"),
-        description: t("student_status_has_been_updated_successfully"),
-      })
-      setShowStatusDialog(false)
-      refetch() // Refetch data after update
-    } catch (error) {
-      console.error("Error updating student status:", error)
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: t("failed_to_update_student_status"),
-      })
-    }
-  }
-
   // Handle migration submission
-  const onMigrationSubmit = async (data: any) => {
+  const onMigrationSubmit = async (data: z.infer<typeof migrationSchema>) => {
     if (!selectedStudent) return
 
-    // Validate that both class and division are selected
-    if (!data.class_id || !data.new_division_id) {
-      toast({
-        variant: "destructive",
-        title: t("validation_error"),
-        description: t("please_select_both_class_and_division_for_migration"),
-      })
-      return
-    }
-
-    // Find the student's current class
-    const studentDivision = AcademicDivisions?.find((div) => div.id === selectedStudent.division_id)
-    const studentClass = studentDivision ? AcademicClasses?.find((c) => c.id === studentDivision.class_id) : null
-
-    // Find the target class
-    const targetClass = AcademicClasses?.find((c) => c.id === data.class_id)
-
-    // Validate that migration is not to a lower class
-    if (studentClass && targetClass && targetClass.class < studentClass.class) {
-      toast({
-        variant: "destructive",
-        title: t("validation_error"),
-        description: t("cannot_migrate_student_to_a_lower_class"),
-      })
-      return
-    }
-
-    // Validate that migration is not to the same division
-    if (data.new_division_id === selectedStudent.division_id) {
-      toast({
-        variant: "destructive",
-        title: t("validation_error"),
-        description: t("cannot_migrate_student_to_the_same_division"),
-      })
-      return
-    }
-
     try {
-      // Include both class_id and division_id in the migration data
-      await updateStudentStatus(
-        selectedStudent.id,
-        "migrated",
-        `${data.remarks} (Migrated to Class ${targetClass?.class}, Division ${
-          AcademicDivisions?.find((d) => d.id === data.new_division_id)?.division || ""
-        })`,
-      )
+      // Find the target class
+      const targetClass = AcademicClasses?.find((c) => c.id === data.class_id)
+
+      // Prepare payload for migration
+      const payload: ReqBodyForStundetMigration = {
+        reason: data.remarks,
+        migrated_class: data.class_id,
+        migrated_division: data.new_division_id,
+        is_migration_for_class: data.is_migration_for_class,
+      }
+
+      // Call the migration API
+      const response = await migrateStudent({
+        student_enrollment_id: selectedStudent.id,
+        payload,
+      }).unwrap()
 
       toast({
         title: t("student_migrated"),
@@ -378,72 +438,142 @@ const ManageStudents: React.FC = () => {
       })
       setShowMigrationDialog(false)
       refetch() // Refetch data after update
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error migrating student:", error)
       toast({
         variant: "destructive",
         title: t("error"),
-        description: t("failed_to_migrate_student"),
+        description: error.data?.message || t("failed_to_migrate_student"),
+      })
+    }
+  }
+
+  // Handle drop student submission
+  const onDropStudentSubmit = async (data: z.infer<typeof dropStudentSchema>) => {
+    if (!selectedStudent) return
+
+    try {
+      // Prepare payload for dropping student
+      const payload: ReqBodyForDropStudent = {
+        reason: data.remarks,
+      }
+
+      // Call the drop student API
+      const response = await dropStudent({
+        student_enrollment_id: selectedStudent.id,
+        payload,
+      }).unwrap()
+
+      toast({
+        title: t("student_dropped"),
+        description: t("student_has_been_dropped_successfully"),
+      })
+      setShowDropDialog(false)
+      refetch() // Refetch data after update
+    } catch (error: any) {
+      console.error("Error dropping student:", error)
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: error.data?.message || t("failed_to_drop_student"),
+      })
+    }
+  }
+
+  // Handle complete student submission
+  const onCompleteStudentSubmit = async (data: z.infer<typeof completeStudentSchema>) => {
+    if (!selectedStudent) return
+
+    try {
+      // Prepare payload for completing student
+      const payload: ReqBodyForStudentCompletion = {
+        reason: data.remarks,
+      }
+
+      // Call the complete student API
+      const response = await completeStudent({
+        student_enrollment_id: selectedStudent.id,
+        payload,
+      }).unwrap()
+
+      toast({
+        title: t("student_completed"),
+        description: t("student_has_been_marked_as_completed_successfully"),
+      })
+      setShowCompleteDialog(false)
+      refetch() // Refetch data after update
+    } catch (error: any) {
+      console.error("Error completing student:", error)
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: error.data?.message || t("failed_to_complete_student"),
       })
     }
   }
 
   // Handle suspension submission
-  const onSuspensionSubmit = async (data: any) => {
+  const onSuspensionSubmit = async (data: z.infer<typeof suspensionSchema>) => {
     if (!selectedStudent) return
 
-    if (!data.remarks) {
-      suspensionForm.setError("remarks", {
-        type: "manual",
-        message: t("remarks_are_required_for_suspension"),
-      })
-      return
-    }
-
     try {
-      await updateStudentStatus(selectedStudent.id, "suspended", data.remarks)
+      // Prepare payload for suspending student
+      const payload: ReqBodyForStudentSuspension = {
+        reason: data.remarks,
+        status: "suspended",
+      }
+
+      // Call the suspend student API
+      const response = await suspendStudent({
+        student_enrollment_id: selectedStudent.id,
+        payload,
+      }).unwrap()
+
       toast({
         title: t("student_suspended"),
         description: t("student_has_been_suspended_successfully"),
       })
       setShowSuspensionDialog(false)
       refetch() // Refetch data after update
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error suspending student:", error)
       toast({
         variant: "destructive",
         title: t("error"),
-        description: t("failed_to_suspend_student"),
+        description: error.data?.message || t("failed_to_suspend_student"),
       })
     }
   }
 
   // Handle remove suspension submission
-  const onRemoveSuspensionSubmit = async (data: any) => {
+  const onRemoveSuspensionSubmit = async (data: z.infer<typeof removeSuspensionSchema>) => {
     if (!selectedStudent) return
 
-    if (!data.remarks) {
-      removeSuspensionForm.setError("remarks", {
-        type: "manual",
-        message: t("remarks_are_required_when_removing_suspension"),
-      })
-      return
-    }
-
     try {
-      await updateStudentStatus(selectedStudent.id, data.status, data.remarks)
+      // Prepare payload for removing suspension
+      const payload: ReqBodyForStudentSuspension = {
+        reason: data.remarks,
+        status: "remove_suspension",
+      }
+
+      // Call the suspend student API with remove_suspension status
+      const response = await suspendStudent({
+        student_enrollment_id: selectedStudent.id,
+        payload,
+      }).unwrap()
+
       toast({
         title: t("suspension_removed"),
         description: t("student_suspension_has_been_removed_successfully"),
       })
       setShowRemoveSuspensionDialog(false)
       refetch() // Refetch data after update
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing student suspension:", error)
       toast({
         variant: "destructive",
         title: t("error"),
-        description: t("failed_to_remove_student_suspension"),
+        description: error.data?.message || t("failed_to_remove_student_suspension"),
       })
     }
   }
@@ -456,7 +586,7 @@ const ManageStudents: React.FC = () => {
     return selectedClassObj ? selectedClassObj.divisions : []
   }
 
-  // Add this function after getFilteredDivisions
+  // Handle migration class change
   const handleMigrationClassChange = (classId: string) => {
     if (!AcademicClasses) return
 
@@ -524,21 +654,23 @@ const ManageStudents: React.FC = () => {
 
   // Get available status options based on current status
   const getAvailableStatusOptions = (currentStatus: string) => {
-    const allStatuses = ["pursuing", "drop", "migrated", "completed", "suspended"]
-
-    // Handle restrictions
+    // If student is dropped, no status changes allowed
     if (currentStatus === "drop") {
-      return [] // No status changes allowed from drop
+      return []
     }
 
+    // If student is completed, no status changes allowed
     if (currentStatus === "completed") {
-      return ["drop", "migrated"] // Limited options from completed
+      return []
     }
 
+    // If student is suspended, only allow removing suspension to pursuing
     if (currentStatus === "suspended") {
-      return ["pursuing", "drop", "failed"] // Options when removing suspension
+      return ["pursuing"]
     }
 
+    // For other statuses, show all applicable options
+    const allStatuses = ["pursuing", "drop", "migrated", "completed", "suspended"]
     return allStatuses.filter(
       (status) => status !== currentStatus && status !== "promoted" && status !== "failed" && status !== "transfered",
     )
@@ -549,16 +681,16 @@ const ManageStudents: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("student_management")}</h1>
-          <p className="text-muted-foreground mt-1">{t("manage_student_enrollment_statuses_and_academic_progression")}</p>
+          <p className="text-muted-foreground mt-1">
+            {t("manage_student_enrollment_statuses_and_academic_progression")}
+          </p>
         </div>
       </div>
 
-      <Card className="mt-6">  
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>{t("student_management")}</CardTitle>
-          <CardDescription>
-            {t("select_classes_to_update_status_students_to_the_next_academic_year")}
-          </CardDescription>
+          <CardDescription>{t("select_classes_to_update_status_students_to_the_next_academic_year")}</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Display warning when no academic classes exist */}
@@ -587,6 +719,20 @@ const ManageStudents: React.FC = () => {
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Status Rules Information */}
+          <Alert variant="default" className="mb-6 bg-blue-50 border-blue-200">
+            <Info className="h-5 w-5 text-blue-600" />
+            <AlertTitle className="text-blue-800">{t("student_status_rules")}</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
+                <li>{t("dropped_students_cannot_have_their_status_changed")}</li>
+                <li>{t("completed_students_cannot_have_their_status_changed")}</li>
+                <li>{t("completed_status_can_only_be_applied_to_students_in_the_highest_grade")}</li>
+                <li>{t("suspended_students_can_only_be_changed_to_pursuing_status")}</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
 
           {requireDivision && (
             <div className="mb-4 p-4 border rounded-md bg-amber-50 text-amber-800 flex items-center gap-2">
@@ -733,6 +879,7 @@ const ManageStudents: React.FC = () => {
                             <Select
                               disabled={
                                 enrollment.status === "drop" ||
+                                enrollment.status === "completed" ||
                                 getAvailableStatusOptions(enrollment.status).length === 0
                               }
                               onValueChange={(value) => handleStatusUpdate(enrollment, value)}
@@ -787,52 +934,7 @@ const ManageStudents: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Status Update Dialog */}
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("update_student_status")}</DialogTitle>
-            <DialogDescription>
-              {selectedStudent && (
-                <span>
-                  {t("changing_status_for")}: {selectedStudent.student.first_name} {selectedStudent.student.last_name}
-                </span>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...statusUpdateForm}>
-            <form onSubmit={statusUpdateForm.handleSubmit(onStatusUpdateSubmit)} className="space-y-4">
-              <FormField
-                control={statusUpdateForm.control}
-                name="remarks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("remarks")}</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t("enter_remarks_for_status_change")} className="resize-none" {...field} />
-                    </FormControl>
-                    <FormDescription>{t("provide_reason_for_status_change")}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowStatusDialog(false)}>
-                  {t("cancel")}
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t("update_status")}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Replace the entire Migration Dialog with this updated version */}
+      {/* Migration Dialog */}
       <Dialog open={showMigrationDialog} onOpenChange={setShowMigrationDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -970,11 +1072,130 @@ const ManageStudents: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={
-                    isLoading || !migrationForm.getValues().new_division_id || !migrationForm.getValues().class_id
+                    isMigratingStudent ||
+                    !migrationForm.getValues().new_division_id ||
+                    !migrationForm.getValues().class_id
                   }
                 >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isMigratingStudent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("confirm_migration")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Drop Student Dialog */}
+      <Dialog open={showDropDialog} onOpenChange={setShowDropDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("drop_student")}</DialogTitle>
+            <DialogDescription>
+              {selectedStudent && (
+                <span>
+                  {t("dropping_student")}: {selectedStudent.student.first_name} {selectedStudent.student.last_name}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...dropStudentForm}>
+            <form onSubmit={dropStudentForm.handleSubmit(onDropStudentSubmit)} className="space-y-4">
+              <FormField
+                control={dropStudentForm.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("drop_reason")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("enter_reason_for_dropping_student")}
+                        className="resize-none"
+                        {...field}
+                        required
+                      />
+                    </FormControl>
+                    <FormDescription>{t("provide_detailed_reason_for_dropping_student")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Alert variant="destructive" className="bg-amber-50 border-amber-200">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800 text-sm font-medium">{t("warning")}</AlertTitle>
+                <AlertDescription className="text-amber-700 text-sm">
+                  {t("dropping_a_student_is_permanent_and_cannot_be_undone")}
+                </AlertDescription>
+              </Alert>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowDropDialog(false)}>
+                  {t("cancel")}
+                </Button>
+                <Button type="submit" disabled={isDroppingStudent} variant="destructive">
+                  {isDroppingStudent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t("confirm_drop")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Student Dialog */}
+      <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("complete_student")}</DialogTitle>
+            <DialogDescription>
+              {selectedStudent && (
+                <span>
+                  {t("marking_student_as_completed")}: {selectedStudent.student.first_name}{" "}
+                  {selectedStudent.student.last_name}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...completeStudentForm}>
+            <form onSubmit={completeStudentForm.handleSubmit(onCompleteStudentSubmit)} className="space-y-4">
+              <FormField
+                control={completeStudentForm.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("completion_reason")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("enter_reason_for_marking_student_as_completed")}
+                        className="resize-none"
+                        {...field}
+                        required
+                      />
+                    </FormControl>
+                    <FormDescription>{t("provide_reason_for_marking_student_as_completed")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Alert variant="destructive" className="bg-amber-50 border-amber-200">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800 text-sm font-medium">{t("warning")}</AlertTitle>
+                <AlertDescription className="text-amber-700 text-sm">
+                  {t("marking_a_student_as_completed_is_permanent_and_cannot_be_undone")}
+                </AlertDescription>
+              </Alert>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowCompleteDialog(false)}>
+                  {t("cancel")}
+                </Button>
+                <Button type="submit" disabled={isCompletingStudent}>
+                  {isCompletingStudent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t("mark_as_completed")}
                 </Button>
               </DialogFooter>
             </form>
@@ -1018,12 +1239,20 @@ const ManageStudents: React.FC = () => {
                 )}
               />
 
+              <Alert variant="default" className="bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertTitle className="text-blue-800 text-sm font-medium">{t("note")}</AlertTitle>
+                <AlertDescription className="text-blue-700 text-sm">
+                  {t("suspended_students_can_be_restored_to_pursuing_status_later")}
+                </AlertDescription>
+              </Alert>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowSuspensionDialog(false)}>
                   {t("cancel")}
                 </Button>
-                <Button type="submit" disabled={isLoading} variant="destructive">
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isSuspendingStudent} variant="destructive">
+                  {isSuspendingStudent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("confirm_suspension")}
                 </Button>
               </DialogFooter>
@@ -1068,21 +1297,9 @@ const ManageStudents: React.FC = () => {
                             <span>{t("pursuing")}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="failed">
-                          <div className="flex items-center gap-2">
-                            <UserX className="h-4 w-4 text-amber-600" />
-                            <span>{t("failed")}</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="drop">
-                          <div className="flex items-center gap-2">
-                            <UserMinus className="h-4 w-4 text-red-600" />
-                            <span>{t("drop")}</span>
-                          </div>
-                        </SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>{t("select_the_new_status_for_the_student")}</FormDescription>
+                    <FormDescription>{t("student_will_be_restored_to_pursuing_status")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1112,8 +1329,8 @@ const ManageStudents: React.FC = () => {
                 <Button type="button" variant="outline" onClick={() => setShowRemoveSuspensionDialog(false)}>
                   {t("cancel")}
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isSuspendingStudent}>
+                  {isSuspendingStudent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("remove_suspension")}
                 </Button>
               </DialogFooter>

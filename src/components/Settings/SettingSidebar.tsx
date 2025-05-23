@@ -62,7 +62,7 @@ const navigationSections: NavSection[] = [
       {
         title: "subject_management",
         icon: GraduationCap,
-        href: "academic/subjects",
+        href: "subjects",
       },
       {
         title: "staff_management",
@@ -124,7 +124,7 @@ const navigationSections: NavSection[] = [
           {
             title: "student_promotion",
             icon: GraduationCap,
-            href: "manage/students/promotion",
+            href: "manage/promotion",
           },
         ],
       },

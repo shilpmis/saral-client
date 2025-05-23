@@ -19,6 +19,7 @@ import StudentProfileView from "./StudentProfileView"
 
 interface StudentTableProps {
   filteredStudents: Student[]
+  selectd_academic_session: number
   onEdit: (student_id: number) => void
   onDelete?: (studentId: string) => void
   selectedClass: string
@@ -29,6 +30,7 @@ interface StudentTableProps {
 
 export default function StudentTable({
   filteredStudents,
+  selectd_academic_session,
   onEdit,
   onDelete,
   PageDetailsForStudents,
@@ -59,7 +61,7 @@ export default function StudentTable({
     try {
       const response = await fetchStudentDetails({
         student_id: Number(student_id),
-        academic_session_id: CurrentAcademicSessionForSchool!.id,
+        academic_session_id: selectd_academic_session
       }).unwrap()
       setSelectedStudent(response)
     } catch (error) {

@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Calendar,
   CreditCard,
-  Download,
   FileText,
   Printer,
   Receipt,
@@ -22,29 +21,61 @@ import {
   Info,
   CheckCircle2,
   Eye,
+  Plus,
+  AlertCircle,
 } from "lucide-react"
-import { useGetAllConcessionsQuery, useLazyGetStudentFeesDetailsQuery } from "@/services/feesService"
+import {
+  useGetAllConcessionsQuery,
+  useLazyGetStudentFeesDetailsQuery,
+  useGetAllFeesTypeQuery,
+} from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
 import InstallmentDetailView from "@/components/Fees/Reports/InstallmentDetailViewProps"
 import PaymentReceiptGenerator from "@/components/Fees/Reports/PaymentReceiptGenerator"
 import type { InstallmentBreakdown } from "@/types/fees"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import ApplyExtraFeesDialog from "@/components/Fees/StudentFee/ApplyExtraFeesDialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import PayExtraFeesDialog from "@/components/Fees/PayFees/PayExtraFeesDialog"
+import type { ExtraFeesAppliedToStudent } from "@/types/fees"
+
+// Create a cache for fee types to avoid repeated lookups
+const feeTypeCache = new Map<number, any>()
+
+// Format currency as Indian Rupees
+const formatCurrency = (amount: string | number | null | undefined) => {
+  if (amount === null || amount === undefined || isNaN(Number(amount))) return "₹0.00"
+  return `₹${Number(amount).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  })}`
+}
+
+// Get fee type by ID from cache or API data
+const getFeeTypeById = (feeTypeId: number, feeTypes: any[]): any => {
+  // First check the cache
+  if (feeTypeCache.has(feeTypeId)) {
+    return feeTypeCache.get(feeTypeId)
+  }
+
+  // If not in cache, check the API data
+  if (feeTypes && feeTypes.length > 0) {
+    const feeType = feeTypes.find((type) => type.id === feeTypeId)
+    if (feeType) {
+      // Store in cache for future use
+      feeTypeCache.set(feeTypeId, feeType)
+      return feeType
+    }
+  }
+
+  // Return null if not found
+  return null
+}
 
 // Extended interface for installment breakdown with additional fields
 interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
@@ -59,11 +90,11 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   transaction_reference?: string | null
   amount_paid_as_carry_forward?: string
   applied_concession?:
-  | {
-    concession_id: number
-    applied_amount: number
-  }[]
-  | null
+    | {
+        concession_id: number
+        applied_amount: number
+      }[]
+    | null
 }
 
 type StudentFeesPanelProps = {}
@@ -81,11 +112,30 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const [activeTab, setActiveTab] = useState("due-fees")
   const [isPayFeesDialogOpen, setIsPayFeesDialogOpen] = useState(false)
   const [isConcessionDialogOpen, setIsConcessionDialogOpen] = useState(false)
+  const [isApplyExtraFeesDialogOpen, setIsApplyExtraFeesDialogOpen] = useState(false)
   const [selectedInstallments, setSelectedInstallments] = useState<ExtendedInstallmentBreakdown[]>([])
   const [selectedInstallmentForPayment, setSelectedInstallmentForPayment] =
     useState<ExtendedInstallmentBreakdown | null>(null)
 
-  // New states for detail view and receipt generator
+  // Keep the state for extra fees selection
+  const [selectedExtraFees, setSelectedExtraFees] = useState<
+    {
+      key: string
+      extraFeeId: number
+      installmentId: number
+      fees_type_id: number
+      amount: number
+      installment_no: number
+    }[]
+  >([])
+
+  // State for extra fees
+  const [selectedExtraFeeForPayment, setSelectedExtraFeeForPayment] = useState<ExtraFeesAppliedToStudent | null>(null)
+  const [isPayExtraFeesDialogOpen, setIsPayExtraFeesDialogOpen] = useState(false)
+  const [isExtraFeeDetailViewOpen, setIsExtraFeeDetailViewOpen] = useState(false)
+  const [selectedExtraFeeForView, setSelectedExtraFeeForView] = useState<ExtraFeesAppliedToStudent | null>(null)
+
+  // States for detail view and receipt generator
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
   const [selectedInstallmentForView, setSelectedInstallmentForView] = useState<any>(null)
   const [selectedFeeTypeForView, setSelectedFeeTypeForView] = useState<any>(null)
@@ -94,15 +144,30 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const [selectedInstallmentForReceipt, setSelectedInstallmentForReceipt] = useState<any>(null)
   const [selectedFeeTypeForReceipt, setSelectedFeeTypeForReceipt] = useState<any>(null)
 
-
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+
+  const { data: feeTypes } = useGetAllFeesTypeQuery(
+    { academic_session_id: CurrentAcademicSessionForSchool?.id || 0, applicable_to: "All" },
+    { skip: !CurrentAcademicSessionForSchool?.id },
+  )
+
+  // Get fee type name from ID
+  const getFeeTypeName = (feeTypeId: number): string => {
+    if (!feeTypeId) return t("unknown_fee_type")
+
+    const feeType = getFeeTypeById(feeTypeId, feeTypes || [])
+    if (feeType) {
+      return feeType.name
+    }
+
+    return `${t("fee_type")} ${feeTypeId}`
+  }
 
   // Fetch concession types from API
   const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
     { academic_session_id: CurrentAcademicSessionForSchool!.id },
     { skip: !CurrentAcademicSessionForSchool!.id },
   )
-
 
   // Get concession name from ID using the API data
   const getConcessionNameFromId = (concessionId: number): string => {
@@ -120,7 +185,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     return `${t("concession")} ${concessionId}`
   }
 
-
   // Format date to readable format
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "-"
@@ -130,22 +194,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       month: "short",
       day: "numeric",
     })
-  }
-
-  // Format currency
-  const formatCurrency = (amount: string | number | null | undefined) => {
-    if (amount === null || amount === undefined) return "₹0.00"
-    return `₹${Number(amount).toLocaleString("en-IN", {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    })}`
-  }
-
-  // Save state to localStorage
-  const saveStateToLocalStorage = (classId: string, divisionId: string | number | null, page: number) => {
-    localStorage.setItem("selectedClass", classId)
-    localStorage.setItem("selectedDivision", divisionId ? divisionId.toString() : "")
-    localStorage.setItem("currentPage", page.toString())
   }
 
   // Get status badge variant based on status
@@ -171,6 +219,31 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
+  // Keep the toggleExtraFeeSelection function
+  const toggleExtraFeeSelection = (extraFee: ExtraFeesAppliedToStudent, installmentId: number) => {
+    const key = `${extraFee.id}-${installmentId}`
+
+    if (selectedExtraFees.some((item) => item.key === key)) {
+      setSelectedExtraFees(selectedExtraFees.filter((item) => item.key !== key))
+    } else {
+      // Find the specific installment
+      const installment = extraFee.installment_breakdown.find((inst) => inst.id === installmentId)
+      if (installment) {
+        setSelectedExtraFees([
+          ...selectedExtraFees,
+          {
+            key,
+            extraFeeId: extraFee.id,
+            installmentId,
+            fees_type_id: extraFee.fees_type_id,
+            amount: installment.installment_amount,
+            installment_no: installment.installment_no,
+          },
+        ])
+      }
+    }
+  }
+
   // Handle pay fees button click for multiple installments
   const handlePayFees = () => {
     if (selectedInstallments.length === 0) {
@@ -185,10 +258,51 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsPayFeesDialogOpen(true)
   }
 
+  // Keep the handlePayExtraFees function
+  const handlePayExtraFees = () => {
+    if (selectedExtraFees.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No extra fees selected",
+        description: "Please select at least one extra fee installment to pay",
+      })
+      return
+    }
+
+    // Group selected installments by extra fee ID
+    const groupedByExtraFee = selectedExtraFees.reduce(
+      (acc, item) => {
+        if (!acc[item.extraFeeId]) {
+          acc[item.extraFeeId] = []
+        }
+        acc[item.extraFeeId].push(item)
+        return acc
+      },
+      {} as Record<number, any[]>,
+    )
+
+    // If only one extra fee is selected, set it as the selected one
+    if (Object.keys(groupedByExtraFee).length === 1) {
+      const extraFeeId = Number(Object.keys(groupedByExtraFee)[0])
+      const extraFee = extraFees.find((fee) => fee.id === extraFeeId)
+      if (extraFee) {
+        setSelectedExtraFeeForPayment(extraFee)
+      }
+    }
+
+    setIsPayExtraFeesDialogOpen(true)
+  }
+
   // Handle pay single installment
   const handlePaySingleInstallment = (installment: ExtendedInstallmentBreakdown) => {
     setSelectedInstallmentForPayment(installment)
     setIsPayFeesDialogOpen(true)
+  }
+
+  // Handle pay single extra fee
+  const handlePaySingleExtraFee = (extraFee: ExtraFeesAppliedToStudent) => {
+    setSelectedExtraFeeForPayment(extraFee)
+    setIsPayExtraFeesDialogOpen(true)
   }
 
   // Handle back to list button click
@@ -196,7 +310,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     navigate(-1)
   }
 
-  // Calculate total selected amount
+  // Calculate total selected amount for regular installments
   const calculateTotalSelectedAmount = () => {
     if (selectedInstallmentForPayment) {
       // For single installment payment
@@ -213,12 +327,21 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
+  // Keep the calculateTotalSelectedExtraFeesAmount function
+  const calculateTotalSelectedExtraFeesAmount = () => {
+    return selectedExtraFees.reduce((total, item) => {
+      return total + Number(item.amount || 0)
+    }, 0)
+  }
+
   // Calculate payment progress percentage
   const calculatePaymentProgress = () => {
     if (!studentFeeDetails) return 0
 
     const totalAmount = Number(studentFeeDetails?.student.fees_status?.total_amount)
-    const paidAmount = Number(studentFeeDetails?.student.fees_status?.paid_amount) + Number(studentFeeDetails?.student.fees_status?.discounted_amount)
+    const paidAmount =
+      Number(studentFeeDetails?.student.fees_status?.paid_amount) +
+      Number(studentFeeDetails?.student.fees_status?.discounted_amount)
 
     return Math.round((paidAmount / totalAmount) * 100)
   }
@@ -240,18 +363,28 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     setIsDetailViewOpen(true)
   }
 
+  // Add a function to handle viewing extra fee details
+  const handleViewExtraFeeDetails = (extraFee: ExtraFeesAppliedToStudent) => {
+    setSelectedExtraFeeForView(extraFee)
+    setIsExtraFeeDetailViewOpen(true)
+  }
 
-  //   // Add a function to handle generating fee receipt
+  // Add a function to handle generating fee receipt
   const handleGenerateReceipt = (payment: any) => {
     // Find the corresponding installment and fee type
     let foundInstallment = null
     let foundFeeType = null
 
     if (!studentFeeDetails) {
-      alert("studentFeeDetails is undefined , Something went wrong !")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Student fee details not available",
+      })
+      return
     }
 
-    studentFeeDetails && studentFeeDetails?.installments?.forEach((feeType) => {
+    studentFeeDetails.installments?.forEach((feeType) => {
       feeType.installments_breakdown.forEach((installment) => {
         if (installment.id === payment.installment_id) {
           foundInstallment = installment
@@ -280,20 +413,12 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     let foundInstallment = null
     let foundFeeType = null
 
-    console.log("payment", payment)
-
     studentFeeDetails?.student.fees_status?.paid_fees?.forEach((paid_fees) => {
       if (paid_fees.installment_id === payment.installment_id) {
         foundInstallment = paid_fees
         foundFeeType = {}
-        return;
+        return
       }
-      // feeType.installments_breakdown.forEach((installment) => {
-      //   if (installment.id === payment.installment_id) {
-      //     foundInstallment = installment
-      //     foundFeeType = feeType
-      //   }
-      // })
     })
 
     if (foundInstallment && foundFeeType) {
@@ -309,12 +434,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
-
   // Calculate available concession balance
   const calculateAvailableConcessionBalance = () => {
     if (!studentFeeDetails) return { student_concession: 0, plan_concession: 0 }
 
-    const wallet = studentFeeDetails?.detail?.wallet || { total_concession_for_student: 0, total_concession_for_plan: 0 }
+    const wallet = studentFeeDetails?.detail?.wallet || {
+      total_concession_for_student: 0,
+      total_concession_for_plan: 0,
+    }
 
     return {
       student_concession: Number(wallet.total_concession_for_student || 0),
@@ -350,6 +477,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     // Generate HTML content for printing
     const student = studentFeeDetails.student
     const feesStatus = student.fees_status
+    const extraFees = studentFeeDetails.detail?.extra_fees || []
 
     const printContent = `
       <!DOCTYPE html>
@@ -414,12 +542,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </tr>
             </thead>
             <tbody>
-              ${studentFeeDetails?.installments?.map((feeType) =>
-      feeType.installments_breakdown
-        .map(
-          (installment) => `
+              ${studentFeeDetails?.installments
+                ?.map((feeType) =>
+                  feeType.installments_breakdown
+                    .map(
+                      (installment) => `
                   <tr>
-                    <td>${getFeeTypeName(feeType.fees_type_id, studentFeeDetails)}</td>
+                    <td>${getFeeTypeName(feeType.fees_type_id)}</td>
                     <td>${feeType.installment_type} - ${installment.installment_no}</td>
                     <td>${formatDate(installment.due_date)}</td>
                     <td>${formatCurrency(installment.installment_amount)}</td>
@@ -428,20 +557,57 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${installment.payment_status || "Unpaid"}</td>
                   </tr>
                 `,
-        )
-        .join(""),
-    )
-        .join("")}
+                    )
+                    .join(""),
+                )
+                .join("")}
             </tbody>
           </table>
         </div>
         
+        ${
+          extraFees.length > 0
+            ? `
+        <div class="section">
+          <div class="section-title">Extra Fees</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Fee Type</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${extraFees
+                .map(
+                  (extraFee: any) => `
+                <tr>
+                  <td>${getFeeTypeName(extraFee.fees_type_id)}</td>
+                  <td>${formatDate(extraFee.due_date)}</td>
+                  <td>${formatCurrency(extraFee.amount)}</td>
+                  <td>${extraFee.status || "Unpaid"}</td>
+                  <td>${extraFee.description || "-"}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+        `
+            : ""
+        }
+        
         <div class="section">
           <div class="section-title">Payment History</div>
-          ${!studentFeeDetails?.student.fees_status?.paid_fees ||
-        studentFeeDetails?.student.fees_status?.paid_fees.length === 0
-        ? `<p>No payment history found.</p>`
-        : `<table>
+          ${
+            !studentFeeDetails?.student.fees_status?.paid_fees ||
+            studentFeeDetails?.student.fees_status?.paid_fees.length === 0
+              ? `<p>No payment history found.</p>`
+              : `<table>
               <thead>
                 <tr>
                   <th>Payment ID</th>
@@ -456,8 +622,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </thead>
               <tbody>
                 ${studentFeeDetails?.student.fees_status?.paid_fees
-          .map(
-            (payment) => `
+                  .map(
+                    (payment) => `
                   <tr>
                     <td>#${payment.id}</td>
                     <td>${formatDate(payment.payment_date)}</td>
@@ -469,11 +635,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${payment.status}</td>
                   </tr>
                 `,
-          )
-          .join("")}
+                  )
+                  .join("")}
               </tbody>
             </table>`
-      }
+          }
         </div>
         
         <div class="footer">
@@ -504,7 +670,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        params.student_id && (await getStudentFeesDetails({ student_id: Number.parseInt(params.student_id), academic_session_id: CurrentAcademicSessionForSchool!.id }))
+        params.student_id &&
+          (await getStudentFeesDetails({
+            student_id: Number.parseInt(params.student_id),
+            academic_session_id: CurrentAcademicSessionForSchool!.id,
+          }))
       } catch (error) {
         console.error("Error fetching student fees details:", error)
         toast({
@@ -518,12 +688,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
 
     if (params.student_id) fetchData()
-  }, [params, getStudentFeesDetails])
+  }, [params, getStudentFeesDetails, CurrentAcademicSessionForSchool])
 
   // Reset selected installments when tab changes
   useEffect(() => {
     setSelectedInstallments([])
     setSelectedInstallmentForPayment(null)
+    setSelectedExtraFees([])
+    setSelectedExtraFeeForPayment(null)
   }, [activeTab])
 
   // Reset selected single installment when dialog closes
@@ -532,6 +704,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       setSelectedInstallmentForPayment(null)
     }
   }, [isPayFeesDialogOpen])
+
+  // Reset selected single extra fee when dialog closes
+  useEffect(() => {
+    if (!isPayExtraFeesDialogOpen) {
+      setSelectedExtraFeeForPayment(null)
+    }
+  }, [isPayExtraFeesDialogOpen])
 
   if (isInitialLoading || isLoading || isFetching) {
     return (
@@ -640,7 +819,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardFooter>
             <Button
               variant="outline"
-              onClick={() => params.student_id && getStudentFeesDetails({ student_id: Number.parseInt(params.student_id), academic_session_id: CurrentAcademicSessionForSchool!.id })}
+              onClick={() =>
+                params.student_id &&
+                getStudentFeesDetails({
+                  student_id: Number.parseInt(params.student_id),
+                  academic_session_id: CurrentAcademicSessionForSchool!.id,
+                })
+              }
             >
               {t("retry")}
             </Button>
@@ -674,9 +859,21 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
   const student = studentFeeDetails.student
   const feesStatus = student.fees_status
+  const installments = studentFeeDetails.installments || []
+  const extraFees = studentFeeDetails.detail?.extra_fees || []
   const paymentProgress = calculatePaymentProgress()
   const concessionBalance = calculateAvailableConcessionBalance()
   const totalConcessionBalance = concessionBalance.student_concession + concessionBalance.plan_concession
+
+  // Calculate total extra fees amount
+  const totalExtraFeesAmount = extraFees.reduce((total, fee) => {
+    return total + Number(fee.total_amount || 0)
+  }, 0)
+
+  // Calculate unpaid extra fees amount
+  const unpaidExtraFeesAmount = extraFees.reduce((total, fee) => {
+    return total + (Number(fee.total_amount || 0) - Number(fee.paid_amount || 0))
+  }, 0)
 
   return (
     <div className="p-6 space-y-6">
@@ -689,25 +886,24 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
             <Printer className="mr-2 h-4 w-4" /> {t("print_details")}
           </Button>
-          {/* <Button variant="outline" size="sm" onClick={handlePrintAllDetails}>
-            <Download className="mr-2 h-4 w-4" /> {t("download_report")}
-          </Button> */}
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center text-2xl">
-            <User className="mr-2 h-5 w-5" />
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <CardTitle className="flex items-center text-2xl text-gray-800">
+            <User className="mr-2 h-5 w-5 text-primary" />
             {student.first_name} {student.middle_name} {student.last_name}
           </CardTitle>
-          <CardDescription>
-            {t("student_fee_details_for_academic_year")}
-            {AcademicSessionsForSchool && AcademicSessionsForSchool.find((session) => session.id === studentFeeDetails?.detail?.fees_plan?.academic_session_id)?.session_name}
-            {/* {studentFeeDetails.detail.fees_plan.academic_session_id} */}
+          <CardDescription className="text-gray-600">
+            {t("student_fee_details_for_academic_year")}{" "}
+            {AcademicSessionsForSchool &&
+              AcademicSessionsForSchool.find(
+                (session) => session.id === studentFeeDetails?.detail?.fees_plan?.academic_session_id,
+              )?.session_name}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">{t("gr_number")}</p>
@@ -741,6 +937,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-blue-700">{formatCurrency(feesStatus.total_amount)}</p>
+                {extraFees.length > 0 && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    {t("extra_fees")}: {formatCurrency(totalExtraFeesAmount)}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -766,7 +967,9 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardContent>
                 <p className="text-2xl font-bold text-amber-700">{formatCurrency(feesStatus.discounted_amount)}</p>
                 {totalConcessionBalance > 0 && (
-                  <p className="text-xs text-amber-600 mt-1">Available: {formatCurrency(totalConcessionBalance)}</p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    {t("available")}: {formatCurrency(totalConcessionBalance)}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -780,6 +983,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-red-700">{formatCurrency(feesStatus.due_amount)}</p>
+                {unpaidExtraFeesAmount > 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {t("extra_fees_due")}: {formatCurrency(unpaidExtraFeesAmount)}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -795,9 +1003,17 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="due-fees" className="flex items-center">
             <Calendar className="mr-2 h-4 w-4" /> {t("due_fees")}
+          </TabsTrigger>
+          <TabsTrigger value="extra-fees" className="flex items-center">
+            <AlertCircle className="mr-2 h-4 w-4" /> {t("extra_fees")}
+            {extraFees.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {extraFees.length}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="paid-fees" className="flex items-center">
             <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
@@ -809,10 +1025,25 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </TabsList>
 
         <TabsContent value="due-fees">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b">
               <CardTitle>{t("due_installments")}</CardTitle>
               <div className="flex gap-2">
+                {studentFeeDetails?.detail?.fees_plan && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button onClick={() => setIsApplyExtraFeesDialogOpen(true)} variant="outline">
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t("apply_extra_fees")}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Apply additional charges like fines, special fees, etc.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button
                   onClick={handlePayFees}
                   disabled={selectedInstallments.length === 0}
@@ -823,7 +1054,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {studentFeeDetails?.installments?.length === 0 ? (
+              {installments.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_due_installments_found.")}</p>
                 </div>
@@ -872,13 +1103,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         {student.provided_concession.map((concession) => (
                           <li key={concession.id}>
                             <span className="font-medium">
-                              {concession.concession?.name || `Concession #${concession.concession_id}`}:
+                              {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}:
                             </span>{" "}
                             {concession.deduction_type === "percentage"
                               ? `${concession.percentage}% discount`
                               : `${formatCurrency(concession.amount || 0)} fixed discount`}
                             {concession.fees_type_id
-                              ? ` on ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
+                              ? ` on ${getFeeTypeName(concession.fees_type_id)}`
                               : ` on all fees`}
                           </li>
                         ))}
@@ -886,38 +1117,13 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     </div>
                   )}
 
-                  {studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                    studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0 && (
-                      <div className="p-4 bg-blue-50 border-b border-blue-100">
-                        <div className="flex items-center mb-2">
-                          <Tag className="h-4 w-4 mr-2 text-blue-600" />
-                          <p className="text-sm font-medium text-blue-700">{t("plan_concessions_applied")}</p>
-                        </div>
-                        <ul className="text-xs text-blue-700 space-y-1 ml-6">
-                          {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
-                            <li key={concession.id}>
-                              <span className="font-medium">
-                                {concession.concession?.name || `Concession #${concession.concession_id}`}:
-                              </span>{" "}
-                              {concession.deduction_type === "percentage"
-                                ? `${concession.percentage}% discount`
-                                : `${formatCurrency(concession.amount || 0)} fixed discount`}
-                              {concession.fees_type_id
-                                ? ` on ${getFeeTypeName(concession.fees_type_id, studentFeeDetails)}`
-                                : ` on all fees`}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
                   {/* Fee Type Sections */}
-                  {studentFeeDetails?.installments?.map((feeType) => (
+                  {installments.map((feeType) => (
                     <div key={feeType.id} className="mb-6">
                       <div className="bg-gray-50 p-3 border-b">
                         <h3 className="font-medium flex items-center">
                           <Tag className="h-4 w-4 mr-2" />
-                          {getFeeTypeName(feeType.fees_type_id, studentFeeDetails)} - {feeType.installment_type}
+                          {getFeeTypeName(feeType.fees_type_id)} - {feeType.installment_type}
                           <Badge variant="outline" className="ml-2">
                             {feeType.total_installment} installments
                           </Badge>
@@ -1004,7 +1210,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                           <div key={idx} className="flex items-center">
                                             <CheckCircle2 className="h-3 w-3 mr-1" />
                                             <span>
-                                              ID: {concession.concession_id} (
+                                              {getConcessionNameFromId(concession.concession_id)} (
                                               {formatCurrency(concession.applied_amount)})
                                             </span>
                                           </div>
@@ -1046,10 +1252,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                         }
                                       >
                                         {installment.is_paid &&
-                                          hasCarryForwardToPay({
-                                            carry_forward_amount: Number(installment.carry_forward_amount),
-                                            is_paid: installment.is_paid,
-                                          })
+                                        hasCarryForwardToPay({
+                                          carry_forward_amount: Number(installment.carry_forward_amount),
+                                          is_paid: installment.is_paid,
+                                        })
                                           ? "Pay Carry Forward"
                                           : "Pay Now"}
                                       </Button>
@@ -1070,14 +1276,174 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           </Card>
         </TabsContent>
 
+        {/* Extra Fees Tab content with selection functionality */}
+        <TabsContent value="extra-fees">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b">
+              <CardTitle>{t("extra_fees")}</CardTitle>
+              <div className="flex gap-2">
+                {studentFeeDetails?.detail?.fees_plan && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button onClick={() => setIsApplyExtraFeesDialogOpen(true)} variant="outline">
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t("apply_extra_fees")}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Apply additional charges like fines, special fees, etc.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <Button
+                  onClick={handlePayExtraFees}
+                  disabled={selectedExtraFees.length === 0}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {t("pay_selected")} ({selectedExtraFees.length})
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {extraFees.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground">{t("no_extra_fees_found")}</p>
+                </div>
+              ) : (
+                <>
+                  {selectedExtraFees.length > 0 && (
+                    <div className="p-4 bg-blue-50 border-b border-blue-100">
+                      <p className="text-sm text-blue-700">
+                        {t("selected_amount")}:{" "}
+                        <span className="font-bold">{formatCurrency(calculateTotalSelectedExtraFeesAmount())}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Extra Fee Type Sections */}
+                  {extraFees.map((extraFee) => (
+                    <div key={extraFee.id} className="mb-6">
+                      <div className="bg-gray-50 p-3 border-b">
+                        <h3 className="font-medium flex items-center">
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          {getFeeTypeName(extraFee.fees_type_id)}
+                          <Badge variant="outline" className="ml-2">
+                            {extraFee.installment_breakdown.length} installments
+                          </Badge>
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs text-muted-foreground">
+                          <div>
+                            <span>Total: {formatCurrency(extraFee.total_amount)}</span>
+                          </div>
+                          <div>
+                            <span>Paid: {formatCurrency(extraFee.paid_amount)}</span>
+                          </div>
+                          <div>
+                            <span>
+                              Due:{" "}
+                              {formatCurrency(Number(extraFee.total_amount || 0) - Number(extraFee.paid_amount || 0))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px]">{t("select")}</TableHead>
+                            <TableHead>{t("installment")}</TableHead>
+                            <TableHead>{t("due_date")}</TableHead>
+                            <TableHead>{t("amount")}</TableHead>
+                            <TableHead>{t("status")}</TableHead>
+                            <TableHead>{t("actions")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {extraFee.installment_breakdown.map((installment) => {
+                            // Check if this installment is already paid
+                            const isPaid =
+                              extraFee.paid_installment?.some((paid) => paid.installment_id === installment.id) ||
+                              installment.status === "Inactive"
+
+                            const isSelected = selectedExtraFees.some(
+                              (item) => item.key === `${extraFee.id}-${installment.id}`,
+                            )
+
+                            return (
+                              <TableRow
+                                key={`${extraFee.id}-${installment.id}`}
+                                className={`hover:bg-gray-50 ${isPaid ? "bg-green-50" : ""} ${isSelected ? "bg-blue-50" : ""}`}
+                              >
+                                <TableCell>
+                                  {!isPaid && (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => toggleExtraFeeSelection(extraFee, installment.id)}
+                                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {t("installment")} {installment.installment_no}
+                                </TableCell>
+                                <TableCell>{formatDate(installment.due_date)}</TableCell>
+                                <TableCell className="font-medium">
+                                  {formatCurrency(installment.installment_amount)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={getStatusBadgeVariant(installment.status === "Active" ? "Unpaid" : "Paid")}
+                                  >
+                                    {installment.status === "Active" ? "Unpaid" : "Paid"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleViewExtraFeeDetails(extraFee)}
+                                    >
+                                      <Eye className="mr-1 h-3 w-3" /> {t("view")}
+                                    </Button>
+                                    {!isPaid && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedExtraFeeForPayment(extraFee)
+                                          setIsPayExtraFeesDialogOpen(true)
+                                        }}
+                                      >
+                                        {t("pay_now")}
+                                      </Button>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ))}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="paid-fees">
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="bg-gray-50 border-b">
               <CardTitle>Payment History</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {!studentFeeDetails?.student.fees_status?.paid_fees ||
-                studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
+              studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                 </div>
@@ -1110,7 +1476,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                             installmentDetails = {
                               type: feeType.installment_type,
                               number: installment.installment_no.toString(),
-                              feeType: getFeeTypeName(feeType.fees_type_id, studentFeeDetails),
+                              feeType: getFeeTypeName(feeType.fees_type_id),
                             }
                             foundInstallment = installment
                             foundFeeType = feeType
@@ -1172,9 +1538,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                               <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
                                 <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
                               </Button>
-                              {/* <Button variant="outline" size="sm" onClick={() => handleViewPayment(payment)}>
-                                <Eye className="mr-1 h-3 w-3" /> {t("view")}
-                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1188,14 +1551,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         </TabsContent>
 
         <TabsContent value="concessions">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="bg-gray-50 border-b">
               <CardTitle>{t("applied_concessions")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {(student.provided_concession && student.provided_concession.length > 0) ||
-                (studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                  studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
+              (studentFeeDetails.detail.fees_plan.concession_for_plan &&
+                studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
                 <>
                   <div className="p-4 bg-blue-50">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">{t("concession_summary")}</h3>
@@ -1249,12 +1612,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                           {student.provided_concession.map((concession) => (
                             <TableRow key={concession.id}>
                               <TableCell className="font-medium">
-                                {concession.concession?.name || `Concession #${concession.concession_id}`}
+                                {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}
                               </TableCell>
                               <TableCell>
-                                {concession.fees_type_id
-                                  ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
-                                  : "All Fees"}
+                                {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
                               </TableCell>
                               <TableCell className="capitalize">{concession.deduction_type}</TableCell>
                               <TableCell>
@@ -1263,7 +1624,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                   : formatCurrency(concession.amount || 0)}
                               </TableCell>
                               <TableCell className="text-green-600 font-medium">
-                                {formatCurrency(concession.amount || `${concession.percentage} %`)}
+                                {formatCurrency(concession.amount || 0)}
                               </TableCell>
                               <TableCell>
                                 <Badge variant={concession.status === "Active" ? "default" : "outline"}>
@@ -1276,49 +1637,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       </Table>
                     </div>
                   )}
-
-                  {studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                    studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0 && (
-                      <div className="mt-4">
-                        <h3 className="px-4 text-base font-medium mb-2">{t("plan_concessions")}</h3>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("concession_name")}</TableHead>
-                              <TableHead>{t("applied_to")}</TableHead>
-                              <TableHead>{t("deduction_type")}</TableHead>
-                              <TableHead>{t("value")}</TableHead>
-                              <TableHead>{t("status")}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {studentFeeDetails.detail.fees_plan.concession_for_plan.map((concession) => (
-                              <TableRow key={concession.id}>
-                                <TableCell className="font-medium">
-                                  {concession.concession?.name || `Concession #${getConcessionNameFromId(concession.concession_id)}`}
-                                </TableCell>
-                                <TableCell>
-                                  {concession.fees_type_id
-                                    ? getFeeTypeName(concession.fees_type_id, studentFeeDetails)
-                                    : "All Fees"}
-                                </TableCell>
-                                <TableCell className="capitalize">{concession.deduction_type}</TableCell>
-                                <TableCell>
-                                  {concession.deduction_type === "percentage"
-                                    ? `${concession.percentage}%`
-                                    : formatCurrency(concession.amount || 0)}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={concession.status === "Active" ? "default" : "outline"}>
-                                    {concession.status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
                 </>
               ) : (
                 <div className="p-6 text-center">
@@ -1350,7 +1668,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           onSuccessfulSubmit={() => {
             setIsPayFeesDialogOpen(false)
             setSelectedInstallments([]) // Clear selected installments after successful payment
-            getStudentFeesDetails({ student_id: Number.parseInt(params.student_id!), academic_session_id: CurrentAcademicSessionForSchool!.id })
+            getStudentFeesDetails({
+              student_id: Number.parseInt(params.student_id!),
+              academic_session_id: CurrentAcademicSessionForSchool!.id,
+            })
           }}
           installments={selectedInstallmentForPayment ? [selectedInstallmentForPayment] : selectedInstallments}
           studentId={Number.parseInt(params.student_id)}
@@ -1358,6 +1679,113 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           studentConcessions={student.provided_concession}
           planConcessions={studentFeeDetails.detail.fees_plan.concession_for_plan}
           availableConcessionBalance={concessionBalance}
+        />
+      )}
+
+      {/* Pay Extra Fees Dialog */}
+      {params.student_id && selectedExtraFeeForPayment && (
+        <PayExtraFeesDialog
+          isOpen={isPayExtraFeesDialogOpen}
+          onClose={() => {
+            setIsPayExtraFeesDialogOpen(false)
+            setSelectedExtraFees([])
+            setSelectedExtraFeeForPayment(null)
+          }}
+          onSuccessfulSubmit={() => {
+            setIsPayExtraFeesDialogOpen(false)
+            setSelectedExtraFees([])
+            setSelectedExtraFeeForPayment(null)
+            // Refresh data
+            params.student_id &&
+              getStudentFeesDetails({
+                student_id: Number.parseInt(params.student_id),
+                academic_session_id: CurrentAcademicSessionForSchool!.id,
+              })
+          }}
+          student_fees_master_id={student.fees_status.id}
+          extraFee={selectedExtraFeeForPayment}
+          studentId={Number.parseInt(params.student_id)}
+          studentName={`${student.first_name} ${student.middle_name || ""} ${student.last_name}`}
+          selectedInstallments={selectedExtraFees}
+        />
+      )}
+
+      {/* Extra Fee Detail View Dialog */}
+      <Dialog open={isExtraFeeDetailViewOpen} onOpenChange={setIsExtraFeeDetailViewOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Extra Fee Details</DialogTitle>
+          </DialogHeader>
+          {selectedExtraFeeForView && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Fee Type</p>
+                  <p className="font-medium">{getFeeTypeName(selectedExtraFeeForView.fees_type_id)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="font-medium">{formatCurrency(selectedExtraFeeForView.total_amount)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Paid Amount</p>
+                  <p className="font-medium">{formatCurrency(selectedExtraFeeForView.paid_amount)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <Badge
+                    variant={getStatusBadgeVariant(selectedExtraFeeForView.status === "Active" ? "Unpaid" : "Paid")}
+                  >
+                    {selectedExtraFeeForView.status === "Active" ? "Unpaid" : "Paid"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Installments</p>
+                <div className="mt-2 space-y-2">
+                  {selectedExtraFeeForView.installment_breakdown.map((installment) => (
+                    <div key={installment.id} className="flex justify-between p-2 border rounded">
+                      <span>Installment {installment.installment_no}</span>
+                      <span>{formatCurrency(installment.installment_amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExtraFeeDetailViewOpen(false)}>
+              Close
+            </Button>
+            {selectedExtraFeeForView && selectedExtraFeeForView.status === "Active" && (
+              <Button
+                onClick={() => {
+                  setIsExtraFeeDetailViewOpen(false)
+                  handlePaySingleExtraFee(selectedExtraFeeForView)
+                }}
+              >
+                Pay Now
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Apply Extra Fees Dialog */}
+      {studentFeeDetails.detail?.fees_plan && params.student_id && (
+        <ApplyExtraFeesDialog
+          isOpen={isApplyExtraFeesDialogOpen}
+          onClose={() => setIsApplyExtraFeesDialogOpen(false)}
+          onSuccess={() => {
+            setIsApplyExtraFeesDialogOpen(false)
+            getStudentFeesDetails({
+              student_id: Number.parseInt(params.student_id!),
+              academic_session_id: CurrentAcademicSessionForSchool!.id,
+            })
+          }}
+          studentId={Number.parseInt(params.student_id)}
+          feesPlanId={studentFeeDetails.detail.fees_plan.id}
         />
       )}
 
@@ -1387,100 +1815,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         getStatusBadgeVariant={getStatusBadgeVariant}
         getFeeTypeName={getFeeTypeName}
       />
-
-      {/* Update Status Dialog */}
-      <Dialog
-        open={isUpdateStatusDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) setIsUpdateStatusDialogOpen(false)
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("update_payment_status")}</DialogTitle>
-            <DialogDescription>
-              {t("change_the_status_of_payment")} #{selectedPayment?.id}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
-                {t("status")}
-              </Label>
-              <Select defaultValue={selectedPayment?.status}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("select_status")} />
-                </SelectTrigger>
-                <SelectContent className="col-span-3">
-                  <SelectItem value="Paid">{t("paid")}</SelectItem>
-                  <SelectItem value="Pending">{t("pending")}</SelectItem>
-                  <SelectItem value="Overdue">{t("overdue")}</SelectItem>
-                  <SelectItem value="Cancelled">{t("cancelled")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="remarks" className="text-right">
-                {t("remarks")}
-              </Label>
-              <Input
-                id="remarks"
-                defaultValue={selectedPayment?.remarks}
-                className="col-span-3"
-                placeholder="Add remarks about this status change"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button
-              type="submit"
-              onClick={() => {
-                toast({
-                  title: "Status Updated",
-                  description: "Payment status has been updated successfully",
-                })
-                setIsUpdateStatusDialogOpen(false)
-                // Implement actual status update logic here
-              }}
-            >
-              {t("update_status")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
-}
-
-// Update the getFeeTypeName function to be dynamic
-const getFeeTypeName = (feeTypeId: number, studentFeeDetails: any): string => {
-  // Try to find the fee type in the installments array
-  const feeType = studentFeeDetails?.installments?.find((installment: any) => installment.fees_type_id === feeTypeId)
-
-  // If found in the API response, return the name from there
-  if (feeType) {
-    // The API doesn't directly provide the name, so we need to infer it from the installment type
-    return `${feeType.installment_type} Fee`
-  }
-
-  // Fallback to default names if not found
-  switch (feeTypeId) {
-    case 1:
-      return "Admission Fee"
-    case 2:
-      return "Tuition Fee"
-    case 3:
-      return "Activity Fee"
-    case 4:
-      return "Library Fee"
-    case 5:
-      return "Development Fee"
-    default:
-      return `Fee Type ${feeTypeId}`
-  }
 }
 
 export default StudentFeesPanel

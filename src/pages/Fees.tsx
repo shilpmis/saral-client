@@ -17,17 +17,17 @@ export const Fees: React.FC = () => {
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full">
-          <TabsTrigger value="dashboard">{t("dashboard")}</TabsTrigger>
+          {/* <TabsTrigger value="dashboard">{t("dashboard")}</TabsTrigger> */}
           <TabsTrigger value="fee-types">{t("fee_types")}</TabsTrigger>
           <TabsTrigger value="fee-plans">{t("fee_plans")}</TabsTrigger>
           <TabsTrigger value="concessions">{t("concessions")}</TabsTrigger>
           <TabsTrigger value="student-fees">{t("student_fees")}</TabsTrigger>
-          <TabsTrigger value="reports">{t("reports")}</TabsTrigger>
+          {/* <TabsTrigger value="reports">{t("reports")}</TabsTrigger> */}
         </TabsList>
 
-        <TabsContent value="dashboard">
+        {/* <TabsContent value="dashboard">
           <FeeDashboard />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="fee-types">
           <FeeTypeManagement />
@@ -45,9 +45,9 @@ export const Fees: React.FC = () => {
           <StudentFeesManagement />
         </TabsContent>
 
-        <TabsContent value="reports">
+        {/* <TabsContent value="reports">
           <ReportGeneration />
-        </TabsContent>    
+        </TabsContent>     */}
       </Tabs>
     </div>
   )

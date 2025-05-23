@@ -30,7 +30,7 @@ export default function AdminAdmissonView() {
             {/* <Link to="/d/admissions/inquiry">
               <Button size="lg">{t("view_all_admission_inquiries")}</Button>
             </Link> */}
-            <Button onClick={() => setIsQuickInquiryOpen(true)}>{t("add_quick_inquiry")}</Button>
+            {/* <Button onClick={() => setIsQuickInquiryOpen(true)}>{t("add_quick_inquiry")}</Button> */}
             <Button onClick={() => setIsInquiryOpen(true)}>{t("add_admission_inquiry")}</Button>
           </div>
         </div>

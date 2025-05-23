@@ -197,7 +197,7 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
 
   // Fetch fee types from API
   const { data: feeTypes, isLoading: isLoadingFeeTypes } = useGetAllFeesTypeQuery(
-    { academic_session_id: academicSessionId || 0 },
+    { academic_session_id: academicSessionId! , applicable_to : "All" },
     { skip: !academicSessionId },
   )
 
@@ -1826,3 +1826,4 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
 }
 
 export default StudentFeesDetailView
+

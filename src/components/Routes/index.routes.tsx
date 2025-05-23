@@ -392,7 +392,7 @@ export default function RootRoute() {
                 }
               />
               <Route
-                path="academic/subjects"
+                path="subjects"
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <SubjectSettings />
@@ -416,7 +416,7 @@ export default function RootRoute() {
                 }
               />
               <Route
-                path="manage/students/promotion"
+                path="manage/promotion"
                 element={
                   <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.IT_ADMIN]}>
                     <StudentPromotionManagement />

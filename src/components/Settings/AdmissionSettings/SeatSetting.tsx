@@ -365,7 +365,13 @@ export default function SeatsManagement() {
     isError: isErrorSeats,
     error: seatsError,
     refetch: refetchSeats,
-  } = useGetClassSeatAvailabilityQuery()
+  } = useGetClassSeatAvailabilityQuery({
+    acadamic_session_id: currentAcademicSession!.id,
+  }, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  })
 
   const { data: quotas, isLoading: isLoadingQuotas, refetch: refetchQuotas } = useGetQuotasQuery({
     academic_session_id : currentAcademicSession!.id,

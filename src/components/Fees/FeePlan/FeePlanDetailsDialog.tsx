@@ -231,7 +231,7 @@ const FeePlanDetailsDialog: React.FC<FeePlanDetailsDialogProps> = ({ isOpen, onC
                         {feePlanDetails.fees_plan.status}
                       </Badge>
                       <p className="text-sm text-muted-foreground mt-2">
-                        Class : { getDivision(feePlanDetails.fees_plan.division_id)}
+                        Class : 
                       </p>
                     </CardContent>
                   </Card>

@@ -1,6 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type {
     AddStudentsRequest,
+    ReqBodyForDropStudent,
+    ReqBodyForStudentCompletion,
+    ReqBodyForStudentSuspension,
+    ReqBodyForStundetMigration,
     Student,
     StudentEnrollment,
     StudentEntry,
@@ -36,10 +40,62 @@ export const StudentManagementApi = createApi({
         }),
 
 
+        migrateStudent: builder.mutation<
+            Student,
+            { student_enrollment_id: number, payload: ReqBodyForStundetMigration }
+        >({
+            query: ({ student_enrollment_id, payload }) => ({
+                url: `management/student/migrate/${student_enrollment_id}`,
+                method: "POST",
+                body: payload,
+            }),
+        }),
+
+
+        DropStudent: builder.mutation<
+            Student,
+            { student_enrollment_id: number, payload: ReqBodyForDropStudent }
+        >({
+            query: ({ student_enrollment_id, payload }) => ({
+                url: `management/student/drop/${student_enrollment_id}`,
+                method: "POST",
+                body: payload,
+            }),
+        }),
+
+
+        updaeStudentStatusToComplete: builder.mutation<
+            Student,
+            { student_enrollment_id: number, payload: ReqBodyForStudentCompletion }
+        >({
+            query: ({ student_enrollment_id, payload }) => ({
+                url: `management/student/complete/${student_enrollment_id}`,
+                method: "POST",
+                body: payload,
+            }),
+        }),
+
+
+        suspensendStudent: builder.mutation<
+            Student,
+            { student_enrollment_id: number, payload: ReqBodyForStudentSuspension }
+        >({
+            query: ({ student_enrollment_id, payload }) => ({
+                url: `management/student/suspend/${student_enrollment_id}`,
+                method: "POST",
+                body: payload,
+            }),
+        }),
+
+
     }),
 });
 
-export const { 
+export const {
     useFetchStudentEnrollmentsForDivisionQuery,
-    useLazyFetchStudentEnrollmentsForDivisionQuery
+    useLazyFetchStudentEnrollmentsForDivisionQuery,
+    useSuspensendStudentMutation,
+    useUpdaeStudentStatusToCompleteMutation,
+    useDropStudentMutation,
+    useMigrateStudentMutation
 } = StudentManagementApi;
