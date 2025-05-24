@@ -303,7 +303,7 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
         await getFilterFeesType({
           academic_session_id: CurrentAcademicSessionForSchool!.id,
           filter: "division",
-          value: selectedDiv[0].id,
+          value: selectedDiv[0].class_id,
         })
       } catch (error) {
         console.log("Error while fetching fees data", error)
