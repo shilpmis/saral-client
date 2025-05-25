@@ -1,3 +1,4 @@
+import { S } from "framer-motion/dist/types.d-DDSxwf0n";
 import { AcademicClasses } from "./academic";
 import { Student } from "./student";
 
@@ -64,6 +65,7 @@ export interface FeesPlan {
   total_amount: number;
   status: "Active" | "Inactive";
   concession: ConcessionDetailForPlan[];
+  fees_detail : FeePlanDetail[];
 }
 
 export interface FeesPlanDetail {
@@ -189,7 +191,7 @@ export interface StudentFeesInstallment {
 export interface FeePlanDetail {
   id: number;
   academic_session_id: number;
-  fees_plan_id: number;
+  fees_plan_id: number; 
   fees_type_id: number;
   installment_type: "Admission" | "Monthly" | "Half Yearly" | "Yearly";
   total_installment: number;
@@ -554,7 +556,7 @@ export interface FeePaymentRequest {
 
 export interface ExtraFeePaymentRequest {
   // fee_plan_details_id: number;
-  // student_fees_type_masters_id: number; 
+  student_fees_type_masters_id: number; 
   installment_id: number;
   paid_amount: number;
   discounted_amount: number;
@@ -578,7 +580,7 @@ export interface ExtraFeePaymentRequest {
 export interface FeePaymentReqForExtraFees {
     student_id: number,
     student_fees_master_id: number,
-    student_fees_type_masters_id : number,
+    // student_fees_type_masters_id : number,
     installments : ExtraFeePaymentRequest[]
 }
 
@@ -639,4 +641,37 @@ export interface ConcessionDetails {
   concession: Concession;
   concession_holder_plans: AppliedConcessioinToPlan[] | null;
   concession_holder_students?: AppliedConcessioinToStudent[] | null;
+}
+
+
+export interface TypeOfInstallmentWiseReportForClass {
+  id: number,
+  enrollment_code: string,
+  first_name: string,
+  middle_name: string,
+  last_name: string,
+  gr_no: number,
+  installment_id: string,
+  total_paid_amount: number,
+  total_discounted_amount: number,
+  total_remaining_amount: number,
+  first_payment_date: string,
+  last_payment_date: string,
+  payment_count: number
+}
+
+export interface TypeOfFeesTypeWiseFeesReport {
+  id: number,
+  enrollment_code: string,
+  first_name: string,
+  middle_name: string,
+  last_name: string,
+  gr_no: number,
+  student_fees_master_id: number,
+  fees_plan_details_id: number,
+  total_amount: number,
+  discounted_amount: number,
+  paid_amount: number,
+  due_amount: number,
+  status: string
 }

@@ -401,6 +401,46 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
     }
   }, [academicClasses])
 
+  // For plan form: clear values and errors on deduction_type change
+  useEffect(() => {
+    if (planDeductionType === "percentage") {
+      planForm.setValue("fixed_amount", null)
+      planForm.clearErrors("fixed_amount")
+    } else if (planDeductionType === "fixed_amount") {
+      planForm.setValue("percentage", null)
+      planForm.clearErrors("percentage")
+    }
+  }, [planDeductionType])
+
+  // For student form: clear values and errors on deduction_type change
+  useEffect(() => {
+    if (studentDeductionType === "percentage") {
+      studentForm.setValue("fixed_amount", null)
+      studentForm.clearErrors("fixed_amount")
+    } else if (studentDeductionType === "fixed_amount") {
+      studentForm.setValue("percentage", null)
+      studentForm.clearErrors("percentage")
+    }
+  }, [studentDeductionType])
+
+  // Reset student dialog form and fee types when dialog closes
+  useEffect(() => {
+    if (!studentDialogOpen) {
+      studentForm.reset({
+        concession_id: concession.id,
+        student_id: undefined,
+        fees_plan_id: undefined,
+        fees_type_ids: null,
+        deduction_type: "percentage",
+        fixed_amount: null,
+        percentage: null,
+        reason: "",
+      })
+      setSelectedStudent(null)
+      setSelectedStudentFeeTypes([])
+    }
+  }, [studentDialogOpen])
+
   return (
     <div className="space-y-6">
       <div className="bg-muted p-4 rounded-md mb-6">
@@ -484,7 +524,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
                           placeholder={t("enter_percentage_value")}
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value ? Number(e.target.value) : null)
+                            planForm.trigger("percentage") // trigger validation on change
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -505,7 +548,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
                           placeholder={t("enter_amount_in_rupees")}
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value ? Number(e.target.value) : null)
+                            planForm.trigger("fixed_amount") // trigger validation on change
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -901,7 +947,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
                                 placeholder={t("enter_percentage_value")}
                                 {...field}
                                 value={field.value ?? ""}
-                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value ? Number(e.target.value) : null)
+                                  studentForm.trigger("percentage") // trigger validation on change
+                                }}
                               />
                             </FormControl>
                             <FormDescription>{t("enter_a_value_between_1_and_100")}</FormDescription>
@@ -922,7 +971,10 @@ export const ApplyConcessionForm: React.FC<ApplyConcessionFormProps> = ({
                                 placeholder={t("enter_amount_in_rupees")}
                                 {...field}
                                 value={field.value ?? ""}
-                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value ? Number(e.target.value) : null)
+                                  studentForm.trigger("fixed_amount") // trigger validation on change
+                                }}
                               />
                             </FormControl>
                             <FormDescription>{t("enter_the_fixed_amount_to_deduct")}</FormDescription>

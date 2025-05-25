@@ -8,7 +8,9 @@ import {
   FeePaymentReqForExtraFees,
   FeePaymentRequest,
   FeesPlan,
+  FeesPlanDetail,
   FeesType,
+  InstallmentBreakdown,
   ReqBodyForApplyConsessionToPlan,
   ReqBodyForApplyConsessionToStudent,
   ReqObjectForCreateFeesPlan,
@@ -16,6 +18,7 @@ import {
   RequestForApplyExtraFees,
   StudentFeeDetails,
   StudentWithFeeStatus,
+  TypeOfInstallmentWiseReportForClass,
 } from "@/types/fees";
 import { PageMeta } from "@/types/global";
 import baseUrl from "@/utils/base-urls";
@@ -207,7 +210,7 @@ export const FeesApi = createApi({
 
     applyExtraFeesPlanOnStudentFeesPlan: builder.mutation<
       ExtraFeesAppliedToStudent,
-      { payload : RequestForApplyExtraFees }
+      { payload: RequestForApplyExtraFees }
     >({
       query: ({ payload }) => ({
         url: `/feesplan/applyextrafees`,
@@ -382,6 +385,38 @@ export const FeesApi = createApi({
         body: payload,
       }),
     }),
+
+    fetchInstallmentDetails: builder.query<
+      FeesPlan,
+      { division_id: number; academic_session_id: number }
+    >({
+      query: ({ division_id, academic_session_id }) => ({
+        url: `/feesplan/installments/${division_id}?academic_session=${academic_session_id}`,
+        method: "GET",
+      }),
+    }),
+
+    fetchInsatllmentWiseReport: builder.query<
+      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
+      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+    >({
+      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+        url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
+        method: "GET",
+      }),
+    }),
+
+    fetchReportBasedOnFeesType: builder.query<
+      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
+      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+    >({
+      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+        url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
+        method: "GET",
+      }),
+    })
+
+
   }),
 });
 
@@ -424,5 +459,9 @@ export const {
   useApplyConcessionsToStudentMutation,
 
   useApplyExtraFeesPlanOnStudentFeesPlanMutation,
-  usePayMultipleInstallmentsForExtraFeesMutation
+  usePayMultipleInstallmentsForExtraFeesMutation,
+
+
+  useFetchInstallmentDetailsQuery,
+  useLazyFetchInsatllmentWiseReportQuery,
 } = FeesApi;

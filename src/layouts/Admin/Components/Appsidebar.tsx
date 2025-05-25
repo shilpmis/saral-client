@@ -32,6 +32,8 @@ import { useAuth } from "@/redux/hooks/useAuth"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectAuthState, selectCurrentSchool } from "@/redux/slices/authSlice"
 
 const SideBarItems = [
   { title: "student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
@@ -83,6 +85,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
   const { hasPermission, hasRole } = useAuth()
   const { t } = useTranslation()
   const location = useLocation()
+  const schoolState = useAppSelector(selectCurrentSchool)
   const [isPayrollExpanded, setIsPayrollExpanded] = useState(false)
 
   // Function to check if a menu item is active
@@ -130,7 +133,7 @@ export default function AppSidebar({ isCollapsed }: AppSidebarProps) {
               />
               <div className="h-16 w-[2px] bg-black mx-2"></div>
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/edumelzo.appspot.com/o/bardoli.png?alt=media&token=ee7cbb11-1038-4fcb-86b3-91830f7ebaaf"
+                src={schoolState.school_logo || "/default_school_logo.png"}
                 alt="School Logo"
                 width={70}
                 height={60}

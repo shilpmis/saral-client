@@ -318,7 +318,7 @@ const ApplyExtraFeesDialog: React.FC<ApplyExtraFeesDialogProps> = ({
 
       const response = await applyExtraFees({ payload }).unwrap()
 
-      if ("data" in response) {
+      if (response) {
         toast({
           title: t("success"),
           description: t("extra_fees_applied_successfully"),
