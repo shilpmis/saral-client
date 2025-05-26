@@ -1,4 +1,4 @@
-
+"use client"
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
@@ -10,16 +10,19 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
-import { Loader2, Receipt, Info, CheckCircle2, AlertCircle } from "lucide-react"
+import { Loader2, Receipt, Info, CheckCircle2, AlertCircle, Tag } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
-import type { ExtraFeesAppliedToStudent } from "@/types/fees"
-import { usePayMultipleInstallmentsForExtraFeesMutation } from "@/services/feesService"
+import { usePayMultipleInstallmentsForExtraFeesMutation, useGetAllFeesTypeQuery } from "@/services/feesService"
 import type { FeePaymentReqForExtraFees, ExtraFeePaymentRequest } from "@/types/fees"
+import type { ExtraFeesAppliedToStudent } from "@/types/fees"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
+import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 
 // Payment form schema
 const extraFeePaymentSchema = z.object({
@@ -37,17 +40,14 @@ interface PayExtraFeesDialogProps {
   isOpen: boolean
   onClose: () => void
   onSuccessfulSubmit: () => void
-  extraFee: ExtraFeesAppliedToStudent
   studentId: number
   studentName: string
-  student_fees_master_id : number
-  selectedInstallments?: {
+  student_fees_master_id: number
+  selectedInstallments: {
     key: string
-    extraFeeId: number
-    installmentId: number
-    fees_type_id: number
-    amount: number
-    installment_no: number
+    extraFee: ExtraFeesAppliedToStudent
+    installment: any
+    student_fees_type_masters_id: number
   }[]
 }
 
@@ -55,19 +55,27 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
   isOpen,
   onClose,
   onSuccessfulSubmit,
-  extraFee,
   studentId,
   studentName,
   student_fees_master_id,
   selectedInstallments = [],
 }) => {
   const { t } = useTranslation()
+  const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentStep, setPaymentStep] = useState<"confirm" | "success">("confirm")
   const [totalAmount, setTotalAmount] = useState<number>(0)
   const [paymentAmount, setPaymentAmount] = useState<string>("0")
+  const [partialPaymentAmounts, setPartialPaymentAmounts] = useState<Record<string, number>>({})
+
   const [payExtraFees, { isLoading: isPaymentLoading, isError: isPaymentError, error: paymentError }] =
     usePayMultipleInstallmentsForExtraFeesMutation()
+
+  // Get fee types for name mapping
+  const { data: feeTypes } = useGetAllFeesTypeQuery(
+    { academic_session_id: currentAcademicSession?.id || 0, applicable_to: "All" },
+    { skip: !currentAcademicSession?.id },
+  )
 
   const form = useForm<z.infer<typeof extraFeePaymentSchema>>({
     resolver: zodResolver(extraFeePaymentSchema),
@@ -103,21 +111,49 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
     }
   }
 
+  // Get fee type name
+  const getFeeTypeName = (feeTypeId: number): string => {
+    if (!feeTypeId) return t("unknown_fee_type")
+    const feeType = feeTypes?.find((type) => type.id === feeTypeId)
+    return feeType ? feeType.name : `${t("fee_type")} ${feeTypeId}`
+  }
+
+  // Group installments by fee type
+  const groupedInstallments = selectedInstallments.reduce(
+    (groups, item) => {
+      const feeTypeId = item.extraFee.fees_type_id
+      if (!groups[feeTypeId]) {
+        groups[feeTypeId] = {
+          feeTypeId,
+          feeTypeName: getFeeTypeName(feeTypeId),
+          installments: [],
+          totalAmount: 0,
+        }
+      }
+      groups[feeTypeId].installments.push(item)
+      groups[feeTypeId].totalAmount += Number(item.installment.installment_amount || 0)
+      return groups
+    },
+    {} as Record<
+      number,
+      { feeTypeId: number; feeTypeName: string; installments: typeof selectedInstallments; totalAmount: number }
+    >,
+  )
+
   // Calculate total amount from selected installments
   useEffect(() => {
-    if (selectedInstallments.length > 0) {
-      const total = selectedInstallments.reduce((sum, item) => sum + Number(item.amount || 0), 0)
-      setTotalAmount(total)
-      setPaymentAmount(total.toString())
-      form.setValue("payment_amount", total)
-    } else if (extraFee) {
-      // If no installments are selected, use the total unpaid amount
-      const unpaidAmount = Number(extraFee.total_amount || 0) - Number(extraFee.paid_amount || 0)
-      setTotalAmount(unpaidAmount)
-      setPaymentAmount(unpaidAmount.toString())
-      form.setValue("payment_amount", unpaidAmount)
-    }
-  }, [selectedInstallments, extraFee, form])
+    const total = selectedInstallments.reduce((sum, item) => sum + Number(item.installment.installment_amount || 0), 0)
+    setTotalAmount(total)
+    setPaymentAmount(total.toString())
+    form.setValue("payment_amount", total)
+
+    // Initialize partial payment amounts
+    const initialPartialAmounts: Record<string, number> = {}
+    selectedInstallments.forEach((item) => {
+      initialPartialAmounts[item.key] = Number(item.installment.installment_amount || 0)
+    })
+    setPartialPaymentAmounts(initialPartialAmounts)
+  }, [selectedInstallments, form])
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -141,10 +177,35 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
     form.setValue("payment_amount", Number(value))
   }
 
+  // Update partial payment amount for specific installment
+  const updatePartialPaymentAmount = (key: string, amount: string) => {
+    const numAmount = Number(amount) || 0
+    const item = selectedInstallments.find((item) => item.key === key)
+
+    if (item) {
+      const maxAmount = Number(item.installment.installment_amount || 0)
+      const validAmount = Math.min(numAmount, maxAmount)
+
+      setPartialPaymentAmounts((prev) => ({
+        ...prev,
+        [key]: validAmount,
+      }))
+    }
+  }
+
+  // Calculate final payment amount
+  const calculateFinalPaymentAmount = () => {
+    if (isPartialPayment) {
+      return Object.values(partialPaymentAmounts).reduce((sum, amount) => sum + amount, 0)
+    }
+    return totalAmount
+  }
+
   // Validate payment amount
   const validatePaymentAmount = () => {
-    const amount = Number(paymentAmount)
-    if (isNaN(amount) || amount <= 0) {
+    const finalAmount = calculateFinalPaymentAmount()
+
+    if (isNaN(finalAmount) || finalAmount <= 0) {
       toast({
         variant: "destructive",
         title: t("invalid_amount"),
@@ -153,7 +214,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
       return false
     }
 
-    if (amount > totalAmount) {
+    if (finalAmount > totalAmount) {
       toast({
         variant: "destructive",
         title: t("amount_exceeds_total"),
@@ -167,20 +228,19 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
 
   // Prepare the API payload
   const preparePayload = (values: z.infer<typeof extraFeePaymentSchema>): FeePaymentReqForExtraFees => {
-    const finalAmount = isPartialPayment ? Number(paymentAmount) : totalAmount
+    const finalAmount = calculateFinalPaymentAmount()
 
     // Create installments array based on selected installments
     const installments: ExtraFeePaymentRequest[] = selectedInstallments.map((item) => {
-      // Calculate the proportional amount if partial payment
-      let installmentPaidAmount = Number(item.amount)
-      if (isPartialPayment && selectedInstallments.length > 0) {
-        // Distribute the partial payment proportionally
-        const proportion = Number(item.amount) / totalAmount
-        installmentPaidAmount = Math.round(proportion * finalAmount * 100) / 100
+      let installmentPaidAmount = Number(item.installment.installment_amount)
+
+      if (isPartialPayment) {
+        installmentPaidAmount = partialPaymentAmounts[item.key] || 0
       }
 
       return {
-        installment_id: item.installmentId,
+        student_fees_type_masters_id: item.student_fees_type_masters_id, // This is the key change
+        installment_id: item.installment.id,
         paid_amount: installmentPaidAmount,
         discounted_amount: 0, // No discount for extra fees
         paid_as_refund: false,
@@ -189,37 +249,16 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
         transaction_reference: values.transaction_reference || "",
         payment_date: values.payment_date,
         remarks: values.remarks || "",
-        remaining_amount: Number(item.amount) - installmentPaidAmount,
-        amount_paid_as_carry_forward: 0,
+        remaining_amount: Number(item.installment.installment_amount) - installmentPaidAmount,
+        amount_paid_as_carry_forward: 0, // No carry forward for extra fees
         applied_concessions: null,
         repaid_installment: false,
       }
     })
 
-    // If no installments are selected, create a single installment for the entire extra fee
-    if (installments.length === 0 && extraFee.installment_breakdown.length > 0) {
-      const firstInstallment = extraFee.installment_breakdown[0]
-      installments.push({
-        installment_id: firstInstallment.id,
-        paid_amount: finalAmount,
-        discounted_amount: 0,
-        paid_as_refund: false,
-        refunded_amount: 0,
-        payment_mode: values.payment_mode,
-        transaction_reference: values.transaction_reference || "",
-        payment_date: values.payment_date,
-        remarks: values.remarks || "",
-        remaining_amount: Number(firstInstallment.installment_amount) - finalAmount,
-        amount_paid_as_carry_forward: 0,
-        applied_concessions: null,
-        repaid_installment: false,
-      })
-    }
-
     return {
       student_id: studentId,
       student_fees_master_id: student_fees_master_id,
-      student_fees_type_masters_id: extraFee.id,
       installments: installments,
     }
   }
@@ -242,7 +281,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
       // Handle success
       toast({
         title: t("payment_successful"),
-        description: `${t("payment_of")} ${formatCurrency(values.payment_amount)} ${t("has_been_recorded")}`,
+        description: `${t("payment_of")} ${formatCurrency(calculateFinalPaymentAmount())} ${t("has_been_recorded")}`,
       })
 
       setPaymentStep("success")
@@ -265,19 +304,14 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
     }
   }
 
-  // Get installment details by ID
-  const getInstallmentById = (installmentId: number) => {
-    return extraFee.installment_breakdown.find((installment) => installment.id === installmentId)
-  }
-
   // Render payment confirmation step
   const renderConfirmStep = () => {
-    const finalAmount = isPartialPayment ? Number(paymentAmount) : totalAmount
+    const finalAmount = calculateFinalPaymentAmount()
 
     return (
       <>
         <DialogHeader>
-          <DialogTitle className="text-xl">{t("confirm_payment")}</DialogTitle>
+          <DialogTitle className="text-xl">{t("confirm_extra_fees_payment")}</DialogTitle>
         </DialogHeader>
 
         <div className="mt-4 space-y-4">
@@ -301,8 +335,8 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
                   <p className="font-medium">{studentName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{t("extra_fee")}</p>
-                  <p className="font-medium">{getFeeTypeName(extraFee.fees_type_id)}</p>
+                  <p className="text-sm text-gray-500">{t("payment_type")}</p>
+                  <p className="font-medium">{t("extra_fees")}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{t("payment_date")}</p>
@@ -328,26 +362,46 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
 
               <Separator />
 
+              {/* Fee Type Sections */}
               <div>
-                <h4 className="font-medium mb-2">{t("selected_installments")}</h4>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {selectedInstallments.length > 0 ? (
-                    selectedInstallments.map((item) => {
-                      const installment = getInstallmentById(item.installmentId)
-                      return (
-                        <div key={item.key} className="flex justify-between items-center p-2 border rounded-md">
-                          <span>
-                            {t("installment")} {item.installment_no}
-                          </span>
-                          <span className="font-medium">{formatCurrency(item.amount)}</span>
+                <h4 className="font-medium mb-3">{t("selected_extra_fees")}</h4>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                  {Object.values(groupedInstallments).map((group) => (
+                    <div key={group.feeTypeId} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">{group.feeTypeName}</span>
+                          <Badge variant="outline">
+                            {group.installments.length} installment{group.installments.length !== 1 ? "s" : ""}
+                          </Badge>
                         </div>
-                      )
-                    })
-                  ) : (
-                    <div className="p-2 border rounded-md text-center text-gray-500">
-                      {t("paying_for_entire_extra_fee")}
+                        <span className="font-medium text-blue-600">{formatCurrency(group.totalAmount)}</span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {group.installments.map((item) => (
+                          <div key={item.key} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <div>
+                              <span className="text-sm">
+                                {t("installment")} {item.installment.installment_no}
+                              </span>
+                              {item.installment.due_date && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                  Due: {formatDate(item.installment.due_date)}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-medium">
+                              {isPartialPayment
+                                ? formatCurrency(partialPaymentAmounts[item.key] || 0)
+                                : formatCurrency(item.installment.installment_amount)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
 
@@ -375,46 +429,75 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <div className="space-y-4 rounded-md border p-4">
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="is_partial_payment"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0">
                       <div className="space-y-0.5">
                         <FormLabel>{t("partial_payment")}</FormLabel>
-                        <FormDescription>{t("pay_a_partial_amount_of_the_fee")}</FormDescription>
+                        <FormDescription>{t("pay_a_partial_amount_of_the_selected_fees")}</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 {isPartialPayment && (
-                  <FormField
-                    control={form.control}
-                    name="payment_amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("payment_amount")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            value={paymentAmount}
-                            onChange={handlePaymentAmountChange}
-                            min="1"
-                            max={totalAmount.toString()}
-                            step="0.01"
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {t("total_selected")}: {formatCurrency(totalAmount)}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">{t("partial_payment_details")}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>{t("partial_payment")}</AlertTitle>
+                        <AlertDescription>
+                          {t("enter_the_amount_you_want_to_pay_for_each_installment")}
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-4">
+                        {Object.values(groupedInstallments).map((group) => (
+                          <div key={group.feeTypeId} className="border rounded-lg p-3">
+                            <h5 className="font-medium mb-3 flex items-center gap-2">
+                              <Tag className="h-4 w-4" />
+                              {group.feeTypeName}
+                            </h5>
+
+                            <div className="space-y-3">
+                              {group.installments.map((item) => (
+                                <div key={item.key} className="grid grid-cols-2 gap-4 items-center">
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {t("installment")} {item.installment.installment_no}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {t("max_amount")}: {formatCurrency(item.installment.installment_amount)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Input
+                                      type="number"
+                                      placeholder="Amount to pay"
+                                      value={partialPaymentAmounts[item.key] || ""}
+                                      onChange={(e) => updatePartialPaymentAmount(item.key, e.target.value)}
+                                      className="w-full"
+                                      min="0"
+                                      max={Number(item.installment.installment_amount)}
+                                      step="0.01"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
 
@@ -509,7 +592,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
 
   // Render payment success step
   const renderSuccessStep = () => {
-    const finalAmount = isPartialPayment ? Number(paymentAmount) : totalAmount
+    const finalAmount = calculateFinalPaymentAmount()
 
     return (
       <>
@@ -569,14 +652,9 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
     )
   }
 
-  // Helper function to get fee type name
-  const getFeeTypeName = (feeTypeId: number): string => {
-    return `Fee Type ${feeTypeId}`
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         {isPaymentError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />

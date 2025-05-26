@@ -77,9 +77,9 @@ const ExtraFeesSection: React.FC<ExtraFeesSectionProps> = ({ studentId, feesPlan
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("extra_fees")}</CardTitle>
-          <Button onClick={() => setIsApplyDialogOpen(true)} size="sm">
+          {/* <Button onClick={() => setIsApplyDialogOpen(true)} size="sm">
             <Plus className="mr-2 h-4 w-4" /> {t("apply_extra_fees")}
-          </Button>
+          </Button> */}
         </CardHeader>
         <CardContent className="p-0">
           {extraFees.length === 0 ? (

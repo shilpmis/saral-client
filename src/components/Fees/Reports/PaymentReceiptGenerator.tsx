@@ -1,3 +1,4 @@
+"use client"
 import type React from "react"
 import { useMemo, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -362,9 +363,9 @@ ${activeSchool?.name || "School Name"} © ${new Date().getFullYear()}
         </DialogHeader>
 
         <div className="flex justify-end gap-2 mb-4">
-          <Button variant="outline" size="sm" onClick={handleDownload}>
+          {/* <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" /> {t("download_receipt")}
-          </Button>
+          </Button> */}
           <Button size="sm" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> {t("print_receipt")}
           </Button>
