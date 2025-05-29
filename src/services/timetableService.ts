@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import ApiService from "./ApiService";
 import { setSchoolCredential } from "@/redux/slices/schoolSlice";
 import baseUrl from "@/utils/base-urls";
-import { ClassDayConfigForTimeTable, labConfig, PeriodsConfig, SchoolSubject, SubjectDivisionMaster, SubjectDivisionStaffMaster, TimeTableConfigForSchool, TypeForCretePeriodsConfigForADay } from "@/types/subjects";
+import { ClassDayConfigForTimeTable, labConfig, PeriodsConfig, SchoolSubject, SubjectDivisionMaster, SubjectDivisionStaffMaster, TimeTableConfigForSchool, TypeForCretePeriodsConfigForADay, WeeklyTimeTableForDivision } from "@/types/subjects";
 
 export const TimeTableApi = createApi({
     reducerPath: 'timeTableApi',
@@ -58,11 +58,19 @@ export const TimeTableApi = createApi({
                 body: payload
             }),
         }),
-        verifyPeriodConfigurationForDay: builder.mutation<PeriodsConfig, { payload: Omit<PeriodsConfig , 'id' > }>({
+        verifyPeriodConfigurationForDay: builder.mutation<PeriodsConfig, { payload: Omit<PeriodsConfig, 'id'> }>({
             query: ({ payload }) => ({
                 url: `/timetable/verify/config/period`,
                 method: "POST",
                 body: payload
+            }),
+        }),
+
+        autoGenerateTimeTableForWeek: builder.mutation<{timetable : WeeklyTimeTableForDivision[] , message : string}, { division_id :number , academic_session_id: number }>({
+            query: ({ division_id , academic_session_id}) => ({
+                url: `/timetable/auto-generate/${division_id}?academic_session=${academic_session_id}`,
+                method: "POST",
+                payload: {}
             }),
         }),
 
@@ -77,5 +85,6 @@ export const {
     useCreateDayWiseTimeTableConfigfForClassMutation,
     useLazyFetchTimeTableConfigForDivisionQuery,
     useCreateDayWiseTimeTableForDivisonMutation,
-    useVerifyPeriodConfigurationForDayMutation
+    useVerifyPeriodConfigurationForDayMutation,
+    useAutoGenerateTimeTableForWeekMutation
 } = TimeTableApi;

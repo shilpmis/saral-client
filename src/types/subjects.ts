@@ -109,6 +109,22 @@ export interface TypeForCretePeriodsConfigForADay {
     }[]
 }
 
+export interface WeeklyTimeTableForDivision {
+    class_day_config_id : number;
+    periods : {
+        period_order : number;
+        start_time : string;
+        end_time : string;
+        is_break : boolean;
+        subjects_division_masters_id : number | null ;
+        staff_enrollment_id  : number | null
+        lab_id : number | null
+        is_pt : boolean
+        is_free_period : boolean
+    }[]
+}; 
+     
+
 export interface TimeTableForDivisionItem extends ClassDayConfigForTimeTable {
     periods: PeriodsConfig[];
     division_id: number;

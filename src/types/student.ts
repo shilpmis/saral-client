@@ -78,7 +78,7 @@ export interface Student {
   aadhar_no: number | null;
   is_active: boolean;
   student_meta?: StudentMeta;
-  acadamic_class: StudentEnrollment[];
+  academic_class: StudentEnrollment[];
 }
 
 export interface PageDetailsForStudents {
@@ -96,7 +96,7 @@ export interface PageDetailsForStudents {
 export interface StudentEntry {
   students_data: Omit<
     Student,
-    "id" | "student_meta" | "school_id" | "acadamic_class" | "enrollment_code"
+    "id" | "student_meta" | "school_id" | "academic_class" | "enrollment_code"
   >;
   student_meta_data: StudentMeta;
 }
