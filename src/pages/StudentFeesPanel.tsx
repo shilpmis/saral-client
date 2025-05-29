@@ -103,7 +103,7 @@ type StudentFeesPanelProps = {}
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
+  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, error, isSuccess }] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -843,7 +843,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {(error as any).data?.message || t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
             </CardDescription>
           </CardHeader>
           <CardFooter>
