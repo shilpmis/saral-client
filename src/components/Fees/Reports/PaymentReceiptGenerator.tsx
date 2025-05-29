@@ -41,6 +41,7 @@ const PaymentReceiptGenerator: React.FC<PaymentReceiptGeneratorProps> = ({
   const currentAcademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
   const activeSchool = useAppSelector(selectCurrentSchool)
 
+  console.log("studentDetails", studentDetails)  
   // Get academic session ID for fee types query
   const academicSessionId = useMemo(() => {
     if (studentDetails?.detail?.fees_plan?.academic_session_id) {
@@ -441,10 +442,9 @@ ${activeSchool?.name || "School Name"} © ${new Date().getFullYear()}
                 </div>
                 <div className="grid grid-cols-5">
                   <span className="text-sm text-gray-600 col-span-2">{t("class")}:</span>
-                  {/* <span className="text-sm font-medium col-span-3">
-                    {studentDetails.academic_class[0]?.class.class} - {studentDetails.academic_class[0]?.class.division} 
-                    {studentDetails.academic_class[0]?.class.aliases  ? `-  (${studentDetails.academic_class[0]?.class.aliases})` : ""}
-                  </span> */}
+                  <span className="text-sm font-medium col-span-3">
+                    {student.academic_class[0]?.class.class.id} - {student.academic_class[0]?.class.division}
+                  </span>
                 </div>
                 <div className="grid grid-cols-5">
                   <span className="text-sm text-gray-600 col-span-2">{t("fee_plan")}:</span>

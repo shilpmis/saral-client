@@ -232,10 +232,10 @@ export const FeesApi = createApi({
 
     payMultipleInstallments: builder.mutation<
       any,
-      { installments: FeePaymentRequest[]; student_id: number }
+      { installments: FeePaymentRequest[]; student_id: number , academic_session_id: number}
     >({
-      query: ({ installments, student_id }) => ({
-        url: `/fees/pay/installments`,
+      query: ({ installments, student_id , academic_session_id}) => ({
+        url: `/fees/pay/installments?academic_session=${academic_session_id}`,
         method: "POST",
         body: {
           student_id: student_id,
@@ -247,10 +247,10 @@ export const FeesApi = createApi({
 
     payMultipleInstallmentsForExtraFees: builder.mutation<
       any,
-      { payload: FeePaymentReqForExtraFees }
+      { payload: FeePaymentReqForExtraFees , academic_session_id : number }
     >({
-      query: ({ payload }) => ({
-        url: `/fees/pay/extra/installments`,
+      query: ({ payload , academic_session_id }) => ({
+        url: `/fees/pay/extra/installments?academic_session=${academic_session_id}`,
         method: "POST",
         body: payload,
       }),

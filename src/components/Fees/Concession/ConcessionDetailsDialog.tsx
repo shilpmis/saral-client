@@ -20,6 +20,7 @@ import {
   ArrowRightLeft,
 } from "lucide-react"
 import {
+  useGetAllFeesTypeQuery,
   useLazyGetConcessionsInDetailQuery,
   useUpdateConcsessionAppliedToPlanMutation,
   useUpdateConcsessionAppliedToStudentMutation,
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTranslation } from "@/redux/hooks/useTranslation"
+import { FeesType } from "@/types/fees"
 
 interface ConcessionDetailsDialogProps {
   concessionId: number
@@ -78,6 +80,27 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   // State for confirmation dialog
   const [confirmDialog, setConfirmDialog] = useState(false)
   const [statusUpdateData, setStatusUpdateData] = useState<StatusUpdateData | null>(null)
+
+    // Get fee types for name mapping
+    const { data: feeTypes } = useGetAllFeesTypeQuery(
+      { academic_session_id: currentAcademicSession?.id || 0, applicable_to: "All" },
+      { skip: !currentAcademicSession?.id },
+    )
+
+  // Get fee type name from ID using the API data
+    const getFeeTypeName = (feeTypeId: number): string => {
+      if (!feeTypeId) return t("unknown_fee_type")
+  
+      // First check if we have the fee type in our API data
+      if (feeTypes && feeTypes.length > 0) {
+        const feeType = feeTypes.find((type : FeesType) => type.id === feeTypeId)
+        if (feeType) {
+          return feeType.name
+        }
+      }
+      // Fallback to a generic name with the ID
+      return `${t("fee_type")} ${feeTypeId}`
+    }
 
   useEffect(() => {
     if (!academicDivisions) {
@@ -211,6 +234,8 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
 
   // Extract concession data from the response
   const { concession, concession_holder_plans, concession_holder_students } = concessionDetails
+
+  console.log("concessionDetails" , concessionDetails)
 
   // Check concession type
   const isPlanConcession = concession.applicable_to === "plan"
@@ -454,7 +479,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                       {concession_holder_plans.map((plan, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">{plan.fees_plan?.name || "N/A"}</TableCell>
-                          <TableCell>{plan.fees_plan ? getClassName(plan.fees_plan?.division_id) : "-"}</TableCell>
+                          <TableCell>{plan.fees_plan ? getClassName(plan.fees_plan?.class_id) : "-"}</TableCell>
                           <TableCell className="capitalize">{plan.deduction_type}</TableCell>
                           <TableCell>
                             {plan.deduction_type === "percentage"
@@ -554,7 +579,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                       {concession_holder_students.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">{item.fees_plan?.name || "N/A"}</TableCell>
-                          <TableCell>{item.fees_plan ? getClassName(item.fees_plan.division_id) : "-"}</TableCell>
+                          <TableCell>{item.fees_plan ? getClassName(item.fees_plan.class_id) : "-"}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
@@ -683,6 +708,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                         <TableHead>{t("class")}</TableHead>
                         <TableHead>{t("roll_number")}</TableHead>
                         <TableHead>{t("fee_plan")}</TableHead>
+                        <TableHead>{t("fees_type")}</TableHead>
                         <TableHead>{t("deduction")}</TableHead>
                         <TableHead>{t("status")}</TableHead>
                         <TableHead>{t("actions")}</TableHead>
@@ -690,7 +716,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                     </TableHeader>
                     <TableBody>
                       {concession_holder_students.map((item, index) => {
-                        const studentClass = item.student?.acadamic_class?.[0]
+                        const studentClass = item.student?.academic_class?.[0]
                         return (
                           <TableRow key={index}>
                             <TableCell>
@@ -714,12 +740,11 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                             </TableCell>
                             <TableCell>{item.student?.gr_no}</TableCell>
                             <TableCell>
-                              {studentClass
-                                ? `Class ${studentClass.class?.class} ${studentClass.class?.division}`
-                                : "N/A"}
+                               Class {item?.student?.academic_class?.[0].class?.class.class} - {item?.student?.academic_class?.[0].class?.division}                                
                             </TableCell>
                             <TableCell>{item.student?.roll_number}</TableCell>
                             <TableCell>{item.fees_plan?.name}</TableCell>
+                            <TableCell>{item.fees_type_id ? getFeeTypeName(item.fees_type_id!) : "unknown"}</TableCell>
                             <TableCell>
                               {item.deduction_type === "percentage"
                                 ? `${item.percentage}%`

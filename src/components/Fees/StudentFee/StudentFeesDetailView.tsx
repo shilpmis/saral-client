@@ -1706,8 +1706,9 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
       </Tabs>
 
       {/* Payment Dialog */}
-      {effectiveStudentId && (
+      {/* {effectiveStudentId && (
         <PayFeesDialog
+          enrolled_academic_session_id={currentAcademicSession?.id || 0}
           isOpen={isPayFeesDialogOpen}
           onClose={() => {
             setIsPayFeesDialogOpen(false)
@@ -1727,7 +1728,7 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
           planConcessions={studentFeeDetails.detail?.fees_plan?.concession_for_plan}
           availableConcessionBalance={concessionBalance}
         />
-      )}
+      )} */}
 
       {/* Installment Detail View Dialog */}
       <InstallmentDetailView
