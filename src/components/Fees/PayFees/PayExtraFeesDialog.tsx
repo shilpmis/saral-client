@@ -42,6 +42,7 @@ interface PayExtraFeesDialogProps {
   onSuccessfulSubmit: () => void
   studentId: number
   studentName: string
+  enrolled_academic_session_id : number
   student_fees_master_id: number
   selectedInstallments: {
     key: string
@@ -58,6 +59,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
   studentId,
   studentName,
   student_fees_master_id,
+  enrolled_academic_session_id,
   selectedInstallments = [],
 }) => {
   const { t } = useTranslation()
@@ -276,7 +278,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
       const payload = preparePayload(values)
 
       // Call the API
-      const response = await payExtraFees({ payload }).unwrap()
+      const response = await payExtraFees({ payload , academic_session_id : enrolled_academic_session_id }).unwrap()
 
       // Handle success
       toast({

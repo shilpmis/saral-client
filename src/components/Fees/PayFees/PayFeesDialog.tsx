@@ -59,6 +59,7 @@ interface PayFeesDialogProps {
   isOpen: boolean
   onClose: () => void
   onSuccessfulSubmit: () => void
+  enrolled_academic_session_id : number
   installments: ExtendedInstallmentBreakdown[]
   studentId: number
   totalAmount: number
@@ -79,6 +80,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
   totalAmount,
   studentConcessions = [],
   planConcessions = [],
+  enrolled_academic_session_id,
   availableConcessionBalance = { student_concession: 0, plan_concession: 0 },
 }) => {
   const { t } = useTranslation()
@@ -390,6 +392,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
       const paymentRequest = {
         student_id: studentId,
         installments: installmentPayments,
+        academic_session_id : enrolled_academic_session_id ?? CurrentAcademicSessionForSchool!.id,
       }
 
       console.log("Payment request:", paymentRequest)

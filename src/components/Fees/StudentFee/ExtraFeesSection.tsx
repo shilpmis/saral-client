@@ -138,6 +138,7 @@ const ExtraFeesSection: React.FC<ExtraFeesSectionProps> = ({ studentId, feesPlan
       </Card>
 
       <ApplyExtraFeesDialog
+        enrolled_academic_session_id={currentAcademicSession?.id || 0}
         isOpen={isApplyDialogOpen}
         onClose={() => setIsApplyDialogOpen(false)}
         onSuccess={onRefresh}

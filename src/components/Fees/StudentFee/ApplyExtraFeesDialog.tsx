@@ -104,6 +104,7 @@ interface ApplyExtraFeesDialogProps {
   onSuccess: () => void
   studentId: number
   feesPlanId: number
+  enrolled_academic_session_id : number
 }
 
 // Global form variable for use in schema refinement
@@ -115,6 +116,7 @@ const ApplyExtraFeesDialog: React.FC<ApplyExtraFeesDialogProps> = ({
   onSuccess,
   studentId,
   feesPlanId,
+  enrolled_academic_session_id
 }) => {
   const { t } = useTranslation()
   const [formError, setFormError] = useState<string | null>(null)
@@ -296,7 +298,7 @@ const ApplyExtraFeesDialog: React.FC<ApplyExtraFeesDialogProps> = ({
     try {
       const payload: RequestForApplyExtraFees = {
         student_id: studentId,
-        academic_session_id: currentAcademicSession.id,
+        academic_session_id: enrolled_academic_session_id ?? currentAcademicSession.id,
         fees_plan_id: feesPlanId,
         fees_type_id: values.fees_type_id,
         installment_type: values.installment_type as any,
@@ -343,7 +345,7 @@ const ApplyExtraFeesDialog: React.FC<ApplyExtraFeesDialogProps> = ({
   useEffect(() => {
     if (isOpen && currentAcademicSession) {
       getAllFeesType({
-        academic_session_id: currentAcademicSession.id,
+        academic_session_id: enrolled_academic_session_id ?? currentAcademicSession.id,
         applicable_to: "student",
       })
     }
