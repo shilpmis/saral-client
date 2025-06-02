@@ -109,6 +109,12 @@ export interface TypeForCretePeriodsConfigForADay {
     }[]
 }
 
+export interface TypeForUpdatePeriodsConfigForADay {    
+    class_day_config_id : number;
+    division_id : number; 
+        periods : Partial<Omit<PeriodsConfig , 'class_day_config_id' | 'division_id' | 'period_order'>>[]
+}
+
 export interface WeeklyTimeTableForDivision {
     class_day_config_id : number;
     periods : {

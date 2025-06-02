@@ -147,7 +147,7 @@ export default function TimetableSettings() {
                 <CardContent>
                     {isConfigNotFound ? (
                         <GeneralSettingsForTimeTable
-                            isNew={true}
+                            // isNew={true}
                             existingConfig={null}
                             academicSession={currentAcademicSession}
                             onConfigSaved={refetch}
@@ -166,7 +166,7 @@ export default function TimetableSettings() {
 
                             <TabsContent value="general">
                                 <GeneralSettingsForTimeTable
-                                    isNew={false}
+                                    // isNew={false}
                                     existingConfig={existingConfig ?? null}
                                     academicSession={currentAcademicSession}
                                     onConfigSaved={refetch}

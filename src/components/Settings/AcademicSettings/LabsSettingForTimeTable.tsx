@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,15 +15,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AlertCircle, Info, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { AlertCircle, Info, Loader2, Pencil, Plus, Trash2, Check, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import {
   useCreateLabConfigMutation,
-//   useUpdateLabConfigMutation,
-//   useDeleteLabConfigMutation,
+  useUpdateLabConfigMutation,
+  useLazyDeleteLabQuery,
 } from "@/services/timetableService"
 import type { TimeTableConfigForSchool, labConfig } from "@/types/subjects"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Define the schema for lab configuration
 const labSchema = z.object({
@@ -39,7 +40,7 @@ type LabSettingsProps = {
   onLabConfigSaved: () => void
 }
 
-export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSaved }: LabSettingsProps) {
+export default function LabSettings({ existingConfig, onLabConfigSaved }: LabSettingsProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -49,9 +50,9 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
   const [labToDelete, setLabToDelete] = useState<labConfig | null>(null)
 
   // RTK Query hooks
-  const [createLabConfig, { isLoading: isCreating }] = useCreateLabConfigMutation()
-//   const [updateLabConfig, { isLoading: isUpdating }] = useUpdateLabConfigMutation()
-//   const [deleteLabConfig, { isLoading: isDeleting }] = useDeleteLabConfigMutation()
+  const [createLabConfig, { isLoading: isCreating, error: createError }] = useCreateLabConfigMutation()
+  const [updateLabConfig, { isLoading: isUpdating, error: updateError }] = useUpdateLabConfigMutation()
+  const [deleteLabConfig, { isLoading: isDeleting, error: deleteError }] = useLazyDeleteLabQuery()
 
   // Set up lab form
   const form = useForm<z.infer<typeof labSchema>>({
@@ -108,15 +109,14 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
 
       if (isEditMode && currentLabId) {
         // Update existing lab
-        // await updateLabConfig({
-        //   id: currentLabId,
-        //   payload: {
-        //     name: data.name,
-        //     max_capacity: data.max_capacity,
-        //     availability_per_day: data.availability_per_day,
-        //     school_timetable_config_id: existingConfig.id,
-        //   },
-        // })
+        await updateLabConfig({
+          lab_id: currentLabId,
+          payload: {
+            name: data.name,
+            max_capacity: data.max_capacity,
+            availability_per_day: data.availability_per_day,
+          },
+        }).unwrap()
 
         toast({
           title: t("success"),
@@ -135,7 +135,7 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
               },
             ],
           },
-        })
+        }).unwrap()
 
         toast({
           title: t("success"),
@@ -146,12 +146,12 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
       // Close dialog and refresh data
       setIsDialogOpen(false)
       onLabConfigSaved()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving lab:", error)
       toast({
         variant: "destructive",
         title: t("error"),
-        description: isEditMode ? t("failed_to_update_lab") : t("failed_to_create_lab"),
+        description: error.data?.message || (isEditMode ? t("failed_to_update_lab") : t("failed_to_create_lab")),
       })
     }
   }
@@ -161,9 +161,9 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
     try {
       if (!labToDelete) return
 
-    //   await deleteLabConfig({
-    //     id: labToDelete.id,
-    //   })
+      await deleteLabConfig({
+        lab_id: labToDelete.id,
+      }).unwrap()
 
       toast({
         title: t("success"),
@@ -173,14 +173,25 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
       // Close dialog and refresh data
       setIsDeleteDialogOpen(false)
       onLabConfigSaved()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting lab:", error)
       toast({
         variant: "destructive",
         title: t("error"),
-        description: t("failed_to_delete_lab"),
+        description: error.data?.message || t("failed_to_delete_lab"),
       })
     }
+  }
+
+  // Get error message from RTK Query error
+  const getErrorMessage = () => {
+    const error = createError || updateError || deleteError
+    if (!error) return null
+
+    if ("data" in error) {
+      return (error as any).data?.message || t("an_error_occurred")
+    }
+    return t("an_error_occurred")
   }
 
   // Check if labs are enabled
@@ -199,8 +210,20 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
 
   return (
     <div className="space-y-6">
+      {/* Error display */}
+      {getErrorMessage() && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle>{t("error")}</AlertTitle>
+          <AlertDescription>{getErrorMessage()}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">{t("lab_configurations")}</h3>
+        <div>
+          <h3 className="text-lg font-medium">{t("lab_configurations")}</h3>
+          <p className="text-sm text-muted-foreground">{t("manage_laboratory_settings_for_timetable")}</p>
+        </div>
         <Button onClick={openAddLabDialog} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           {t("add_lab")}
@@ -222,41 +245,62 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {labs.map((lab) => (
-            <div key={lab.id} className="border rounded-md p-4 relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {labs.map((lab : labConfig) => (
+            <div key={lab.id} className="border rounded-md p-4 relative hover:border-primary transition-colors">
               <div className="absolute top-2 right-2 flex space-x-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-primary"
-                  onClick={() => openEditLabDialog(lab)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => openDeleteLabDialog(lab)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => openEditLabDialog(lab)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("edit_lab")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => openDeleteLabDialog(lab)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("delete_lab")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
-              <h4 className="font-medium text-lg mb-2">{lab.name}</h4>
+              <h4 className="font-medium text-lg mb-4 pr-16">{lab.name}</h4>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("maximum_capacity")}:</span>
-                  <span className="font-medium">{lab.max_capacity}</span>
+                  <Badge variant="outline" className="font-medium">
+                    {lab.max_capacity} {t("classes")}
+                  </Badge>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("availability_per_day")}:</span>
-                  <span className="font-medium">
-                    {lab.availability_per_day === null ? t("unlimited") : lab.availability_per_day}
-                  </span>
+                  <Badge variant={lab.availability_per_day === null ? "secondary" : "outline"} className="font-medium">
+                    {lab.availability_per_day === null ? t("unlimited") : `${lab.availability_per_day} ${t("periods")}`}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -336,8 +380,8 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   {t("cancel")}
                 </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {(isCreating ) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isCreating || isUpdating}>
+                  {(isCreating || isUpdating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isEditMode ? t("update_lab") : t("add_lab")}
                 </Button>
               </DialogFooter>
@@ -350,22 +394,48 @@ export default function LabSettingsForTimeTable({ existingConfig, onLabConfigSav
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("confirm_deletion")}</DialogTitle>
+            <DialogTitle className="flex items-center text-destructive">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              {t("confirm_deletion")}
+            </DialogTitle>
             <DialogDescription>
               {t("are_you_sure_you_want_to_delete_this_lab")}
-              {labToDelete && <strong className="block mt-1">{labToDelete.name}</strong>}
+              {labToDelete && <strong className="block mt-1 text-foreground">{labToDelete.name}</strong>}
               {t("this_action_cannot_be_undone")}
             </DialogDescription>
           </DialogHeader>
 
+          <div className="bg-muted/50 p-3 rounded-md text-sm">
+            <p className="font-medium mb-2">{t("deletion_consequences")}:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>{t("any_timetable_entries_using_this_lab_will_be_affected")}</li>
+              <li>{t("you_may_need_to_reassign_periods_that_were_using_this_lab")}</li>
+            </ul>
+          </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button type="button" variant="destructive" onClick={handleDeleteLab} disabled={true}>
-              {false && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("delete_lab")}
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="flex items-center"
+              >
+                <X className="mr-2 h-4 w-4" />
+                {t("cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteLab}
+                disabled={isDeleting}
+                className="flex items-center"
+              >
+                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {!isDeleting && <Check className="mr-2 h-4 w-4" />}
+                {t("confirm_delete")}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import ApiService from "./ApiService";
 import { setSchoolCredential } from "@/redux/slices/schoolSlice";
 import baseUrl from "@/utils/base-urls";
-import { ClassDayConfigForTimeTable, labConfig, PeriodsConfig, SchoolSubject, SubjectDivisionMaster, SubjectDivisionStaffMaster, TimeTableConfigForSchool, TypeForCretePeriodsConfigForADay, WeeklyTimeTableForDivision } from "@/types/subjects";
+import { ClassDayConfigForTimeTable, labConfig, PeriodsConfig, SchoolSubject, SubjectDivisionMaster, SubjectDivisionStaffMaster, TimeTableConfigForSchool, TypeForCretePeriodsConfigForADay, TypeForUpdatePeriodsConfigForADay, WeeklyTimeTableForDivision } from "@/types/subjects";
 
 export const TimeTableApi = createApi({
     reducerPath: 'timeTableApi',
@@ -28,6 +28,13 @@ export const TimeTableApi = createApi({
                 body: payload
             }),
         }),
+        updateTimeTableConfig: builder.mutation<TimeTableConfigForSchool, { config_id: number, payload: Partial<Omit<TimeTableConfigForSchool, 'lab_config' | 'class_day_config'>> }>({
+            query: ({ payload, config_id }) => ({
+                url: `/timetable/config/${config_id}`,
+                method: "PUT",
+                body: payload
+            }),
+        }),
         createLabConfig: builder.mutation<labConfig, { payload: { school_timetable_config_id: number, labs: Omit<labConfig, 'id' | 'school_timetable_config_id'>[] } }>({
             query: ({ payload }) => ({
                 url: `/timetable/config/lab`,
@@ -36,10 +43,33 @@ export const TimeTableApi = createApi({
             }),
         }),
 
+        updateLabConfig: builder.mutation<labConfig, { lab_id: number, payload: Partial<Omit<labConfig, 'school_timetable_config_id'>> }>({
+            query: ({ payload, lab_id }) => ({
+                url: `/timetable/config/lab/${lab_id}`,
+                method: "PUT",
+                body: payload
+            }),
+        }),
+
+        deleteLab: builder.query<labConfig, { lab_id: number }>({
+            query: ({ lab_id }) => ({
+                url: `/timetable/config/lab/${lab_id}`,
+                method: "DELETE",
+            }),
+        }),
+
         createDayWiseTimeTableConfigfForClass: builder.mutation<ClassDayConfigForTimeTable, { payload: Omit<ClassDayConfigForTimeTable, 'id' | 'period_config'> }>({
             query: ({ payload }) => ({
                 url: `/timetable/config/class/day`,
                 method: "POST",
+                body: payload
+            }),
+        }),
+
+        updateDayWiseTimeTableConfigfForClass: builder.mutation<ClassDayConfigForTimeTable[], { class_id: number, class_day_config_id: number, payload: Partial<Omit<ClassDayConfigForTimeTable, 'id' | 'school_timetable_config_id' | 'class_id' | 'day' | 'period_config'>> }>({
+            query: ({ payload, class_day_config_id, class_id }) => ({
+                url: `/timetable/config/class/day/${class_id}/${class_day_config_id}`,
+                method: "PUT",
                 body: payload
             }),
         }),
@@ -58,6 +88,23 @@ export const TimeTableApi = createApi({
                 body: payload
             }),
         }),
+
+        updateDayWiseTimeTableForDivison: builder.mutation<PeriodsConfig[], { payload: TypeForUpdatePeriodsConfigForADay }>({
+            query: ({ payload }) => ({
+                url: `/timetable/config/period`,
+                method: "PUT",
+                body: payload
+            }),
+        }),
+
+        deleteDayWiseTimeTableForDivison: builder.mutation<any, { division_id : number }>({
+            query: ({ division_id }) => ({
+                url: `/timetable/config/${division_id}`,
+                method: "DELETE",
+            }),
+        }),
+
+
         verifyPeriodConfigurationForDay: builder.mutation<PeriodsConfig, { payload: Omit<PeriodsConfig, 'id'> }>({
             query: ({ payload }) => ({
                 url: `/timetable/verify/config/period`,
@@ -66,8 +113,8 @@ export const TimeTableApi = createApi({
             }),
         }),
 
-        autoGenerateTimeTableForWeek: builder.mutation<{timetable : WeeklyTimeTableForDivision[] , message : string}, { division_id :number , academic_session_id: number }>({
-            query: ({ division_id , academic_session_id}) => ({
+        autoGenerateTimeTableForWeek: builder.mutation<{ timetable: WeeklyTimeTableForDivision[], message: string }, { division_id: number, academic_session_id: number }>({
+            query: ({ division_id, academic_session_id }) => ({
                 url: `/timetable/auto-generate/${division_id}?academic_session=${academic_session_id}`,
                 method: "POST",
                 payload: {}
@@ -83,8 +130,14 @@ export const {
     useCreateTimeTableConfigMutation,
     useCreateLabConfigMutation,
     useCreateDayWiseTimeTableConfigfForClassMutation,
+    useUpdateDayWiseTimeTableConfigfForClassMutation,
     useLazyFetchTimeTableConfigForDivisionQuery,
     useCreateDayWiseTimeTableForDivisonMutation,
     useVerifyPeriodConfigurationForDayMutation,
-    useAutoGenerateTimeTableForWeekMutation
+    useAutoGenerateTimeTableForWeekMutation,
+    useUpdateTimeTableConfigMutation,
+    useLazyDeleteLabQuery,
+    useUpdateLabConfigMutation,
+    useUpdateDayWiseTimeTableForDivisonMutation,
+    useDeleteDayWiseTimeTableForDivisonMutation
 } = TimeTableApi;
