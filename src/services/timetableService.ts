@@ -97,9 +97,9 @@ export const TimeTableApi = createApi({
             }),
         }),
 
-        deleteDayWiseTimeTableForDivison: builder.mutation<any, { division_id : number }>({
-            query: ({ division_id }) => ({
-                url: `/timetable/config/${division_id}`,
+        deleteDayWiseTimeTableForDivison: builder.mutation<any, { school_timetable_config_id: number, division_id: number }>({
+            query: ({ school_timetable_config_id, division_id }) => ({
+                url: `/timetable/config/${school_timetable_config_id}/${division_id}`,
                 method: "DELETE",
             }),
         }),
@@ -113,13 +113,31 @@ export const TimeTableApi = createApi({
             }),
         }),
 
-        autoGenerateTimeTableForWeek: builder.mutation<{ timetable: WeeklyTimeTableForDivision[], message: string }, { division_id: number, academic_session_id: number }>({
-            query: ({ division_id, academic_session_id }) => ({
-                url: `/timetable/auto-generate/${division_id}?academic_session=${academic_session_id}`,
-                method: "POST",
-                payload: {}
+        autoGenerateTimeTableForWeek: builder.mutation<{ timetable: WeeklyTimeTableForDivision[], message: string },
+            {
+                division_id: number, academic_session_id: number, configuration: {
+                    free_periods_count: number,
+                    max_consecutive_periods: number,
+                    include_pt_periods: boolean,
+                    selected_labs: number[],
+                    subject_preferences: {
+                        subject_id: number,
+                        periods_per_week: number,
+                        priority: number
+                    }[],
+                    // Additional configuration from timetable config
+                    max_periods_per_day: number,
+                    default_period_duration: number,
+                    lab_enabled: boolean,
+                    pt_enabled: boolean,
+                }
+            }>({
+                query: ({ division_id, academic_session_id , configuration}) => ({
+                    url: `/timetable/auto-generate/${division_id}?academic_session=${academic_session_id}`,
+                    method: "POST",
+                    body: configuration
+                }),
             }),
-        }),
 
     })
 
