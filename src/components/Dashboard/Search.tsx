@@ -130,19 +130,20 @@ export function Search() {
     return location.pathname.match(/^\/d\/fee\/student\/\d+/)
   }, [location.pathname])
 
+  // Add support for /d/pay-fees and /d/pay-fees/:id
+  const isPayFeesProfilePage = useMemo(() => {
+    return location.pathname.match(/^\/d\/pay-fees(\/\d+)?$/)
+  }, [location.pathname])
+
+  const isPayFeesStudentDetailPage = useMemo(() => {
+    return location.pathname.match(/^\/d\/pay-fees\/student\/\d+/)
+  }, [location.pathname])
+
   // Original handlers
   const handleSearch = (category: SearchCategory) => {
     setSelectedCategory(category)
-  }
-
-  const onChangeSearch = (value: string) => {
-    setSearchQuery(value)
-    if (value === "") {
-      setShowResults(false)
-      setHasSearched(false)
-    } else {
-      setShowResults(true)
-    }
+    const storageKey = getFilterStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(category));
   }
 
   const searchTrigger = (event: any) => {
@@ -230,11 +231,11 @@ export function Search() {
         }
       }
       // For other searches
-      else if (window.location.pathname === "/d/leaves") {
-        console.log("from leaves", searchQuery, selectedCategory?.id)
-      } else if (window.location.pathname === "/d/fee") {
-        console.log("from fee", searchQuery, selectedCategory?.id)
-      }
+      // else if (window.location.pathname === "/d/leaves") {
+      //   console.log("from leaves", searchQuery, selectedCategory?.id)
+      // } else if (window.location.pathname === "/d/fee") {
+      //   console.log("from fee", searchQuery, selectedCategory?.id)
+      // }
     } catch (err) {
       console.error("Search error:", err)
     }
@@ -250,10 +251,20 @@ export function Search() {
     setHasSearched(false)
   }
 
+  // Update handleSelectStudentForFees to support /d/pay-fees/:id?session_id=2 context
   const handleSelectStudentForFees = (student: Student) => {
-    // Navigate to the student profile page with the student ID
-    navigate(`/d/fee/student/${student.id}`)
-    // Clear search results and query
+    if (isPayFeesProfilePage || isPayFeesStudentDetailPage) {
+      // Preserve session_id if present in the current URL
+      const params = new URLSearchParams(location.search)
+      const sessionId = params.get("session_id") || currentAcademicSession?.id
+      let url = `/d/pay-fees/${student.id}`
+      if (sessionId) {
+        url += `?session_id=${sessionId}`
+      }
+      navigate(url)
+    } else {
+      navigate(`/d/fee/student/${student.id}`)
+    }
     setShowResults(false)
     setSearchQuery("")
     setHasSearched(false)
@@ -302,59 +313,85 @@ export function Search() {
 
   useEffect(() => {
     setSearchQuery("")
-
     // Only reset the selected category if not navigating to a profile page
     // or if we're coming from a non-profile page
+    // (No longer clear selectedCategory)
     if (
-      (!isStudentProfilePage && !isStaffProfilePage) ||
-      (!location.pathname.includes("/d/student/") && !location.pathname.includes("/d/staff/"))
+      isStudentProfilePage
     ) {
-      setSelectedCategory(null)
-    }
-
-    // Handle profile pages by setting to appropriate search mode
-    if (isStudentProfilePage) {
       setActivePage("Search for Students")
     } else if (isStaffProfilePage) {
       setActivePage("Search for Staff")
-    } else if (isFeesProfilePage || isFeeStudentDetailPage) {
+    } else if (isFeesProfilePage || isFeeStudentDetailPage || isPayFeesProfilePage || isPayFeesStudentDetailPage) {
       setActivePage("Search for Fee")
     } else {
       setActivePage(pageTitles[location.pathname])
     }
-
     setHasSearched(false)
-  }, [location.pathname, pageTitles, setActivePage, isStudentProfilePage, isStaffProfilePage])
+  }, [location.pathname, pageTitles, setActivePage, isStudentProfilePage, isStaffProfilePage, isFeesProfilePage, isFeeStudentDetailPage, isPayFeesProfilePage, isPayFeesStudentDetailPage])
 
+  // Helper to get filter key for localStorage per context
+  const getFilterStorageKey = () => {
+    // Use activePage or fallback to pathname
+    let key = activePage || location.pathname;
+    // Normalize for pay-fees/fee context
+    if (key.includes("pay-fees")) return "search_filter_pay_fees";
+    if (key.includes("fee")) return "search_filter_fee";
+    if (key.includes("students")) return "search_filter_students";
+    if (key.includes("staff")) return "search_filter_staff";
+    // if (key.includes("leaves")) return "search_filter_leaves";
+    return `search_filter_${key}`;
+  };
+
+  // Helper to get categories for current context
+  const getCategories = () => {
+    if (activePage === "Search for Students" || isStudentProfilePage) return studentCategories;
+    if (activePage === "Search for Staff" || isStaffProfilePage) return staffCategories;
+    if (activePage === "Search for Fee" || isFeesProfilePage || isFeeStudentDetailPage || isPayFeesProfilePage || isPayFeesStudentDetailPage) return feeCategories;
+    // if (activePage === "Search for Leave") return leaveCategories;
+    return studentCategories;
+  };
+
+  // On context change, set filter from localStorage or default to first
   useEffect(() => {
-    if (searchQuery === "" && activePage !== "Search for Students" && activePage !== "Search for Staff") {
-      setSelectedCategory(null)
+    const categories = getCategories();
+    const storageKey = getFilterStorageKey();
+    const stored = localStorage.getItem(storageKey);
+    let found = null;
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        found = categories.find((c) => c.id === parsed.id);
+      } catch {}
     }
-  }, [searchQuery, activePage])
+    setSelectedCategory(found || categories[0]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage, isStudentProfilePage, isStaffProfilePage, isFeesProfilePage, isFeeStudentDetailPage, isPayFeesProfilePage, isPayFeesStudentDetailPage]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest(".search-container") && showResults) {
-        setShowResults(false)
-      }
+  // Prevent filter from being cleared on input clear/backspace
+  const onChangeSearch = (value: string) => {
+    setSearchQuery(value)
+    if (value === "") {
+      setShowResults(false)
+      setHasSearched(false)
+      // Do NOT clear selectedCategory
+    } else {
+      setShowResults(true)
     }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [showResults])
+  }
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
-      {activePage === "Search for Students" ||
-      activePage === "Search for Staff" ||
-      activePage === "Search for Leave" ||
-      activePage === "Search for Fee" ||
-      isStudentProfilePage ||
-      isStaffProfilePage ||
-      isFeeStudentDetailPage ? (
+      {(
+        activePage === "Search for Students" ||
+        activePage === "Search for Staff" ||
+        activePage === "Search for Fee" ||
+        isStudentProfilePage ||
+        isStaffProfilePage ||
+        isFeeStudentDetailPage ||
+        isPayFeesProfilePage ||
+        isPayFeesStudentDetailPage
+      ) ? (
         <div className="search-container">
           <div className="relative flex items-center">
             <Input
@@ -373,14 +410,6 @@ export function Search() {
               className="pl-[120px] pr-10"
               value={searchQuery}
               onChange={(e) => onChangeSearch(e.target.value)}
-              disabled={
-                (selectedCategory === null &&
-                  activePage !== "Search for Students" &&
-                  activePage !== "Search for Staff" &&
-                  !isStudentProfilePage &&
-                  !isStaffProfilePage) ||
-                (activePage === "Search for Students" && !currentAcademicSession?.id)
-              }
               onKeyDown={(event) => searchTrigger(event)}
               onFocus={() => {
                 if (
@@ -478,26 +507,6 @@ export function Search() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">
                   {staffCategories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.id}
-                      onClick={() => handleSearch(category)}
-                      className="flex items-center gap-2"
-                    >
-                      {category.icon}
-                      <span>{category.label}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : activePage === "Search for Leave" ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
-                    {selectedCategory ? selectedCategory.label : "Search by"}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                  {leaveCategories.map((category) => (
                     <DropdownMenuItem
                       key={category.id}
                       onClick={() => handleSearch(category)}

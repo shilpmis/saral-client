@@ -1093,6 +1093,7 @@
   "template_details": "Template Details",
   "update_the_details_of_the_salary_template": "Update the details of the salary template",
   "edit_salary_template": "Edit Salary Template",
+  "total_carry_forwarded_amount" : "Total Carry Forwarded Amount",
   "no_components_added_yet. click_add_component_to_add_salary_components_to_the_template": "No components added yet. Click add component to add salary components to the template",
   "inactive_templates_will_not_be_available": "Inactive templates will not be available",
   "mandatory_templates_cannot_be_modified": "Mandatory templates cannot be modified",

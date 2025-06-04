@@ -70,7 +70,7 @@ export interface FeesPlan {
 
 export interface FeesPlanDetail {
   id: number;
-  academic_session_id: number;
+  academic_session_id: number;  
   fees_plan_id: number;
   fees_type_id: number;
   total_installment: number;

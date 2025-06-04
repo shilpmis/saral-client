@@ -858,11 +858,11 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
   }, [])
 
   // Debug log to check if studentFeeDetails is actually available
-  useEffect(() => {
-    if (studentFeeDetails) {
-      console.log("Student fee details loaded:", studentFeeDetails)
-    }
-  }, [studentFeeDetails])
+  // useEffect(() => {
+  //   if (studentFeeDetails) {
+  //     console.log("Student fee details loaded:", studentFeeDetails)
+  //   }
+  // }, [studentFeeDetails])
 
   if (isLoading) {
     return (
@@ -1111,6 +1111,11 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-700">{formatCurrency(feesStatus?.paid_amount)}</p>
+                {Number(feesStatus?.paid_amount) > 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    {t("due_amount")}: {formatCurrency((Number(feesStatus?.total_amount) - Number(feesStatus?.paid_amount)))}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -1135,7 +1140,7 @@ const StudentFeesDetailView: React.FC<StudentFeesPanelProps> = ({
               <CardHeader className="pb-2">
                 <CardTitle className="text-red-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  {t("due_amount")}
+                  {t("total_carry_forwarded_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>

@@ -437,6 +437,7 @@ export const {
   useLazyUpdateFeesPlanStatusQuery,
 
   useGetAllConcessionsQuery,
+  useLazyGetAllConcessionsQuery,
 
   useUpdateConcsessionAppliedToPlanMutation,
   useUpdateConcsessionAppliedToStudentMutation,
