@@ -831,6 +831,7 @@
   "save_quota": "કોટા સાચવો",
   "quota_allocated": "કોટા સોંપેલ",
   "error_loading_student_fees": "વિદ્યાર્થી ફી લોડ કરવામાં ભૂલ",
+  "total_carry_forwarded_amount" : "કુલ આગળ વધારેલ રકમ",
   "there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.": "આ વિદ્યાર્થી માટે ફી વિગતો લોડ કરવામાં સમસ્યા હતી કૃપા કરીને પછીથી ફરી પ્રયાસ કરો.",
   "no_data_available": "કોઈ ડેટા ઉપલબ્ધ નથી",
   "no_fee_details_found_for_this_student.": "આ વિદ્યાર્થી માટે કોઈ ફી વિગતો મળી નથી",
