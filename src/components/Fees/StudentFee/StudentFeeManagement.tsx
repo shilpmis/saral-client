@@ -592,7 +592,7 @@ const StudentFeesManagement: React.FC = () => {
                       <TableCell>{formatCurrency(student.fees_status.total_amount)}</TableCell>
                       <TableCell>{formatCurrency(student.fees_status.paid_amount)}</TableCell>
                       <TableCell className="font-medium text-red-600">
-                        {formatCurrency(student.fees_status.due_amount)}
+                        {formatCurrency((Number(student.fees_status.total_amount)- Number(student.fees_status.paid_amount)))}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(student.fees_status.status) as any}>
