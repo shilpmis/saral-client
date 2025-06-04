@@ -28,7 +28,8 @@ import {
 import {
   useGetAllConcessionsQuery,
   useLazyGetStudentFeesDetailsQuery,
-  useGetAllFeesTypeQuery,
+  useLazyGetAllFeesTypeQuery,
+  useLazyGetAllConcessionsQuery,
 } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
@@ -57,25 +58,30 @@ const formatCurrency = (amount: string | number | null | undefined) => {
   })}`
 }
 
-// Get fee type by ID from cache or API data
-const getFeeTypeById = (feeTypeId: number, feeTypes: any[]): any => {
-  // First check the cache
-  if (feeTypeCache.has(feeTypeId)) {
-    return feeTypeCache.get(feeTypeId)
+// Utility: Format date as 'dd MMM yyyy' or return 'N/A' if invalid
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return "N/A"
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "N/A"
+    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+  } catch (e) {
+    return "Invalid Date"
   }
+}
 
-  // If not in cache, check the API data
-  if (feeTypes && feeTypes.length > 0) {
-    const feeType = feeTypes.find((type) => type.id === feeTypeId)
-    if (feeType) {
-      // Store in cache for future use
-      feeTypeCache.set(feeTypeId, feeType)
-      return feeType
-    }
+// Utility: Get status badge variant for fee/payment status
+const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
+  switch (status) {
+    case "Paid":
+      return "default"
+    case "Partially Paid":
+      return "outline"
+    case "Overdue":
+      return "destructive"
+    default:
+      return "secondary"
   }
-
-  // Return null if not found
-  return null
 }
 
 // Extended interface for installment breakdown with additional fields
@@ -91,11 +97,11 @@ interface ExtendedInstallmentBreakdown extends InstallmentBreakdown {
   transaction_reference?: string | null
   amount_paid_as_carry_forward?: string
   applied_concession?:
-    | {
-        concession_id: number
-        applied_amount: number
-      }[]
-    | null
+  | {
+    concession_id: number
+    applied_amount: number
+  }[]
+  | null
 }
 
 type StudentFeesPanelProps = {}
@@ -147,69 +153,39 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
-  const { data: feeTypes } = useGetAllFeesTypeQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool?.id || 0, applicable_to: "All" },
-    { skip: !CurrentAcademicSessionForSchool?.id },
-  )
+  // Use lazy query for fee types
+  const [getAllFeesType, { data: feeTypes, isFetching: isFetchingFeeTypes }] = useLazyGetAllFeesTypeQuery();
+  // Use lazy query for concessions
+  const [getAllConcessions, { data: concessionTypes, isFetching: isFetchingConcessions }] = useLazyGetAllConcessionsQuery();
 
-  // Get fee type name from ID
+  // Fetch fee types and concessions on mount or when session changes
+  useEffect(() => {
+    let sessionId: number | undefined;
+    const sessionIdFromUrl = searchParams.get("session_id");
+    if (sessionIdFromUrl) {
+      sessionId = Number.parseInt(sessionIdFromUrl);
+    } else if (CurrentAcademicSessionForSchool?.id) {
+      sessionId = CurrentAcademicSessionForSchool.id;
+    }
+    if (sessionId) {
+      getAllFeesType({ academic_session_id: sessionId, applicable_to: "All" });
+      getAllConcessions({ academic_session_id: sessionId });
+    }
+  }, [searchParams, CurrentAcademicSessionForSchool, getAllFeesType, getAllConcessions]);
+
+  // Unified function to get fee type name by id
   const getFeeTypeName = (feeTypeId: number): string => {
-    if (!feeTypeId) return t("unknown_fee_type")
+    if (!feeTypeId) return t("unknown_fee_type");
+    const feeType = feeTypes?.find((ft) => ft.id === feeTypeId);
+    return feeType ? feeType.name : `${t("fee_type")} ${feeTypeId}`;
+  };
 
-    const feeType = getFeeTypeById(feeTypeId, feeTypes || [])
-    if (feeType) {
-      return feeType.name
-    }
-
-    return `${t("fee_type")} ${feeTypeId}`
-  }
-
-  // Fetch concession types from API
-  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
-    { academic_session_id: CurrentAcademicSessionForSchool!.id },
-    { skip: !CurrentAcademicSessionForSchool!.id },
-  )
-
-  // Get concession name from ID using the API data
-  const getConcessionNameFromId = (concessionId: number): string => {
-    if (!concessionId) return t("unknown_concession")
-
-    // First check if we have the concession in our API data
-    if (concessionTypes && concessionTypes.length > 0) {
-      const concession = concessionTypes.find((type) => type.id === concessionId)
-      if (concession) {
-        return concession.name
-      }
-    }
-
-    // Fallback to a generic name with the ID
-    return `${t("concession")} ${concessionId}`
-  }
-
-  // Format date to readable format
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "-"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  // Get status badge variant based on status
-  const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
-    switch (status) {
-      case "Paid":
-        return "default"
-      case "Partially Paid":
-        return "outline"
-      case "Overdue":
-        return "destructive"
-      default:
-        return "secondary"
-    }
-  }
+  // Unified function to get concession name by id
+  const getConcessionName = (concessionId: number): string => {
+    if (!concessionId) return t("unknown_concession");
+    const concession = concessionTypes?.find((type) => type.id === concessionId);
+    return concession ? concession.name : `${t("concession")} ${concessionId}`;
+  };
 
   // Toggle installment selection
   const toggleInstallmentSelection = (installment: ExtendedInstallmentBreakdown) => {
@@ -565,10 +541,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </thead>
             <tbody>
               ${studentFeeDetails?.installments
-                ?.map((feeType) =>
-                  feeType.installments_breakdown
-                    .map(
-                      (installment) => `
+        ?.map((feeType) =>
+          feeType.installments_breakdown
+            .map(
+              (installment) => `
                   <tr>
                     <td>${getFeeTypeName(feeType.fees_type_id)}</td>
                     <td>${feeType.installment_type} - ${installment.installment_no}</td>
@@ -579,17 +555,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${installment.payment_status || "Unpaid"}</td>
                   </tr>
                 `,
-                    )
-                    .join(""),
-                )
-                .join("")}
+            )
+            .join(""),
+        )
+        .join("")}
             </tbody>
           </table>
         </div>
         
-        ${
-          extraFees.length > 0
-            ? `
+        ${extraFees.length > 0
+        ? `
         <div class="section">
           <div class="section-title">Extra Fees</div>
           <table>
@@ -604,8 +579,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </thead>
             <tbody>
               ${extraFees
-                .map(
-                  (extraFee: any) => `
+          .map(
+            (extraFee: any) => `
                 <tr>
                   <td>${getFeeTypeName(extraFee.fees_type_id)}</td>
                   <td>${formatDate(extraFee.due_date)}</td>
@@ -614,22 +589,21 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                   <td>${extraFee.description || "-"}</td>
                 </tr>
               `,
-                )
-                .join("")}
+          )
+          .join("")}
             </tbody>
           </table>
         </div>
         `
-            : ""
-        }
+        : ""
+      }
         
         <div class="section">
           <div class="section-title">Payment History</div>
-          ${
-            !studentFeeDetails?.student.fees_status?.paid_fees ||
-            studentFeeDetails?.student.fees_status?.paid_fees.length === 0
-              ? `<p>No payment history found.</p>`
-              : `<table>
+          ${!studentFeeDetails?.student.fees_status?.paid_fees ||
+        studentFeeDetails?.student.fees_status?.paid_fees.length === 0
+        ? `<p>No payment history found.</p>`
+        : `<table>
               <thead>
                 <tr>
                   <th>Payment ID</th>
@@ -644,8 +618,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </thead>
               <tbody>
                 ${studentFeeDetails?.student.fees_status?.paid_fees
-                  .map(
-                    (payment) => `
+          .map(
+            (payment) => `
                   <tr>
                     <td>#${payment.id}</td>
                     <td>${formatDate(payment.payment_date)}</td>
@@ -657,11 +631,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                     <td>${payment.status}</td>
                   </tr>
                 `,
-                  )
-                  .join("")}
+          )
+          .join("")}
               </tbody>
             </table>`
-          }
+      }
         </div>
         
         <div class="footer">
@@ -984,6 +958,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-700">{formatCurrency(feesStatus.paid_amount)}</p>
+                {Number(feesStatus?.paid_amount) > 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    {t("due_amount")}: {formatCurrency((Number(feesStatus?.total_amount) - Number(feesStatus?.paid_amount)))}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -1008,16 +987,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-red-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  {t("due_amount")}
+                  {t("total_carry_forwarded_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-red-700">{formatCurrency(feesStatus.due_amount)}</p>
-                {/* {unpaidExtraFeesAmount > 0 && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {t("extra_fees_due")}: {formatCurrency(unpaidExtraFeesAmount)}
-                  </p>
-                )} */}
               </CardContent>
             </Card>
           </div>
@@ -1081,14 +1055,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 >
                   {t("pay_selected")} ({selectedInstallments.length})
                 </Button>
-                {/* <Button
+                <Button
                   onClick={() => setIsFlexiblePaymentDialogOpen(true)}
                   variant="outline"
                   className="bg-green-50 hover:bg-green-100 border-green-200"
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   {t("flexible_payment")}
-                </Button> */}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -1141,7 +1115,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         {student.provided_concession.map((concession) => (
                           <li key={concession.id}>
                             <span className="font-medium">
-                              {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}:
+                              {concession.concession?.name || getConcessionName(concession.concession_id)}:
                             </span>{" "}
                             {concession.deduction_type === "percentage"
                               ? `${concession.percentage}% discount`
@@ -1248,7 +1222,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                           <div key={idx} className="flex items-center">
                                             <CheckCircle2 className="h-3 w-3 mr-1" />
                                             <span>
-                                              {getConcessionNameFromId(concession.concession_id)} (
+                                              {getConcessionName(concession.concession_id)} (
                                               {formatCurrency(concession.applied_amount)})
                                             </span>
                                           </div>
@@ -1283,10 +1257,10 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                         }
                                       >
                                         {installment.is_paid &&
-                                        hasCarryForwardToPay({
-                                          carry_forward_amount: Number(installment.carry_forward_amount),
-                                          is_paid: installment.is_paid,
-                                        })
+                                          hasCarryForwardToPay({
+                                            carry_forward_amount: Number(installment.carry_forward_amount),
+                                            is_paid: installment.is_paid,
+                                          })
                                           ? "Pay Carry Forward"
                                           : "Pay Now"}
                                       </Button>
@@ -1482,7 +1456,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </CardHeader>
             <CardContent className="p-0">
               {!studentFeeDetails?.student.fees_status?.paid_fees ||
-              studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
+                studentFeeDetails?.student.fees_status?.paid_fees.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-muted-foreground">{t("no_payment_history_found.")}</p>
                 </div>
@@ -1596,8 +1570,8 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
             </CardHeader>
             <CardContent className="p-0">
               {(student.provided_concession && student.provided_concession.length > 0) ||
-              (studentFeeDetails.detail.fees_plan.concession_for_plan &&
-                studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
+                (studentFeeDetails.detail.fees_plan.concession_for_plan &&
+                  studentFeeDetails.detail.fees_plan.concession_for_plan.length > 0) ? (
                 <>
                   <div className="p-4 bg-blue-50">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">{t("concession_summary")}</h3>
@@ -1651,7 +1625,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                           {student.provided_concession.map((concession) => (
                             <TableRow key={concession.id}>
                               <TableCell className="font-medium">
-                                {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}
+                                {concession.concession?.name || getConcessionName(concession.concession_id)}
                               </TableCell>
                               <TableCell>
                                 {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
@@ -1832,6 +1806,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               academic_session_id: academicSessionId,
             })
           }}
+          feesPlanDetail={studentFeeDetails.detail.fees_details}
           enrolled_academic_session_id={Number(searchParams.get("session_id")) ?? CurrentAcademicSessionForSchool!.id}
           availableInstallments={installments.flatMap((feeType) =>
             feeType.installments_breakdown
@@ -1852,6 +1827,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               })),
           )}
           studentId={Number.parseInt(params.student_id)}
+          // feesPlanDetail={studentFeeDetails.detail.fees_details}
           studentConcessions={student.provided_concession}
           planConcessions={studentFeeDetails.detail.fees_plan.concession_for_plan}
           availableConcessionBalance={concessionBalance}
