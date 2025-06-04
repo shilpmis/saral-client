@@ -382,7 +382,7 @@ const PayFeesPanel: React.FC = () => {
               </Select>
             </div>
           </div>
-          <div className="relative flex-grow max-w-md">
+          {/* <div className="relative flex-grow max-w-md">
             <Search className="absolute left-3 top-9 transform -translate-y-1/2 text-gray-400" />
             <label htmlFor="search" className="text-sm font-medium text-gray-700 mb-1 block">
               {t("search")}
@@ -394,7 +394,7 @@ const PayFeesPanel: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
@@ -505,7 +505,7 @@ const PayFeesPanel: React.FC = () => {
                       <TableCell>{formatCurrency(student.fees_status.total_amount)}</TableCell>
                       <TableCell>{formatCurrency(student.fees_status.paid_amount)}</TableCell>
                       <TableCell className="font-medium text-red-600">
-                        {formatCurrency(student.fees_status.due_amount)}
+                        {formatCurrency((Number(student.fees_status.total_amount) - Number(student.fees_status.paid_amount)))}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(student.fees_status.status)}>
