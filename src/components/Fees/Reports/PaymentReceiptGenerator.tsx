@@ -292,7 +292,7 @@ STUDENT DETAILS
 Name: ${studentDetails.student.first_name} ${studentDetails.student.middle_name || ""} ${studentDetails.student.last_name}
 GR Number: ${studentDetails.student.gr_no}
 Roll Number: ${studentDetails.student.roll_number}
-Class: ${studentDetails.detail?.class_name || ""}
+Class: ${studentDetails.student.academic_class[0].class.class.class || ""} - ${studentDetails?.student.academic_class[0].class.division}
 Fee Plan: ${studentDetails.detail?.fees_plan?.name || ""}
 
 PAYMENT DETAILS
@@ -443,7 +443,7 @@ ${activeSchool?.name || "School Name"} © ${new Date().getFullYear()}
                 <div className="grid grid-cols-5">
                   <span className="text-sm text-gray-600 col-span-2">{t("class")}:</span>
                   <span className="text-sm font-medium col-span-3">
-                    {student.academic_class[0]?.class.class.id} - {student.academic_class[0]?.class.division}
+                    {studentDetails.student.academic_class[0].class.class.class || ""} - {studentDetails?.student.academic_class[0].class.division}
                   </span>
                 </div>
                 <div className="grid grid-cols-5">
