@@ -38,7 +38,7 @@ import { selectAuthState, selectCurrentSchool } from "@/redux/slices/authSlice"
 const SideBarItems = [
   { title: "student", url: "/d/students", icon: Users, requiredPermission: Permission.MANAGE_STUDENTS },
   { title: "staff", url: "/d/staff", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
-  { title: "subjects", url: "/d/subjects", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
+  // { title: "subjects", url: "/d/subjects", icon: UserCheck, requiredPermission: Permission.MANAGE_STAFF },
   { title: "my_leaves", url: "/d/leave-applications", icon: Bed, requiredPermission: Permission.MARK_LEAVES },
   { title: "leave_management", url: "/d/leaves", icon: Bed, requiredPermission: Permission.MANAGE_LEAVES },
   {

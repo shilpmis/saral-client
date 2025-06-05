@@ -193,7 +193,7 @@ export default function StudentFeesStatus({ studentId: propStudentId, onClose }:
           <CardContent className="p-6 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h3 className="text-lg font-medium text-red-800 mb-2">{t("error_loading_student_fees")}</h3>
-            <p className="text-red-600 mb-4">{t("unable_to_load_student_fee_information_please_try_again")}</p>
+            <p className="text-red-600 mb-4">{(error as any)?.data?.message || t("unable_to_load_student_fee_information_please_try_again")}</p>
             <Button onClick={handleRefresh}>{t("retry")}</Button>
           </CardContent>
         </Card>
@@ -300,7 +300,7 @@ export default function StudentFeesStatus({ studentId: propStudentId, onClose }:
                   <CardHeader className="pb-2">
                     <CardTitle className="text-red-700 text-lg flex items-center">
                       <Tag className="mr-2 h-5 w-5" />
-                      {t("due_amount")}
+                      {t("total_carry_forwarded_amount")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
