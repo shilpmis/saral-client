@@ -85,6 +85,7 @@ export interface FeesPlanDetail {
 }
 
 export interface InstallmentBreakdowns {
+  id : number;
   fee_plan_details_id: number;
   installment_no: number;
   installment_amount: string;
@@ -109,8 +110,8 @@ export interface ReqObjectForCreateFeesPlan {
 }
 
 export interface ReqObjectForUpdateFeesPlan {
-  fees_plan: Partial<Pick<FeesPlan, "name" | "description" | "status">>;
-  plan_details?: {
+  general_detail_for_plan?: Partial<Pick<FeesPlan, "name" | "description" | "status">>;
+  new_fees_type?: {
     fees_type_id: number;
     installment_type: string;
     total_installment: number;
@@ -118,6 +119,17 @@ export interface ReqObjectForUpdateFeesPlan {
     installment_breakDowns: Pick<
       InstallmentBreakdowns,
       "installment_no" | "due_date" | "installment_amount"
+    >[];
+  }[],
+  existing_fees_type?: {
+    fees_plan_detail_id : number; // consider this as id filed 
+    fees_type_id: number;
+    installment_type: string;
+    total_installment: number;
+    total_amount: string;
+    installment_breakDowns: Pick<
+      InstallmentBreakdowns,
+      "id" | "installment_no" | "due_date" | "installment_amount"
     >[];
   }[];
 }
@@ -129,6 +141,7 @@ export interface DetailedFeesPlan {
     installment_breakDowns: InstallmentBreakdowns[];
   }[];
   consession: ConcessionDetailForPlan[];
+  is_editable : boolean;
 }
 
 // Types for fees module
@@ -143,6 +156,7 @@ export interface FeeStatus {
   due_amount: string;
   status: "Pending" | "Partially Paid" | "Paid" | "Overdue";
   paid_fees: StudentFeesInstallment[];
+  reversed_fees: StudentFeesInstallment[];
   repaid_installment: boolean;
   applied_concessions:
   | {
@@ -185,7 +199,8 @@ export interface StudentFeesInstallment {
   transaction_reference: string | null;
   payment_date: string;
   remarks: "Done";
-  status: "Pending" | "Partially Paid" | "Paid" | "Overdue" | "Failed";
+  status: 'Pending' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Paid Late' | 'Failed' | 'Reversal Requested' | 'Reversed';
+  payment_status: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled';
 }
 
 export interface FeePlanDetail {
@@ -234,7 +249,8 @@ export interface PaidInstallmentsForExtraFees {
   transaction_reference: string | null,
   payment_date: string,
   remarks: string,
-  status: 'Pending' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Failed'
+  status: 'Pending' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Paid Late' | 'Failed' | 'Reversal Requested' | 'Reversed';
+  payment_status: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled';
 }
 
 export interface RequestForApplyExtraFees {

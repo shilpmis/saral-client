@@ -282,7 +282,7 @@ const EmployeeDetail = () => {
                   {employee.gender || "N/A"}
                 </Badge>
                 {employee.blood_group && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
+                  <Badge variant="destructive" className="text-white flex items-center gap-1">
                     {employee.blood_group}
                   </Badge>
                 )}

@@ -45,7 +45,7 @@ const AdminLeaveRequestList: React.FC<AdminLeaveRequestListProps> = ({ leaveRequ
                   <Button size="sm" onClick={() => onUpdateStatus(request.id, "approved")}>
                     {t("approve")}
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => onUpdateStatus(request.id, "rejected")}>
+                  <Button size="sm" variant="destructive" className="text-white" onClick={() => onUpdateStatus(request.id, "rejected")}>
                     {t("reject")}
                   </Button>
                 </div>

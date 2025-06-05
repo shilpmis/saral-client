@@ -134,7 +134,7 @@ export function StaffProfileView({ staff, onBack, showToolBar }: StaffProfileVie
                   {staff.gender}
                 </Badge>
                 {staff.blood_group && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
+                  <Badge variant="destructive" className="flex items-center gap-1 text-white">
                     {staff.blood_group}
                   </Badge>
                 )}

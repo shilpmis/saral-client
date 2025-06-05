@@ -24,12 +24,17 @@ import {
   Plus,
   AlertCircle,
   Calculator,
+  RotateCcw,
+  Settings2,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 import {
   useGetAllConcessionsQuery,
   useLazyGetStudentFeesDetailsQuery,
-  useLazyGetAllFeesTypeQuery,
-  useLazyGetAllConcessionsQuery,
+  useGetAllFeesTypeQuery,
 } from "@/services/feesService"
 import { toast } from "@/hooks/use-toast"
 import PayFeesDialog from "@/components/Fees/PayFees/PayFeesDialog"
@@ -45,6 +50,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PayExtraFeesDialog from "@/components/Fees/PayFees/PayExtraFeesDialog"
 import type { ExtraFeesAppliedToStudent } from "@/types/fees"
 import FlexiblePaymentDialog from "@/components/Fees/PayFees/FlexiblePaymentDialog"
+import ReversalRequestDialog from "@/components/Fees/PayFees/ReversalRequestDialog"
+import PaymentStatusUpdateDialog from "@/components/Fees/PayFees/PaymentStatusUpdateDialog"
 
 // Create a cache for fee types to avoid repeated lookups
 const feeTypeCache = new Map<number, any>()
@@ -58,30 +65,25 @@ const formatCurrency = (amount: string | number | null | undefined) => {
   })}`
 }
 
-// Utility: Format date as 'dd MMM yyyy' or return 'N/A' if invalid
-const formatDate = (dateString: string | null | undefined) => {
-  if (!dateString) return "N/A"
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "N/A"
-    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-  } catch (e) {
-    return "Invalid Date"
+// Get fee type by ID from cache or API data
+const getFeeTypeById = (feeTypeId: number, feeTypes: any[]): any => {
+  // First check the cache
+  if (feeTypeCache.has(feeTypeId)) {
+    return feeTypeCache.get(feeTypeId)
   }
-}
 
-// Utility: Get status badge variant for fee/payment status
-const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
-  switch (status) {
-    case "Paid":
-      return "default"
-    case "Partially Paid":
-      return "outline"
-    case "Overdue":
-      return "destructive"
-    default:
-      return "secondary"
+  // If not in cache, check the API data
+  if (feeTypes && feeTypes.length > 0) {
+    const feeType = feeTypes.find((type) => type.id === feeTypeId)
+    if (feeType) {
+      // Store in cache for future use
+      feeTypeCache.set(feeTypeId, feeType)
+      return feeType
+    }
   }
+
+  // Return null if not found
+  return null
 }
 
 // Extended interface for installment breakdown with additional fields
@@ -109,7 +111,7 @@ type StudentFeesPanelProps = {}
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, error, isSuccess }] =
+  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -153,39 +155,78 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
-  // Use lazy query for fee types
-  const [getAllFeesType, { data: feeTypes, isFetching: isFetchingFeeTypes }] = useLazyGetAllFeesTypeQuery();
-  // Use lazy query for concessions
-  const [getAllConcessions, { data: concessionTypes, isFetching: isFetchingConcessions }] = useLazyGetAllConcessionsQuery();
+  const { data: feeTypes } = useGetAllFeesTypeQuery(
+    { academic_session_id: CurrentAcademicSessionForSchool?.id || 0, applicable_to: "All" },
+    { skip: !CurrentAcademicSessionForSchool?.id },
+  )
 
-  // Fetch fee types and concessions on mount or when session changes
-  useEffect(() => {
-    let sessionId: number | undefined;
-    const sessionIdFromUrl = searchParams.get("session_id");
-    if (sessionIdFromUrl) {
-      sessionId = Number.parseInt(sessionIdFromUrl);
-    } else if (CurrentAcademicSessionForSchool?.id) {
-      sessionId = CurrentAcademicSessionForSchool.id;
-    }
-    if (sessionId) {
-      getAllFeesType({ academic_session_id: sessionId, applicable_to: "All" });
-      getAllConcessions({ academic_session_id: sessionId });
-    }
-  }, [searchParams, CurrentAcademicSessionForSchool, getAllFeesType, getAllConcessions]);
+  // First, add a new state for the fee status update dialog
+  const [isUpdateStatusDialogOpen, setIsUpdateStatusDialogOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<any>(null)
 
-  // Unified function to get fee type name by id
+  const [isReversalRequestDialogOpen, setIsReversalRequestDialogOpen] = useState(false)
+  const [isPaymentStatusUpdateDialogOpen, setIsPaymentStatusUpdateDialogOpen] = useState(false)
+  const [selectedPaymentForReversal, setSelectedPaymentForReversal] = useState<any>(null)
+  const [selectedPaymentForStatusUpdate, setSelectedPaymentForStatusUpdate] = useState<any>(null)
+
+  // Get fee type name from ID
   const getFeeTypeName = (feeTypeId: number): string => {
-    if (!feeTypeId) return t("unknown_fee_type");
-    const feeType = feeTypes?.find((ft) => ft.id === feeTypeId);
-    return feeType ? feeType.name : `${t("fee_type")} ${feeTypeId}`;
-  };
+    if (!feeTypeId) return t("unknown_fee_type")
 
-  // Unified function to get concession name by id
-  const getConcessionName = (concessionId: number): string => {
-    if (!concessionId) return t("unknown_concession");
-    const concession = concessionTypes?.find((type) => type.id === concessionId);
-    return concession ? concession.name : `${t("concession")} ${concessionId}`;
-  };
+    const feeType = getFeeTypeById(feeTypeId, feeTypes || [])
+    if (feeType) {
+      return feeType.name
+    }
+
+    return `${t("fee_type")} ${feeTypeId}`
+  }
+
+  // Fetch concession types from API
+  const { data: concessionTypes, isLoading: isLoadingConcessionTypes } = useGetAllConcessionsQuery(
+    { academic_session_id: CurrentAcademicSessionForSchool!.id },
+    { skip: !CurrentAcademicSessionForSchool!.id },
+  )
+
+  // Get concession name from ID using the API data
+  const getConcessionNameFromId = (concessionId: number): string => {
+    if (!concessionId) return t("unknown_concession")
+
+    // First check if we have the concession in our API data
+    if (concessionTypes && concessionTypes.length > 0) {
+      const concession = concessionTypes.find((type) => type.id === concessionId)
+      if (concession) {
+        return concession.name
+      }
+    }
+
+    // Fallback to a generic name with the ID
+    return `${t("concession")} ${concessionId}`
+  }
+
+  // Format date to readable format
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
+
+  // Get status badge variant based on status
+  const getStatusBadgeVariant = (status: string): "default" | "outline" | "secondary" | "destructive" => {
+    switch (status) {
+      case "Paid":
+        return "default"
+      case "Partially Paid":
+        return "outline"
+      case "Overdue":
+        return "destructive"
+      default:
+        return "secondary"
+    }
+  }
 
   // Toggle installment selection
   const toggleInstallmentSelection = (installment: ExtendedInstallmentBreakdown) => {
@@ -306,10 +347,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
 
     return Math.round((paidAmount / totalAmount) * 100)
   }
-
-  // First, add a new state for the fee status update dialog
-  const [isUpdateStatusDialogOpen, setIsUpdateStatusDialogOpen] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<any>(null)
 
   // Add a function to handle opening the update status dialog
   const handleUpdateStatus = (payment: any) => {
@@ -662,6 +699,50 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
     }
   }
 
+  const isLastTransaction = (paymentId: number) => {
+    if (!studentFeeDetails?.student.fees_status?.paid_fees) return false
+
+    const sortedPayments = [...studentFeeDetails.student.fees_status.paid_fees].sort(
+      (a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
+    )
+
+    return sortedPayments[0]?.id === paymentId
+  }
+
+  const hasActiveReversalRequest = () => {
+    return (
+      studentFeeDetails?.student.fees_status?.paid_fees?.some((payment) => payment.status === "Reversal Requested") ||
+      false
+    )
+  }
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case "Success":
+        return "text-green-600 bg-green-50"
+      case "In Progress":
+        return "text-blue-600 bg-blue-50"
+      case "Failed":
+        return "text-red-600 bg-red-50"
+      case "Disputed":
+        return "text-amber-600 bg-amber-50"
+      case "Cancelled":
+        return "text-gray-600 bg-gray-50"
+      default:
+        return "text-gray-600 bg-gray-50"
+    }
+  }
+
+  const handleRequestReversal = (payment: any) => {
+    setSelectedPaymentForReversal(payment)
+    setIsReversalRequestDialogOpen(true)
+  }
+
+  const handleUpdatePaymentStatus = (payment: any) => {
+    setSelectedPaymentForStatusUpdate(payment)
+    setIsPaymentStatusUpdateDialogOpen(true)
+  }
+
   // Fetch student fees details on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -817,7 +898,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              {(error as any).data?.message || t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -958,11 +1039,6 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-700">{formatCurrency(feesStatus.paid_amount)}</p>
-                {Number(feesStatus?.paid_amount) > 0 && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    {t("due_amount")}: {formatCurrency((Number(feesStatus?.total_amount) - Number(feesStatus?.paid_amount)))}
-                  </p>
-                )}
               </CardContent>
             </Card>
 
@@ -987,11 +1063,16 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-red-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  {t("total_carry_forwarded_amount")}
+                  {t("due_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-red-700">{formatCurrency(feesStatus.due_amount)}</p>
+                {/* {unpaidExtraFeesAmount > 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {t("extra_fees_due")}: {formatCurrency(unpaidExtraFeesAmount)}
+                  </p>
+                )} */}
               </CardContent>
             </Card>
           </div>
@@ -1022,6 +1103,14 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <TabsTrigger value="paid-fees" className="flex items-center">
             <Receipt className="mr-2 h-4 w-4" /> {t("paid_fees")}
           </TabsTrigger>
+          <TabsTrigger value="reversed-fees" className="flex items-center">
+            <RotateCcw className="mr-2 h-4 w-4" /> {t("reversed_fees")}
+            {studentFeeDetails?.student?.fees_status?.reversed_fees && studentFeeDetails.student.fees_status.reversed_fees.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {studentFeeDetails.student?.fees_status?.reversed_fees.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="concessions" className="flex items-center">
             <Tag className="mr-2 h-4 w-4" />
             {t("concessions")}
@@ -1050,7 +1139,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                 )}
                 <Button
                   onClick={handlePayFees}
-                  disabled={selectedInstallments.length === 0}
+                  disabled={selectedInstallments.length === 0 || hasActiveReversalRequest()}
                   className="bg-primary hover:bg-primary/90"
                 >
                   {t("pay_selected")} ({selectedInstallments.length})
@@ -1059,6 +1148,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                   onClick={() => setIsFlexiblePaymentDialogOpen(true)}
                   variant="outline"
                   className="bg-green-50 hover:bg-green-100 border-green-200"
+                  disabled={hasActiveReversalRequest()}
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   {t("flexible_payment")}
@@ -1115,7 +1205,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                         {student.provided_concession.map((concession) => (
                           <li key={concession.id}>
                             <span className="font-medium">
-                              {concession.concession?.name || getConcessionName(concession.concession_id)}:
+                              {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}:
                             </span>{" "}
                             {concession.deduction_type === "percentage"
                               ? `${concession.percentage}% discount`
@@ -1222,7 +1312,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                           <div key={idx} className="flex items-center">
                                             <CheckCircle2 className="h-3 w-3 mr-1" />
                                             <span>
-                                              {getConcessionName(concession.concession_id)} (
+                                              {getConcessionNameFromId(concession.concession_id)} (
                                               {formatCurrency(concession.applied_amount)})
                                             </span>
                                           </div>
@@ -1248,6 +1338,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        disabled={hasActiveReversalRequest()}
                                         onClick={() =>
                                           handlePaySingleInstallment({
                                             ...installment,
@@ -1452,7 +1543,17 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
         <TabsContent value="paid-fees">
           <Card className="shadow-sm border-gray-200">
             <CardHeader className="bg-gray-50 border-b">
-              <CardTitle>Payment History</CardTitle>
+              <CardTitle className="flex items-between justify-between">
+                Payment History
+                {hasActiveReversalRequest() && (
+                  <Alert className="bg-amber-50 border-amber-200 ml-4">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-amber-700 text-sm">
+                      A reversal request is pending. New payments are temporarily disabled.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {!studentFeeDetails?.student.fees_status?.paid_fees ||
@@ -1473,85 +1574,219 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                       <TableHead>{t("remaining")}</TableHead>
                       <TableHead>{t("payment_mode")}</TableHead>
                       <TableHead>{t("status")}</TableHead>
+                      <TableHead>{t("payment_status")}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {studentFeeDetails?.student.fees_status?.paid_fees.map((payment) => {
+                    {studentFeeDetails?.student.fees_status?.paid_fees
+                      ?.slice()
+                      .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+                      .map((payment) => {
+                        // Find the corresponding installment details
+                        let installmentDetails = { type: "Unknown", number: "-", feeType: "Unknown" }
+
+                        studentFeeDetails?.installments?.forEach((feeType) => {
+                          feeType.installments_breakdown.forEach((installment) => {
+                            if (installment.id === payment.installment_id) {
+                              installmentDetails = {
+                                type: feeType.installment_type,
+                                number: installment.installment_no.toString(),
+                                feeType: getFeeTypeName(feeType.fees_type_id),
+                              }
+                            }
+                          })
+                        })
+
+                        const hasDiscount = Number(payment.discounted_amount) > 0
+                        const hasCarryForward = Number(payment.amount_paid_as_carry_forward) > 0
+                        const hasRemaining = Number(payment.remaining_amount) > 0
+                        const isLast = isLastTransaction(payment.id)
+                        const canRequestReversal =
+                          isLast && payment.status !== "Reversal Requested" && payment.status !== "Reversed"
+
+                        return (
+                          <TableRow
+                            key={payment.id}
+                            className={`hover:bg-gray-50 ${hasDiscount ? "bg-green-50" : ""} ${hasCarryForward ? "bg-blue-50" : ""} ${payment.status === "Reversal Requested" ? "bg-amber-50 border-l-4 border-amber-400" : ""} ${payment.status === "Reversed" ? "bg-red-50 border-l-4 border-red-400" : ""}`}
+                          >
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                #{payment.id}
+                                {isLast && (
+                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600">
+                                    Latest
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {installmentDetails.type} - {installmentDetails.number}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{installmentDetails.feeType}</div>
+                            </TableCell>
+                            <TableCell>{formatDate(payment.payment_date)}</TableCell>
+                            <TableCell className="font-medium">{formatCurrency(payment.paid_amount)}</TableCell>
+                            <TableCell>{formatCurrency(payment.discounted_amount)}</TableCell>
+                            <TableCell>
+                              {hasCarryForward ? (
+                                <span className="text-blue-600">
+                                  {formatCurrency(payment.amount_paid_as_carry_forward)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {hasRemaining ? (
+                                <span className="text-amber-600">{formatCurrency(payment.remaining_amount)}</span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{payment.payment_mode}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  payment.status === "Paid"
+                                    ? "default"
+                                    : payment.status === "Reversal Requested"
+                                      ? "secondary"
+                                      : payment.status === "Reversed"
+                                        ? "destructive"
+                                        : payment.status === "Overdue"
+                                          ? "destructive"
+                                          : "secondary"
+                                }
+                                className={payment.status === "Reversal Requested" ? "bg-amber-100 text-amber-700" : ""}
+                              >
+                                {payment.status === "Reversal Requested" && <Clock className="mr-1 h-3 w-3" />}
+                                {payment.status === "Reversed" && <RotateCcw className="mr-1 h-3 w-3" />}
+                                {payment.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${getPaymentStatusColor(payment.payment_status || "Success")}`}
+                              >
+                                {payment.payment_status === "Success" && <CheckCircle className="mr-1 h-3 w-3" />}
+                                {payment.payment_status === "Failed" && <XCircle className="mr-1 h-3 w-3" />}
+                                {payment.payment_status === "In Progress" && <Clock className="mr-1 h-3 w-3" />}
+                                {payment.payment_status || "Success"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-1">
+                                <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
+                                  <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
+                                </Button>
+
+                                {canRequestReversal && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleRequestReversal(payment)}
+                                    className="bg-amber-50 hover:bg-amber-100 border-amber-200"
+                                  >
+                                    <RotateCcw className="mr-1 h-3 w-3" /> Reverse
+                                  </Button>
+                                )}
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUpdatePaymentStatus(payment)}
+                                  className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                >
+                                  <Settings2 className="mr-1 h-3 w-3" /> Status
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+                <TabsContent value="reversed-fees">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="bg-gray-50 border-b">
+              <CardTitle className="flex items-center">
+                <RotateCcw className="mr-2 h-5 w-5 text-red-600" />
+                {t("reversed_transactions")}
+              </CardTitle>
+              <CardDescription>{t("history_of_all_reversed_fee_transactions_for_this_student")}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {!studentFeeDetails.student?.fees_status?.reversed_fees || studentFeeDetails.student.fees_status.reversed_fees.length === 0 ? (
+                <div className="p-6 text-center">
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <AlertTriangle className="h-12 w-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">{t("no_reversed_transactions")}</h3>
+                    <p className="text-gray-500 text-center max-w-md">
+                      {t("this_student_does_not_have_any_reversed_fee_transactions_in_the_system")}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("transaction_id")}</TableHead>
+                      <TableHead>{t("original_payment_date")}</TableHead>
+                      <TableHead>{t("reversal_date")}</TableHead>
+                      <TableHead>{t("installment")}</TableHead>
+                      <TableHead>{t("amount_reversed")}</TableHead>
+                      <TableHead>{t("payment_mode")}</TableHead>
+                      <TableHead>{t("reason")}</TableHead>
+                      <TableHead>{t("reversed_by")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {studentFeeDetails.student?.fees_status?.reversed_fees.map((reversedFee) => {
                       // Find the corresponding installment details
                       let installmentDetails = { type: "Unknown", number: "-", feeType: "Unknown" }
-                      let foundInstallment = null
-                      let foundFeeType = null
 
-                      studentFeeDetails?.installments?.forEach((feeType) => {
+                      studentFeeDetails.installments?.forEach((feeType) => {
                         feeType.installments_breakdown.forEach((installment) => {
-                          if (installment.id === payment.installment_id) {
+                          if (installment.id === reversedFee.installment_id) {
                             installmentDetails = {
                               type: feeType.installment_type,
                               number: installment.installment_no.toString(),
                               feeType: getFeeTypeName(feeType.fees_type_id),
                             }
-                            foundInstallment = installment
-                            foundFeeType = feeType
                           }
                         })
                       })
 
-                      const hasDiscount = Number(payment.discounted_amount) > 0
-                      const hasCarryForward = Number(payment.amount_paid_as_carry_forward) > 0
-                      const hasRemaining = Number(payment.remaining_amount) > 0
-
                       return (
-                        <TableRow
-                          key={payment.id}
-                          className={`hover:bg-gray-50 ${hasDiscount ? "bg-green-50" : ""} ${hasCarryForward ? "bg-blue-50" : ""}`}
-                        >
-                          <TableCell className="font-medium">#{payment.id}</TableCell>
+                        <TableRow key={reversedFee.id} className="bg-red-50 hover:bg-red-100">
+                          <TableCell className="font-medium">#{reversedFee.id}</TableCell>
+                          <TableCell>{formatDate(reversedFee.payment_date)}</TableCell>
+                          <TableCell>{formatDate(reversedFee.payment_date)}</TableCell>
                           <TableCell>
                             <div className="text-sm">
                               {installmentDetails.type} - {installmentDetails.number}
                             </div>
                             <div className="text-xs text-muted-foreground">{installmentDetails.feeType}</div>
                           </TableCell>
-                          <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(payment.paid_amount)}</TableCell>
-                          <TableCell>{formatCurrency(payment.discounted_amount)}</TableCell>
+                          <TableCell className="font-medium text-red-600">
+                            {formatCurrency(reversedFee.paid_amount)}
+                          </TableCell>
+                          <TableCell>{reversedFee.payment_mode}</TableCell>
                           <TableCell>
-                            {hasCarryForward ? (
-                              <span className="text-blue-600">
-                                {formatCurrency(payment.amount_paid_as_carry_forward)}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
+                            <span className="text-sm text-gray-700">
+                              {reversedFee.remarks || t("not_specified")}
+                            </span>
                           </TableCell>
                           <TableCell>
-                            {hasRemaining ? (
-                              <span className="text-amber-600">{formatCurrency(payment.remaining_amount)}</span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{payment.payment_mode}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                payment.status === "Paid"
-                                  ? "default"
-                                  : payment.status === "Overdue"
-                                    ? "destructive"
-                                    : "secondary"
-                              }
-                            >
-                              {payment.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button variant="outline" size="sm" onClick={() => handleGenerateReceipt(payment)}>
-                                <FileText className="mr-1 h-3 w-3" /> {t("receipt")}
-                              </Button>
-                            </div>
+                            <span className="text-sm">{t("admin")}</span>
                           </TableCell>
                         </TableRow>
                       )
@@ -1625,7 +1860,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
                           {student.provided_concession.map((concession) => (
                             <TableRow key={concession.id}>
                               <TableCell className="font-medium">
-                                {concession.concession?.name || getConcessionName(concession.concession_id)}
+                                {concession.concession?.name || getConcessionNameFromId(concession.concession_id)}
                               </TableCell>
                               <TableCell>
                                 {concession.fees_type_id ? getFeeTypeName(concession.fees_type_id) : "All Fees"}
@@ -1834,10 +2069,57 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           getFeeTypeName={getFeeTypeName}
         />
       )}
+      {/* Reversal Request Dialog */}
+      <ReversalRequestDialog
+        isOpen={isReversalRequestDialogOpen}
+        onClose={() => {
+          setIsReversalRequestDialogOpen(false)
+          setSelectedPaymentForReversal(null)
+        }}
+        onSuccess={() => {
+          setIsReversalRequestDialogOpen(false)
+          setSelectedPaymentForReversal(null)
+          // Refresh data
+          const sessionIdFromUrl = searchParams.get("session_id")
+          const academicSessionId = sessionIdFromUrl
+            ? Number.parseInt(sessionIdFromUrl)
+            : CurrentAcademicSessionForSchool!.id
+
+          getStudentFeesDetails({
+            student_id: Number.parseInt(params.student_id!),
+            academic_session_id: academicSessionId,
+          })
+        }}
+        payment={selectedPaymentForReversal}
+        studentFeesDetails={studentFeeDetails}
+      />
+
+      {/* Payment Status Update Dialog */}
+      <PaymentStatusUpdateDialog
+        isOpen={isPaymentStatusUpdateDialogOpen}
+        onClose={() => {
+          setIsPaymentStatusUpdateDialogOpen(false)
+          setSelectedPaymentForStatusUpdate(null)
+        }}
+        onSuccess={() => {
+          setIsPaymentStatusUpdateDialogOpen(false)
+          setSelectedPaymentForStatusUpdate(null)
+          // Refresh data
+          const sessionIdFromUrl = searchParams.get("session_id")
+          const academicSessionId = sessionIdFromUrl
+            ? Number.parseInt(sessionIdFromUrl)
+            : CurrentAcademicSessionForSchool!.id
+
+          getStudentFeesDetails({
+            student_id: Number.parseInt(params.student_id!),
+            academic_session_id: academicSessionId,
+          })
+        }}
+        payment={selectedPaymentForStatusUpdate}
+        studentFeesDetails={studentFeeDetails}
+      />
     </div>
   )
 }
 
 export default StudentFeesPanel
-
-
