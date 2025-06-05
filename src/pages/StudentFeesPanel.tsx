@@ -1063,7 +1063,7 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-red-700 text-lg flex items-center">
                   <Tag className="mr-2 h-5 w-5" />
-                  {t("due_amount")}
+                  {t("total_carry_forwarded_amount")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
