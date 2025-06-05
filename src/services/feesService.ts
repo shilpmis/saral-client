@@ -17,6 +17,7 @@ import {
   ReqObjectForUpdateFeesPlan,
   RequestForApplyExtraFees,
   StudentFeeDetails,
+  StudentFeesInstallment,
   StudentWithFeeStatus,
   TypeOfInstallmentWiseReportForClass,
 } from "@/types/fees";
@@ -166,12 +167,12 @@ export const FeesApi = createApi({
 
     updateFeesPlan: builder.mutation<
       FeesPlan,
-      { data: ReqObjectForUpdateFeesPlan; plan_id: number }
+      { payload: ReqObjectForUpdateFeesPlan ; plan_id: number }
     >({
-      query: ({ data, plan_id }) => ({
+      query: ({ payload, plan_id }) => ({
         url: `/feesplan/${plan_id}`,
         method: "PUT",
-        body: { ...data },
+        body: payload,
       }),
     }),
 
@@ -414,6 +415,34 @@ export const FeesApi = createApi({
         url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
         method: "GET",
       }),
+    }),
+
+
+    updateStatusForTransaction: builder.mutation<
+      { data: StudentFeesInstallment},
+      {student_fees_master_id : number , transaction_id : number , 
+        payload : {
+          status ?: 'Reversal Requested',
+          remarks ?: string,
+          payment_status ?: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled', 
+        }}
+    >({
+      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
+        url: `/transaction/${student_fees_master_id}/${transaction_id}`,
+        method: "PUT",
+        body: payload,
+      }),
+    }),
+
+    reverseTransaction: builder.mutation<
+      { data: StudentFeesInstallment},
+      {student_fees_master_id : number , transaction_id : number , payload : {remarks : string}}
+    >({
+      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
+        url: `/transaction/reverse/${student_fees_master_id}/${transaction_id}`,
+        method: "PUT",
+        body: payload,
+      }),
     })
 
 
@@ -465,4 +494,7 @@ export const {
 
   useFetchInstallmentDetailsQuery,
   useLazyFetchInsatllmentWiseReportQuery,
+
+  useReverseTransactionMutation,
+  useUpdateStatusForTransactionMutation
 } = FeesApi;
