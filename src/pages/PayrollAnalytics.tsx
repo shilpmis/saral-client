@@ -591,7 +591,7 @@ const PayrollAnalytics = () => {
                               </>
                             ) : employee.trend === "down" ? (
                               <>
-                                <Badge variant="destructive">
+                                <Badge variant="destructive" className="text-white">
                                   <ChevronDown className="h-3 w-3 mr-1" />
                                   {employee.percentChange}%
                                 </Badge>
@@ -642,7 +642,7 @@ const PayrollAnalytics = () => {
                               </>
                             ) : employee.trend === "down" ? (
                               <>
-                                <Badge variant="destructive">
+                                <Badge variant="destructive" className="text-white">
                                   <ChevronDown className="h-3 w-3 mr-1" />
                                   {employee.percentChange}%
                                 </Badge>

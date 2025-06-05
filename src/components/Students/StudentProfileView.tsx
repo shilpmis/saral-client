@@ -195,7 +195,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                   {student.student.gender}
                 </Badge>
                 {student.student.student_meta?.blood_group && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
+                  <Badge variant="destructive" className="flex items-center gap-1 text-white">
                     {student.student.student_meta.blood_group}
                   </Badge>
                 )}

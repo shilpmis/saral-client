@@ -849,7 +849,7 @@ export default function PayRun() {
                             {enrollment.staff_salary_templates ? (
                               enrollment.staff_salary_templates.template_name
                             ) : (
-                              <Badge variant="destructive">No Salary Template</Badge>
+                              <Badge variant="destructive" className="text-white">No Salary Template</Badge>
                             )}
                           </TableCell>
                           <TableCell>
