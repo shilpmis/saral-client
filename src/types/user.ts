@@ -64,6 +64,7 @@ export enum Permission {
   MANAGE_USERS = "MANAGE_USERS",
   MANAGE_STUDENTS = "MANAGE_STUDENTS",
   MANAGE_STAFF = "MANAGE_STAFF",
+  MANAGE_SUBJECTS = "MANAGE_SUBJECTS",
   MANAGE_CLASSES = "MANAGE_CLASSES",
   MANAGE_ATTENDANCE = "MANAGE_ATTENDANCE",
   MANAGE_PAYROLL = "MANAGE_PAYROLL",
@@ -91,6 +92,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_SETTINGS,
     Permission.MANAGE_LEAVES,
     Permission.MANAGE_ADMISSION,
+    Permission.MANAGE_SUBJECTS,
   ],
   [UserRole.PRINCIPAL]: [
     Permission.VIEW_DASHBOARD,
@@ -101,11 +103,13 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_CLASSES,
     Permission.VIEW_REPORTS,
     Permission.MANAGE_ADMISSION,
+    Permission.MANAGE_SUBJECTS
   ],
   [UserRole.HEAD_TEACHER]: [
     Permission.VIEW_DASHBOARD,
     Permission.MANAGE_ATTENDANCE,
     Permission.MANAGE_STUDENTS,
+    Permission.MANAGE_SUBJECTS
   ],
   [UserRole.CLERK]: [
     Permission.VIEW_DASHBOARD,
@@ -113,6 +117,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.MANAGE_ADMISSION,
     Permission.MANAGE_LEAVES,
     Permission.PAY_FEES,
+    Permission.MANAGE_SUBJECTS
   ],
   [UserRole.IT_ADMIN]: [
     Permission.VIEW_DASHBOARD,
@@ -128,6 +133,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_DASHBOARD,
     Permission.MARK_LEAVES,
     Permission.MARK_ATTENDANCE,
+    Permission.MANAGE_SUBJECTS
   ],
 };
 

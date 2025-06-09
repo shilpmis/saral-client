@@ -831,6 +831,7 @@
   "save_quota": "કોટા સાચવો",
   "quota_allocated": "કોટા સોંપેલ",
   "error_loading_student_fees": "વિદ્યાર્થી ફી લોડ કરવામાં ભૂલ",
+  "total_carry_forwarded_amount" : "કુલ આગળ વધારેલ રકમ",
   "there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.": "આ વિદ્યાર્થી માટે ફી વિગતો લોડ કરવામાં સમસ્યા હતી કૃપા કરીને પછીથી ફરી પ્રયાસ કરો.",
   "no_data_available": "કોઈ ડેટા ઉપલબ્ધ નથી",
   "no_fee_details_found_for_this_student.": "આ વિદ્યાર્થી માટે કોઈ ફી વિગતો મળી નથી",
@@ -1087,5 +1088,12 @@
   "update_seats_for" : "સીટ્સ અપડેટ કરો",
   "in" : "માં",
   "quota_cannot_be_changed_once_set" : "એકવાર સેટ થયા પછી ક્વોટા બદલવામાં આવી શકતી નથી",
-  "update_allocation" : "Update allocation"
+  "update_allocation" : "Update allocation",
+  "reverse_transaction" : "Reverse Transaction",
+  "you_are_about_to_reverse_a_payment_transaction_this_action_cannot_be_undone" : "You are about to reverse a payment transaction. This action cannot be undone",
+  "reason_for_reversal" : "Reason for Reversal",
+  "this_reason_will_be_recorded_in_the_transaction_history" : "This reason will be recorded in the transaction history",
+  "reversing_this_transaction_will_update_the_student_fee_balance_and_cannot_be_undone" : "Reversing this transaction will update the student fee balance and cannot be undone",
+  "warning" : "Warning",
+  "confirm_reversal" : "Confirm Reversal"
 }

@@ -9,7 +9,6 @@ import {
   UserStatus,
 } from "@/types/user";
 import { AcademicSession } from "@/types/user";
-import { AcademicClasses } from "@/types/academic";
 
 // Mapping from role_id (from your DB) to UserRole
 const roleMapping: Record<number, UserRole> = {
@@ -140,6 +139,7 @@ const authSlice = createSlice({
 });
 
 export const selectCurrentUser = (state: RootState) => state.auth.user;
+export const selectCurrentSchool = (state: RootState) => state.auth.user!.school;
 export const selectCurrentStaff = (state: RootState) =>
   state.auth.user?.staff || null;
 export const selectAccademicSessionsForSchool = (state: RootState) =>

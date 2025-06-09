@@ -56,8 +56,7 @@ export const formSchema = z.object({
       required_error: "Class is required",
       invalid_type_error: "Class must be a number",
     })
-    .min(1, { message: "Class must be a positive number" })
-    .max(12, { message: "Class must be less than or equal to 12" }),
+  ,
 
   father_name: z
     .string()

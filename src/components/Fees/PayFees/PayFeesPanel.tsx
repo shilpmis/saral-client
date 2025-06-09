@@ -7,37 +7,86 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Filter, ArrowUpDown, Download, FileText } from "lucide-react"
-import { useLazyGetStudentFeesDetailsForClassQuery } from "@/services/feesService"
+import { Search, Filter, ArrowUpDown, FileText, CreditCard, Download } from 'lucide-react'
+import { useLazyGetStudentFeesDetailsForClassQuery, useGetAllFeesTypeQuery } from "@/services/feesService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import { selectActiveAccademicSessionsForSchool, selectAuthState, selectAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import type { AcademicClasses, Division } from "@/types/academic"
 import type { StudentWithFeeStatus } from "@/types/fees"
 import { toast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import StudentFeesPanel from "@/pages/StudentFeesPanel"
+
+// Format currency function for global use
+export function formatCurrency(amount: string | number | null | undefined) {
+  if (amount === undefined || amount === null || isNaN(Number(amount))) return "₹0.00"
+  return `₹${Number(amount).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  })}`
+}
+
+// Add getFeeTypeName function using feeTypes from API
+const getFeeTypeName = (feeTypeId: number, feeTypes: any[] | undefined, t: (key: string) => string): string => {
+  if (!feeTypeId) return t("unknown_fee_type")
+  if (feeTypes && feeTypes.length > 0) {
+    const feeType = feeTypes.find((type: any) => type.id === feeTypeId)
+    if (feeType) {
+      return feeType.name
+    }
+  }
+  return `${t("fee_type")} ${feeTypeId}`
+}
+
+// Utility keys for session storage
+const SESSION_SELECTED_CLASS_KEY = "saral_selected_class_id"
+const SESSION_SELECTED_DIVISION_KEY = "saral_selected_division_id"
+const SESSION_SELECTED_SESSION_KEY = "saral_selected_academic_session_id"
 
 const PayFeesPanel: React.FC = () => {
-  //   const router = useRouter()
   const navigate = useNavigate()
   const authState = useAppSelector(selectAuthState)
   const academicClasses = useAppSelector(selectAcademicClasses)
+  const academicSessions = useAppSelector(selectAccademicSessionsForSchool)
+  const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const { t } = useTranslation()
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getClassFeesStatus, { data: feesData, isLoading, isError, error: errorWhileFetchingClassFees }] =
     useLazyGetStudentFeesDetailsForClassQuery()
 
-  const [selectedClass, setSelectedClass] = useState<string>("")
+  // Read initial values from sessionStorage
+  const getInitialClass = () => sessionStorage.getItem(SESSION_SELECTED_CLASS_KEY) || ""
+  const getInitialDivision = () => sessionStorage.getItem(SESSION_SELECTED_DIVISION_KEY)
+  const getInitialSession = () => sessionStorage.getItem(SESSION_SELECTED_SESSION_KEY)
+
+  const [selectedClass, setSelectedClass] = useState<string>(getInitialClass())
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
+  const [selectedSession, setSelectedSession] = useState<string>(getInitialSession() || (currentAcademicSession?.id?.toString() || ""))
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "ascending" | "descending" } | null>(null)
   const [students, setStudents] = useState<StudentWithFeeStatus[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
 
-  const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
+  // Update sessionStorage when academic year changes
+  useEffect(() => {
+    if (selectedSession) {
+      sessionStorage.setItem(SESSION_SELECTED_SESSION_KEY, selectedSession)
+    }
+  }, [selectedSession])
+
+  // Fetch fee types when component mounts (use selectedSession)
+  const { data: feeTypes } = useGetAllFeesTypeQuery(
+    { academic_session_id: Number(selectedSession) || 0, applicable_to: "All" },
+    { skip: !selectedSession }
+  )
 
   // Get available divisions for selected class
   const availableDivisions = useMemo<AcademicClasses | null>(() => {
@@ -47,28 +96,63 @@ const PayFeesPanel: React.FC = () => {
     return null
   }, [academicClasses, selectedClass])
 
+  // On mount, if sessionStorage has division, set it
+  useEffect(() => {
+    if (academicClasses && selectedClass && selectedSession) {
+      const classObj = academicClasses.find((cls) => cls.class.toString() === selectedClass)
+      if (classObj && classObj.divisions.length > 0) {
+        let divisionToSet: Division | null = null
+        const storedDivisionId = getInitialDivision()
+        if (storedDivisionId) {
+          divisionToSet = classObj.divisions.find((div) => div.id.toString() === storedDivisionId) || null
+        }
+        if (!divisionToSet) {
+          divisionToSet = classObj.divisions[0]
+        }
+        setSelectedDivision(divisionToSet)
+        // Fetch fees data for this class and division
+        if (divisionToSet && selectedSession) {
+          getClassFeesStatus({
+            class_id: divisionToSet.id,
+            academic_session: Number(selectedSession),
+            page: 1
+          })
+        }
+      }
+    }
+  }, [academicClasses, selectedClass, selectedSession, getClassFeesStatus])
+
   // Handle class selection change
   const handleClassChange = (value: string) => {
     setSelectedClass(value)
+    sessionStorage.setItem(SESSION_SELECTED_CLASS_KEY, value)
     setSelectedDivision(null)
+    setCurrentPage(1)
+    sessionStorage.removeItem(SESSION_SELECTED_DIVISION_KEY)
   }
 
   // Handle division selection change
   const handleDivisionChange = async (value: string) => {
-    if (academicClasses) {
+    if (academicClasses && selectedSession) {
       const selectedDiv = academicClasses
         .filter((cls) => cls.class.toString() === selectedClass)[0]
         .divisions.filter((div) => div.id.toString() === value)
 
       setSelectedDivision(selectedDiv[0])
+      setCurrentPage(1)
+      sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, value)
 
       try {
-        await getClassFeesStatus({ class_id: selectedDiv[0].id, academic_session: CurrentAcademicSessionForSchool!.id })
+        await getClassFeesStatus({
+          class_id: selectedDiv[0].id,
+          academic_session: Number(selectedSession),
+          page: 1
+        })
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Failed to fetch fees data",
-          description: "Please try again later",
+          title: t("failed_to_fetch_fees_data"),
+          description: t("please_try_again_later")
         })
       }
     }
@@ -80,7 +164,7 @@ const PayFeesPanel: React.FC = () => {
 
     return students.filter((student) => {
       const fullName = `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase()
-      const grNumber = student.gr_no.toString()
+      const grNumber = student.gr_no != null ? student.gr_no.toString() : ""
 
       return fullName.includes(searchTerm.toLowerCase()) || grNumber.includes(searchTerm.toLowerCase())
     })
@@ -132,18 +216,24 @@ const PayFeesPanel: React.FC = () => {
     setSortConfig({ key, direction })
   }
 
-  // Navigate to student fee details page
+  // Handle opening payment dialog
   const handleViewDetails = (studentId: number) => {
-    navigate(`${studentId}`)
+    setSelectedStudentId(studentId)
+    setIsPaymentDialogOpen(true)
+  }
+
+  // Handle direct navigation to student fees page
+  const handleNavigateToStudentFees = (studentId: number) => {
+    navigate(`${studentId}?session_id=${selectedSession}`)
   }
 
   // Get status badge variant based on fee status
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "destructive" | "outline" | "secondary" => {
     switch (status) {
       case "Paid":
-        return "success"
+        return "default"
       case "Partially Paid":
-        return "warning"
+        return "outline" 
       case "Overdue":
         return "destructive"
       default:
@@ -151,12 +241,24 @@ const PayFeesPanel: React.FC = () => {
     }
   }
 
-  // Format currency
-  const formatCurrency = (amount: string | number) => {
-    return `₹${Number(amount).toLocaleString("en-IN", {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    })}`
+  // Generate report for class
+  const handleGenerateClassReport = () => {
+    if (!selectedDivision) {
+      toast({
+        variant: "destructive",
+        title: t("no_class_selected"),
+        description: t("please_select_a_class_and_division_to_generate_report")
+      })
+      return
+    }
+    
+    toast({
+      title: t("generating_report"),
+      description: t("class_fee_report_is_being_generated")
+    })
+    
+    // Implement report generation functionality
+    console.log("Generating report for class", selectedClass, "division", selectedDivision.division)
   }
 
   // Initialize data
@@ -178,21 +280,21 @@ const PayFeesPanel: React.FC = () => {
 
         // Set the first division of that class
         if (firstClassWithDivisions.divisions.length > 0) {
-          setSelectedDivision(firstClassWithDivisions.divisions[0])
+          const firstDivision = firstClassWithDivisions.divisions[0]
+          setSelectedDivision(firstDivision)
+
+          // Fetch fees data for this class and division
+          if (selectedSession) {
+            getClassFeesStatus({
+              class_id: firstDivision.id,
+              academic_session: Number(selectedSession),
+              page: 1
+            })
+          }
         }
       }
     }
-  }, [academicClasses, selectedClass])
-
-  // Fetch data when selectedDivision changes
-  useEffect(() => {
-    if (selectedDivision && CurrentAcademicSessionForSchool) {
-      getClassFeesStatus({
-        class_id: selectedDivision.id,
-        academic_session: CurrentAcademicSessionForSchool.id,
-      })
-    }
-  }, [selectedDivision, CurrentAcademicSessionForSchool, getClassFeesStatus])
+  }, [academicClasses, selectedClass, selectedSession, getClassFeesStatus])
 
   // Update students when fees data changes
   useEffect(() => {
@@ -202,29 +304,43 @@ const PayFeesPanel: React.FC = () => {
   }, [feesData])
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
+    <div className="p-6 bg-gradient-to-b from-white to-gray-50 shadow-md rounded-lg max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">
-          {t("fee_management")}
+        <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+          <CreditCard className="mr-3 h-7 w-7 text-primary" /> {t("fee_management")}
         </h2>
         <div className="flex space-x-2 mt-4 sm:mt-0">
-          {/* <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" /> {t("export_report")}
-          </Button>
-          <Button variant="outline">
-            <FileText className="mr-2 h-4 w-4" /> {t("generate_receipts")}
+          {/* <Button variant="outline" className="flex items-center" onClick={handleGenerateClassReport}>
+            <FileText className="mr-2 h-4 w-4" /> {t("class_report")}
           </Button> */}
         </div>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="mr-2 h-5 w-5" /> {t("filter_students")}
+      <Card className="mb-6 shadow-sm border-gray-200">
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
+          <CardTitle className="flex items-center text-gray-700">
+            <Filter className="mr-2 h-5 w-5 text-gray-500" /> {t("filter_students")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row justify-between gap-4">
+        <CardContent className="flex flex-col sm:flex-row justify-between gap-4 p-5">
           <div className="flex flex-col sm:flex-row gap-4">
+            <div>
+              <label htmlFor="session-select" className="text-sm font-medium text-gray-700 mb-1 block">
+                {t("academic_year")}
+              </label>
+              <Select value={selectedSession} onValueChange={setSelectedSession}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t("select_academic_year")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {academicSessions?.map((session) => (
+                    <SelectItem key={session.id} value={session.id.toString()}>
+                      {session.session_name} {Boolean(session.is_active) && `(${t("current")})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label htmlFor="class-select" className="text-sm font-medium text-gray-700 mb-1 block">
                 {t("class")}
@@ -266,28 +382,28 @@ const PayFeesPanel: React.FC = () => {
               </Select>
             </div>
           </div>
-          <div className="relative flex-grow max-w-md">
+          {/* <div className="relative flex-grow max-w-md">
             <Search className="absolute left-3 top-9 transform -translate-y-1/2 text-gray-400" />
             <label htmlFor="search" className="text-sm font-medium text-gray-700 mb-1 block">
               {t("search")}
             </label>
             <Input
               id="search"
-              placeholder={t("search_by_name_or_roll_number")}
+              placeholder={t("search_by_name_or_gr_number")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm border-gray-200">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-gray-50">
                   <TableHead className="w-[250px]">
                     <div className="flex items-center cursor-pointer" onClick={() => requestSort("first_name")}>
                       {t("student_name")}
@@ -367,18 +483,16 @@ const PayFeesPanel: React.FC = () => {
                 ) : isError ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-red-500">
-                      {t("failed_to_load_fees_data._please_try_again.")}
-                      {errorWhileFetchingClassFees && (
-                        <p className="text-sm mt-2">Error: {JSON.stringify(errorWhileFetchingClassFees)}</p>
-                      )}
+                      {(errorWhileFetchingClassFees as any)?.data?.message ||
+                        t("failed_to_load_fees_data._please_try_again.")}
                     </TableCell>
                   </TableRow>
                 ) : sortedStudents.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       {searchTerm
-                        ? "No students match your search criteria."
-                        : "No students found in this class/division."}
+                        ? t("no_students_match_your_search_criteria")
+                        : t("no_students_found_in_this_class_division")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -391,20 +505,31 @@ const PayFeesPanel: React.FC = () => {
                       <TableCell>{formatCurrency(student.fees_status.total_amount)}</TableCell>
                       <TableCell>{formatCurrency(student.fees_status.paid_amount)}</TableCell>
                       <TableCell className="font-medium text-red-600">
-                        {formatCurrency(student.fees_status.due_amount)}
+                        {formatCurrency((Number(student.fees_status.total_amount) - Number(student.fees_status.paid_amount)))}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={(getStatusBadgeVariant(student.fees_status.status) as 'default' | 'destructive' | 'outline' | 'secondary')}>
+                        <Badge variant={getStatusBadgeVariant(student.fees_status.status)}>
                           {student.fees_status.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          onClick={() => handleViewDetails(student.id)}
-                          className="bg-primary hover:bg-primary/90"
-                        >
-                          {t("view_details")}
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            className="bg-primary hover:bg-primary/90"
+                            size="sm"
+                            onClick={() => handleNavigateToStudentFees(student.id)}
+                            title={t("view_full_details")}
+                          >
+                            {t("fees_details")}
+                          </Button>
+                          {/* <Button
+                            onClick={() => handleViewDetails(student.id)}
+                            className="bg-primary hover:bg-primary/90"
+                            size="sm"
+                          >
+                            {t("pay_fees")}
+                          </Button> */}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -413,20 +538,51 @@ const PayFeesPanel: React.FC = () => {
             </Table>
           </div>
           {feesData && feesData.meta && selectedDivision && (
-            <SaralPagination
-              currentPage={feesData.meta.current_page}
-              totalPages={feesData.meta.last_page}
-              onPageChange={(page) =>
-                getClassFeesStatus({
-                  class_id: selectedDivision.id,
-                  academic_session: CurrentAcademicSessionForSchool!.id,
-                  page,
-                })
-              }
-            />
+            <div className="p-4 border-t">
+              <SaralPagination
+                currentPage={feesData.meta.current_page}
+                totalPages={feesData.meta.last_page}
+                onPageChange={(page) => {
+                  setCurrentPage(page)
+                  getClassFeesStatus({
+                    class_id: selectedDivision.id,
+                    academic_session: Number(selectedSession),
+                    page,
+                  })
+                }}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Payment Details Dialog */}
+      {/* <Dialog 
+        open={isPaymentDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) setIsPaymentDialogOpen(false)
+        }}
+      >
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+          {selectedStudentId && (
+            <StudentFeesPanel
+              studentId={selectedStudentId}
+              onClose={() => setIsPaymentDialogOpen(false)}
+              onSuccess={() => {
+                setIsPaymentDialogOpen(false)
+                // Refresh the student list after payment
+                if (selectedDivision) {
+                  getClassFeesStatus({
+                    class_id: selectedDivision.id,
+                    academic_session: Number(selectedSession),
+                    page: currentPage,
+                  })
+                }
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog> */}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import feesReducer from "./slices/feesSlice";
 import schoolReducer from "./slices/schoolSlice";
 import academicReducer from "./slices/academicSlice";
 import staffReducer from "./slices/staffSlice";
+// import payrollReducer from "./slices/payrollSlice";
 import leaveReducer from "./slices/leaveSlice";
 import languageReducer from "./slices/languageSlice";
 
@@ -21,7 +22,10 @@ import { InquiryApi } from "@/services/InquiryServices";
 import { QuotaApi } from "@/services/QuotaService";
 import { DashboardApi } from "@/services/dashboardServices";
 import { PromotionApi } from "@/services/PromotionService";
-import { StaffAttendanceApi } from "@/services/StaffAttendanceService";
+import { PayrollApi } from "@/services/PayrollService";
+import { StudentManagementApi } from "@/services/StudentManagementService";
+import { SubjectApi } from "@/services/subjects";
+import { TimeTableApi } from "@/services/timetableService";
 
 const store = configureStore({
   reducer: {
@@ -37,7 +41,10 @@ const store = configureStore({
     [SchoolApi.reducerPath]: SchoolApi.reducer,
     [AcademicApi.reducerPath]: AcademicApi.reducer,
     [StaffApi.reducerPath]: StaffApi.reducer,
+    [SubjectApi.reducerPath]: SubjectApi.reducer,
+    [TimeTableApi.reducerPath]: TimeTableApi.reducer,
     [StudentApi.reducerPath]: StudentApi.reducer,
+    [StudentManagementApi.reducerPath] : StudentManagementApi.reducer,
     [UserManagementApi.reducerPath]: UserManagementApi.reducer,
     [LeaveApi.reducerPath]: LeaveApi.reducer,
     [AttendanceApi.reducerPath]: AttendanceApi.reducer,
@@ -46,7 +53,7 @@ const store = configureStore({
     [QuotaApi.reducerPath]: QuotaApi.reducer,
     [DashboardApi.reducerPath]: DashboardApi.reducer,
     [PromotionApi.reducerPath]: PromotionApi.reducer,
-    [StaffAttendanceApi.reducerPath]: StaffAttendanceApi.reducer,
+    [PayrollApi.reducerPath]: PayrollApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -55,16 +62,19 @@ const store = configureStore({
       AcademicApi.middleware,
       StaffApi.middleware,
       StudentApi.middleware,
+      StudentManagementApi.middleware,
       UserManagementApi.middleware,
       LeaveApi.middleware,
       AttendanceApi.middleware,
-      InquiryApi.middleware,
+      SubjectApi.middleware,
+      TimeTableApi.middleware,
+      // InquiryApi.middleware,
       FeesApi.middleware,
       QuotaApi.middleware,
       InquiryApi.middleware,
       DashboardApi.middleware,
       PromotionApi.middleware,
-      StaffAttendanceApi.middleware,
+      PayrollApi.middleware
     ),
 });
 

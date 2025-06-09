@@ -626,7 +626,7 @@ export function StudentPromotionManagement() {
 
       return (
         fullName.includes(searchLower) ||
-        (student.student.gr_no && student.student.gr_no.toString().includes(searchTerm)) ||
+        (student.student.gr_no != null && student.student.gr_no.toString().includes(searchTerm)) ||
         (student.student.roll_number && student.student.roll_number.toString().includes(searchTerm))
       )
     })
@@ -1069,7 +1069,7 @@ export function StudentPromotionManagement() {
                                 {t("promoted")}
                               </Badge>
                             ) : student.promotionStatus === "held" ? (
-                              <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+                              <Badge variant="destructive" className="bg-red-100 text-white hover:bg-red-100">
                                 <XCircle className="mr-1 h-3 w-3" />
                                 {t("held_back")}
                               </Badge>
@@ -1098,7 +1098,7 @@ export function StudentPromotionManagement() {
                                 {student.student.fees_status.status}
                               </Badge>
                             ) : (
-                              <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+                              <Badge variant="destructive" className="bg-red-100 text-white hover:bg-red-100">
                                 Not Available
                               </Badge>
                             )}
@@ -1480,7 +1480,7 @@ export function StudentPromotionManagement() {
             <Button variant="outline" onClick={() => setIsHoldBackDialogOpen(false)}>
               {t("cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleHoldBackStudent} disabled={isHoldingBack}>
+            <Button variant="destructive" className="text-white" onClick={handleHoldBackStudent} disabled={isHoldingBack}>
               {isHoldingBack ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> {t("processing...")}

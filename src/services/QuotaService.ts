@@ -133,8 +133,8 @@ export const QuotaApi = createApi({
     }),
 
     // New endpoints for seat management
-    getClassSeatAvailability: builder.query<ClassSeatAvailability[], void>({
-      query: () => "classes/seats/all",
+    getClassSeatAvailability: builder.query<ClassSeatAvailability[], {acadamic_session_id :number}>({
+      query: ({acadamic_session_id}) => `classes/seats/all?acadamic_session=${acadamic_session_id}`,
       providesTags: ["Seats"],
     }),
 

@@ -58,8 +58,8 @@ export function StudentSearchResults({ results, isLoading, error, onSelectStuden
                   {student.first_name} {student.middle_name || ""} {student.last_name || ""}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {student.acadamic_class && student.acadamic_class[0]
-                    ? `Class ${student.acadamic_class[0].class.class} ${student.acadamic_class[0].class.division}`
+                  {student.academic_class && student.academic_class[0]
+                    ? `Class ${student.academic_class[0].class?.class ?? ""} ${student.academic_class[0].class?.division ?? ""}`
                     : "Class information not available"}
                 </div>
               </div>

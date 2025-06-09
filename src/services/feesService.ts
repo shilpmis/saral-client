@@ -4,15 +4,22 @@ import {
   Concession,
   ConcessionDetails,
   DetailedFeesPlan,
+  ExtraFeesAppliedToStudent,
+  FeePaymentReqForExtraFees,
   FeePaymentRequest,
   FeesPlan,
+  FeesPlanDetail,
   FeesType,
+  InstallmentBreakdown,
   ReqBodyForApplyConsessionToPlan,
   ReqBodyForApplyConsessionToStudent,
   ReqObjectForCreateFeesPlan,
   ReqObjectForUpdateFeesPlan,
+  RequestForApplyExtraFees,
   StudentFeeDetails,
+  StudentFeesInstallment,
   StudentWithFeeStatus,
+  TypeOfInstallmentWiseReportForClass,
 } from "@/types/fees";
 import { PageMeta } from "@/types/global";
 import baseUrl from "@/utils/base-urls";
@@ -35,16 +42,16 @@ export const FeesApi = createApi({
   endpoints: (builder) => ({
     getFeesType: builder.query<
       { data: FeesType[]; meta: PageMeta },
-      { page?: number; academic_session: number }
+      { page?: number; academic_session: number, applicable_to: "All" | "student" | "plan", status?: "Active" | "Inactive" }
     >({
-      query: ({ page = 1, academic_session }) => ({
-        url: `/feestype?page=${page}&academic_session=${academic_session}`,
+      query: ({ page = 1, academic_session, applicable_to = 'All', status = 'Active' }) => ({
+        url: `/feestype?page=${page}&academic_session=${academic_session}&type=${applicable_to}&status=${status}`,
         method: "GET",
       }),
     }),
-    getAllFeesType: builder.query<FeesType[], { academic_session_id: number }>({
-      query: ({ academic_session_id }) => ({
-        url: `/feestype?all=true&academic_session=${academic_session_id}`,
+    getAllFeesType: builder.query<FeesType[], { academic_session_id: number, applicable_to: "All" | "student" | "plan", status?: "Active" | "Inactive" }>({
+      query: ({ academic_session_id, applicable_to = 'All', status = 'Active' }) => ({
+        url: `/feestype?all=true&academic_session=${academic_session_id}&type=${applicable_to}&status=${status}`,
         method: "GET",
       }),
     }),
@@ -86,12 +93,17 @@ export const FeesApi = createApi({
     }),
     getFeesPlan: builder.query<
       { data: FeesPlan[]; meta: PageMeta },
-      { academic_session: number; page?: number }
+      {
+        academic_session: number;
+        status?: "All" | "Active" | "Inactive";
+        page?: number;
+      }
     >({
-      query: ({ academic_session, page = 1 }) => ({
-        url: `/feesplan?academic_session=${academic_session}&page=${page}`,
+      query: ({ academic_session, status = "All", page = 1 }) => ({
+        url: `/feesplan?academic_session=${academic_session}&status=${status}&page=${page}`,
         method: "GET",
       }),
+
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -143,14 +155,24 @@ export const FeesApi = createApi({
       }),
     }),
 
+    updateFeesPlanStatus: builder.query<
+      FeesPlan,
+      { status: "Active" | "Inactive"; plan_id: number }
+    >({
+      query: ({ plan_id, status }) => ({
+        url: `/feesplan/status/${plan_id}/${status}`,
+        method: "GET",
+      }),
+    }),
+
     updateFeesPlan: builder.mutation<
       FeesPlan,
-      { data: ReqObjectForUpdateFeesPlan; plan_id: number }
+      { payload: ReqObjectForUpdateFeesPlan ; plan_id: number }
     >({
-      query: ({ data, plan_id }) => ({
+      query: ({ payload, plan_id }) => ({
         url: `/feesplan/${plan_id}`,
         method: "PUT",
-        body: { ...data },
+        body: payload,
       }),
     }),
 
@@ -180,10 +202,21 @@ export const FeesApi = createApi({
       }),
     }),
 
-    getStudentFeesDetails: builder.query<StudentFeeDetails, number>({
-      query: (student_id) => ({
-        url: `/fees/status/student/${student_id}`,
+    getStudentFeesDetails: builder.query<StudentFeeDetails, { student_id: number, academic_session_id: number }>({
+      query: ({ student_id, academic_session_id }) => ({
+        url: `/fees/status/student/${student_id}?academic_session=${academic_session_id}`,
         method: "GET",
+      }),
+    }),
+
+    applyExtraFeesPlanOnStudentFeesPlan: builder.mutation<
+      ExtraFeesAppliedToStudent,
+      { payload: RequestForApplyExtraFees }
+    >({
+      query: ({ payload }) => ({
+        url: `/feesplan/applyextrafees`,
+        method: "POST",
+        body: payload,
       }),
     }),
 
@@ -200,10 +233,10 @@ export const FeesApi = createApi({
 
     payMultipleInstallments: builder.mutation<
       any,
-      { installments: FeePaymentRequest[]; student_id: number }
+      { installments: FeePaymentRequest[]; student_id: number , academic_session_id: number}
     >({
-      query: ({ installments, student_id }) => ({
-        url: `/fees/pay/installments`,
+      query: ({ installments, student_id , academic_session_id}) => ({
+        url: `/fees/pay/installments?academic_session=${academic_session_id}`,
         method: "POST",
         body: {
           student_id: student_id,
@@ -211,6 +244,19 @@ export const FeesApi = createApi({
         },
       }),
     }),
+
+
+    payMultipleInstallmentsForExtraFees: builder.mutation<
+      any,
+      { payload: FeePaymentReqForExtraFees , academic_session_id : number }
+    >({
+      query: ({ payload , academic_session_id }) => ({
+        url: `/fees/pay/extra/installments?academic_session=${academic_session_id}`,
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     updatePaymentStatus: builder.mutation<
       any,
       { payload: { status: string; remarks: string }; transaction_id: number }
@@ -228,6 +274,16 @@ export const FeesApi = createApi({
     >({
       query: ({ page = 1, academic_session }) => ({
         url: `/concessions?academic_session=${academic_session}&page=${page}`,
+        method: "GET",
+      }),
+    }),
+
+    getAllConcessions: builder.query<
+      Concession[],
+      { academic_session_id: number }
+    >({
+      query: ({ academic_session_id }) => ({
+        url: `/concessions/all?academic_session=${academic_session_id}`,
         method: "GET",
       }),
     }),
@@ -330,6 +386,66 @@ export const FeesApi = createApi({
         body: payload,
       }),
     }),
+
+    fetchInstallmentDetails: builder.query<
+      FeesPlan,
+      { division_id: number; academic_session_id: number }
+    >({
+      query: ({ division_id, academic_session_id }) => ({
+        url: `/feesplan/installments/${division_id}?academic_session=${academic_session_id}`,
+        method: "GET",
+      }),
+    }),
+
+    fetchInsatllmentWiseReport: builder.query<
+      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
+      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+    >({
+      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+        url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
+        method: "GET",
+      }),
+    }),
+
+    fetchReportBasedOnFeesType: builder.query<
+      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
+      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+    >({
+      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+        url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
+        method: "GET",
+      }),
+    }),
+
+
+    updateStatusForTransaction: builder.mutation<
+      { data: StudentFeesInstallment},
+      {student_fees_master_id : number , transaction_id : number , 
+        payload : {
+          status ?: 'Reversal Requested',
+          remarks ?: string,
+          payment_status ?: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled', 
+        }}
+    >({
+      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
+        url: `/transaction/${student_fees_master_id}/${transaction_id}`,
+        method: "PUT",
+        body: payload,
+      }),
+    }),
+
+    reverseTransaction: builder.mutation<
+      { data: StudentFeesInstallment},
+      {student_fees_master_id : number , transaction_id : number , payload : {remarks : string}}
+    >({
+      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
+        url: `/transaction/reverse/${student_fees_master_id}/${transaction_id}`,
+        method: "PUT",
+        body: payload,
+      }),
+    })
+
+
   }),
 });
 
@@ -337,6 +453,7 @@ export const {
   useGetFeesTypeQuery,
   useLazyGetFeesTypeQuery,
   useLazyGetAllFeesTypeQuery,
+  useGetAllFeesTypeQuery,
   useLazyGetFilterFeesTypeQuery,
   useCreateFeesTypeMutation,
   useUpdateFeesTypeMutation,
@@ -345,6 +462,11 @@ export const {
   useLazyGetFeesPlanQuery,
   useLazyGetFilteredFeesPlanQuery,
   useLazyFetchDetailFeePlanQuery, // to fetch single fee plan
+
+  useLazyUpdateFeesPlanStatusQuery,
+
+  useGetAllConcessionsQuery,
+  useLazyGetAllConcessionsQuery,
 
   useUpdateConcsessionAppliedToPlanMutation,
   useUpdateConcsessionAppliedToStudentMutation,
@@ -365,4 +487,14 @@ export const {
   useLazyGetConcessionsInDetailQuery,
   useApplyConcessionsToPlanMutation,
   useApplyConcessionsToStudentMutation,
+
+  useApplyExtraFeesPlanOnStudentFeesPlanMutation,
+  usePayMultipleInstallmentsForExtraFeesMutation,
+
+
+  useFetchInstallmentDetailsQuery,
+  useLazyFetchInsatllmentWiseReportQuery,
+
+  useReverseTransactionMutation,
+  useUpdateStatusForTransactionMutation
 } = FeesApi;

@@ -65,18 +65,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const customStudentSchema = studentSchema
-    // .refine(
-    //   (data) => {
-    //     if (data.admission_class && data.class) {
-    //       return Number.parseInt(data.admission_class) <= Number.parseInt(data.class)
-    //     }
-    //     return true
-    //   },
-    //   {
-    //     message: "Admission class should not be greater than the current class",
-    //     path: ["admission_class"], // Specify the path to the field that should show the error
-    //   },
-    // )
+  
     .refine(
       (data) => {
         if (data.class) {
@@ -89,21 +78,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         path: ["division"], // Specify the path to the field that should show the error
       },
     )
-    // .refine(
-    //   (data) => {
-    //     if (data.admission_class) {
-    //       return (
-    //         data.admission_division !== undefined && data.admission_division !== null && data.admission_division !== ""
-    //       )
-    //     }
-    //     return true
-    //   },
-    //   {
-    //     message: "Admission division cannot be null if admission class is selected",
-    //     path: ["admission_division"], // Specify the path to the field that should show the error
-    //   },
-    // )
-
+  
   const form = useForm<StudentFormData>({
     resolver: zodResolver(customStudentSchema),
     defaultValues: {
@@ -368,22 +343,23 @@ const StudentForm: React.FC<StudentFormProps> = ({
           return
         }
           try {
-            const res = await convertInquiryToStudent({
-              inquiry_id: inquiry_id,
-              payload: payload,
-            }).unwrap()
+            // const res = await convertInquiryToStudent({
+            //   inquiry_id: inquiry_id,
+            //   payload: payload,
+            // }).unwrap()
 
-            if (onSubmitSuccess) {
-              onSubmitSuccess({...res , class_id :payload.students_data.class_id})
-            } else {
-              onClose()
-            }
+            // if (onSubmitSuccess) {
+            //   onSubmitSuccess({...res , class_id :payload.students_data.class_id})
+            // } else {
+            //   onClose()
+            // }
 
           } catch (error) {
             console.log("Error while converting inquiry to student:", error)  
             onSubmitError && onSubmitError(error);
           }
-      }else {
+      }
+      else {
         try {
           const response = await createStudent({
             payload: payload,
@@ -629,6 +605,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0];
 
+      
       form.reset({
         first_name: initial_data?.first_name,
         last_name: initial_data?.last_name,
@@ -675,6 +652,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         class: CurrentDivision?.class_id.toString(),
         division: CurrentDivision?.id.toString(),
       })
+      
     } else if (form_type === "create" && initial_data && is_use_for_onBoarding) {
 
       /**
@@ -697,6 +675,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         if (AdmissionClass) handleClassChange(AdmissionClass.id.toString(), "admission_Class")
 
       }
+
       // Set initial form values from the inquiry data
       form.reset({
         first_name: initial_data.first_name || "",
@@ -705,7 +684,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         first_name_in_guj: initial_data.first_name_in_guj || null,
         middle_name_in_guj: initial_data.middle_name_in_guj || null,
         last_name_in_guj: initial_data.last_name_in_guj || null,
-        gender: initial_data.gender || "Male",
+        gender: initial_data.gender ?? undefined,
         birth_date: initial_data.birth_date ? formatData(initial_data.birth_date) : "",
         gr_no: initial_data.gr_no,
         primary_mobile: initial_data.primary_mobile,
@@ -912,12 +891,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <FormItem>
                         <FormLabel>{t("gender")}</FormLabel>
                         <Select
+                          // onValueChange={field.onChange}
+                          // value={field.value}
                           onValueChange={field.onChange}
                           defaultValue={field.value ?? undefined}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
+                              <SelectValue placeholder="Select Gender" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

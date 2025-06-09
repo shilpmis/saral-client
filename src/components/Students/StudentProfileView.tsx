@@ -168,7 +168,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 <div className="flex items-center gap-1">
                   <GraduationCap className="h-4 w-4" />
                   <span>
-                    {t("class")}: {student.class.class.class}-{student.class.division}
+                    {t("class")}: {student.class?.class.class}-{student.class?.division}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -180,7 +180,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {t("dob")}: {formatDate(student.student.birth_date)}
+                    {t("dob")}: {student.student?.birth_date ? formatDate(student.student?.birth_date) : "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -195,7 +195,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                   {student.student.gender}
                 </Badge>
                 {student.student.student_meta?.blood_group && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
+                  <Badge variant="destructive" className="flex items-center gap-1 text-white">
                     {student.student.student_meta.blood_group}
                   </Badge>
                 )}
@@ -251,7 +251,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
           <TabsTrigger value="academic">{t("academic")}</TabsTrigger>
-          <TabsTrigger value="fees">{t("fees")}</TabsTrigger>
+          {/* <TabsTrigger value="fees">{t("fees")}</TabsTrigger> */}
           <TabsTrigger value="personal">{t("personal_details")}</TabsTrigger>
         </TabsList>
 
@@ -396,8 +396,8 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                   </thead>
                   <tbody>
                     <tr className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">{student.class.class.class}</td>
-                      <td className="py-3 px-4">{student.class.division}</td>
+                      <td className="py-3 px-4">{student.class?.class.class}</td>
+                      <td className="py-3 px-4">{student.class?.division}</td>
                       <td className="py-3 px-4">
                         <Badge className={getStatusBadgeColor(student.status)}>
                           {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
@@ -428,7 +428,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("class")}</span>
                   <span className="font-medium">
-                    {student.class.class.class}-{student.class.division}
+                    {student.class?.class.class}-{student.class?.division}
                   </span>
                 </div>
                 <Separator />
@@ -735,7 +735,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t("date_of_birth")}</p>
-                    <p className="font-medium">{formatDate(student.student.birth_date)}</p>
+                    <p className="font-medium">{student.student?.birth_date ? formatDate(student.student?.birth_date) : "N/A"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t("birth_place")}</p>

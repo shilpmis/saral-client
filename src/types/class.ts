@@ -28,7 +28,7 @@ export interface AssignedClasses {
   id: number;
   class_id: number;
   staff_id: number;
-  academic_session_id: 2;
+  academic_session_id: number;
   status: "Active" | "Inactive";
   class: Division;
 }

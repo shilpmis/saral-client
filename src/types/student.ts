@@ -16,15 +16,15 @@ export interface StudentEnrollment {
   division_id: number;
   student_id: number;
   quota_id: number | null;
-  status: "pursuing" | "permoted" | "failed" | "drop";
+  status: 'pursuing' | 'promoted' | 'failed' | 'drop' | 'migrated' | 'completed' | 'transfered' | 'suspended' | 'onboarded' | 'admission_cancel';
   is_new_admission: boolean;
   remarks: string | null;
   type: string;
-  class: Division; // here noted as class , actual
-  student: Student;
-  quota: Quota | null;
-  fees_status: FeeStatus;
-  provided_concession: AppliedConcessioinToStudent[];
+  class?: Division; // here noted as class , actual
+  student: Partial<Student>;
+  quota?: Quota | null;
+  fees_status?: FeeStatus;
+  provided_concession?: AppliedConcessioinToStudent[];
 }
 
 export interface StudentMeta {
@@ -78,7 +78,7 @@ export interface Student {
   aadhar_no: number | null;
   is_active: boolean;
   student_meta?: StudentMeta;
-  acadamic_class: StudentEnrollment[];
+  academic_class: StudentEnrollment[];
 }
 
 export interface PageDetailsForStudents {
@@ -96,9 +96,22 @@ export interface PageDetailsForStudents {
 export interface StudentEntry {
   students_data: Omit<
     Student,
-    "id" | "student_meta" | "school_id" | "acadamic_class" | "enrollment_code"
+    "id" | "student_meta" | "school_id" | "academic_class" | "enrollment_code"
   >;
   student_meta_data: StudentMeta;
+}
+
+export interface ReqBodyForOnBoardingStudent {
+  first_name : string;
+  middle_name : string | null;
+  last_name : string;
+  birth_date : string;
+  class_id : number;
+  gender : "Male" | "Female";
+  division_id : number;
+  primary_mobile : number;
+  father_name : string | null;
+  academic_session_id : number;
 }
 
 export interface UpdateStudent {
@@ -133,4 +146,25 @@ export interface DashboardData {
 export interface AdmissionTrend {
   grade: string;
   inquiries: number;
+}
+
+
+export interface ReqBodyForStundetMigration {
+  reason : string;
+  migrated_class : number;
+  migrated_division : number;
+  is_migration_for_class : number;
+}
+
+export interface ReqBodyForDropStudent {
+  reason : string;
+}
+
+export interface ReqBodyForStudentCompletion {
+  reason : string;
+}
+
+export interface ReqBodyForStudentSuspension {
+    reason: string,
+    status : 'suspended' | 'remove_suspension',
 }

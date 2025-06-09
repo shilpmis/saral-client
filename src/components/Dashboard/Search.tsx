@@ -1,5 +1,3 @@
-"use client"
-
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -16,7 +14,6 @@ import {
   UserRoundCheck,
   UsersRound,
   Type,
-  PersonStanding,
   X,
   Phone,
   SearchX,
@@ -71,8 +68,8 @@ export function Search() {
     { id: "status", label: "Status", icon: <ShieldCheck className="h-4 w-4" /> },
   ]
   const feeCategories: SearchCategory[] = [
-    { id: "standard", label: "Standard", icon: <PersonStanding className="h-4 w-4" /> },
-    { id: "status", label: "status", icon: <ShieldCheck className="h-4 w-4" /> },
+    { id: "name", label: "Student Name", icon: <User className="h-4 w-4" /> },
+    { id: "grno", label: "GR Number", icon: <GraduationCap className="h-4 w-4" /> },
   ]
   const mark_Attendance_Categories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
@@ -125,19 +122,28 @@ export function Search() {
     return null
   }, [location.pathname, isStaffProfilePage])
 
+  const isFeesProfilePage = useMemo(() => {
+    return location.pathname.match(/^\/d\/fee\/\d+/)
+  }, [location.pathname])
+
+  const isFeeStudentDetailPage = useMemo(() => {
+    return location.pathname.match(/^\/d\/fee\/student\/\d+/)
+  }, [location.pathname])
+
+  // Add support for /d/pay-fees and /d/pay-fees/:id
+  const isPayFeesProfilePage = useMemo(() => {
+    return location.pathname.match(/^\/d\/pay-fees(\/\d+)?$/)
+  }, [location.pathname])
+
+  const isPayFeesStudentDetailPage = useMemo(() => {
+    return location.pathname.match(/^\/d\/pay-fees\/student\/\d+/)
+  }, [location.pathname])
+
   // Original handlers
   const handleSearch = (category: SearchCategory) => {
     setSelectedCategory(category)
-  }
-
-  const onChangeSearch = (value: string) => {
-    setSearchQuery(value)
-    if (value === "") {
-      setShowResults(false)
-      setHasSearched(false)
-    } else {
-      setShowResults(true)
-    }
+    const storageKey = getFilterStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(category));
   }
 
   const searchTrigger = (event: any) => {
@@ -182,37 +188,54 @@ export function Search() {
             detailed: false,
           })
         }
+      } else if (activePage === "Search for Fee" || isFeesProfilePage) {
+        if (selectedCategory.id === "name") {
+          searchStudents({
+            academic_session_id: currentAcademicSession!.id,
+            name: searchQuery,
+            detailed: false,
+          })
+        } else if (selectedCategory.id === "grno") {
+          const grNo = Number.parseInt(searchQuery)
+          if (!isNaN(grNo)) {
+            searchStudents({
+              academic_session_id: currentAcademicSession!.id,
+              gr_no: grNo,
+              detailed: false,
+            })
+          }
+        }
       }
       // For staff search - passing academic_session_id
       else if (activePage === "Search for Staff" || isStaffProfilePage) {
         if (selectedCategory.id === "name") {
           searchStaff({
             name: searchQuery,
-            academic_session_id: currentAcademicSession?.id
+            academic_session_id: currentAcademicSession?.id,
           })
         } else if (selectedCategory.id === "employee_code") {
           searchStaff({
             employee_code: searchQuery,
-            academic_session_id: currentAcademicSession?.id
+            academic_session_id: currentAcademicSession?.id,
           })
         } else if (selectedCategory.id === "mobile") {
           searchStaff({
             mobile_number: Number(searchQuery),
-            academic_session_id: currentAcademicSession?.id
+            academic_session_id: currentAcademicSession?.id,
           })
         } else if (selectedCategory.id === "role") {
           searchStaff({
             staff_role_id: Number(searchQuery),
-            academic_session_id: currentAcademicSession?.id
+            academic_session_id: currentAcademicSession?.id,
           })
         }
       }
       // For other searches
-      else if (window.location.pathname === "/d/leaves") {
-        console.log("from leaves", searchQuery, selectedCategory?.id)
-      } else if (window.location.pathname === "/d/fee") {
-        console.log("from fee", searchQuery, selectedCategory?.id)
-      }
+      // else if (window.location.pathname === "/d/leaves") {
+      //   console.log("from leaves", searchQuery, selectedCategory?.id)
+      // } else if (window.location.pathname === "/d/fee") {
+      //   console.log("from fee", searchQuery, selectedCategory?.id)
+      // }
     } catch (err) {
       console.error("Search error:", err)
     }
@@ -223,6 +246,25 @@ export function Search() {
     // Navigate to the student profile page with the student ID
     navigate(`/d/student/${student.id}`)
     // Clear search results and query
+    setShowResults(false)
+    setSearchQuery("")
+    setHasSearched(false)
+  }
+
+  // Update handleSelectStudentForFees to support /d/pay-fees/:id?session_id=2 context
+  const handleSelectStudentForFees = (student: Student) => {
+    if (isPayFeesProfilePage || isPayFeesStudentDetailPage) {
+      // Preserve session_id if present in the current URL
+      const params = new URLSearchParams(location.search)
+      const sessionId = params.get("session_id") || currentAcademicSession?.id
+      let url = `/d/pay-fees/${student.id}`
+      if (sessionId) {
+        url += `?session_id=${sessionId}`
+      }
+      navigate(url)
+    } else {
+      navigate(`/d/fee/student/${student.id}`)
+    }
     setShowResults(false)
     setSearchQuery("")
     setHasSearched(false)
@@ -251,6 +293,8 @@ export function Search() {
         performSearch()
       } else if (activePage === "Search for Staff") {
         performSearch()
+      } else if (activePage === "Search for Fee") {
+        performSearch()
       }
     }
   }, [debouncedSearchQuery, selectedCategory, currentAcademicSession, activePage])
@@ -262,70 +306,100 @@ export function Search() {
       "/d/staff": "Search for Staff",
       "/d/leaves": "Search for Leave",
       "/d/fee": "Search for Fee",
+      "/d/fee/student": "Search for Fee",
     }),
     [],
   )
 
   useEffect(() => {
     setSearchQuery("")
-
     // Only reset the selected category if not navigating to a profile page
     // or if we're coming from a non-profile page
+    // (No longer clear selectedCategory)
     if (
-      (!isStudentProfilePage && !isStaffProfilePage) ||
-      (!location.pathname.includes("/d/student/") && !location.pathname.includes("/d/staff/"))
+      isStudentProfilePage
     ) {
-      setSelectedCategory(null)
-    }
-
-    // Handle profile pages by setting to appropriate search mode
-    if (isStudentProfilePage) {
       setActivePage("Search for Students")
     } else if (isStaffProfilePage) {
       setActivePage("Search for Staff")
+    } else if (isFeesProfilePage || isFeeStudentDetailPage || isPayFeesProfilePage || isPayFeesStudentDetailPage) {
+      setActivePage("Search for Fee")
     } else {
       setActivePage(pageTitles[location.pathname])
     }
-
     setHasSearched(false)
-  }, [location.pathname, pageTitles, setActivePage, isStudentProfilePage, isStaffProfilePage])
+  }, [location.pathname, pageTitles, setActivePage, isStudentProfilePage, isStaffProfilePage, isFeesProfilePage, isFeeStudentDetailPage, isPayFeesProfilePage, isPayFeesStudentDetailPage])
 
+  // Helper to get filter key for localStorage per context
+  const getFilterStorageKey = () => {
+    // Use activePage or fallback to pathname
+    let key = activePage || location.pathname;
+    // Normalize for pay-fees/fee context
+    if (key.includes("pay-fees")) return "search_filter_pay_fees";
+    if (key.includes("fee")) return "search_filter_fee";
+    if (key.includes("students")) return "search_filter_students";
+    if (key.includes("staff")) return "search_filter_staff";
+    // if (key.includes("leaves")) return "search_filter_leaves";
+    return `search_filter_${key}`;
+  };
+
+  // Helper to get categories for current context
+  const getCategories = () => {
+    if (activePage === "Search for Students" || isStudentProfilePage) return studentCategories;
+    if (activePage === "Search for Staff" || isStaffProfilePage) return staffCategories;
+    if (activePage === "Search for Fee" || isFeesProfilePage || isFeeStudentDetailPage || isPayFeesProfilePage || isPayFeesStudentDetailPage) return feeCategories;
+    // if (activePage === "Search for Leave") return leaveCategories;
+    return studentCategories;
+  };
+
+  // On context change, set filter from localStorage or default to first
   useEffect(() => {
-    if (searchQuery === "" && activePage !== "Search for Students" && activePage !== "Search for Staff") {
-      setSelectedCategory(null)
+    const categories = getCategories();
+    const storageKey = getFilterStorageKey();
+    const stored = localStorage.getItem(storageKey);
+    let found = null;
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        found = categories.find((c) => c.id === parsed.id);
+      } catch {}
     }
-  }, [searchQuery, activePage])
+    setSelectedCategory(found || categories[0]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage, isStudentProfilePage, isStaffProfilePage, isFeesProfilePage, isFeeStudentDetailPage, isPayFeesProfilePage, isPayFeesStudentDetailPage]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest(".search-container") && showResults) {
-        setShowResults(false)
-      }
+  // Prevent filter from being cleared on input clear/backspace
+  const onChangeSearch = (value: string) => {
+    setSearchQuery(value)
+    if (value === "") {
+      setShowResults(false)
+      setHasSearched(false)
+      // Do NOT clear selectedCategory
+    } else {
+      setShowResults(true)
     }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [showResults])
+  }
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
-      {activePage === "Search for Students" ||
-      activePage === "Search for Staff" ||
-      activePage === "Search for Leave" ||
-      activePage === "Search for Fee" ||
-      isStudentProfilePage ||
-      isStaffProfilePage ? (
+      {(
+        activePage === "Search for Students" ||
+        activePage === "Search for Staff" ||
+        activePage === "Search for Fee" ||
+        isStudentProfilePage ||
+        isStaffProfilePage ||
+        isFeeStudentDetailPage ||
+        isPayFeesProfilePage ||
+        isPayFeesStudentDetailPage
+      ) ? (
         <div className="search-container">
           <div className="relative flex items-center">
             <Input
               type="text"
               placeholder={
-                isStudentProfilePage 
-                  ? selectedCategory 
-                    ? `Search for other students by ${selectedCategory.label}` 
+                isStudentProfilePage
+                  ? selectedCategory
+                    ? `Search for other students by ${selectedCategory.label}`
                     : "Search for Students"
                   : isStaffProfilePage
                     ? selectedCategory
@@ -336,19 +410,14 @@ export function Search() {
               className="pl-[120px] pr-10"
               value={searchQuery}
               onChange={(e) => onChangeSearch(e.target.value)}
-              disabled={
-                (selectedCategory === null && 
-                 activePage !== "Search for Students" && 
-                 activePage !== "Search for Staff" && 
-                 !isStudentProfilePage && 
-                 !isStaffProfilePage) || 
-                (activePage === "Search for Students" && !currentAcademicSession?.id)
-              }
               onKeyDown={(event) => searchTrigger(event)}
               onFocus={() => {
-                if (searchQuery && 
-                   ((studentSearchResults.length > 0 && (activePage === "Search for Students" || isStudentProfilePage)) || 
-                    (staffSearchResults.length > 0 && (activePage === "Search for Staff" || isStaffProfilePage)))) {
+                if (
+                  searchQuery &&
+                  ((studentSearchResults.length > 0 &&
+                    (activePage === "Search for Students" || isStudentProfilePage)) ||
+                    (staffSearchResults.length > 0 && (activePage === "Search for Staff" || isStaffProfilePage)))
+                ) {
                   setShowResults(true)
                 }
               }}
@@ -387,9 +456,9 @@ export function Search() {
                 />
               </svg>
             </button>
-            
+
             {/* Category dropdowns for different pages */}
-            {(activePage === "Search for Students" || isStudentProfilePage) ? (
+            {activePage === "Search for Students" || isStudentProfilePage ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
@@ -409,7 +478,27 @@ export function Search() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (activePage === "Search for Staff" || isStaffProfilePage) ? (
+            ) : activePage === "Search for Fee" || isFeesProfilePage ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
+                    {selectedCategory ? selectedCategory.label : "Search by"}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  {feeCategories.map((category) => (
+                    <DropdownMenuItem
+                      key={category.id}
+                      onClick={() => handleSearch(category)}
+                      className="flex items-center gap-2"
+                    >
+                      {category.icon}
+                      <span>{category.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : activePage === "Search for Staff" || isStaffProfilePage ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
@@ -429,27 +518,7 @@ export function Search() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (activePage === "Search for Leave") ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
-                    {selectedCategory ? selectedCategory.label : "Search by"}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                  {leaveCategories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.id}
-                      onClick={() => handleSearch(category)}
-                      className="flex items-center gap-2"
-                    >
-                      {category.icon}
-                      <span>{category.label}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (activePage === "Search for Fee") ? (
+            ) : activePage === "Search for Fee" ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="absolute left-1 top-1/2 -translate-y-1/2 rounded-md border bg-background px-2 py-1 text-sm font-medium">
@@ -506,6 +575,39 @@ export function Search() {
             </>
           )}
 
+          {showResults && (activePage === "Search for Fee" || isFeesProfilePage) && (
+            <>
+              {isStudentLoading ? (
+                <div className="p-4 text-center">
+                  <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Searching...</p>
+                </div>
+              ) : (
+                <>
+                  {studentSearchResults.length > 0 ? (
+                    <StudentSearchResults
+                      results={studentSearchResults}
+                      isLoading={isStudentLoading}
+                      error={studentSearchError}
+                      onSelectStudent={handleSelectStudentForFees}
+                    />
+                  ) : (
+                    hasSearched && (
+                      <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-md max-h-60 overflow-auto">
+                        <div className="flex items-center justify-center p-4 border-b">
+                          <SearchX className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            No results found for "{searchQuery}" in {selectedCategory?.label}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </>
+          )}
+
           {/* Show staff search results */}
           {showResults && (activePage === "Search for Staff" || isStaffProfilePage) && (
             <>
@@ -524,7 +626,8 @@ export function Search() {
                       onSelectStaff={handleSelectStaff}
                     />
                   ) : (
-                    hasSearched && !isStaffLoading && (
+                    hasSearched &&
+                    !isStaffLoading && (
                       <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-md max-h-60 overflow-auto">
                         <div className="flex items-center justify-center p-4 border-b">
                           <SearchX className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -546,7 +649,7 @@ export function Search() {
           )}
 
           {/* Show message if no active academic session for student search */}
-          {activePage === "Search for Students" && !currentAcademicSession?.id && (
+          {(activePage === "Search for Students" || activePage === "") && !currentAcademicSession?.id && (
             <div className="text-sm text-amber-500 mt-1">
               No active academic session found. Please set an active academic session first.
             </div>
