@@ -48,8 +48,20 @@ const SideBarItems = [
     requiredPermission: Permission.MANAGE_ATTENDANCE,
   },
   {
+    title: "staff_attendance_management",
+    url: "/d/staff/attendance",
+    icon: ClipboardList,
+    requiredPermission: Permission.MANAGE_ATTENDANCE,
+  },
+  {
     title: "attendance",
     url: "/d/mark-attendance",
+    icon: ClipboardList,
+    requiredPermission: Permission.MARK_ATTENDANCE,
+  },
+  {
+    title: "staff-attendance",
+    url: "/d/staff/mark-attendance",
     icon: ClipboardList,
     requiredPermission: Permission.MARK_ATTENDANCE,
   },
