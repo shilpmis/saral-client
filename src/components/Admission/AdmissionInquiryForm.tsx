@@ -17,13 +17,14 @@ import { useGetClassSeatAvailabilityQuery } from "@/services/QuotaService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useGetQuotasQuery } from "@/services/QuotaService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
-import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { Loader2, CheckCircle } from "lucide-react"
 import NumberInput from "@/components/ui/NumberInput"
 import { format } from "date-fns"
 import { formSchema, type FormValues } from "./AdmissionFormSchema"
 import { skipToken } from "@reduxjs/toolkit/query"
+import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
 
 // Define the props for the component
 interface AdmissionInquiryFormProps {
@@ -75,8 +76,10 @@ export default function AdmissionInquiryForm({
   const academicSessions = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentacademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
   const AcademicClasses = useAppSelector(selectAcademicClasses)
-
+  const authState = useAppSelector(selectAuthState)
+  
   // API hooks
+  const [getAcademicClasses] = useLazyGetAcademicClassesQuery() 
   const [addInquiry, { isLoading: isAddLoading }] = useAddInquiryMutation()
   const [updateInquiry, { isLoading: isUpdateLoading }] = useUpdateInquiryMutation()
 
@@ -130,6 +133,20 @@ export default function AdmissionInquiryForm({
   // Watch for selected academic session in the form
   const selectedAcademicSessionId = form.watch("academic_session_id")
 
+  useEffect(() => {
+    // Reset class and quota fields when academic session changes
+    form.setValue("inquiry_for_class", Number(""), {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    form.setValue("quota_type", null, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+  }, [selectedAcademicSessionId])
+
   // Fetch available classes based on selected academic session
   const { data: classSeats, isLoading: isLoadingSeats } = useGetClassSeatAvailabilityQuery(
     selectedAcademicSessionId ? { acadamic_session_id: selectedAcademicSessionId } : skipToken
@@ -137,7 +154,7 @@ export default function AdmissionInquiryForm({
 
   // Fetch available quotas
   const { data: quotas, isLoading: isLoadingQuotas } = useGetQuotasQuery({
-    academic_session_id: CurrentacademicSessions!.id,
+    academic_session_id: selectedAcademicSessionId,
   })
 
   const isLoading = isAddLoading || isUpdateLoading
@@ -307,6 +324,12 @@ export default function AdmissionInquiryForm({
     }
   }
 
+    useEffect(() => {
+      if (!AcademicClasses && authState.user) {
+        getAcademicClasses(authState.user.school_id)
+      }
+    }, [AcademicClasses])
+
   // Show success message after submission
   if (submitted && !isEditing) {
     return (
@@ -393,7 +416,7 @@ export default function AdmissionInquiryForm({
             <FormLabel>{t("academic_session")}</FormLabel>
             <Select
               onValueChange={(value) => field.onChange(Number.parseInt(value))}
-              defaultValue={field.value?.toString()}
+              value={field.value?.toString() ?? ""} // Use value, not defaultValue, for controlled input
             >
               <FormControl>
                 <SelectTrigger>
@@ -403,7 +426,7 @@ export default function AdmissionInquiryForm({
               <SelectContent>
                 {academicSessions?.map((session) => (
                   <SelectItem key={session.id} value={session.id.toString()}>
-                    {session.session_name} {session.is_active && `(${t("current")})`}
+                    {session.session_name} {Boolean(Number(session.is_active)) ? `(${t("current")})` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -547,11 +570,11 @@ export default function AdmissionInquiryForm({
 
       {/* Class Applying For */}
       {Array.isArray(classSeats) && classSeats.length === 0 ? (
-        <div className="text-sm text-destructive bg-destructive/10 p-4 rounded-lg mb-2">
+        <div className="text-sm text-destructive bg-destructive/10 p-4 rounded-lg my-2">
           No class capacity has been set for any class in the selected academic session. Please contact the administrator to configure class capacities for this academic year.
         </div>
       ) : (
-        <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg mb-2">
+        <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg my-2">
           Only classes for which capacity has been set are visible for the selected academic session.
         </div>
       )}
@@ -568,7 +591,7 @@ export default function AdmissionInquiryForm({
               </FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                defaultValue={field.value?.toString()}
+                value={field.value?.toString() ?? ""} // Use value, not defaultValue, for controlled input
               >
                 <FormControl>
                   <SelectTrigger>
@@ -739,7 +762,7 @@ export default function AdmissionInquiryForm({
           name="previous_class"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel>{t("last_class_completed")}</FormLabel>
+              <FormLabel>{t("last_completed_class")}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={t("enter_last_class")}
@@ -868,7 +891,7 @@ export default function AdmissionInquiryForm({
               <FormLabel>{t("select_quota")}</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                defaultValue={field.value?.toString()}
+                value={field.value?.toString() ?? ""} // Use value, not defaultValue, for controlled input
               >
                 <FormControl>
                   <SelectTrigger>
