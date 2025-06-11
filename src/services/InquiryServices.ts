@@ -19,7 +19,7 @@ export interface Inquiry {
   address: string;
   previous_school: string | null;
   previous_class: string | null;
-  inquiry_for_class: number;
+  inquiry_for_class: number | undefined;
   father_name: string;
   previous_percentage: string | null;
   previous_year: string | null;
