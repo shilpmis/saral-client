@@ -46,6 +46,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { AcademicClasses } from "@/types/academic"
+import { useDeleteFeesPlanMutation } from "@/services/feesService"
 
 type StatusFilter = "All" | "Active" | "Inactive"
 type ConfirmationDialogProps = {
@@ -107,7 +108,8 @@ export const FeePlanManagement: React.FC = () => {
   // const [updateFeesPlan, { isLoading: isUpdatingFeePlan }] = useUpdateFeesPlanMutation()
   const [updateFeesPlanStatus, { isLoading: isUpdatingFeePlanStaus }] = useLazyUpdateFeesPlanStatusQuery()
 
-  const [createFeesPlan, { isLoading: isCreatingFeePlan }] = useCreateFeesPlanMutation()
+  const [createFeesPlan, { isLoading: isCreatingFeePlan }] = useCreateFeesPlanMutation();
+  const [deleteFeesPlan, { isLoading: isFeesPlanDeleting }] = useDeleteFeesPlanMutation();
   const [getFeePlanInDetail, { data: detailedFeePlan, isLoading: isLoadingDetailedPlan }] =
     useLazyFetchDetailFeePlanQuery()
   const [getClassesWithoutFeesPlan, { data: classesWithoutFeesPlan, isLoading: isLoadingClasses }] =
@@ -175,7 +177,7 @@ export const FeePlanManagement: React.FC = () => {
     isOpen: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
     confirmText: t("confirm"),
     cancelText: t("cancel"),
     variant: "default",
@@ -186,20 +188,39 @@ export const FeePlanManagement: React.FC = () => {
   }
 
   const handleDelete = (feePlan: FeesPlan) => {
-    if (feePlan.status === "Active") return
+    if (feePlan.status === "Active") {
+      toast({
+        variant: "destructive",
+        title: "You cannot delete an active fee plan",
+      })
+      return
+    }
 
     setConfirmDialog({
       isOpen: true,
       title: t("delete_fee_plan"),
       description: t("are_you_sure_you_want_to_delete_this_fee_plan?_this_action_cannot_be_undone."),
-      onConfirm: () => {
+      onConfirm: async () => {
         // Call delete API here
-        toast({
-          variant: "destructive",
-          title: t("delete_not_implemented"),
-          description: t("delete_functionality_is_not_fully_implemented_yet"),
-        })
-        closeConfirmDialog()
+        try {
+          await deleteFeesPlan({
+            plan_id: feePlan.id,
+          }).unwrap()
+
+          toast({
+            variant: "default",
+            title: "Fees Plan Deleted Successfully",
+          })
+
+          refreshFeePlans()
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Something went wrong",
+            description: (error as any)?.data?.message || t("delete_not_implemented"),
+          })
+          closeConfirmDialog()
+        }
       },
       confirmText: t("delete"),
       cancelText: t("cancel"),
@@ -319,27 +340,27 @@ export const FeePlanManagement: React.FC = () => {
           status: newStatus,
           plan_id: feePlan.id,
         })
-        .then((response) => {
-          if (response.data) {
-            toast({
-              variant: "default",
-              title: isActivating ? t("fee_plan_activated") : t("fee_plan_deactivated"),
-              description: isActivating
-                ? t("fee_plan_has_been_activated_successfully")
-                : t("fee_plan_has_been_deactivated_successfully"),
-            })
-            // Refresh the fee plans list
-            refreshFeePlans()
-          } else {
-            toast({
-              variant: "destructive",
-              title: t("error"),
-              description:
-                (response.error as any)?.data?.message ||
-                (isActivating ? t("failed_to_activate_fee_plan") : t("failed_to_deactivate_fee_plan")),
-            })
-          }
-        })
+          .then((response) => {
+            if (response.data) {
+              toast({
+                variant: "default",
+                title: isActivating ? t("fee_plan_activated") : t("fee_plan_deactivated"),
+                description: isActivating
+                  ? t("fee_plan_has_been_activated_successfully")
+                  : t("fee_plan_has_been_deactivated_successfully"),
+              })
+              // Refresh the fee plans list
+              refreshFeePlans()
+            } else {
+              toast({
+                variant: "destructive",
+                title: t("error"),
+                description:
+                  (response.error as any)?.data?.message ||
+                  (isActivating ? t("failed_to_activate_fee_plan") : t("failed_to_deactivate_fee_plan")),
+              })
+            }
+          })
         closeConfirmDialog()
       },
       confirmText: isActivating ? t("activate") : t("deactivate"),
@@ -390,7 +411,7 @@ export const FeePlanManagement: React.FC = () => {
     }
     getAllFeesType({
       academic_session_id: CurrentAcademicSessionForSchool!.id,
-      applicable_to : "plan",      
+      applicable_to: "plan",
     })
   }, [])
 
@@ -587,15 +608,15 @@ export const FeePlanManagement: React.FC = () => {
                                       </Button>
                                     )}
 
-                                    {/* <Button
+                                    <Button
                                       variant="outline"
                                       size="icon"
                                       onClick={() => handleDelete(feePlan)}
                                       className="text-red-500 hover:text-red-600 hover:border-red-600"
-                                      disabled={feePlan.status === "Active" || isUpdatingFeePlanStaus}
+                                    // disabled={feePlan.description}
                                     >
                                       <Trash2 className="h-4 w-4" />
-                                    </Button> */}
+                                    </Button>
                                   </>
                                 )}
                               </>
@@ -635,15 +656,21 @@ export const FeePlanManagement: React.FC = () => {
       <Dialog
         open={DialogForFeesPlan.isOpen}
         onOpenChange={(open) => {
-          if (!open) return
-          setDialogForFeesPlan({
-            isOpen: false,
-            paln_id: null,
-            type: "create",
-          })
+          // Only allow closing if open is false (triggered by close button)
+          if (!open) {
+            setDialogForFeesPlan({
+              isOpen: false,
+              paln_id: null,
+              type: "create",
+            })
+          }
         }}
       >
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+        <DialogContent
+          className="max-w-5xl max-h-[90vh] overflow-auto"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>
               {DialogForFeesPlan.type === "update" ? t("edit_fee_plan") : t("create_new_fee_plan")}
@@ -718,17 +745,17 @@ export const FeePlanManagement: React.FC = () => {
                     <div>
                       <Label>{t("original_class")}</Label>
                       <div className="p-2 border rounded-md mt-1 bg-muted/50">
-                        { AcademicClassesForSchool
+                        {AcademicClassesForSchool
                           ? (() => {
-                              const classInfo = AcademicClassesForSchool.find((cls) => cls.id === detailedFeePlan.fees_plan.class_id)
-                              if (!classInfo) return "N/A"
+                            const classInfo = AcademicClassesForSchool.find((cls) => cls.id === detailedFeePlan.fees_plan.class_id)
+                            if (!classInfo) return "N/A"
 
-                              return (
-                                <span>
-                                  {classInfo?.class || ""}
-                                </span>
-                              )
-                            })()
+                            return (
+                              <span>
+                                {classInfo?.class || ""}
+                              </span>
+                            )
+                          })()
                           : "Loading..."}
                       </div>
                     </div>
@@ -769,7 +796,7 @@ export const FeePlanManagement: React.FC = () => {
                           </FormControl>
                           <SelectContent>
                             {classesWithoutFeesPlan &&
-                              classesWithoutFeesPlan.map((cls : AcademicClasses) => (
+                              classesWithoutFeesPlan.map((cls: AcademicClasses) => (
                                 <SelectItem key={cls.id} value={cls.id.toString()} className="hover:bg-slate-50">
                                   {/* {AcademicClassesForSchool && AcademicClassesForSchool.find((clas) => clas.id === cls.class_id)?.class}
                                   -{cls.division} {cls.aliases} */}
