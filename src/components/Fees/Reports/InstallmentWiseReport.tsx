@@ -52,7 +52,7 @@ const InstallmentWiseReport: React.FC = () => {
         isLoading: isInstallmentDetailsLoading,
         error: installmentDetailsError,
         refetch: refetchInstallmentDetails,
-    } = useFetchInstallmentDetailsQuery(
+    } = useFetchInstallmentDetailsQuery(    
         {
             division_id: Number(selectedDivision),
             academic_session_id: Number(selectedAcademicYear),
