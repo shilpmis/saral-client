@@ -25,6 +25,7 @@ interface ReversalRequestDialogProps {
   onSuccess: () => void
   payment: any
   studentFeesDetails: any
+  isExtraFee: boolean
 }
 
 const ReversalRequestDialog: React.FC<ReversalRequestDialogProps> = ({
@@ -33,6 +34,7 @@ const ReversalRequestDialog: React.FC<ReversalRequestDialogProps> = ({
   onSuccess,
   payment,
   studentFeesDetails,
+  isExtraFee
 }) => {
   const { t } = useTranslation()
   const [remarks, setRemarks] = useState("")
@@ -56,6 +58,7 @@ const ReversalRequestDialog: React.FC<ReversalRequestDialogProps> = ({
           status: "Reversal Requested",
           remarks: remarks.trim(),
         },
+        is_extra_fees: isExtraFee,
       }).unwrap()
 
       toast({
@@ -152,3 +155,114 @@ const ReversalRequestDialog: React.FC<ReversalRequestDialogProps> = ({
 }
 
 export default ReversalRequestDialog
+
+
+// "use client"
+
+// import type React from "react"
+// import { useState } from "react"
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+// } from "@/components/ui/alert-dialog"
+// import { Input } from "@/components/ui/input"
+// import { useUpdateStatusForTransactionMutation } from "@/services/feesService"
+// import { toast } from "@/hooks/use-toast"
+
+// interface ReversalRequestDialogProps {
+//   isOpen: boolean
+//   onClose: () => void
+//   onSuccess: () => void
+//   payment: any
+//   studentFeesDetails: any
+//   isExtraFee?: boolean
+// }
+
+// const ReversalRequestDialog: React.FC<ReversalRequestDialogProps> = ({
+//   isOpen,
+//   onClose,
+//   onSuccess,
+//   payment,
+//   studentFeesDetails,
+//   isExtraFee = false,
+// }) => {
+//   const [remarks, setRemarks] = useState("")
+//   const [updateStatusForTransaction, { isLoading }] = useUpdateStatusForTransactionMutation()
+
+//   const handleSubmit = async () => {
+//     if (!remarks.trim()) {
+//       toast({
+//         variant: "destructive",
+//         title: "Remarks Required",
+//         description: "Please provide a reason for the reversal request",
+//       })
+//       return
+//     }
+
+//     try {
+//       await updateStatusForTransaction({
+//         student_fees_master_id: studentFeesDetails.student.fees_status.id,
+//         transaction_id: payment.id,
+//         payload: {
+//           status: "Reversal Requested",
+//           remarks: remarks.trim(),
+//         },
+//         is_extra_fees: isExtraFee,
+//       }).unwrap()
+
+//       toast({
+//         title: "Reversal Request Submitted",
+//         description: `The ${isExtraFee ? "extra fee " : ""}reversal request has been submitted successfully. Admin will review it.`,
+//       })
+
+//       onSuccess()
+//       onClose()
+//       setRemarks("")
+//     } catch (error: any) {
+//       toast({
+//         variant: "destructive",
+//         title: "Failed to Submit Request",
+//         description: error?.data?.message || "There was an error submitting the reversal request",
+//       })
+//     }
+//   }
+
+//   return (
+//     <AlertDialog open={isOpen} onOpenChange={onClose}>
+//       <AlertDialogContent>
+//         <AlertDialogHeader>
+//           <AlertDialogTitle>Request Reversal</AlertDialogTitle>
+//           <AlertDialogDescription>
+//             Are you sure you want to request a reversal for this transaction?
+//           </AlertDialogDescription>
+//         </AlertDialogHeader>
+//         <div className="grid gap-4 py-4">
+//           <div className="grid grid-cols-4 items-center gap-4">
+//             <label htmlFor="remarks" className="text-right">
+//               Remarks
+//             </label>
+//             <Input
+//               type="text"
+//               id="remarks"
+//               value={remarks}
+//               onChange={(e) => setRemarks(e.target.value)}
+//               className="col-span-3"
+//             />
+//           </div>
+//         </div>
+//         <AlertDialogFooter>
+//           <AlertDialogCancel>Cancel</AlertDialogCancel>
+//           <AlertDialogAction onClick={handleSubmit}>Submit Request</AlertDialogAction>
+//         </AlertDialogFooter>
+//       </AlertDialogContent>
+//     </AlertDialog>
+//   )
+// }
+
+// export default ReversalRequestDialog

@@ -23,6 +23,8 @@ interface AdminReversalDialogProps {
     onSuccess: () => void
     payment: any
     studentName: string
+    isExtraFee: boolean
+
 }
 
 export default function AdminReversalDialog({
@@ -31,6 +33,7 @@ export default function AdminReversalDialog({
     onSuccess,
     payment,
     studentName,
+    isExtraFee
 }: AdminReversalDialogProps) {
     const { t } = useTranslation()
     const [remarks, setRemarks] = useState("")
@@ -55,7 +58,8 @@ export default function AdminReversalDialog({
                 transaction_id: payment.id,
                 payload: {
                     remarks: remarks.trim(),
-                }
+                },
+                is_extra_fees: isExtraFee,
             }).unwrap()
 
             toast({
