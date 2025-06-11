@@ -91,6 +91,15 @@ export const FeesApi = createApi({
         body: data,
       }),
     }),
+    deleteFeesType: builder.mutation<
+      FeesType,
+      { fees_type_id: number }
+    >({
+      query: ({ fees_type_id }) => ({
+        url: `/feestype/${fees_type_id}`,
+        method: "DELETE"
+      }),
+    }),
     getFeesPlan: builder.query<
       { data: FeesPlan[]; meta: PageMeta },
       {
@@ -173,6 +182,16 @@ export const FeesApi = createApi({
         url: `/feesplan/${plan_id}`,
         method: "PUT",
         body: payload,
+      }),
+    }),
+
+    deleteFeesPlan: builder.mutation<
+      any,
+      {plan_id: number }
+    >({
+      query: ({ plan_id }) => ({
+        url: `/feesplan/${plan_id}`,
+        method: "DELETE",
       }),
     }),
 
@@ -425,10 +444,12 @@ export const FeesApi = createApi({
           status ?: 'Reversal Requested',
           remarks ?: string,
           payment_status ?: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled', 
-        }}
+        }
+        is_extra_fees ? : boolean
+      }
     >({
-      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
-        url: `/transaction/${student_fees_master_id}/${transaction_id}`,
+      query: ({ student_fees_master_id ,transaction_id , payload , is_extra_fees = false}) => ({
+        url: `/transaction/${student_fees_master_id}/${transaction_id}?is_extra_fees=${is_extra_fees}`,
         method: "PUT",
         body: payload,
       }),
@@ -436,10 +457,13 @@ export const FeesApi = createApi({
 
     reverseTransaction: builder.mutation<
       { data: StudentFeesInstallment},
-      {student_fees_master_id : number , transaction_id : number , payload : {remarks : string}}
+      {student_fees_master_id : number , transaction_id : number , 
+        payload : {remarks : string},
+        is_extra_fees ? : boolean      
+      }
     >({
-      query: ({ student_fees_master_id ,transaction_id , payload}) => ({
-        url: `/transaction/reverse/${student_fees_master_id}/${transaction_id}`,
+      query: ({ student_fees_master_id ,transaction_id , payload ,is_extra_fees = false}) => ({
+        url: `/transaction/reverse/${student_fees_master_id}/${transaction_id}?is_extra_fees=${is_extra_fees}`,
         method: "PUT",
         body: payload,
       }),
@@ -453,6 +477,7 @@ export const {
   useGetFeesTypeQuery,
   useLazyGetFeesTypeQuery,
   useLazyGetAllFeesTypeQuery,
+  useDeleteFeesTypeMutation,
   useGetAllFeesTypeQuery,
   useLazyGetFilterFeesTypeQuery,
   useCreateFeesTypeMutation,
@@ -496,5 +521,7 @@ export const {
   useLazyFetchInsatllmentWiseReportQuery,
 
   useReverseTransactionMutation,
-  useUpdateStatusForTransactionMutation
+  useUpdateStatusForTransactionMutation,
+
+  useDeleteFeesPlanMutation
 } = FeesApi;
