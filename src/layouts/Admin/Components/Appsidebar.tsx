@@ -59,12 +59,12 @@ const SideBarItems = [
     icon: ClipboardList,
     requiredPermission: Permission.MARK_ATTENDANCE,
   },
-  {
-    title: "staff-attendance",
-    url: "/d/staff/mark-attendance",
-    icon: ClipboardList,
-    requiredPermission: Permission.MARK_ATTENDANCE,
-  },
+  // {
+  //   title: "staff-attendance",
+  //   url: "/d/staff/mark-attendance",
+  //   icon: ClipboardList,
+  //   requiredPermission: Permission.MARK_ATTENDANCE,
+  // },
   { title: "payments", url: "/d/pay-fees", icon: IndianRupee, requiredPermission: Permission.PAY_FEES },
   { title: "manage_fees", url: "/d/fee", icon: IndianRupee, requiredPermission: Permission.MANAGE_FEES },
   { title: "admissions", url: "/d/admissions", icon: ClipboardList, requiredPermission: Permission.MANAGE_ADMISSION },
