@@ -25,6 +25,7 @@ interface PaymentStatusUpdateDialogProps {
   onSuccess: () => void
   payment: any
   studentFeesDetails: any
+  isExtraFee: boolean
 }
 
 const PaymentStatusUpdateDialog: React.FC<PaymentStatusUpdateDialogProps> = ({
@@ -33,6 +34,7 @@ const PaymentStatusUpdateDialog: React.FC<PaymentStatusUpdateDialogProps> = ({
   onSuccess,
   payment,
   studentFeesDetails,
+  isExtraFee,
 }) => {
   const { t } = useTranslation()
   const [paymentStatus, setPaymentStatus] = useState<string>(payment?.payment_status || "")
@@ -65,6 +67,7 @@ const PaymentStatusUpdateDialog: React.FC<PaymentStatusUpdateDialogProps> = ({
           payment_status: paymentStatus as any,
           remarks: remarks.trim() || undefined,
         },
+        is_extra_fees: isExtraFee
       }).unwrap()
 
       toast({

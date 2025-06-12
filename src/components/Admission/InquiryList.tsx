@@ -352,7 +352,7 @@ export default function InquiriesManagement() {
                               </SelectContent>
                             </Select>
 
-                            {authState.user!.role === 'CLERK' && (<Button
+                            {(authState.user!.role === 'CLERK' || authState.user!.role === 'ADMIN') && (<Button
                               variant="outline"
                               size="sm"
                               onClick={() => navigate(`/d/pay-fees/${inquiry.student_enrollment!.student_id}?session_id=${inquiry.academic_session_id}`)}
@@ -436,7 +436,7 @@ export default function InquiriesManagement() {
                       <div className="text-sm">{selectedInquiry.previous_school || "N/A"}</div>
                       <div className="text-sm font-medium">{t("last_class")}:</div>
                       <div className="text-sm">{selectedInquiry.previous_class || "N/A"}</div>
-                      <div className="text-sm font-medium">{t("percentage")}:</div>
+                      <div className="text-sm font-medium">{t("percentage")}(%):</div>
                       <div className="text-sm">{selectedInquiry.previous_percentage || "N/A"}</div>
                       <div className="text-sm font-medium">{t("year")}:</div>
                       <div className="text-sm">{selectedInquiry.previous_year || "N/A"}</div>
@@ -448,7 +448,7 @@ export default function InquiriesManagement() {
                     <div className="grid grid-cols-1 gap-2 mt-2">
                       {selectedInquiry.applying_for_quota ? (
                         <div className="p-2 bg-muted rounded-md">
-                          Applied for: {selectedInquiry.quota_type || "General Quota"}
+                          Applied for: {selectedInquiry.quota_type ?? "N/A"}
                         </div>
                       ) : (
                         <div className="p-2 bg-muted rounded-md">{t("not_applying_for_any_quota")}</div>

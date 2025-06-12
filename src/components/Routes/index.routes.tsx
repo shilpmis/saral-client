@@ -51,6 +51,8 @@ import SubjectSettings from "../Settings/AcademicSettings/SubjectSettings"
 import SubjectAssignment from "@/pages/SubjectAssignment"
 import TimetableConfig from "../Settings/AcademicSettings/TimetableConfig"
 import TimetableManagement from "@/pages/TimeTable"
+import StaffAttendancePage from "../Attendance/StaffAttendancePage"
+import AdminEditRequestsPanel from "../Attendance/AdminEditRequestsPanel"
 
 export default function RootRoute() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
@@ -260,6 +262,26 @@ export default function RootRoute() {
               element={
                 <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.HEAD_TEACHER]}>
                   <AdminAttendanceView />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Staff Attendance Management for admin */}
+            <Route
+              path="staff/attendance"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.HEAD_TEACHER]}>
+                  <AdminEditRequestsPanel />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Staff Attendance */}
+            <Route
+              path="staff/mark-attendance"
+              element={
+                <PrivateRoute allowedRoles={[UserRole.SCHOOL_TEACHER, UserRole.HEAD_TEACHER]}>
+                    <StaffAttendancePage />
                 </PrivateRoute>
               }
             />

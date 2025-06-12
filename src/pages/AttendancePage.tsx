@@ -13,7 +13,7 @@ import type { Division } from "@/types/academic"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
-const Attendance: React.FC = () => {
+const AttendancePage: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user)
   const allAcademicClasses = useAppSelector(selectAllAcademicClasses)
   const [getAcademicClasses, { isLoading: isLoadingClasses, error: classesError }] = useLazyGetAcademicClassesQuery()
@@ -86,4 +86,4 @@ const Attendance: React.FC = () => {
   return null
 }
 
-export default Attendance
+export default AttendancePage

@@ -29,7 +29,7 @@ import { toast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses, selectAllAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
-import { selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
+import { selectAccademicSessionsForSchool, selectActiveAccademicSessionsForSchool, selectAuthState } from "@/redux/slices/authSlice"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -73,6 +73,8 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   useUpdateConcsessionAppliedToStudentMutation()
   const academicClasses = useAppSelector(selectAcademicClasses)
   const academicDivisions = useAppSelector(selectAllAcademicClasses)
+  const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
+  
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const authState = useAppSelector(selectAuthState)
   const currentAcademicSession = useAppSelector(selectActiveAccademicSessionsForSchool)
@@ -235,8 +237,6 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
   // Extract concession data from the response
   const { concession, concession_holder_plans, concession_holder_students } = concessionDetails
 
-  console.log("concessionDetails" , concessionDetails)
-
   // Check concession type
   const isPlanConcession = concession.applicable_to === "plan"
   const isStudentConcession = concession.applicable_to === "students"
@@ -348,7 +348,7 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
-          <TabsTrigger value="applied-plans">{isPlanConcession ? "Applied Plans" : t("applied_fee_plans")}</TabsTrigger>
+          {/* <TabsTrigger value="applied-plans">{isPlanConcession ? "Applied Plans" : t("applied_fee_plans")}</TabsTrigger> */}
           <TabsTrigger value="students" disabled={isPlanConcession}>
             {t("students")}
           </TabsTrigger>
@@ -388,7 +388,11 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">{t("academic_session")}:</span>
-                  <span className="text-sm font-medium">{concession.academic_session_id}</span>
+                  <span className="text-sm font-medium">{
+                    AcademicSessionsForSchool 
+                    ? AcademicSessionsForSchool.find((session) => session.id === concession.academic_session_id)?.session_name || ""
+                    : "Loading..."
+                  }</span>
                 </div>
               </CardContent>
             </Card>
@@ -405,12 +409,12 @@ export const ConcessionDetailsDialog: React.FC<ConcessionDetailsDialogProps> = (
                   <span className="text-sm text-muted-foreground">{t("total_applied_plans")}:</span>
                   <span className="text-sm font-medium">{totalAppliedPlans}</span>
                 </div>
-                {isPlanConcession && (
+                {/* {isPlanConcession && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">{t("total_fee_types")}:</span>
                     <span className="text-sm font-medium">{totalFeeTypes}</span>
                   </div>
-                )}
+                )} */}
                 {isStudentConcession && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">{t("total_students")}:</span>

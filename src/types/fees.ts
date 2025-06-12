@@ -65,12 +65,12 @@ export interface FeesPlan {
   total_amount: number;
   status: "Active" | "Inactive";
   concession: ConcessionDetailForPlan[];
-  fees_detail : FeePlanDetail[];
+  fees_detail: FeePlanDetail[];
 }
 
 export interface FeesPlanDetail {
   id: number;
-  academic_session_id: number;  
+  academic_session_id: number;
   fees_plan_id: number;
   fees_type_id: number;
   total_installment: number;
@@ -85,7 +85,7 @@ export interface FeesPlanDetail {
 }
 
 export interface InstallmentBreakdowns {
-  id : number;
+  id: number;
   fee_plan_details_id: number;
   installment_no: number;
   installment_amount: string;
@@ -122,7 +122,7 @@ export interface ReqObjectForUpdateFeesPlan {
     >[];
   }[],
   existing_fees_type?: {
-    fees_plan_detail_id : number; // consider this as id filed 
+    fees_plan_detail_id: number; // consider this as id filed 
     fees_type_id: number;
     installment_type: string;
     total_installment: number;
@@ -141,7 +141,7 @@ export interface DetailedFeesPlan {
     installment_breakDowns: InstallmentBreakdowns[];
   }[];
   consession: ConcessionDetailForPlan[];
-  is_editable : boolean;
+  is_editable: boolean;
 }
 
 // Types for fees module
@@ -206,7 +206,7 @@ export interface StudentFeesInstallment {
 export interface FeePlanDetail {
   id: number;
   academic_session_id: number;
-  fees_plan_id: number; 
+  fees_plan_id: number;
   fees_type_id: number;
   installment_type: "Admission" | "Monthly" | "Half Yearly" | "Yearly";
   total_installment: number;
@@ -254,14 +254,14 @@ export interface PaidInstallmentsForExtraFees {
 }
 
 export interface RequestForApplyExtraFees {
-  student_id : number,
-  academic_session_id : number,   
-  fees_plan_id : number,
+  student_id: number,
+  academic_session_id: number,
+  fees_plan_id: number,
   fees_type_id: number,
   installment_type: "Admission" | "Monthly" | "Half Yearly" | "Yearly";
   total_installment: number,
   total_amount: number,
-  installment_breakDowns : Pick<InstallmentBreakdownForExtraFees , 'installment_amount' | 'due_date' | 'installment_no'>[]
+  installment_breakDowns: Pick<InstallmentBreakdownForExtraFees, 'installment_amount' | 'due_date' | 'installment_no'>[]
 }
 
 export interface ExtraFeesAppliedToStudent {
@@ -314,7 +314,7 @@ export interface StudentFeeDetails {
     fees_details: FeePlanDetail[];
     fees_plan: FeePlan;
     paid_fees: StudentFeesInstallment[];
-    extra_fees: ExtraFeesAppliedToStudent[];
+    // extra_fees: ExtraFeesAppliedToStudent[];
     wallet: {
       total_concession_for_student: number;
       total_concession_for_plan: number;
@@ -352,6 +352,65 @@ export interface StudentFeeDetails {
       }[];
     }[];
   }[];
+  extra_fees: {
+    id: number,
+    student_enrollments_id: number,
+    fees_plan_id: number,
+    fees_type_id: number,
+    total_amount: number,
+    paid_amount: number,
+    status: "Active" | "Inactive",
+    paid_installment: {
+      id: number,
+      student_fees_master_id: number,
+      student_fees_type_masters_id: number,
+      installment_id: number,
+      paid_amount: number,
+      discounted_amount: number,
+      remaining_amount: number,
+      transaction_reference: string | null,
+      payment_date: string,
+      remarks: string |  null,
+      paid_as_refund: boolean,
+      refunded_amount: number,
+      payment_mode: "Cash" | "Online" | "Bank Transfer" | "Cheque" | "UPI" | "Full Discount",
+      status: "Paid" | "Pending" | "Partially Paid" | "Overdue" | "Paid Late" | "Failed" | "Reversal Requested" | "Reversed",
+      amount_paid_as_carry_forward: number,
+      payment_status: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled';
+    }[],
+    installment_breakdown:
+    {
+      id: number,
+      student_fees_type_masters_id: number,
+      installment_no: number,
+      installment_amount: number,
+      due_date: string,
+      status: "Active" | "Inactive",
+    }[],
+  }[],
+  extra_fees_installments: {
+    id: number,
+    fees_type_id: number,
+    total_amount: number,
+    paid_amount: number,
+    due_amount: number,
+    installments_breakdown: {
+      id: number,
+      installment_no: number,
+      installment_amount: number,
+      paid_amount: number,
+      due_date: string,
+      payment_status: "Unpaid" | "Paid";
+      is_paid: boolean,
+      payment_date: string,
+      remaining_amount: number,
+      transaction_reference: string | null,
+      discounted_amount: number,
+      carry_forward_amount: number,
+      amount_paid_as_carry_forward: number,
+      applied_concession: null
+    }[]
+  }[]
 }
 
 // export interface StudentFeeDetails {
@@ -572,7 +631,7 @@ export interface FeePaymentRequest {
 
 export interface ExtraFeePaymentRequest {
   // fee_plan_details_id: number;
-  student_fees_type_masters_id: number; 
+  student_fees_type_masters_id: number;
   installment_id: number;
   paid_amount: number;
   discounted_amount: number;
@@ -594,10 +653,10 @@ export interface ExtraFeePaymentRequest {
 }
 
 export interface FeePaymentReqForExtraFees {
-    student_id: number,
-    student_fees_master_id: number,
-    // student_fees_type_masters_id : number,
-    installments : ExtraFeePaymentRequest[]
+  student_id: number,
+  student_fees_master_id: number,
+  // student_fees_type_masters_id : number,
+  installments: ExtraFeePaymentRequest[]
 }
 
 export interface FeePaymentFormData {

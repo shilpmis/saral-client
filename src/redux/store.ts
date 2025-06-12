@@ -26,6 +26,7 @@ import { PayrollApi } from "@/services/PayrollService";
 import { StudentManagementApi } from "@/services/StudentManagementService";
 import { SubjectApi } from "@/services/subjects";
 import { TimeTableApi } from "@/services/timetableService";
+import { StaffAttendanceApi } from "@/services/StaffAttendanceService";
 
 const store = configureStore({
   reducer: {
@@ -54,6 +55,7 @@ const store = configureStore({
     [DashboardApi.reducerPath]: DashboardApi.reducer,
     [PromotionApi.reducerPath]: PromotionApi.reducer,
     [PayrollApi.reducerPath]: PayrollApi.reducer,
+    [StaffAttendanceApi.reducerPath]: StaffAttendanceApi.reducer    
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -74,7 +76,8 @@ const store = configureStore({
       InquiryApi.middleware,
       DashboardApi.middleware,
       PromotionApi.middleware,
-      PayrollApi.middleware
+      PayrollApi.middleware,
+      StaffAttendanceApi.middleware
     ),
 });
 

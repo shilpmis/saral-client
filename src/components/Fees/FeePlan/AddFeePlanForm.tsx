@@ -719,7 +719,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   <CardTitle>{t("fee_plan_details")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {type === "create" && (
+                  
                     <FormField
                       control={form.control}
                       name="fees_plan.class_id"
@@ -729,6 +729,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                           <Select
                             onValueChange={(value) => field.onChange(Number.parseInt(value))}
                             value={field.value ? field.value.toString() : undefined}
+                            disabled={type === "update"}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -753,7 +754,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                         </FormItem>
                       )}
                     />
-                  )}
 
                   <FormField
                     control={form.control}

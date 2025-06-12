@@ -462,6 +462,10 @@
   "reference": "Reference",
   "applied_on ": "Applied On",
   "close": "Close",
+  "delete_fee_plan" : "Delete Fee Plan",
+  "delete_fee_type" : "Delete Fee Type",
+  "are_you_sure_you_want_to_delete_this_fee_type?_this_action_cannot_be_undone." : "Are you sure you want to delete this fee type? This action cannot be undone.",
+  "are_you_sure_you_want_to_delete_this_fee_plan?_this_action_cannot_be_undone." : "Are you sure you want to delete this fee plan? This action cannot be undone.",
   "report_generation": "Report Generation",
   "collection_report": "Collection Report",
   "pending_fee_report": "Pending Fee Report",
@@ -629,7 +633,7 @@
   "student_full_name": "Student Full Name",
   "inquiry_for_class": "Class Applying For",
   "residential_address": "Residential Address",
-  "last_class_completed": "Last Class Completed",
+  "last_completed_class": "Last Completed Class",
   "percentage/_grade": "Percentage/Grade",
   "year": "Year",
   "special_achievements": "Special Achievements",
@@ -1106,5 +1110,8 @@
   "this_reason_will_be_recorded_in_the_transaction_history" : "This reason will be recorded in the transaction history",
   "reversing_this_transaction_will_update_the_student_fee_balance_and_cannot_be_undone" : "Reversing this transaction will update the student fee balance and cannot be undone",
   "warning" : "Warning",
-  "confirm_reversal" : "Confirm Reversal"
+  "confirm_reversal" : "Confirm Reversal",
+  "used_concession" : "Used Concession",
+  "extra_fees" : "Extra Fees",
+  "comprehensive_fee_management_and_transaction_history" : "Comprehensive Fee Management and Transaction History"
 }
