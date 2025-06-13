@@ -658,6 +658,8 @@
   "salary_slip" : "Salary Slip",
   "salary_component" : "Salary Component",
   "pay_schedule" : "Pay Schedule",
+  "payroll" : "Payroll",
+  "employees" : "Employees",
   "salary_templates" : "Salary Templates",
   "manage_students" : "Manage Students",
   "basic_personal_details_of_the_employee" : "Basic personal details of the employee",
