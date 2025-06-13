@@ -282,7 +282,7 @@ export default function AdmissionInquiryForm({
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to submit inquiry. Please try again.",
+          description: (error as any)?.data?.message ?? "Failed to submit inquiry. Please try again.",
         })
       }
     }
@@ -723,7 +723,7 @@ export default function AdmissionInquiryForm({
             </FormControl>
             <div className="flex justify-between items-start h-5">
               <FormMessage className="text-xs" />
-              <span className="text-xs text-muted-foreground">{field.value.length}/100</span>
+              <span className="text-xs text-muted-foreground">{field.value.length}/350</span>
             </div>
           </FormItem>
         )}
