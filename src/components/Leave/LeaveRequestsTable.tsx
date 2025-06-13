@@ -185,11 +185,11 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
               return (
                 <TableRow key={request.id}>
                   <TableCell>
-                    {request.staff
-                      ? `${request.staff.first_name || ""} ${request.staff.middle_name || ""} ${request.staff.last_name || ""}`.trim()
+                    {request
+                      ? `${request.first_name || ""} ${request.middle_name || ""} ${request.last_name || ""}`.trim()
                       : "N/A"}
                   </TableCell>
-                  <TableCell>{request.leave_type.leave_type_name}</TableCell>
+                  <TableCell>{request.leave_type_name}</TableCell>
                   <TableCell>{new Date(request.from_date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(request.to_date).toLocaleDateString()}</TableCell>
                   <TableCell>
@@ -302,7 +302,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         <SaralPagination
           onPageChange={handlePageChange}
           currentPage={leaveRequests.page.current_page}
-          totalPages={leaveRequests.page.last_page}
+          totalPages={leaveRequests.page.last_page}          
         />
       )}
     </div>

@@ -466,12 +466,12 @@ const AdminLeaveManagement: React.FC = () => {
             <div className="bg-muted/50 p-3 rounded-md mb-4">
               <div className="text-sm">
                 <p>
-                  <span className="font-medium">Staff:</span> {DialogForApplication.application.staff?.first_name}{" "}
-                  {DialogForApplication.application.staff?.last_name}
+                  <span className="font-medium">Staff:</span> {DialogForApplication.application.first_name}{" "}
+                  {DialogForApplication.application.last_name}
                 </p>
                 <p>
                   <span className="font-medium">Leave Type:</span>{" "}
-                  {DialogForApplication.application.leave_type?.leave_type_name}
+                  {DialogForApplication.application?.leave_type_name}
                 </p>
                 <p>
                   <span className="font-medium">Duration:</span>{" "}
