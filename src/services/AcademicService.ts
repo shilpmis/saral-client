@@ -132,9 +132,9 @@ export const createDivision = createAsyncThunk<
 export const editDivision = createAsyncThunk<
   Class[],
   { aliases: string | null; class_id: number }
->("academic/createDivision", async (paylaod, { rejectWithValue }) => {
+>("academic/updateDivision", async (paylaod, { rejectWithValue }) => {
   try {
-    const res = await ApiService.put(`class/${paylaod.class_id}`, paylaod);
+    const res = await ApiService.put(`class/${paylaod.class_id}`, {aliases : paylaod.aliases});
     return res.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data || "Failed to create class");
