@@ -278,8 +278,19 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
     }
   }, [applyConcession, isOpen])
 
-  // Update the handleSubmit function to properly handle the payment request
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [pendingPaymentValues, setPendingPaymentValues] = useState<z.infer<typeof feePaymentSchema> | null>(null)
+
+  // Intercept submit to show confirmation dialog
   const handleSubmit = async (values: z.infer<typeof feePaymentSchema>) => {
+    setPendingPaymentValues(values)
+    setShowConfirmDialog(true)
+  }
+
+  // Actual payment logic, called after confirmation
+  const handleConfirmedPayment = async () => {
+    if (!pendingPaymentValues) return
     try {
       // Create an array of payment objects for each installment
       const installmentPayments: FeePaymentRequest[] = installments.map((installment: any) => {
@@ -309,7 +320,7 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
           remainingAmount = 0
           // Use the carry-forward amount from the installment
           carryForwardAmount = carryForwardAmounts[installment.id] || Number(installment.carry_forward_amount || 0)
-        } else if (values.pay_full_amount) {
+        } else if (pendingPaymentValues.pay_full_amount) {
           paidAmount = originalAmount - totalDiscount
           remainingAmount = 0
         } else {
@@ -318,14 +329,14 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
 
           // If user is paying less than the full amount, the difference becomes carry forward
           // Only if they've explicitly chosen to use carry forward
-          if (values.use_carry_forward) {
+          if (pendingPaymentValues.use_carry_forward) {
             carryForwardAmount = originalAmount - totalDiscount - paidAmount - remainingAmount
             if (carryForwardAmount < 0) carryForwardAmount = 0
           }
         }
 
         // Add existing carry forward amount if enabled and not already a carry-forward payment
-        if (!isCarryForwardPayment && values.use_carry_forward && Number(installment.carry_forward_amount || 0) > 0) {
+        if (!isCarryForwardPayment && pendingPaymentValues.use_carry_forward && Number(installment.carry_forward_amount || 0) > 0) {
           carryForwardAmount += carryForwardAmounts[installment.id] || 0
         }
 
@@ -377,10 +388,10 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
           discounted_amount: isCarryForwardPayment ? 0 : totalDiscount,
           paid_as_refund: false,
           refunded_amount: 0,
-          payment_mode: values.payment_mode,
-          transaction_reference: values.transaction_reference || "",
-          payment_date: values.payment_date,
-          remarks: values.remarks || "",
+          payment_mode: pendingPaymentValues.payment_mode,
+          transaction_reference: pendingPaymentValues.transaction_reference || "",
+          payment_date: pendingPaymentValues.payment_date,
+          remarks: pendingPaymentValues.remarks || "",
           remaining_amount: remainingAmount,
           amount_paid_as_carry_forward: carryForwardAmount,
           applied_concessions: appliedConcessions,
@@ -405,6 +416,8 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
         description: `Payment of ${formatCurrency(finalPaymentAmount)} has been recorded.`,
       })
 
+      setShowConfirmDialog(false)
+      setPendingPaymentValues(null)
       onSuccessfulSubmit()
     } catch (error) {
       console.error("Payment error:", error)
@@ -426,143 +439,128 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
   }, 0)
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center text-xl">
-            <Receipt className="mr-2 h-5 w-5" />
-            {t("process_fee_payment")}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      {/* Main Payment Dialog */}
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[600px] h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl">
+              <Receipt className="mr-2 h-5 w-5" />
+              {t("process_fee_payment")}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="bg-blue-50 p-4 rounded-md mb-4">
-          <p className="text-sm text-blue-700 font-medium">
-            {t("payment_amount")}: <span className="font-bold">{formatCurrency(totalAmount)}</span>
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            For {installments.length} installment{installments.length !== 1 ? "s" : ""}
-          </p>
+          <div className="bg-blue-50 p-4 rounded-md mb-4">
+            <p className="text-sm text-blue-700 font-medium">
+              {t("payment_amount")}: <span className="font-bold">{formatCurrency(totalAmount)}</span>
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              For {installments.length} installment{installments.length !== 1 ? "s" : ""}
+            </p>
 
-          {totalAvailableConcession > 0 && (
-            <div className="mt-2 pt-2 border-t border-blue-200">
-              <p className="text-xs text-blue-700">
-                {t("available_concession_balance")}:{" "}
-                <span className="font-semibold">{formatCurrency(totalAvailableConcession)}</span>
-              </p>
-              {availableConcessionBalance.student_concession > 0 && (
-                <p className="text-xs text-blue-600">
-                  {t("student_concession")}: {formatCurrency(availableConcessionBalance.student_concession)}
+            {totalAvailableConcession > 0 && (
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <p className="text-xs text-blue-700">
+                  {t("available_concession_balance")}:{" "}
+                  <span className="font-semibold">{formatCurrency(totalAvailableConcession)}</span>
                 </p>
-              )}
-              {availableConcessionBalance.plan_concession > 0 && (
-                <p className="text-xs text-blue-600">
-                  {t("plan_concession")}: {formatCurrency(availableConcessionBalance.plan_concession)}
+                {availableConcessionBalance.student_concession > 0 && (
+                  <p className="text-xs text-blue-600">
+                    {t("student_concession")}: {formatCurrency(availableConcessionBalance.student_concession)}
+                  </p>
+                )}
+                {availableConcessionBalance.plan_concession > 0 && (
+                  <p className="text-xs text-blue-600">
+                    {t("plan_concession")}: {formatCurrency(availableConcessionBalance.plan_concession)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {totalCarryForwardAvailable > 0 && (
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <p className="text-xs text-blue-700">
+                  {t("available_carry_forward")}:{" "}
+                  <span className="font-semibold">{formatCurrency(totalCarryForwardAvailable)}</span>
                 </p>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
-          {totalCarryForwardAvailable > 0 && (
-            <div className="mt-2 pt-2 border-t border-blue-200">
-              <p className="text-xs text-blue-700">
-                {t("available_carry_forward")}:{" "}
-                <span className="font-semibold">{formatCurrency(totalCarryForwardAvailable)}</span>
-              </p>
-            </div>
-          )}
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="payment_mode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("payment_mode")}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment mode" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Cash">{t("cash")}</SelectItem>
-                      <SelectItem value="Online">{t("online")}</SelectItem>
-                      <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
-                      <SelectItem value="Cheque">{t("cheque")}</SelectItem>
-                      <SelectItem value="Full Discount">{t("full Discount")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="transaction_reference"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("transaction_reference")} (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t("enter_reference_number")} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="payment_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("payment_date")}</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="remarks"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("remarks")} (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t("add_any_additional_notes")} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="space-y-4 rounded-md border p-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="pay_full_amount"
+                name="payment_mode"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0">
-                    <div className="space-y-0.5">
-                      <FormLabel>{t("pay_full_amount")}</FormLabel>
-                      <FormDescription>{t("pay_the_entire_installment_amount")}</FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+                  <FormItem>
+                    <FormLabel>{t("payment_mode")}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment mode" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Cash">{t("cash")}</SelectItem>
+                        <SelectItem value="Online">{t("online")}</SelectItem>
+                        <SelectItem value="Bank Transfer">{t("bank_transfer")}</SelectItem>
+                        <SelectItem value="Cheque">{t("cheque")}</SelectItem>
+                        <SelectItem value="Full Discount">{t("full Discount")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* {totalAvailableConcession > 0 && (
+              <FormField
+                control={form.control}
+                name="transaction_reference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("transaction_reference")} (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("enter_reference_number")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="payment_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("payment_date")}</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("remarks")} (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("add_any_additional_notes")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="space-y-4 rounded-md border p-4">
                 <FormField
                   control={form.control}
-                  name="apply_concession"
+                  name="pay_full_amount"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0">
                       <div className="space-y-0.5">
-                        <FormLabel>{t("apply_concessions")}</FormLabel>
-                        <FormDescription>{t("use_available_concession_balance")}</FormDescription>
+                        <FormLabel>{t("pay_full_amount")}</FormLabel>
+                        <FormDescription>{t("pay_the_entire_installment_amount")}</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -570,7 +568,6 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
                     </FormItem>
                   )}
                 />
-              )} */}
 
               {totalCarryForwardAvailable > 0 && (
                 <FormField
@@ -959,6 +956,46 @@ const PayFeesDialog: React.FC<PayFeesDialogProps> = ({
         </Form>
       </DialogContent>
     </Dialog>
+
+    {/* Confirmation Dialog */}
+    <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg flex items-center">
+            <Info className="mr-2 h-5 w-5 text-blue-600" />
+            {t("confirm_payment")}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 py-2">
+          <p className="text-sm text-gray-700">
+            {t("please_confirm_you_want_to_pay_the_following_amount")}
+          </p>
+          <div className="flex items-center justify-between bg-blue-50 rounded px-3 py-2">
+            <span className="text-sm">{t("final_payment_amount")}:</span>
+            <span className="font-bold text-blue-700">{formatCurrency(finalPaymentAmount)}</span>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={handleConfirmedPayment}
+            disabled={isPaymentProcessing}
+          >
+            {isPaymentProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t("processing")}...
+              </>
+            ) : (
+              t("confirm_and_pay")
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 
