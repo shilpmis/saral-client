@@ -7,7 +7,7 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { LogIn } from "lucide-react"
+import { Loader2, LogIn } from "lucide-react"
 import { useAppDispatch } from "@/redux/hooks/useAppDispatch"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectVerificationStatus, setCredentialsForVerificationStatus } from "@/redux/slices/authSlice"
@@ -16,6 +16,7 @@ import { login } from "@/services/AuthService"
 import { selectAuthError, selectAuthStatus, selectIsAuthenticated } from "@/redux/slices/authSlice"
 import { toast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useLoginMutation } from "@/services/AuthService"
 
 const formSchema = z.object({
   email: z.string().email({
@@ -28,7 +29,7 @@ const formSchema = z.object({
 })
 
 export default function LoginForm({ onForgotPassword }: { onForgotPassword: () => void }) {
-  const [isLoading, setIsLoading] = useState(false)
+  // const [isLoading, setIsLoading] = useState(false)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
@@ -36,6 +37,8 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
   const authError = useAppSelector(selectAuthError)
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
   const verificationStatus = useAppSelector(selectVerificationStatus)
+
+  const [login , {isLoading , isError , error}] = useLoginMutation()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,32 +51,27 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const user = await dispatch(login(values)).unwrap()
+      const user = await login({
+         email : values.email,
+         password : values.password   
+      }).unwrap()
 
-      dispatch(
-        setCredentialsForVerificationStatus({
-          isVerificationInProgress: false,
-          isVerificationFails: false,
-          verificationError: null,
-          isVerificationSuccess: true,
-        }),
-      )
+      window.location.href = "/d/students";
 
       toast({
         title: "Login successful!",
         description: "Welcome back!",
       })
 
-      setTimeout(() => {
-        window.location.reload()
-      }, 500)
+      // setTimeout(() => {
+      //   window.location.reload()
+      // }, 500)
     } catch (error) {
-      console.error("Login failed:", error)
-
+      // console.error("Login failed:", error)
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Your Email or password must be wrong! Please try again.",
+        description: (error as any)?.data?.message ?? "Your Email or password must be wrong! Please try again.",
       })
     }
   }
@@ -113,7 +111,7 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
               <FormItem>
                 <div className="flex justify-between items-center">
                   <FormLabel className="text-gray-700">Password</FormLabel>
-                  <a
+                  {/* <a
                     href="#"
                     onClick={(e) => {
                       e.preventDefault()
@@ -122,7 +120,7 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
                     className="text-sm text-orange-600 hover:text-orange-800 hover:underline"
                   >
                     Forgot password?
-                  </a>
+                  </a> */}
                 </div>
                 <FormControl>
                   <Input
@@ -146,7 +144,7 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-gray-600">Remember me for 30 days</FormLabel>
+                  <FormLabel className="text-gray-600">Remember me !</FormLabel>
                 </div>
               </FormItem>
             )}
@@ -159,7 +157,7 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
           >
             {isLoading ? (
               <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing in...
               </>
             ) : (
@@ -172,14 +170,14 @@ export default function LoginForm({ onForgotPassword }: { onForgotPassword: () =
         </form>
       </Form>
 
-      <div className="mt-8 text-center">
+      {/* <div className="mt-8 text-center">
         <p className="text-gray-500 text-sm">
           Don't have an account?{" "}
           <a href="#" className="text-orange-600 hover:underline font-medium">
             Contact administrator
           </a>
         </p>
-      </div>
+      </div> */}
     </>
   )
 }
