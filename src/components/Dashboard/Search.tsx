@@ -46,9 +46,9 @@ export function Search() {
   ]
   const staffCategories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
-    { id: "employee_code", label: "Staff ID", icon: <IdCard className="h-4 w-4" /> },
-    { id: "mobile", label: "Mobile Number", icon: <Phone className="h-4 w-4" /> },
-    { id: "role", label: "Role", icon: <UserPen className="h-4 w-4" /> },
+    // { id: "employee_code", label: "Staff ID", icon: <IdCard className="h-4 w-4" /> },
+    // { id: "mobile", label: "Mobile Number", icon: <Phone className="h-4 w-4" /> },
+    // { id: "role", label: "Role", icon: <UserPen className="h-4 w-4" /> },
   ]
   const payrollCategories: SearchCategory[] = [
     { id: "name", label: "Name", icon: <User className="h-4 w-4" /> },
