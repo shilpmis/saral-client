@@ -66,12 +66,20 @@ const formSchemaForDivision = z.object({
   }),
   aliases: z
     .string()
-    .min(3, "Alias should be at least 3 characters")
-    .max(15, "Alias should not be more than 15 characters")
-    .regex(/^[a-zA-Z0-9]+(?: [a-zA-Z0-9]+)*$/, {
-      message: "Alias should contain only letters, numbers, and single spaces",
-    })
-    .optional(),
+    .transform((val) => (val?.trim() === "" ? null : val))
+    .refine(
+      (val) =>
+        val === null ||
+        (typeof val === "string" &&
+          val.length >= 3 &&
+          val.length <= 15 &&
+          /^[a-zA-Z0-9]+(?: [a-zA-Z0-9]+)*$/.test(val)),
+      {
+        message:
+          "Alias should be at least 3 characters, not more than 15, and contain only letters, numbers, and single spaces",
+      }
+    )
+    .nullable(),
   formType: z.enum(["create", "edit"]),
 })
 
@@ -137,7 +145,7 @@ export default function AcademicSettings() {
       class_id: null,
       class: newDivision?.class.toString(),
       division: newDivision?.division,
-      aliases: newDivision?.aliases,
+      aliases: null,
       formType: "create",
     },
   })
@@ -205,7 +213,7 @@ export default function AcademicSettings() {
       formForDivsion.reset({
         class_id: cls.id,
         class: cls.class,
-        aliases: nextLetter,
+        // aliases: nextLetter,
         division: nextLetter,
         formType: "create",
       })
@@ -217,7 +225,7 @@ export default function AcademicSettings() {
     formForDivsion.reset({
       class: clas.class, // need to change class type for creation of class ,(API demands number format for create class)
       division: division.division,
-      aliases: division.aliases || "",
+      aliases: division.aliases,
       formType: "edit",
       class_id: division.id,
     })
@@ -304,16 +312,22 @@ export default function AcademicSettings() {
 
   const confirmDivisionChanges = async () => {
     const payload = formForDivsion.getValues();
-    if (payload.formType === "edit" && payload.class_id && payload.aliases) {
+
+    // Ensure aliases is null if empty string or only whitespace
+    const aliasesToSend =
+      payload.aliases === "" || payload.aliases == null || (typeof payload.aliases === "string" && payload.aliases.trim() === "")
+        ? null
+        : payload.aliases;
+
+    if (payload.formType === "edit" && payload.class_id) {
       try {
         // Edit division
         const edited_division = await dispatch(
           editDivision({
             class_id: payload.class_id,
-            aliases: payload.aliases,
+            aliases: aliasesToSend,
           }),
         ).unwrap()
-        console.log("edited_division", edited_division)
         // Update the academicClasses state for the edited division
         setAcademicClasses((prevClasses) =>
           prevClasses.map((cls) => ({
@@ -350,7 +364,7 @@ export default function AcademicSettings() {
           createDivision({
             class_id: payload.class_id,
             division: payload.division,
-            aliases: payload.aliases || null,
+            aliases: payload.aliases,
             academic_session_id: currentAcademicSession?.id ?? 0,
           }),
         ).unwrap()
@@ -366,7 +380,7 @@ export default function AcademicSettings() {
                       school_id: user!.school_id,
                       class: payload.class.toString(),
                       division: payload.division,
-                      aliases: payload.aliases || null,
+                      aliases: payload.aliases,
                     },
                   ],
                 }
@@ -443,9 +457,9 @@ export default function AcademicSettings() {
     }
   }, [academicClassesForSchool])
 
-  useEffect(() => {
-    console.log("formForDivsion.formState.errors", formForDivsion.formState.errors)
-  }, [formForDivsion.formState.errors])
+  // useEffect(() => {
+  //   console.log("formForDivsion.formState.errors", formForDivsion.formState.errors)
+  // }, [formForDivsion.formState.errors])
 
   // Update the useEffect for setting the active session
   useEffect(() => {

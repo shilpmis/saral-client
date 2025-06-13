@@ -123,7 +123,7 @@ export const Students: React.FC = () => {
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
-  const [getStudentForClass, { data: studentDataForSelectedClass }] = useLazyFetchStudentForClassQuery()
+  const [getStudentForClass, { data: studentDataForSelectedClass ,isLoading : isStudentsLoading }] = useLazyFetchStudentForClassQuery()
   const [getSingleStudent, { data: studentDataForEditStudent, isLoading: isStudentForEditLoading, isError }] =
     useLazyFetchSingleStundetQuery()
 
@@ -1096,16 +1096,52 @@ export const Students: React.FC = () => {
             </CardContent>
           </Card>
         )}
-        {studentDataForSelectedClass && listedStudentForSelectedClass && (
-          <StudentTable
-            selectd_academic_session={SelectedSession!}
-            selectedClass={selectedClass}
-            selectedDivision={selectedDivision}
-            PageDetailsForStudents={paginationDataForSelectedClass}
-            filteredStudents={filteredStudents}
-            onPageChange={handlePageChange}
-            onEdit={handleAddEditStudent}
-          />
+        {selectedClass && !selectedDivision && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("division_not_selected")}</AlertTitle>
+            <AlertDescription>
+              {t("please_select_a_division_to_view_students")}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {selectedClass && selectedDivision && (
+          isStudentsLoading ? (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>{t("students")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Improved Skeleton */}
+                <div className="space-y-3">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-4 animate-pulse">
+                      <div className="rounded-full bg-gray-200 h-8 w-8" />
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-gray-100 rounded w-1/2" />
+                      </div>
+                      <div className="h-4 bg-gray-200 rounded w-16" />
+                      <div className="h-4 bg-gray-200 rounded w-20" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            studentDataForSelectedClass && listedStudentForSelectedClass && (
+              <StudentTable
+                selectd_academic_session={SelectedSession!}
+                selectedClass={selectedClass}
+                selectedDivision={selectedDivision}
+                PageDetailsForStudents={paginationDataForSelectedClass}
+                filteredStudents={filteredStudents}
+                onPageChange={handlePageChange}
+                onEdit={handleAddEditStudent}
+              />
+            )
+          )
         )}
       </div>
 

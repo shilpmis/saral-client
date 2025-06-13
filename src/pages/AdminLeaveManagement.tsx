@@ -327,7 +327,7 @@ const AdminLeaveManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-md border-t-4 border-t-primary">
+      <Card className="shadow-md ">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-2xl font-bold text-primary">{t("leave_requests_management")}</CardTitle>
           <Button
@@ -466,12 +466,12 @@ const AdminLeaveManagement: React.FC = () => {
             <div className="bg-muted/50 p-3 rounded-md mb-4">
               <div className="text-sm">
                 <p>
-                  <span className="font-medium">Staff:</span> {DialogForApplication.application.staff?.first_name}{" "}
-                  {DialogForApplication.application.staff?.last_name}
+                  <span className="font-medium">Staff:</span> {DialogForApplication.application.first_name}{" "}
+                  {DialogForApplication.application.last_name}
                 </p>
                 <p>
                   <span className="font-medium">Leave Type:</span>{" "}
-                  {DialogForApplication.application.leave_type?.leave_type_name}
+                  {DialogForApplication.application?.leave_type_name}
                 </p>
                 <p>
                   <span className="font-medium">Duration:</span>{" "}

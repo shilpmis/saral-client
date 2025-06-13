@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -42,7 +42,7 @@ interface PayExtraFeesDialogProps {
   onSuccessfulSubmit: () => void
   studentId: number
   studentName: string
-  enrolled_academic_session_id : number
+  enrolled_academic_session_id: number
   student_fees_master_id: number
   selectedInstallments: {
     key: string
@@ -278,7 +278,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
       const payload = preparePayload(values)
 
       // Call the API
-      const response = await payExtraFees({ payload , academic_session_id : enrolled_academic_session_id }).unwrap()
+      const response = await payExtraFees({ payload, academic_session_id: enrolled_academic_session_id }).unwrap()
 
       // Handle success
       toast({
@@ -296,6 +296,58 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
         errorMessage = (paymentError.data as any)?.message || errorMessage
       }
 
+      toast({
+        variant: "destructive",
+        title: t("payment_failed"),
+        description: errorMessage,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [pendingPaymentValues, setPendingPaymentValues] = useState<z.infer<typeof extraFeePaymentSchema> | null>(null)
+  const confirmInputRef = useRef<HTMLInputElement>(null)
+  const [confirmAmount, setConfirmAmount] = useState("")
+  const [confirmError, setConfirmError] = useState("")
+
+  // Intercept submit to show confirmation dialog
+  const handleFormSubmit = (values: z.infer<typeof extraFeePaymentSchema>) => {
+    if (!validatePaymentAmount()) return
+    setPendingPaymentValues(values)
+    setShowConfirmDialog(true)
+    setConfirmAmount("")
+    setConfirmError("")
+    setTimeout(() => confirmInputRef.current?.focus(), 100)
+  }
+
+  // Actual payment logic, called after confirmation
+  const handleConfirmedPayment = async () => {
+    const finalAmount = calculateFinalPaymentAmount()
+    if (Number(confirmAmount) !== Number(finalAmount)) {
+      setConfirmError(t("entered_amount_does_not_match_the_payment_amount"))
+      return
+    }
+    setConfirmError("")
+    if (!pendingPaymentValues) return
+    try {
+      setIsSubmitting(true)
+      const payload = preparePayload(pendingPaymentValues)
+      await payExtraFees({ payload, academic_session_id: enrolled_academic_session_id }).unwrap()
+      toast({
+        title: t("payment_successful"),
+        description: `${t("payment_of")} ${formatCurrency(finalAmount)} ${t("has_been_recorded")}`,
+      })
+      setPaymentStep("success")
+      setShowConfirmDialog(false)
+      setPendingPaymentValues(null)
+    } catch (error) {
+      let errorMessage = t("there_was_an_error_processing_your_payment._please_try_again.")
+      if (paymentError && "data" in paymentError) {
+        errorMessage = (paymentError.data as any)?.message || errorMessage
+      }
       toast({
         variant: "destructive",
         title: t("payment_failed"),
@@ -429,7 +481,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
           </Card>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
               <div className="space-y-4 rounded-md border p-4">
                 {/* <FormField
                   control={form.control}
@@ -575,19 +627,22 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
                   )}
                 />
               </div>
+              <DialogFooter className="mt-6">
+                <Button variant="outline" onClick={onClose} disabled={isSubmitting || isPaymentLoading}>
+                  {t("cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isPaymentLoading}
+                >
+                  {(isSubmitting || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t("confirm_payment")}
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
         </div>
 
-        <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting || isPaymentLoading}>
-            {t("cancel")}
-          </Button>
-          <Button onClick={form.handleSubmit(handleSubmit)} disabled={isSubmitting || isPaymentLoading}>
-            {(isSubmitting || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("confirm_payment")}
-          </Button>
-        </DialogFooter>
       </>
     )
   }
@@ -654,6 +709,63 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
     )
   }
 
+  // Confirmation Dialog UI
+  const renderConfirmationDialog = () => {
+    const finalAmount = calculateFinalPaymentAmount()
+    return (
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg flex items-center">
+              <Info className="mr-2 h-5 w-5 text-blue-600" />
+              {t("confirm_payment")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <p className="text-sm text-gray-700">
+              {t("please_re_enter_the_amount_to_confirm_your_payment")}
+            </p>
+            <div className="flex items-center justify-between bg-blue-50 rounded px-3 py-2">
+              <span className="text-sm">{t("final_payment_amount")}:</span>
+              <span className="font-bold text-blue-700">{formatCurrency(finalAmount)}</span>
+            </div>
+            <Input
+              ref={confirmInputRef}
+              type="number"
+              placeholder={t("enter_amount_to_confirm")}
+              value={confirmAmount}
+              onChange={e => setConfirmAmount(e.target.value)}
+              className="mt-2"
+              min={0}
+              step="any"
+            />
+            {confirmError && (
+              <p className="text-xs text-red-600 mt-1">{confirmError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={handleConfirmedPayment}
+              disabled={isSubmitting || !confirmAmount}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("processing")}...
+                </>
+              ) : (
+                t("confirm_and_pay")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -671,6 +783,7 @@ const PayExtraFeesDialog: React.FC<PayExtraFeesDialogProps> = ({
 
         {paymentStep === "confirm" && renderConfirmStep()}
         {paymentStep === "success" && renderSuccessStep()}
+        {renderConfirmationDialog()}
       </DialogContent>
     </Dialog>
   )

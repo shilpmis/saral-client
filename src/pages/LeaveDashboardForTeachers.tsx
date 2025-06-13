@@ -501,8 +501,8 @@ const LeaveDashboardForTeachers: React.FC = () => {
                     </TableHeader>
                     <TableBody>
                       {leaveApplications.applications.map((application) => {
-                        const leaveTypeColor = application.leave_type
-                          ? getLeaveTypeColor(application.leave_type.id)
+                        const leaveTypeColor = application.leave_type_id
+                          ? getLeaveTypeColor(application.leave_type_id)
                           : "bg-gray-500"
                         return (
                           <TableRow
@@ -514,8 +514,8 @@ const LeaveDashboardForTeachers: React.FC = () => {
                               <div className="flex items-center">
                                 <div className={`w-3 h-3 rounded-full ${leaveTypeColor} mr-2`}></div>
                                 <span>
-                                  {application.leave_type
-                                    ? application.leave_type.leave_type_name
+                                  {application.leave_type_name
+                                    ? application.leave_type_name
                                     : "Unknown Leave Type"}
                                 </span>
                               </div>
@@ -650,10 +650,10 @@ const LeaveDashboardForTeachers: React.FC = () => {
                 <div>
                   <div className="flex items-center">
                     <div
-                      className={`w-3 h-3 rounded-full ${selectedLeave.leave_type ? getLeaveTypeColor(selectedLeave.leave_type.id) : "bg-gray-500"} mr-2`}
+                      className={`w-3 h-3 rounded-full ${selectedLeave.leave_type_id ? getLeaveTypeColor(selectedLeave.leave_type_id) : "bg-gray-500"} mr-2`}
                     ></div>
                     <h3 className="text-lg font-medium">
-                      {selectedLeave.leave_type ? selectedLeave.leave_type.leave_type_name : "Unknown Leave Type"}
+                      {selectedLeave.leave_type_name ? selectedLeave.leave_type_name : "Unknown Leave Type"}
                     </h3>
                   </div>
                   <p className="text-muted-foreground mt-1">
@@ -801,7 +801,7 @@ const LeaveDashboardForTeachers: React.FC = () => {
               <div className="text-sm">
                 <p>
                   <span className="font-medium">{t("leave_type")}:</span>{" "}
-                  {leaveToWithdraw.leave_type?.leave_type_name || t("unknown")}
+                  {leaveToWithdraw?.leave_type_name || t("unknown")}
                 </p>
                 <p>
                   <span className="font-medium">{t("duration")}:</span>{" "}

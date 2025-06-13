@@ -56,11 +56,43 @@ export const Authapi = createApi({
         }
       },
     }),
+    login: builder.mutation<any , LoginCredentials>({
+      query: (payload) => ({
+        url: "/login",
+        method: "POST",
+        body: payload
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          // console.log("Login successful:", data) 
+          ApiService.setTokenInLocal(data.token.token) // Store token properly;
+          dispatch(
+            setCredentialsForVerificationStatus({
+              isVerificationInProgress: false,
+              isVerificationFails: false,
+              verificationError: null,
+              isVerificationSuccess: true,
+            }),
+          )
+        } catch (error) {
+          localStorage.removeItem('access_token')
+          dispatch(setCredentialsForVerificationStatus({
+            isVerificationFails: true,
+            isVerificationInProgress: false,
+            verificationError: error,
+            isVerificationSuccess: false
+          }))
+        }
+      },
+    }),
   }
   ),
 })
 
-export const { useVerifyQuery, useLazyVerifyQuery } = Authapi
+export const { useVerifyQuery, useLazyVerifyQuery,
+  useLoginMutation
+} = Authapi
 
 
 /**

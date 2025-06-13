@@ -71,7 +71,7 @@ export const formSchema = z.object({
   address: z
     .string()
     .min(5, { message: "Address must be at least 5 characters." })
-    .max(100, { message: "Address must be no more than 100 characters." })
+    .max(350, { message: "Address must be no more than 100 characters." })
     .regex(addressRegex, { message: "Address contains invalid characters." }),
 
   previous_school: z
