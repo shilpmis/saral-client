@@ -289,10 +289,15 @@ export const FeesApi = createApi({
 
     getConcessions: builder.query<
       { data: Concession[]; meta: PageMeta },
-      { academic_session: number; page?: number }
+      { academic_session: number;
+        status ?: "all" | "active" | "inactive" ,
+        category ?: string,
+        search_term ?: string, 
+        page?: number 
+      }
     >({
-      query: ({ page = 1, academic_session }) => ({
-        url: `/concessions?academic_session=${academic_session}&page=${page}`,
+      query: ({ page = 1, academic_session , status = 'all' , category = 'all' ,search_term = undefined }) => ({
+        url: `/concessions?academic_session=${academic_session}&status=${status}&category=${category}&search=${search_term}&page=${page}`,
         method: "GET",
       }),
     }),
@@ -319,7 +324,7 @@ export const FeesApi = createApi({
 
     createConcessions: builder.mutation<
       Concession,
-      { payload: Omit<Concession, "id"> }
+      { payload: Omit<Concession, "id" | 'created_at'> }
     >({
       query: ({ payload }) => ({
         url: `/concession`,

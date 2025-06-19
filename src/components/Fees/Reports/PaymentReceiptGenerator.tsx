@@ -40,8 +40,7 @@ const PaymentReceiptGenerator: React.FC<PaymentReceiptGeneratorProps> = ({
 
   const currentAcademicSessions = useAppSelector(selectActiveAccademicSessionsForSchool)
   const activeSchool = useAppSelector(selectCurrentSchool)
-
-  console.log("studentDetails", studentDetails)  
+ 
   // Get academic session ID for fee types query
   const academicSessionId = useMemo(() => {
     if (studentDetails?.detail?.fees_plan?.academic_session_id) {

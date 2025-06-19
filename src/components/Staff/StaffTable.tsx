@@ -57,15 +57,13 @@ export default function StaffTable({
   }
   const perPageData = 6;
   const totalPages = staffList.page_meta.last_page;
-  
-  const {t} = useTranslation();
+
+  const { t } = useTranslation();
 
   const handelPageChange = (upadatedPage: number) => {
     onPageChange(upadatedPage);
   };
 
-
-  console.log(staffList)
 
   return (
     <div className="w-full overflow-auto">
@@ -74,10 +72,12 @@ export default function StaffTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("user_id")}</TableHead>
                 <TableHead>{t("name")}</TableHead>
+                <TableHead>{t("gender")}</TableHead>
                 <TableHead>{t("email")}</TableHead>
                 <TableHead>{t("mobile")}</TableHead>
+                <TableHead>{t("aadhar_no")}</TableHead>
+                <TableHead>{t("DOJ")}</TableHead>
                 <TableHead>{t("designation")}</TableHead>
                 <TableHead>{t("current_status")}</TableHead>
                 <TableHead>{t("actions")}</TableHead>
@@ -86,7 +86,6 @@ export default function StaffTable({
             <TableBody>
               {staffList.staff && staffList.staff.map((staff) => (
                 <TableRow key={staff.id}>
-                  <TableCell>{staff.id}</TableCell>
                   <TableCell>
                     <button
                       className="text-blue-600 hover:underline focus:outline-none"
@@ -95,20 +94,27 @@ export default function StaffTable({
                       {staff.first_name} {staff.middle_name} {staff.last_name}
                     </button>
                   </TableCell>
+                  <TableCell>{staff.gender}</TableCell>
                   <TableCell>
                     {isValidEmail(staff.email) ? (
                       staff.email
                     ) : (
-                      <span className="text-red-500">{t("invalid_email")}</span>
+                      <span className="text-red-500">{t("N/A")}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     {isValidMobile(staff.mobile_number) ? (
                       staff.mobile_number
                     ) : (
-                      <span className="text-red-500">{t("invalid_mobile")}</span>
+                      <span className="text-red-500">{"N/A"}</span>
                     )}
                   </TableCell>
+                  <TableCell>{staff.aadhar_no ?? "N/A"}</TableCell>
+                  <TableCell>
+                    {staff.joining_date
+                      ? new Date(staff.joining_date).toLocaleDateString("en-GB")
+                      : "-"}
+                    </TableCell>
                   <TableCell>{staff.role}</TableCell>
                   <TableCell>{staff.employment_status}</TableCell>
                   <TableCell>
@@ -153,11 +159,12 @@ export default function StaffTable({
               ))}
             </TableBody>
           </Table>
-          {selectedStaff && (<StaffPdfDilog
+          {selectedStaff && (
+            <StaffPdfDilog
             dialogOpen={dialogOpen}
             setDialogOpen={setDialogOpen}
             selectedStaff={selectedStaff}
-            StafftDetailsPDF={StafftDetailsPDF}
+            StaffDetailsPDF={StafftDetailsPDF}
           />)}
           <SaralPagination
             currentPage={staffList.page_meta.current_page ?? staffList.page_meta.currentPage}

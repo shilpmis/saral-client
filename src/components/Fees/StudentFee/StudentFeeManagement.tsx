@@ -1,5 +1,7 @@
-import type React from "react"
+"use client"
 import { useState, useEffect, useMemo } from "react"
+import type React from "react"
+
 import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Filter, ArrowUpDown, FileText, Eye } from "lucide-react"
-import { useLazyGetStudentFeesDetailsForClassQuery, useLazyGetStudentFeesDetailsQuery } from "@/services/feesService"
+import { Search, Filter, ArrowUpDown, Eye, ExternalLink } from "lucide-react"
+import { useLazyGetStudentFeesDetailsForClassQuery } from "@/services/feesService"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectAcademicClasses } from "@/redux/slices/academicSlice"
 import { useLazyGetAcademicClassesQuery } from "@/services/AcademicService"
@@ -19,10 +21,8 @@ import type { StudentWithFeeStatus } from "@/types/fees"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { SaralPagination } from "@/components/ui/common/SaralPagination"
+import StudentFeesStatus from "@/pages/StundetFeesStatus"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import type { StudentFeeDetails } from "@/types/fees"
-import StudentFeesDetailView from "./StudentFeesDetailView" 
-import StudentFeesDetailPage from "./StudentFeesDetailPage"
 
 // Session storage keys for this page
 const SESSION_SELECTED_CLASS_KEY = "studentFeeMgmt_selected_class_id"
@@ -40,8 +40,6 @@ const StudentFeesManagement: React.FC = () => {
   const [getAcademicClasses] = useLazyGetAcademicClassesQuery()
   const [getClassFeesStatus, { data: feesData, isLoading, isError, error: errorWhileFetchingClassFees }] =
     useLazyGetStudentFeesDetailsForClassQuery()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading: isLoadingDetails }] =
-    useLazyGetStudentFeesDetailsQuery()
 
   // State for class/division selection and filtering
   const [selectedClass, setSelectedClass] = useState<string>("")
@@ -51,15 +49,15 @@ const StudentFeesManagement: React.FC = () => {
   const [students, setStudents] = useState<StudentWithFeeStatus[]>([])
   const [currentPage, setCurrentPage] = useState(1)
 
-  // State for student details dialog
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  // State for student details modal
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [selectedStudentName, setSelectedStudentName] = useState<string>("")
   const [hasRestoredSession, setHasRestoredSession] = useState(false)
-
 
   // Load state from sessionStorage ONLY after academicClasses are loaded
   useEffect(() => {
-    if (!academicClasses || academicClasses.length === 0 || hasRestoredSession) return;
+    if (!academicClasses || academicClasses.length === 0 || hasRestoredSession) return
     const savedClass = sessionStorage.getItem(SESSION_SELECTED_CLASS_KEY)
     const savedDivision = sessionStorage.getItem(SESSION_SELECTED_DIVISION_KEY)
     const savedPage = sessionStorage.getItem(SESSION_SELECTED_PAGE_KEY)
@@ -102,7 +100,6 @@ const StudentFeesManagement: React.FC = () => {
         page: pageToSet,
       })
     }
-  // eslint-disable-next-line
   }, [academicClasses, currentAcademicSession, hasRestoredSession])
 
   // Save state to sessionStorage
@@ -213,11 +210,19 @@ const StudentFeesManagement: React.FC = () => {
     setSortConfig({ key, direction })
   }
 
-  // View student details
+  // View student details in modal
   const handleViewDetails = (studentId: number) => {
     setSelectedStudentId(studentId)
-    getStudentFeesDetails({student_id : studentId , academic_session_id: currentAcademicSession!.id})
-    setIsDetailsDialogOpen(true)
+    setIsModalOpen(true)
+  }
+
+  const handleGenerateReceipt = (studentId: number) => {
+    console.log("Generate receipt for student ID:", studentId)
+  }
+
+  // Navigate to full details page
+  const handleViewFullDetails = (studentId: number) => {
+    navigate(`/d/fee/student/${studentId}`)
   }
 
   // Get status badge variant based on fee status
@@ -226,7 +231,7 @@ const StudentFeesManagement: React.FC = () => {
       case "Paid":
         return "default"
       case "Partially Paid":
-        return "warning"
+        return "outline"
       case "Overdue":
         return "destructive"
       default:
@@ -242,141 +247,6 @@ const StudentFeesManagement: React.FC = () => {
     })}`
   }
 
-  // Handle generating student fee report
-  const handleGenerateReceipt = (studentId: number) => {
-    // Get student details if not already loaded
-    if (!studentFeeDetails || selectedStudentId !== studentId) {
-      setSelectedStudentId(studentId)
-      getStudentFeesDetails({student_id : studentId , academic_session_id : currentAcademicSession!.id }).then(() => {
-        // Generate report after data is loaded
-        generateStudentReport(studentId)
-      })
-    } else {
-      // Generate report with existing data
-      generateStudentReport(studentId)
-    }
-  }
-
-  // Generate comprehensive student fee report
-  const generateStudentReport = (studentId: number) => {
-    if (!studentFeeDetails) return
-
-    // Create a new window for printing
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) {
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: t("could_not_open_print_window._please_check_your_popup_blocker_settings."),
-      })
-      return
-    }
-
-    // Generate HTML content for printing
-    const student = studentFeeDetails.student
-    const feesStatus = student.fees_status
-
-    const printContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>${t("student_fee_details")}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .section { margin-bottom: 20px; }
-        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .summary-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
-        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        .badge { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 12px; }
-        .badge-default { background-color: #22c55e; color: white; }
-        .badge-outline { background-color: #f59e0b; color: white; }
-        .badge-destructive { background-color: #ef4444; color: white; }
-        .badge-secondary { background-color: #6b7280; color: white; }
-        .text-green { color: #22c55e; }
-        .text-red { color: #ef4444; }
-        .text-blue { color: #3b82f6; }
-        .text-amber { color: #f59e0b; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .font-bold { font-weight: bold; }
-        .school-header { text-align: center; margin-bottom: 10px; }
-        .school-name { font-size: 24px; font-weight: bold; }
-        .school-address { font-size: 14px; }
-        .report-title { font-size: 18px; font-weight: bold; text-align: center; margin: 15px 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        @media print {
-          button { display: none; }
-          @page { size: A4; margin: 1cm; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="school-header">
-        <div class="school-name">${authState.user?.school.name || "School Management System"}</div>
-        <div class="school-address">${authState.user?.school.address || ""}</div>
-      </div>
-      
-      <div class="report-title">${t("student_fee_details_report")}</div>
-      
-      <div class="header">
-        <p>${t("generated_on")} ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">${t("student_information")}</div>
-        <div class="summary-box">
-          <p><strong>${t("name")}:</strong> ${student.first_name} ${student.middle_name || ""} ${student.last_name}</p>
-          <p><strong>${t("gr_number")}:</strong> ${student.gr_no}</p>
-          <p><strong>${t("roll_number")}:</strong> ${student.roll_number || "-"}</p>
-          <p><strong>${t("fee_plan")}:</strong> ${studentFeeDetails.detail.fees_plan.name}</p>
-          <p><strong>${t("academic_year")}:</strong> ${currentAcademicSession?.session_name || "-"}</p>
-          <p><strong>${t("class")}:</strong> ${selectedClass} ${selectedDivision?.division || ""}</p>
-        </div>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">${t("fee_summary")}</div>
-        <div class="summary-box">
-          <p><strong>${t("total_fees")}:</strong> ${formatCurrency(feesStatus.total_amount)}</p>
-          <p><strong>${t("paid_amount")}:</strong> ${formatCurrency(feesStatus.paid_amount)}</p>
-          <p><strong>${t("discounted_amount")}:</strong> ${formatCurrency(feesStatus.discounted_amount || 0)}</p>
-          <p><strong>${t("due_amount")}:</strong> ${formatCurrency(feesStatus.due_amount)}</p>
-          <p><strong>${t("payment_status")}:</strong> <span class="badge badge-${getStatusBadgeVariant(feesStatus.status)}">${feesStatus.status}</span></p>
-        </div>
-      </div>
-      
-      <div class="footer">
-        <p>${t("this_is_a_computer_generated_report_and_does_not_require_a_signature.")}</p>
-      </div>
-      
-      <div style="text-align: center; margin-top: 20px;">
-        <button onclick="window.print()">${t("print_report")}</button>
-      </div>
-    </body>
-    </html>
-  `
-
-    // Write to the new window and print
-    printWindow.document.open()
-    printWindow.document.write(printContent)
-    printWindow.document.close()
-
-    // Trigger print after content is loaded
-    printWindow.onload = () => {
-      printWindow.focus()
-      // Uncomment to automatically print
-      // printWindow.print();
-    }
-
-    toast({
-      title: t("report_generated"),
-      description: t("student_fee_report_has_been_generated_successfully"),
-    })
-  }
-
   // Initialize data
   useEffect(() => {
     if (!academicClasses && authState.user) {
@@ -386,12 +256,7 @@ const StudentFeesManagement: React.FC = () => {
 
   // Only auto-select first class/division if session restore has NOT happened
   useEffect(() => {
-    if (
-      academicClasses &&
-      academicClasses.length > 0 &&
-      !selectedClass &&
-      !hasRestoredSession
-    ) {
+    if (academicClasses && academicClasses.length > 0 && !selectedClass && !hasRestoredSession) {
       const firstClassWithDivisions = academicClasses.find((cls) => cls.divisions.length > 0)
       if (firstClassWithDivisions) {
         setSelectedClass(firstClassWithDivisions.class.toString())
@@ -402,7 +267,6 @@ const StudentFeesManagement: React.FC = () => {
         })
       }
     }
-  // eslint-disable-next-line
   }, [academicClasses, selectedClass, currentAcademicSession, hasRestoredSession])
 
   // Update students when fees data changes
@@ -415,9 +279,7 @@ const StudentFeesManagement: React.FC = () => {
   return (
     <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">
-          {t("student_fee_management")}
-        </h2>
+        <h2 className="text-3xl font-bold">{t("student_fee_management")}</h2>
       </div>
 
       <Card className="mb-6">
@@ -469,7 +331,7 @@ const StudentFeesManagement: React.FC = () => {
               </Select>
             </div>
           </div>
-          {/* <div className="relative flex-grow max-w-md">
+          <div className="relative flex-grow max-w-md">
             <Search className="absolute left-3 top-9 transform -translate-y-1/2 text-gray-400" />
             <label htmlFor="search" className="text-sm font-medium text-gray-700 mb-1 block">
               {t("search")}
@@ -481,7 +343,7 @@ const StudentFeesManagement: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
-          </div> */}
+          </div>
         </CardContent>
       </Card>
 
@@ -592,7 +454,9 @@ const StudentFeesManagement: React.FC = () => {
                       <TableCell>{formatCurrency(student.fees_status.total_amount)}</TableCell>
                       <TableCell>{formatCurrency(student.fees_status.paid_amount)}</TableCell>
                       <TableCell className="font-medium text-red-600">
-                        {formatCurrency((Number(student.fees_status.total_amount)- Number(student.fees_status.paid_amount)))}
+                        {formatCurrency(
+                          Number(student.fees_status.total_amount) - Number(student.fees_status.paid_amount),
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(student.fees_status.status) as any}>
@@ -603,19 +467,21 @@ const StudentFeesManagement: React.FC = () => {
                         <div className="flex justify-end space-x-2">
                           <Button
                             variant="outline"
-                            size="icon"
-                            onClick={() => handleViewDetails(student.id)}
-                            title={t("view_details")}
+                            size="sm"
+                            onClick={() =>
+                              handleViewDetails(student.id)
+                            }
+                            title={t("quick_view")}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
-                            size="icon"
-                            onClick={() => handleGenerateReceipt(student.id)}
-                            title={t("generate_student_report")}
+                            size="sm"
+                            onClick={() => handleViewFullDetails(student.id)}
+                            title={t("full_details_and_management")}
                           >
-                            <FileText className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -645,32 +511,23 @@ const StudentFeesManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Student Details Dialog */}
       <Dialog
-        open={isDetailsDialogOpen}
+        open={isModalOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setIsDetailsDialogOpen(false)
+            setIsModalOpen(false)
           }
         }}
       >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          {selectedStudentId && studentFeeDetails ? (
-            // <StudentFeesDetailView
-            //   studentFeeDetails={studentFeeDetails as StudentFeeDetails}
-            //   isLoading={isLoadingDetails}
-            //   onClose={() => setIsDetailsDialogOpen(false)}
-            //   academicSession={currentAcademicSession!}
-            //   schoolInfo={{
-            //     name: authState.user?.school?.name || "School Management System",
-            //     address: authState.user?.school?.address || "",
-            //   }}
-            //   showBackButton={false}
-            // />
-            <StudentFeesDetailPage
-              studentId={selectedStudentId}
-              onClose={() => setIsDetailsDialogOpen(false)}
-            />
+          {selectedStudentId ? (
+            <>
+              <StudentFeesStatus
+                studentId={selectedStudentId}
+                onClose={() => setIsModalOpen(false)}
+                mode="dialog"
+              />
+            </>
           ) : (
             <div className="p-6 space-y-4">
               <h3 className="text-lg font-medium">Loading student fee details...</h3>
@@ -683,6 +540,7 @@ const StudentFeesManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
     </div>
   )
 }

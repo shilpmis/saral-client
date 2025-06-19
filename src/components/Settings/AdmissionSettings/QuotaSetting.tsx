@@ -50,7 +50,7 @@ import {
 // Validation schema for quota
 const quotaSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  description: z.string().optional(),
+  description: z.string().min(5, { message: "Description must be at least 5 characters" }),
   eligibility_criteria: z.string().optional(),
   is_active: z.boolean().default(true),
 })
@@ -79,9 +79,10 @@ function QuotaForm({
   // Update form values when defaultValues change (for editing)
   useEffect(() => {
     if (defaultValues) {
-      form.reset(defaultValues)
+      form.reset({...defaultValues , is_active : Boolean(Number(defaultValues.is_active))})
     }
   }, [defaultValues, form])
+
 
   return (
     <Form {...form}>
@@ -143,11 +144,11 @@ function QuotaForm({
               <div className="space-y-0.5">
                 <FormLabel className="text-base">{t("active_status")}</FormLabel>
                 <FormDescription>
-                  {field.value ? t("this_quota_is_active") : t("this_quota_is_inactive")}
+                  {Boolean(Number(field.value)) ? t("this_quota_is_active") : t("this_quota_is_inactive")}
                 </FormDescription>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                <Switch checked={Boolean(Number(field.value))} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
@@ -203,7 +204,9 @@ export default function QuotaManagement() {
   //   refetch: refetchAllocations,
   // } = useGetQuotaAllocationsQuery()
 
-  const { data: classSeats, isLoading: isLoadingSeats, refetch: refetchSeats } = useGetClassSeatAvailabilityQuery()
+  const { data: classSeats, isLoading: isLoadingSeats, refetch: refetchSeats } = useGetClassSeatAvailabilityQuery({
+    acadamic_session_id : currentAcademicSession!.id,
+  })
 
   const {
     isLoading: isLoadingClasses,

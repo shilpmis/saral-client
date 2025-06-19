@@ -1,3 +1,4 @@
+"use client"
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +21,7 @@ import {
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Calendar, Filter, RefreshCw } from "lucide-react"
+import { AlertCircle, Calendar, Filter, RefreshCw, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import LeaveRequestsTable from "@/components/Leave/LeaveRequestsTable"
@@ -92,7 +93,7 @@ const AdminLeaveManagement: React.FC = () => {
 
   const confirmStatusChange = async () => {
     if (!DialogForApplication.application || !DialogForApplication.action) return
-    
+
     // Validate remarks are provided
     if (!actionReason.trim()) {
       toast({
@@ -105,14 +106,14 @@ const AdminLeaveManagement: React.FC = () => {
 
     try {
       await updateStatusForApplication({
-        application_id: DialogForApplication.application.uuid, // Make sure to use uuid here
+        application_id: DialogForApplication.application.uuid,
         status: DialogForApplication.action === "approve" ? "approved" : "rejected",
         remarks: actionReason.trim(),
         academic_session_id: CurrentAcademicSessionForSchool!.id,
       }).unwrap()
 
       fetchLeaveApplication(activeTab as "teacher" | "other", statusFilter, 1)
-      
+
       toast({
         title: "Leave request updated",
         description: `The leave request has been ${DialogForApplication.action === "approve" ? "approved" : "rejected"}.`,
@@ -150,7 +151,7 @@ const AdminLeaveManagement: React.FC = () => {
         const status = await updateStatusForApplication({
           application_id: requestId,
           status: newStatus,
-          remarks: actionReason.trim(), // Include remarks in the request
+          remarks: actionReason.trim(),
           academic_session_id: CurrentAcademicSessionForSchool!.id,
         }).unwrap()
 
@@ -171,8 +172,17 @@ const AdminLeaveManagement: React.FC = () => {
     [actionReason, statusFilter, CurrentAcademicSessionForSchool, updateStatusForApplication, toast],
   )
 
+  // Clear the relevant leave request state before fetching new data on tab, status, or page change to prevent data accumulation and stale data display.
+  useEffect(() => {
+    setLeaveRequestsForTeachingStaff(null)
+    setLeaveRequestsForOtherStaff(null)
+    fetchLeaveApplication(activeTab as "teacher" | "other", statusFilter, 1)
+  }, [activeTab, statusFilter])
+
   const onPageChange = useCallback(
     (page: number) => {
+      if (activeTab === "teacher") setLeaveRequestsForTeachingStaff(null)
+      else setLeaveRequestsForOtherStaff(null)
       fetchLeaveApplication(
         activeTab as "teacher" | "other",
         statusFilter,
@@ -188,6 +198,10 @@ const AdminLeaveManagement: React.FC = () => {
     fetchLeaveApplication(activeTab as "teacher" | "other", statusFilter, 1)
   }
 
+  const clearStatusFilter = () => {
+    setStatusFilter("all")
+  }
+
   async function fetchLeaveApplication(
     type: "teacher" | "other",
     status: "pending" | "approved" | "rejected" | "cancelled" | "all",
@@ -195,7 +209,6 @@ const AdminLeaveManagement: React.FC = () => {
     date?: string,
   ) {
     try {
-      // Create API params, omitting status if it's "all"
       const params: any = {
         page: page,
         date: date,
@@ -203,16 +216,15 @@ const AdminLeaveManagement: React.FC = () => {
         role: type === "teacher" ? "teaching" : "non-teaching",
         status: status,
       }
-      
-      // Only include status if it's not "all"
+
       if (status !== "all") {
-        params.status = status;
+        params.status = status
       }
 
       if (type === "teacher") {
-        getLeaveApplicationsForTeachingStaff(params);
+        getLeaveApplicationsForTeachingStaff(params)
       } else {
-        getLeaveApplicationsForOtherStaff(params);
+        getLeaveApplicationsForOtherStaff(params)
       }
     } catch (error) {
       console.error("Error fetching leave applications:", error)
@@ -237,8 +249,7 @@ const AdminLeaveManagement: React.FC = () => {
 
   useEffect(() => {
     fetchLeaveApplication(activeTab as "teacher" | "other", statusFilter, 1)
-  }, [activeTab , statusFilter])
-
+  }, [activeTab, statusFilter])
 
   useEffect(() => {
     if (selectedDate) {
@@ -265,23 +276,32 @@ const AdminLeaveManagement: React.FC = () => {
     }
   }
 
+  const renderSkeletonLoader = () => {
+    return (
+      <div className="space-y-4 py-8">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex items-center space-x-4 p-4 border rounded-md">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-[150px]" />
+            </div>
+            <div className="space-x-2">
+              <Skeleton className="h-8 w-16 inline-block" />
+              <Skeleton className="h-8 w-16 inline-block" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const renderEmptyState = () => {
     const isLoading = activeTab === "teacher" ? loadingForTeachersLeave : loadingForOtherStaffLeave
 
     if (isLoading) {
-      return (
-        <div className="space-y-4 py-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 border rounded-md">
-              <Skeleton className="h-12 w-12 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )
+      return renderSkeletonLoader()
     }
 
     const currentData =
@@ -296,10 +316,8 @@ const AdminLeaveManagement: React.FC = () => {
             {statusFilter === "all"
               ? t("there_are_no_leave_applications_of_any_status_for")
               : `${t("there_are_no")} ${statusFilter} ${t("leave_applications_for")}`}{" "}
-            {activeTab === "teacher" ? t("teaching") : t("non_teaching")}{" "}
-            {t("staff")}
+            {activeTab === "teacher" ? t("teaching") : t("non_teaching")} {t("staff")}
             {selectedDate ? ` on ${new Date(selectedDate).toLocaleDateString()}` : ""}.
-            
             {statusFilter !== "all" && (
               <div className="mt-2">
                 {t("try_checking")}{" "}
@@ -309,7 +327,6 @@ const AdminLeaveManagement: React.FC = () => {
                 {t("applications_instead.")}
               </div>
             )}
-            
             {selectedDate && (
               <div className="mt-2">
                 <Button variant="outline" size="sm" className="mt-2" onClick={clearDateFilter}>
@@ -327,9 +344,9 @@ const AdminLeaveManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-md ">
+      <Card className="shadow-md">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-2xl font-bold text-primary">{t("leave_requests_management")}</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary">{t("leave_management")}</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -347,17 +364,15 @@ const AdminLeaveManagement: React.FC = () => {
               <TabsTrigger value="other">{t("other_staff_leave_requests")}</TabsTrigger>
             </TabsList>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4 bg-muted/50 p-3 rounded-md">
-              <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full">
+            {/* Filter Controls */}
+            <div className="space-y-4 bg-muted/50 p-4 rounded-md">
+              <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <div className="flex items-center space-x-2 w-full sm:w-auto">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <SaralDatePicker
-                    date={selectedDate}
-                    onDateChange={(date) => setSelectedDate(date)}
-                  />
+                  <SaralDatePicker date={selectedDate} onDateChange={(date) => setSelectedDate(date)} />
                   {selectedDate && (
                     <Button variant="ghost" size="sm" className="h-8 px-2" onClick={clearDateFilter}>
-                      ✕
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
@@ -366,7 +381,9 @@ const AdminLeaveManagement: React.FC = () => {
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <Select
                     value={statusFilter}
-                    onValueChange={(value: "pending" | "approved" | "rejected" | "cancelled" | "all") => setStatusFilter(value)}
+                    onValueChange={(value: "pending" | "approved" | "rejected" | "cancelled" | "all") =>
+                      setStatusFilter(value)
+                    }
                   >
                     <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by status" />
@@ -382,11 +399,38 @@ const AdminLeaveManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Badge className={getStatusBadgeColor(statusFilter)}>
-                  {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
-                </Badge>
-              </div>
+              {/* Active Filters Display */}
+              {(statusFilter !== "all" || selectedDate) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{t("active_filters")}:</span>
+
+                  {statusFilter !== "all" && (
+                    <Badge className={`${getStatusBadgeColor(statusFilter)} flex items-center space-x-1`}>
+                      <span>{statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
+                      <button
+                        onClick={clearStatusFilter}
+                        className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                        aria-label="Clear status filter"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+
+                  {selectedDate && (
+                    <Badge variant="outline" className="flex items-center space-x-1">
+                      <span>{new Date(selectedDate).toLocaleDateString()}</span>
+                      <button
+                        onClick={clearDateFilter}
+                        className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                        aria-label="Clear date filter"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
             {renderEmptyState()}
@@ -403,7 +447,7 @@ const AdminLeaveManagement: React.FC = () => {
                   }
                   staff_type="teacher"
                   onPageChange={onPageChange}
-                  statusFilter={statusFilter} // Add this line to pass the required prop
+                  statusFilter={statusFilter}
                 />
               )}
             </TabsContent>
@@ -420,7 +464,7 @@ const AdminLeaveManagement: React.FC = () => {
                   }
                   staff_type="other"
                   onPageChange={onPageChange}
-                  statusFilter={statusFilter} // Add this line to pass the required prop
+                  statusFilter={statusFilter}
                 />
               )}
             </TabsContent>
@@ -470,8 +514,7 @@ const AdminLeaveManagement: React.FC = () => {
                   {DialogForApplication.application.last_name}
                 </p>
                 <p>
-                  <span className="font-medium">Leave Type:</span>{" "}
-                  {DialogForApplication.application?.leave_type_name}
+                  <span className="font-medium">Leave Type:</span> {DialogForApplication.application?.leave_type_name}
                 </p>
                 <p>
                   <span className="font-medium">Duration:</span>{" "}

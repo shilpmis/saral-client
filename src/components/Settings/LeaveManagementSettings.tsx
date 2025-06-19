@@ -40,7 +40,7 @@ import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { selectLeaveTypeForSchool } from "@/redux/slices/leaveSlice"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import NumberInput from "../ui/NumberInput"
+import { NumberInput } from "../ui/NumberInput"
 
 // Schema for leave type
 const leaveTypeSchema = z.object({

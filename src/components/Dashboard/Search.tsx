@@ -242,9 +242,9 @@ export function Search() {
   }
 
   // Handle student selection - navigate to student profile page
-  const handleSelectStudent = (student: Student) => {
+  const handleSelectStudent = (student_id: number) => {
     // Navigate to the student profile page with the student ID
-    navigate(`/d/student/${student.id}`)
+    navigate(`/d/student/${student_id}`)
     // Clear search results and query
     setShowResults(false)
     setSearchQuery("")
@@ -252,18 +252,18 @@ export function Search() {
   }
 
   // Update handleSelectStudentForFees to support /d/pay-fees/:id?session_id=2 context
-  const handleSelectStudentForFees = (student: Student) => {
+  const handleSelectStudentForFees = (student_id: number) => {
     if (isPayFeesProfilePage || isPayFeesStudentDetailPage) {
       // Preserve session_id if present in the current URL
       const params = new URLSearchParams(location.search)
       const sessionId = params.get("session_id") || currentAcademicSession?.id
-      let url = `/d/pay-fees/${student.id}`
+      let url = `/d/pay-fees/${student_id}`
       if (sessionId) {
         url += `?session_id=${sessionId}`
       }
       navigate(url)
     } else {
-      navigate(`/d/fee/student/${student.id}`)
+      navigate(`/d/fee/student/${student_id}`)
     }
     setShowResults(false)
     setSearchQuery("")

@@ -19,6 +19,7 @@ import * as XLSX from 'xlsx'
 
 interface ExcelDownloadModalProps {
   academicClasses: AcademicClasses[] | null
+  selctedDivisionFromParent : Division | null
 }
 
 // Define field groups for student data based on the provided mapping
@@ -75,13 +76,14 @@ const fieldGroups = {
   ],
 }
 
-export default function ExcelDownloadModalForStudents({ academicClasses }: ExcelDownloadModalProps) {
+export default function ExcelDownloadModalForStudents({ academicClasses , selctedDivisionFromParent  }: ExcelDownloadModalProps) {
+  
   const AcademicSessionsForSchool = useAppSelector(selectAccademicSessionsForSchool)
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
   const {t} = useTranslation()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedClass, setSelectedClass] = useState<string>("")
+  const [selectedClass, setSelectedClass] = useState<string | null>(null)
   const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -103,7 +105,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
   }, [])
 
   const availableDivisions =
-    academicClasses && selectedClass ? academicClasses.find((cls) => cls.class.toString() === selectedClass) : null
+    academicClasses && selectedClass ? academicClasses.find((cls) => cls.id.toString() === selectedClass) : null
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value)
@@ -114,7 +116,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
     if (!academicClasses) return
 
     const selectedDiv = academicClasses
-      .find((cls) => cls.class.toString() === selectedClass)
+      .find((cls) => cls.id.toString() === selectedClass)
       ?.divisions.find((div) => div.id.toString() === value)
 
     if (selectedDiv) {
@@ -230,7 +232,7 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
       const transformedExcel = await transformExcelHeaders(response);
       
       // Generate filename
-      const fileName = `Students_${selectedClass}_${selectedDivision?.division || ""}_${new Date().toISOString().split("T")[0]}.xlsx`
+      const fileName = `Students_${academicClasses!.find((cls) => cls.id.toString() === selectedClass)?.class}_${selectedDivision?.division || ""}_${new Date().toISOString().split("T")[0]}.xlsx`
 
       // Download the transformed Excel
       const url = URL.createObjectURL(transformedExcel)
@@ -253,10 +255,18 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
 
   useEffect(() => {
     if (!isOpen) {
-      setSelectedClass("")
+      setSelectedClass(null)
       setSelectedDivision(null)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (academicClasses && selctedDivisionFromParent) {
+      setSelectedClass(selctedDivisionFromParent.class_id.toString())
+      setSelectedDivision(selctedDivisionFromParent)
+    }
+  } , [])
+
 
   const selectedFieldCount = Object.values(selectedFields).filter(Boolean).length
 
@@ -285,14 +295,14 @@ export default function ExcelDownloadModalForStudents({ academicClasses }: Excel
             </div>
             <div className="space-y-2">
               <Label htmlFor="class">{t("select_class")}</Label>
-              <Select value={selectedClass} onValueChange={handleClassChange}>
+              <Select value={selectedClass ?? undefined} onValueChange={handleClassChange}>
                 <SelectTrigger id="class">
                   <SelectValue placeholder={t("select_class")} />
                 </SelectTrigger>
                 <SelectContent>
                   {academicClasses?.map((cls) =>
                     cls.divisions.length > 0 ? (
-                      <SelectItem key={cls.class} value={cls.class.toString()}>
+                      <SelectItem key={cls.class} value={cls.id.toString()}>
                         Class {cls.class}
                       </SelectItem>
                     ) : null

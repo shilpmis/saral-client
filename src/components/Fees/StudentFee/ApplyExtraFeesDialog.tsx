@@ -17,7 +17,7 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { format, addMonths } from "date-fns"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "@/components/ui/NumberInput"
 import type { RequestForApplyExtraFees } from "@/types/fees"
 
 // Define the installment types

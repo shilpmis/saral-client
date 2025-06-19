@@ -28,13 +28,13 @@ import type { z } from "zod"
 import type { Student, StudentEntry, UpdateStudent } from "@/types/student"
 import { Loader2 } from "lucide-react"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "../ui/NumberInput"
 
 interface StudentFormProps {
   onClose: () => void
   form_type: "create" | "update" | "view"
   is_use_for_onBoarding?: boolean
-  inquiry_id?: number 
+  inquiry_id?: number
   initial_data?: Student | null
   setListedStudentForSelectedClass?: (data: any) => void
   setPaginationDataForSelectedClass?: (data: any) => void
@@ -65,7 +65,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const CurrentAcademicSessionForSchool = useAppSelector(selectActiveAccademicSessionsForSchool)
 
   const customStudentSchema = studentSchema
-  
+
     .refine(
       (data) => {
         if (data.class) {
@@ -78,7 +78,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         path: ["division"], // Specify the path to the field that should show the error
       },
     )
-  
+
   const form = useForm<StudentFormData>({
     resolver: zodResolver(customStudentSchema),
     defaultValues: {
@@ -88,7 +88,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       first_name_in_guj: null,
       middle_name_in_guj: null,
       last_name_in_guj: null,
-      gender: undefined, 
+      gender: undefined,
       birth_date: "",
       birth_place: null,
       birth_place_in_guj: null,
@@ -187,7 +187,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
     useAddSingleStudentMutation()
 
   const [convertInquiryToStudent, { isLoading: isOnBoardingStudent, isError: errorWhileOnBoardingStudent }] =
-  useConvertQueryToStudentMutation()
+    useConvertQueryToStudentMutation()
 
   const [selectedClass, setSelectedClass] = useState<string>("")
   // const [selectedDivision, setSelectedDivision] = useState<Division | null>(null)
@@ -334,30 +334,30 @@ const StudentForm: React.FC<StudentFormProps> = ({
         },
       }
 
-      if(is_use_for_onBoarding) {
-        if(!inquiry_id){
+      if (is_use_for_onBoarding) {
+        if (!inquiry_id) {
           toast({
             variant: "destructive",
             title: "Internal Error ! Inquiry Id not found",
           })
           return
         }
-          try {
-            // const res = await convertInquiryToStudent({
-            //   inquiry_id: inquiry_id,
-            //   payload: payload,
-            // }).unwrap()
+        try {
+          // const res = await convertInquiryToStudent({
+          //   inquiry_id: inquiry_id,
+          //   payload: payload,
+          // }).unwrap()
 
-            // if (onSubmitSuccess) {
-            //   onSubmitSuccess({...res , class_id :payload.students_data.class_id})
-            // } else {
-            //   onClose()
-            // }
+          // if (onSubmitSuccess) {
+          //   onSubmitSuccess({...res , class_id :payload.students_data.class_id})
+          // } else {
+          //   onClose()
+          // }
 
-          } catch (error) {
-            console.log("Error while converting inquiry to student:", error)  
-            onSubmitError && onSubmitError(error);
-          }
+        } catch (error) {
+          console.log("Error while converting inquiry to student:", error)
+          onSubmitError && onSubmitError(error);
+        }
       }
       else {
         try {
@@ -365,15 +365,15 @@ const StudentForm: React.FC<StudentFormProps> = ({
             payload: payload,
             academic_session: CurrentAcademicSessionForSchool!.id,
           }).unwrap()
-  
+
           toast({
             variant: "default",
             title: "Success",
             description: "Student Created Successfully",
           })
           if (onSubmitSuccess) {
-            onSubmitSuccess({...response.data , class_id :payload.students_data.class_id})
-          } else{
+            onSubmitSuccess({ ...response.data, class_id: payload.students_data.class_id })
+          } else {
             onClose()
           }
         } catch (error: any) {
@@ -538,14 +538,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
         if (response.data) {
           if (setListedStudentForSelectedClass) setListedStudentForSelectedClass(response.data.data)
           if (setPaginationDataForSelectedClass) setPaginationDataForSelectedClass(response.data.meta)
-            if (onSubmitSuccess) {
-              onSubmitSuccess({...response.data , class_id :payload.students_data.class_id})
-            } else{
-              onClose()
-            }            
+          if (onSubmitSuccess) {
+            onSubmitSuccess({ ...response.data, class_id: payload.students_data.class_id })
+          } else {
+            onClose()
+          }
         }
       } catch (error: any) {
-        console.log("Erro while adding student :" , error)
+        console.log("Erro while adding student :", error)
         if (error?.data?.errors?.code === "E_VALIDATION_ERROR") {
           error.data.errors.messages.map((msg: any) => {
             toast({
@@ -605,7 +605,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         (cls) => cls.id === initial_data?.student_meta?.admission_class_id,
       )[0];
 
-      
+
       form.reset({
         first_name: initial_data?.first_name,
         last_name: initial_data?.last_name,
@@ -648,11 +648,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
         last_name_in_guj: initial_data?.last_name_in_guj,
         secondary_mobile: initial_data!.student_meta!.secondary_mobile,
         admission_class: null,
-        admission_division:  null,
+        admission_division: null,
         class: CurrentDivision?.class_id.toString(),
         division: CurrentDivision?.id.toString(),
       })
-      
+
     } else if (form_type === "create" && initial_data && is_use_for_onBoarding) {
 
       /**
@@ -662,11 +662,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
        */
 
       if (initial_data?.class_id && AcademicClasses) {
-        
+
         const CurrentClass = AcademicClasses?.filter((cls) => cls.id === initial_data.class_id)[0];
         if (CurrentClass) handleClassChange(CurrentClass.id.toString(), "class")
         if (CurrentClass) handleDivisionChange(CurrentClass.id.toString(), "class")
-            
+
         const AdmissionClass = AcademicClasses?.filter(
           (cls) => cls.id === initial_data?.class_id,
         )[0]
@@ -693,7 +693,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         mother_name: initial_data.mother_name || null,
         mother_name_in_guj: initial_data.mother_name_in_guj || null,
         class: initial_data?.class_id ? initial_data?.class_id.toString() : undefined,
-        
+
         roll_number: initial_data?.roll_number || null,
         aadhar_no: initial_data?.aadhar_no ? Number(initial_data?.aadhar_no) : null,
         aadhar_dise_no: initial_data?.student_meta?.aadhar_dise_no
@@ -721,10 +721,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
         IFSC_code: initial_data?.student_meta?.IFSC_code || null,
         secondary_mobile: initial_data?.student_meta?.secondary_mobile || null,
         admission_class: null,
-        admission_division:  null,
+        admission_division: null,
       })
     }
-    else{
+    else {
     }
   }, [AcademicClasses, initial_data, form_type, form.reset])
 
@@ -736,7 +736,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
   useEffect(() => {
     const errors = form.formState.errors;
-    console.log("errors" , errors)
+    console.log("errors", errors)
     if (Object.keys(errors).length > 0) {
       const firstErrorField = Object.keys(errors)[0]
       const tabToActivate = tabMapping[firstErrorField]
@@ -889,12 +889,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("gender")}</FormLabel>
+                        <FormLabel required>{t("gender")}</FormLabel>
                         <Select
-                          // onValueChange={field.onChange}
-                          // value={field.value}
+                          // onValueChange={field.onChange}]
                           onValueChange={field.onChange}
-                          defaultValue={field.value ?? undefined}
+                          defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1112,10 +1111,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) : ""}
-                            onChange={(value) =>
-                              field.onChange(value ? Number(value) : undefined)
-                            }
+                            value={(field.value === undefined || field.value === null) ? "" : String(field.value)}
+                            onChange={(value) => {
+                              field.onChange(value === "" ? undefined : Number(value))
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1131,10 +1130,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                         <FormControl>
                           <NumberInput
                             {...field}
-                            value={field.value ? String(field.value) : ""}
-                            onChange={(value) =>
-                              field.onChange(value ? Number(value) : undefined)
-                            }
+                            value={field.value == null ? "" : String(field.value)}
+                            onChange={(value) => {
+                              field.onChange((value === "" || isNaN(Number(value))) ? null : Number(value));
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1374,11 +1373,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
                                     key={index}
                                     value={division.id.toString()}
                                   >
-                                    {`${division.division} ${
-                                      division.aliases
+                                    {`${division.division} ${division.aliases
                                         ? "- " + division.aliases
                                         : ""
-                                    }`}
+                                      }`}
                                   </SelectItem>
                                 )
                               )}
@@ -1781,8 +1779,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   {(isStundetGetingUpdate ||
                     isStundetGetingCreate ||
                     isOnBoardingStudent) && (
-                    <Loader2 className="animate-spin" />
-                  )}
+                      <Loader2 className="animate-spin" />
+                    )}
                 </Button>
               </CardFooter>
             </Card>
@@ -1794,4 +1792,5 @@ const StudentForm: React.FC<StudentFormProps> = ({
 }
 
 export default StudentForm
+
 

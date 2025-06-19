@@ -127,7 +127,7 @@ export const FeeTypeManagement: React.FC = () => {
     DataForFeesType?.type.filter((feeType) => {
       return (
         feeType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feeType.description.toLowerCase().includes(searchTerm.toLowerCase())
+        feeType.description && feeType.description.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }) || []
 
@@ -137,7 +137,7 @@ export const FeeTypeManagement: React.FC = () => {
         id: DialogForFeeType.data!.id,
         data: {
           name: values.name,
-          description: values.description ? values.description : "",
+          description: values.description,
           status: values.status,
           // applicable_to is not included as it cannot be updated
         },
@@ -148,6 +148,7 @@ export const FeeTypeManagement: React.FC = () => {
           title: t("fee_type_updated_successfully"),
         })
         refreshFeeTypes()
+        setDialogForFeeType({ isOpen: false, data: null, type: "create" }) // Close dialog only on success
       } else {
         console.log("Error updating Fee Type", (fees_type.error as any)?.data?.message)
         toast({
@@ -159,7 +160,7 @@ export const FeeTypeManagement: React.FC = () => {
       const fees_type = await createFeesType({
         data: {
           name: values.name,
-          description: values.description ? values.description : "",
+          description: values.description,
           status: values.status,
           academic_session_id: CurrentAcademicSessionForSchool!.id,
           applicable_to: values.applicable_to,
@@ -171,6 +172,7 @@ export const FeeTypeManagement: React.FC = () => {
           variant: "default",
           title: t("fee_type_created_successfully"),
         })
+        setDialogForFeeType({ isOpen: false, data: null, type: "create" }) // Close dialog only on success
       } else {
         console.log("Error creating Fee Type", fees_type.error)
         toast({
@@ -179,7 +181,6 @@ export const FeeTypeManagement: React.FC = () => {
         })
       }
     }
-    setDialogForFeeType({ isOpen: false, data: null, type: "create" })
   }
 
   const handleDelete = (feeType: FeesType) => {
@@ -303,15 +304,6 @@ export const FeeTypeManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder={t("search_fee_types...")}
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
               <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder={t("academic_year")} />
@@ -327,16 +319,6 @@ export const FeeTypeManagement: React.FC = () => {
                     })}
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder={t("status")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* <SelectItem value="All">{t("all")}</SelectItem> */}
-                  <SelectItem value="Active">{t("active")}</SelectItem>
-                  <SelectItem value="Inactive">{t("inactive")}</SelectItem>
-                </SelectContent>
-              </Select>
               <Select
                 value={applicableToFilter}
                 onValueChange={(value: ApplicableToFilter) => setApplicableToFilter(value)}
@@ -350,6 +332,26 @@ export const FeeTypeManagement: React.FC = () => {
                   <SelectItem value="plan">{t("plan")}</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder={t("status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* <SelectItem value="All">{t("all")}</SelectItem> */}
+                  <SelectItem value="Active">{t("active")}</SelectItem>
+                  <SelectItem value="Inactive">{t("inactive")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder={t("search_fee_types...")}
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
             </div>
 
             {showSkeleton ? (

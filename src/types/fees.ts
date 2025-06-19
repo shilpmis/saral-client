@@ -23,6 +23,8 @@ export interface Concession {
   concessions_to: "fees_type" | "plan";
   status: "Active" | "Inactive";
   category: "family" | "sports" | "staff" | "education" | "financial" | "other";
+  created_at: string;
+  // updated_at: string;
 }
 
 export interface ReqBodyForApplyConsessionToPlan {
@@ -132,6 +134,7 @@ export interface ReqObjectForUpdateFeesPlan {
       "id" | "installment_no" | "due_date" | "installment_amount"
     >[];
   }[];
+  deleted_fees_type?: number[] // Array of fees_plan_detail_id to be deleted
 }
 
 export interface DetailedFeesPlan {

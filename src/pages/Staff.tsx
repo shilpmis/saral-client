@@ -137,8 +137,8 @@ export const Staff: React.FC = () => {
 
   const [getTeachingStaff, { data: teachingStaff, isLoading: isTeachingStaffLoading }] = useLazyGetTeachingStaffQuery()
   const [getOtherStaff, { data: otherStaff, isLoading: isTeachingOtherLoading }] = useLazyGetOtherStaffQuery()
-  const [AddNewStaff , {isLoading : isNewStaffCreating}] = useAddStaffMutation()
-  const [updateStaff , {isLoading : isStaffGettingUpdate}] = useUpdateStaffMutation()
+  const [AddNewStaff, { isLoading: isNewStaffCreating }] = useAddStaffMutation()
+  const [updateStaff, { isLoading: isStaffGettingUpdate }] = useUpdateStaffMutation()
 
   /**\
    *  api which fetches staff roles and store in redux stoe
@@ -610,7 +610,7 @@ export const Staff: React.FC = () => {
         // Determine which tab to refresh based on the staff type
         const staffType = Boolean(Number(updated_staff.data.is_teching_staff)) ? "teaching" : "non-teaching"
 
-        console.log("staffType", updated_staff , updated_staff.data.is_teching_staff)
+        console.log("staffType", updated_staff, updated_staff.data.is_teching_staff)
         // Set the active tab to match the staff type
         setActiveTab(staffType)
 
@@ -936,11 +936,10 @@ export const Staff: React.FC = () => {
                         {/* Validation status summary */}
                         {uploadResults.length > 0 && (
                           <div
-                            className={`p-3 rounded-md ${
-                              validationPassed
+                            className={`p-3 rounded-md ${validationPassed
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-red-50 border border-red-200"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center">
                               {validationPassed ? (
@@ -949,15 +948,13 @@ export const Staff: React.FC = () => {
                                 <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
                               )}
                               <p
-                                className={`text-sm font-medium ${
-                                  validationPassed ? "text-green-700" : "text-red-700"
-                                }`}
+                                className={`text-sm font-medium ${validationPassed ? "text-green-700" : "text-red-700"
+                                  }`}
                               >
                                 {validationPassed
                                   ? `All ${uploadResults.length} rows passed validation. Ready to upload.`
-                                  : `${uploadResults.filter((r) => r.hasErrors).length} of ${
-                                      uploadResults.length
-                                    } rows have validation errors.`}
+                                  : `${uploadResults.filter((r) => r.hasErrors).length} of ${uploadResults.length
+                                  } rows have validation errors.`}
                               </p>
                             </div>
                           </div>
@@ -1214,7 +1211,7 @@ export const Staff: React.FC = () => {
                     </div>
                   </AlertDescription>
                 </Alert>
-                
+
               )}
             </TabsContent>
             <TabsContent value="non-teaching">
@@ -1258,7 +1255,7 @@ export const Staff: React.FC = () => {
                   </AlertDescription>
                 </Alert>
               )
-            }
+              }
             </TabsContent>
           </Tabs>
 
@@ -1267,15 +1264,16 @@ export const Staff: React.FC = () => {
             // id="staff-form-dialog"
             onOpenChange={(open) => handleStaffFormOpenChange(open)}
           >
-            <DialogContent className="sm:max-w-[800px]">
+            <DialogContent 
+            className="sm:max-w-[800px]">
               <DialogHeader>
                 <DialogTitle>{openDialogForStaffForm.type === "add" ? "Add New Staff" : "Edit Staff"}</DialogTitle>
               </DialogHeader>
               {openDialogForStaffForm.type === "add" && (
-                <StaffForm 
-                isApiInProgress={isStaffGettingUpdate || isNewStaffCreating}
-                onSubmit={handleAddStaffSubmit} 
-                formType="create" onClose={handleStaffFormClose} />
+                <StaffForm
+                  isApiInProgress={isStaffGettingUpdate || isNewStaffCreating}
+                  onSubmit={handleAddStaffSubmit}
+                  formType="create" onClose={handleStaffFormClose} />
               )}
               {openDialogForStaffForm.type === "edit" && teacherInitialData && (
                 <StaffForm
@@ -1289,7 +1287,7 @@ export const Staff: React.FC = () => {
             </DialogContent>
           </Dialog>
 
-          <Dialog
+          {/* <Dialog
             open={openDialogForStaffForm.isOpen}
             // id="staff-form-dialog"
             onOpenChange={(open) => handleOtherStaffFormOpenChange(open)}
@@ -1301,9 +1299,9 @@ export const Staff: React.FC = () => {
                 </DialogTitle>
               </DialogHeader>
               {openDialogForStaffForm.type === "add" ? (
-                <StaffForm 
+                <StaffForm
                   isApiInProgress={isStaffGettingUpdate || isNewStaffCreating}
-                onSubmit={handleAddStaffSubmit} formType="create" onClose={handleStaffFormClose} />
+                  onSubmit={handleAddStaffSubmit} formType="create" onClose={handleStaffFormClose} />
               ) : (
                 <StaffForm
                   isApiInProgress={isStaffGettingUpdate || isNewStaffCreating}
@@ -1314,7 +1312,7 @@ export const Staff: React.FC = () => {
                 />
               )}
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
 
           <Dialog open={isdelete} onOpenChange={(open) => setIsDelete(open)}>
             <DialogContent className="max-w-md rounded-2xl shadow-lg">

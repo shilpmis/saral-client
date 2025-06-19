@@ -41,8 +41,13 @@ export const AddFeeTypeForm: React.FC<AddFeeTypeFormProps> = ({ initialData, typ
           },
   })
 
+  // Ensure if description is empty string, set to null before submit
   const handleSubmit = (values: z.infer<typeof feeTypeSchema>) => {
-    onSubmit(values)
+    const submitValues = {
+      ...values,
+      description: values.description,
+    }
+    onSubmit(submitValues)
   }
 
   return (

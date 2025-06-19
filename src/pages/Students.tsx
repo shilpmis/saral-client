@@ -632,7 +632,7 @@ export const Students: React.FC = () => {
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">{t("students")}</h2>
+          <h2 className="text-3xl font-bold">{t("student_managment")}</h2>
           <div className="flex space-x-2">
             <Button
               onClick={() =>
@@ -640,7 +640,7 @@ export const Students: React.FC = () => {
               }
               disabled={!AcademicClasses || AcademicClasses.length === 0}
             >
-              <Plus className="mr-2 h-4 w-4" /> {t("add_new_student")}
+              <Plus className="mr-2 h-4 w-4" /> {t("add_student")}
             </Button>
 
             {/* Upload CSV */}
@@ -1247,7 +1247,10 @@ export const Students: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{t("download_student_data")}</DialogTitle>
           </DialogHeader>
-          <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
+          <ExcelDownloadModalForStudents 
+            academicClasses={AcademicClasses}
+            selctedDivisionFromParent={selectedDivision}
+          />
         </DialogContent>
       </Dialog>
     </>
