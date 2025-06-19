@@ -909,6 +909,7 @@
   "error_loading_student_fees": "Error loading student fees",
   "there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.": "There was a problem loading the fee detail for this student. Please try again later.",
   "no_data_available": "No data available",
+  "staff_designation" : "Staff Designation",
   "no_fee_details_found_for_this_student.": "No fee details found for this student.",
   "return_to_fee_list": "Return to Fee List",
   "no_due_installments_found.": "No due installments found.",

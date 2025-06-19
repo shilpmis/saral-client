@@ -51,6 +51,7 @@ import PayExtraFeesDialog from "@/components/Fees/PayFees/PayExtraFeesDialog"
 import FlexiblePaymentDialog from "@/components/Fees/PayFees/FlexiblePaymentDialog"
 import ReversalRequestDialog from "@/components/Fees/PayFees/ReversalRequestDialog"
 import PaymentStatusUpdateDialog from "@/components/Fees/PayFees/PaymentStatusUpdateDialog"
+import { error } from "console"
 
 // Create a cache for fee types to avoid repeated lookups
 const feeTypeCache = new Map<number, any>()
@@ -110,7 +111,7 @@ type StudentFeesPanelProps = {}
 const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess }] =
+  const [getStudentFeesDetails, { data: studentFeeDetails, isLoading, isError, isFetching, isSuccess , error }] =
     useLazyGetStudentFeesDetailsQuery()
   const params = useParams<{ student_id: string }>()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -914,7 +915,11 @@ const StudentFeesPanel: React.FC<StudentFeesPanelProps> = () => {
           <CardHeader>
             <CardTitle className="text-red-600">{t("error_loading_student_fees")}</CardTitle>
             <CardDescription className="text-red-500">
-              {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")}
+              {error 
+              ? (error as any).data?.message 
+              : t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.") 
+              }
+              {/* {t("there_was_a_problem_loadin_the_fee_detail_for_this_student_please_try_agai_later.")} */}
             </CardDescription>
           </CardHeader>
           <CardFooter>

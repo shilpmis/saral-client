@@ -1,5 +1,6 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -7,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Pencil, Plus, Search, Link, Eye, X, RefreshCw } from "lucide-react"
+import { Pencil, Plus, Search, Link, Eye, X, RefreshCw, Filter } from "lucide-react"
 import { AddConcessionForm } from "./AddConcessionForm"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { ApplyConcessionForm } from "./ApplyConcessionForm"
@@ -34,19 +35,30 @@ import {
 } from "@/redux/slices/authSlice"
 import type { Concession } from "@/types/fees"
 import { UserRole } from "@/types/user"
+import { SaralPagination } from "@/components/ui/common/SaralPagination"
 
-interface FilterState {
-  academicYear: string
-  status: string
-  category: string
-  search_term: string | null
+// Inline debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
 }
 
-const initialFilters: FilterState = {
-  academicYear: "",
-  status: "all",
-  category: "all",
-  search_term: null,
+interface FilterState {
+  academicYear: number
+  status: "all" | "active" | "inactive"
+  category: string
+  searchTerm: string
 }
 
 export const ConcessionManagement: React.FC = () => {
@@ -56,19 +68,24 @@ export const ConcessionManagement: React.FC = () => {
   const { t } = useTranslation()
 
   // Queries and mutations
-  const [getConcession, { data: concessions, isLoading }] = useLazyGetConcessionsQuery()
+  const [getConcessions, { data: concessions, isLoading, isFetching }] = useLazyGetConcessionsQuery()
   const [createConcession, { isLoading: isCreating }] = useCreateConcessionsMutation()
   const [updateConcession, { isLoading: isUpdating }] = useUpdateConcessionsMutation()
   const [ApplyConcessionToPlan, { isLoading: ApplyingConcessionToPlan }] = useApplyConcessionsToPlanMutation()
   const [ApplyConcessionToStudent, { isLoading: ApplyingConcessionToStudent }] = useApplyConcessionsToStudentMutation()
 
-  // Local state
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filters, setFilters] = useState<FilterState>(initialFilters)
-  const [page, setPage] = useState(1)
+  // Local state - Initialize with proper defaults
+  const [filters, setFilters] = useState<FilterState>(() => ({
+    academicYear: CurrentAcademicSessionForSchool?.id || 0,
+    status: "all",
+    category: "all",
+    searchTerm: "",
+  }))
 
-  // Map academicYear to academic_session (number)
-  const academic_session = Number(filters.academicYear) || 0
+  const [currentPage, setCurrentPage] = useState(1)
+
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 500)
 
   const [dialogState, setDialogState] = useState<{
     type: "add" | "edit" | "apply" | "details" | null
@@ -80,47 +97,117 @@ export const ConcessionManagement: React.FC = () => {
     concession: null,
   })
 
-  const [deleteDialogState, setDeleteDialogState] = useState<{
-    isOpen: boolean
-    concession: Concession | null
-  }>({
-    isOpen: false,
-    concession: null,
-  })
+  // Get unique categories from current data for filter options
+  const availableCategories = useMemo(() => {
+    if (!concessions?.data) return []
+    return [...new Set(concessions.data.map((c: Concession) => c.category))].filter(Boolean)
+  }, [concessions?.data])
 
-  // Get unique categories and applicable_to values for filters
-  const categories = [...new Set(concessions?.data?.map((c: Concession) => c.category) || [])]
-  const applicableToOptions = [...new Set(concessions?.data?.map((c: Concession) => c.applicable_to) || [])]
+  // Set academic year if not already set and session is available
+  useEffect(() => {
+    if (filters.academicYear === 0 && CurrentAcademicSessionForSchool?.id) {
+      setFilters((prev) => ({
+        ...prev,
+        academicYear: CurrentAcademicSessionForSchool.id,
+      }))
+    }
+  }, [filters.academicYear, CurrentAcademicSessionForSchool?.id])
 
+  // Simple fetch function without complex dependencies
+  const fetchConcessionsData = useCallback(async () => {
+    if (!filters.academicYear) return
+
+    try {
+      await getConcessions({
+        academic_session: filters.academicYear,
+        status: filters.status === "all" ? undefined : filters.status,
+        category: filters.category === "all" ? undefined : filters.category,
+        search_term: debouncedSearchTerm || undefined,
+        page: currentPage,
+      }).unwrap()
+    } catch (error) {
+      console.error("Failed to fetch concessions:", error)
+      toast({
+        title: t("error"),
+        description: t("failed_to_fetch_concessions"),
+        variant: "destructive",
+      })
+    }
+  }, [filters.academicYear, filters.status, filters.category, debouncedSearchTerm, currentPage, getConcessions, t])
+
+  // Fetch data when mounted and filters change
+  useEffect(() => {
+    if (filters.academicYear) {
+      fetchConcessionsData()
+    }
+  }, [fetchConcessionsData])
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))    
-    setPage(1); // Reset page on filter change
+  const handleAcademicYearChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, academicYear: Number.parseInt(value) }))
+    setCurrentPage(1)
+  }
+
+  const handleStatusChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, status: value as "all" | "active" | "inactive" }))
+    setCurrentPage(1)
+  }
+
+  const handleCategoryChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, category: value }))
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, searchTerm: value }))
+    setCurrentPage(1)
+  }
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
   // Clear individual filter
   const clearFilter = (key: keyof FilterState) => {
-    setFilters((prev) => ({ ...prev, [key]: "" }))
+    if (key === "academicYear") {
+      setFilters((prev) => ({ ...prev, academicYear: CurrentAcademicSessionForSchool?.id || 0 }))
+    } else if (key === "status") {
+      setFilters((prev) => ({ ...prev, status: "all" }))
+    } else if (key === "category") {
+      setFilters((prev) => ({ ...prev, category: "all" }))
+    } else {
+      setFilters((prev) => ({ ...prev, searchTerm: "" }))
+    }
+    setCurrentPage(1)
   }
 
   // Clear all filters
   const clearAllFilters = () => {
-    setFilters(initialFilters)
-    setSearchTerm("")
+    setFilters({
+      academicYear: CurrentAcademicSessionForSchool?.id || 0,
+      status: "all",
+      category: "all",
+      searchTerm: "",
+    })
+    setCurrentPage(1)
   }
 
   // Count active filters
-  const activeFiltersCount =
-    Object.values(filters).filter((value) => value && value !== CurrentAcademicSessionForSchool?.id.toString()).length +
-    (searchTerm ? 1 : 0)
+  const activeFiltersCount = useMemo(() => {
+    let count = 0
+    if (filters.searchTerm.trim()) count++
+    if (filters.status !== "all") count++
+    if (filters.category !== "all") count++
+    return count
+  }, [filters])
 
   // Get status color
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
+    switch (status?.toLowerCase()) {
+      case "active":
         return "text-green-600 font-medium"
-      case "Inactive":
+      case "inactive":
         return "text-red-600 font-medium"
       default:
         return "text-green-600 font-medium"
@@ -143,16 +230,16 @@ export const ConcessionManagement: React.FC = () => {
         },
       }).unwrap()
 
-      fetchConcessions()
+      fetchConcessionsData()
       toast({
-        title: "Success",
-        description: "Concession created successfully",
+        title: t("success"),
+        description: t("concession_created_successfully"),
       })
       closeDialog()
     } catch (error: any) {
       toast({
-        title: `${error.data.message}`,
-        description: "Failed to create concession",
+        title: t("error"),
+        description: error?.data?.message || t("failed_to_create_concession"),
         variant: "destructive",
       })
     }
@@ -173,16 +260,16 @@ export const ConcessionManagement: React.FC = () => {
         },
       }).unwrap()
 
-      fetchConcessions()
+      fetchConcessionsData()
       toast({
-        title: "Success",
-        description: "Concession updated successfully",
+        title: t("success"),
+        description: t("concession_updated_successfully"),
       })
       closeDialog()
     } catch (error: any) {
       toast({
-        title: `${error.data.message}`,
-        description: "Failed to update concession",
+        title: t("error"),
+        description: error?.data?.message || t("failed_to_update_concession"),
         variant: "destructive",
       })
     }
@@ -191,11 +278,10 @@ export const ConcessionManagement: React.FC = () => {
   // Handle applying a concession
   const handleApplyConcession = async (data: ApplyConcessionToStudentData | ApplyConcessionToPlanData) => {
     if (!dialogState.concession) return
-    let res: any
 
     try {
       if (dialogState.concession.applicable_to === "plan") {
-        res = await ApplyConcessionToPlan({
+        await ApplyConcessionToPlan({
           payload: {
             concession_id: data.concession_id,
             fees_plan_id: data.fees_plan_id,
@@ -206,7 +292,7 @@ export const ConcessionManagement: React.FC = () => {
           },
         }).unwrap()
       } else if (dialogState.concession.applicable_to === "students" && "student_id" in data) {
-        res = await ApplyConcessionToStudent({
+        await ApplyConcessionToStudent({
           payload: {
             student_id: data.student_id,
             concession_id: data.concession_id,
@@ -219,20 +305,15 @@ export const ConcessionManagement: React.FC = () => {
         }).unwrap()
       }
 
-      setDialogState({
-        type: null,
-        isOpen: false,
-        concession: null,
-      })
-
+      closeDialog()
       toast({
-        title: "Success",
-        description: "Concession applied successfully",
+        title: t("success"),
+        description: t("concession_applied_successfully"),
       })
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.data.message ?? "Failed to apply concession",
+        title: t("error"),
+        description: error?.data?.message || t("failed_to_apply_concession"),
         variant: "destructive",
       })
     }
@@ -247,49 +328,57 @@ export const ConcessionManagement: React.FC = () => {
     setDialogState({ type: null, isOpen: false, concession: null })
   }
 
-
-  // Fetch concessions
-  const fetchConcessions = () => {
-    // getConcession({
-    //   academic_session: Number.parseInt(filters.academicYear) || CurrentAcademicSessionForSchool!.id,
-    //   page: 1,
-    // })
-    if (filters.academicYear) {
-      getConcession({
-        academic_session: Number(filters.academicYear),
-        status: (filters.status as any),
-        category: filters.category,
-        page,
-        search_term: filters.search_term || undefined,
-      });
-    }
-  }
-
   // Refresh data
   const refreshData = () => {
-    fetchConcessions()
+    fetchConcessionsData()
     toast({
-      title: "Data Refreshed",
-      description: "Concession data has been refreshed successfully",
+      title: t("data_refreshed"),
+      description: t("concession_data_refreshed_successfully"),
     })
   }
 
-  useEffect(() => {
-    if (CurrentAcademicSessionForSchool) {
-      fetchConcessions()
-    }
-  }, [CurrentAcademicSessionForSchool, filters, page])
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <TableRow key={`skeleton-${index}`}>
+          <TableCell>
+            <Skeleton className="h-4 w-32" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-4 w-24" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-4 w-48" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-4 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-4 w-16" />
+          </TableCell>
+          <TableCell>
+            <div className="flex space-x-2">
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  )
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">{t("concession_management")}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={refreshData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={refreshData} disabled={isLoading || isFetching}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading || isFetching ? "animate-spin" : ""}`} />
             {t("refresh")}
           </Button>
-          {(authState.user?.role == UserRole.ADMIN || authState.user?.role == UserRole.PRINCIPAL) && (
+          {(authState.user?.role === UserRole.ADMIN || authState.user?.role === UserRole.PRINCIPAL) && (
             <Button onClick={() => openDialog("add")}>
               <Plus className="mr-2 h-4 w-4" /> {t("add_concession")}
             </Button>
@@ -300,122 +389,150 @@ export const ConcessionManagement: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <span>{t("filter_concessions")}</span>
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary">
+                  {activeFiltersCount} {t("active")}
+                </Badge>
+              )}
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Filter Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Academic Year Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t("academic_year")}</label>
+              <Select value={filters.academicYear.toString()} onValueChange={handleAcademicYearChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("select_academic_year")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {AcademicSessionsForSchool?.map((session) => (
+                    <SelectItem key={session.id} value={session.id.toString()}>
+                      {session.session_name}
+                      {session.is_active && ` (${t("current")})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t("status")}</label>
+              <Select value={filters.status} onValueChange={handleStatusChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("select_status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("all_statuses")}</SelectItem>
+                  <SelectItem value="active">{t("active")}</SelectItem>
+                  <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t("category")}</label>
+              <Select value={filters.category} onValueChange={handleCategoryChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("select_category")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("all_categories")}</SelectItem>
+                  {availableCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t("search")}</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("search_concessions")}
+                  className="pl-8"
+                  value={filters.searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                />
+                {filters.searchTerm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1 h-6 w-6 p-0"
+                    onClick={() => clearFilter("searchTerm")}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFiltersCount > 0 && (
+            <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm font-medium text-muted-foreground">{t("active_filters")}:</span>
+
+              {filters.searchTerm && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t("search")}: "{filters.searchTerm}"
+                  <X
+                    className="h-3 w-3 cursor-pointer hover:text-destructive"
+                    onClick={() => clearFilter("searchTerm")}
+                  />
+                </Badge>
+              )}
+
+              {filters.status !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t("status")}: {t(filters.status)}
+                  <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => clearFilter("status")} />
+                </Badge>
+              )}
+
+              {filters.category !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t("category")}: {filters.category}
+                  <X
+                    className="h-3 w-3 cursor-pointer hover:text-destructive"
+                    onClick={() => clearFilter("category")}
+                  />
+                </Badge>
+              )}
+
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                <X className="h-3 w-3 mr-1" />
+                {t("clear_all")}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
             <span>{t("concessions")}</span>
-            {activeFiltersCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {activeFiltersCount} {t("filters_active")}
-              </Badge>
+            {(isLoading || isFetching) && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                {t("loading")}
+              </div>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Search and Filters */}
-          <div className="space-y-4 mb-6">
-            {/* Search Bar */}
-            <div className="relative max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder={t("search_concessions...")}
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1 h-6 w-6 p-0"
-                  onClick={() => setSearchTerm("")}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-
-            {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">{t("academic_year")}</label>
-                <Select
-                  value={filters.academicYear}
-                  onValueChange={(value) => handleFilterChange("academicYear", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("all_years")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AcademicSessionsForSchool?.map((session) => (
-                      <SelectItem key={session.id} value={session.id.toString()}>
-                        {session.session_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">{t("status")}</label>
-                <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("all_statuses")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("all_statuses")}</SelectItem>
-                    <SelectItem value="active">{t("active")}</SelectItem>
-                    <SelectItem value="inactive">{t("inactive")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">{t("category")}</label>
-                <Select value={filters.category} onValueChange={(value) => handleFilterChange("category", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("all_categories")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("all_categories")}</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Active Filters Display */}
-            {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-md">
-                <span className="text-sm font-medium">{t("active_filters")}:</span>
-                {searchTerm && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {t("search")}: {searchTerm}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchTerm("")} />
-                  </Badge>
-                )}
-
-                {filters.status && filters.status !== "all" && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {t("status")}: {filters.status}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("status")} />
-                  </Badge>
-                )}
-                {filters.category && filters.category !== "all" && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {t("category")}: {filters.category}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("category")} />
-                  </Badge>
-                )}
-                <Button variant="outline" size="sm" onClick={clearAllFilters}>
-                  {t("clear_all")}
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -425,77 +542,93 @@ export const ConcessionManagement: React.FC = () => {
                   <TableHead>{t("description")}</TableHead>
                   <TableHead>{t("applicable_to")}</TableHead>
                   <TableHead>{t("status")}</TableHead>
-                  <TableHead>{t("actions")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  Array(5)
-                    .fill(0)
-                    .map((_, index) => (
-                      <TableRow key={`loading-${index}`}>
-                        <TableCell colSpan={6}>
-                          <Skeleton className="h-10 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : concessions && concessions.data.length === 0 ? (
+                {isLoading || isFetching ? (
+                  <LoadingSkeleton />
+                ) : !concessions?.data || concessions.data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                      {activeFiltersCount > 0 ? t("no_concessions_match_your_filters") : t("no_concessions_found")}
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Search className="h-8 w-8" />
+                        <p className="text-lg font-medium">
+                          {activeFiltersCount > 0 ? t("no_concessions_match_filters") : t("no_concessions_found")}
+                        </p>
+                        <p className="text-sm">
+                          {activeFiltersCount > 0
+                            ? t("try_adjusting_your_filters")
+                            : t("create_your_first_concession_to_get_started")}
+                        </p>
+                        {activeFiltersCount > 0 && (
+                          <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                            {t("clear_all_filters")}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  concessions && concessions.data.map((concession) => (
-                    <TableRow key={concession.id}>
+                  concessions.data.map((concession) => (
+                    <TableRow key={concession.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{concession.name}</TableCell>
-                      <TableCell>{concession.category}</TableCell>
-                      <TableCell className="max-w-xs truncate">{concession.description}</TableCell>
-                      <TableCell className="capitalize">{concession.applicable_to}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{concession.category}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="truncate" title={concession.description}>
+                          {concession.description}
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        <Badge variant="secondary">{concession.applicable_to}</Badge>
+                      </TableCell>
                       <TableCell>
                         <span className={getStatusColor(concession.status || "Active")}>
                           {concession.status || "Active"}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openDialog("details", concession)}
-                            className="flex items-center gap-1"
-                          >
-                            <Eye className="h-3 w-3" />
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => openDialog("details", concession)}>
+                            <Eye className="h-3 w-3 mr-1" />
                             {t("view")}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={authState.user?.role !== "ADMIN"}
-                            onClick={() => openDialog("edit", concession)}
-                            className="flex items-center gap-1"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            {t("edit")}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={authState.user?.role !== "ADMIN"}
-                            onClick={() => openDialog("apply", concession)}
-                            className="flex items-center gap-1"
-                          >
-                            <Link className="h-3 w-3" />
-                            {t("apply")}
-                          </Button>
+
+                          {authState.user?.role === UserRole.ADMIN && (
+                            <Button variant="outline" size="sm" onClick={() => openDialog("edit", concession)}>
+                              <Pencil className="h-3 w-3 mr-1" />
+                              {t("edit")}
+                            </Button>
+                          )}
+
+                          {authState.user?.role === UserRole.ADMIN && (
+                            <Button variant="outline" size="sm" onClick={() => openDialog("apply", concession)}>
+                              <Link className="h-3 w-3 mr-1" />
+                              {t("apply")}
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                  )) )
+                }
               </TableBody>
             </Table>
+
+            {/* Pagination */}
+            {(concessions?.meta && concessions.data.length > 0) && (
+              <div className="flex justify-center p-4 border-t">
+                <SaralPagination
+                  currentPage={concessions.meta.current_page || concessions.meta.currentPage}
+                  totalPages={concessions.meta.last_page || concessions.meta.lastPage}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </div>
+
         </CardContent>
       </Card>
 
@@ -523,7 +656,7 @@ export const ConcessionManagement: React.FC = () => {
           <DialogHeader>
             <DialogTitle>
               {dialogState.concession?.applicable_to === "plan"
-                ? "Apply Concession to Fee Plan"
+                ? t("apply_concession_to_fee_plan")
                 : t("apply_concession_to_student")}
             </DialogTitle>
           </DialogHeader>
