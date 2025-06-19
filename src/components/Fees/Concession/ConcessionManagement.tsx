@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -111,12 +111,13 @@ export const ConcessionManagement: React.FC = () => {
         academicYear: CurrentAcademicSessionForSchool.id,
       }))
     }
+    // Only run when academic year is 0 and session is available
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.academicYear, CurrentAcademicSessionForSchool?.id])
 
-  // Simple fetch function without complex dependencies
-  const fetchConcessionsData = useCallback(async () => {
+  // Fetch concessions data utility
+  const fetchConcessionsData = async () => {
     if (!filters.academicYear) return
-
     try {
       await getConcessions({
         academic_session: filters.academicYear,
@@ -133,14 +134,13 @@ export const ConcessionManagement: React.FC = () => {
         variant: "destructive",
       })
     }
-  }, [filters.academicYear, filters.status, filters.category, debouncedSearchTerm, currentPage, getConcessions, t])
+  }
 
-  // Fetch data when mounted and filters change
+  // Fetch data when filters change
   useEffect(() => {
-    if (filters.academicYear) {
-      fetchConcessionsData()
-    }
-  }, [fetchConcessionsData])
+    fetchConcessionsData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.academicYear, filters.status, filters.category, debouncedSearchTerm, currentPage])
 
   // Handle filter changes
   const handleAcademicYearChange = (value: string) => {
