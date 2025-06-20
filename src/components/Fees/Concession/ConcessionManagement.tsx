@@ -12,7 +12,7 @@ import { Pencil, Plus, Search, Link, Eye, X, RefreshCw, Filter } from "lucide-re
 import { AddConcessionForm } from "./AddConcessionForm"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { ApplyConcessionForm } from "./ApplyConcessionForm"
-import { ConcessionDetailsDialog } from "./ConcessionDetailsDialog"
+import { ConcessionDetailDialog } from "./ConcessionDetailsDialog"
 import {
   useLazyGetConcessionsQuery,
   useCreateConcessionsMutation,
@@ -612,7 +612,7 @@ export const ConcessionManagement: React.FC = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  )) )
+                  )))
                 }
               </TableBody>
             </Table>
@@ -680,7 +680,11 @@ export const ConcessionManagement: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{t("concession_details")}</DialogTitle>
           </DialogHeader>
-          {dialogState.concession && <ConcessionDetailsDialog concessionId={dialogState.concession.id} />}
+          {dialogState.concession &&
+            <ConcessionDetailDialog
+              concessionId={dialogState.concession.id}
+              isOpen={dialogState.isOpen}
+            />}
         </DialogContent>
       </Dialog>
     </div>
