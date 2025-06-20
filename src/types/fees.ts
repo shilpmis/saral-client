@@ -721,6 +721,25 @@ export interface ConcessionDetails {
   concession_holder_students?: AppliedConcessioinToStudent[] | null;
 }
 
+export interface ConcessionStudenMaster extends Partial<Student> {
+  id: number;
+  student_id: number;
+  academic_session_id: number;
+  concession_id: number;
+  fees_plan_id: number;
+  fees_type_id: number | null;
+  deduction_type: "percentage" | "fixed_amount";
+  amount: number | null;
+  percentage: number | null;
+  status: "Active" | "Inactive";
+  concession?: Concession;
+  fees_plan?: FeesPlan;
+  fees_plan_name?: string;
+  fees_type?: FeesPlanDetail;
+  fees_type_name?: string;
+  class_id ?: number;
+  division_id ?: number;
+}
 
 export interface TypeOfInstallmentWiseReportForClass {
   id: number,

@@ -3,6 +3,7 @@ import { setFeesPlan } from "@/redux/slices/feesSlice";
 import {
   Concession,
   ConcessionDetails,
+  ConcessionStudenMaster,
   DetailedFeesPlan,
   ExtraFeesAppliedToStudent,
   FeePaymentReqForExtraFees,
@@ -25,6 +26,7 @@ import { PageMeta } from "@/types/global";
 import baseUrl from "@/utils/base-urls";
 import { FeePaymentFormData } from "@/utils/fees.validation";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { Student } from "@/types/student";
 
 export const FeesApi = createApi({
   reducerPath: "feesApi",
@@ -176,7 +178,7 @@ export const FeesApi = createApi({
 
     updateFeesPlan: builder.mutation<
       FeesPlan,
-      { payload: ReqObjectForUpdateFeesPlan ; plan_id: number }
+      { payload: ReqObjectForUpdateFeesPlan; plan_id: number }
     >({
       query: ({ payload, plan_id }) => ({
         url: `/feesplan/${plan_id}`,
@@ -187,7 +189,7 @@ export const FeesApi = createApi({
 
     deleteFeesPlan: builder.mutation<
       any,
-      {plan_id: number }
+      { plan_id: number }
     >({
       query: ({ plan_id }) => ({
         url: `/feesplan/${plan_id}`,
@@ -252,9 +254,9 @@ export const FeesApi = createApi({
 
     payMultipleInstallments: builder.mutation<
       any,
-      { installments: FeePaymentRequest[]; student_id: number , academic_session_id: number}
+      { installments: FeePaymentRequest[]; student_id: number, academic_session_id: number }
     >({
-      query: ({ installments, student_id , academic_session_id}) => ({
+      query: ({ installments, student_id, academic_session_id }) => ({
         url: `/fees/pay/installments?academic_session=${academic_session_id}`,
         method: "POST",
         body: {
@@ -267,9 +269,9 @@ export const FeesApi = createApi({
 
     payMultipleInstallmentsForExtraFees: builder.mutation<
       any,
-      { payload: FeePaymentReqForExtraFees , academic_session_id : number }
+      { payload: FeePaymentReqForExtraFees, academic_session_id: number }
     >({
-      query: ({ payload , academic_session_id }) => ({
+      query: ({ payload, academic_session_id }) => ({
         url: `/fees/pay/extra/installments?academic_session=${academic_session_id}`,
         method: "POST",
         body: payload,
@@ -289,14 +291,15 @@ export const FeesApi = createApi({
 
     getConcessions: builder.query<
       { data: Concession[]; meta: PageMeta },
-      { academic_session: number;
-        status ?: "all" | "active" | "inactive" ,
-        category ?: string,
-        search_term ?: string, 
-        page?: number 
+      {
+        academic_session: number;
+        status?: "all" | "active" | "inactive",
+        category?: string,
+        search_term?: string,
+        page?: number
       }
     >({
-      query: ({ page = 1, academic_session , status = 'all' , category = 'all' ,search_term = undefined }) => ({
+      query: ({ page = 1, academic_session, status = 'all', category = 'all', search_term = undefined }) => ({
         url: `/concessions?academic_session=${academic_session}&status=${status}&category=${category}&search=${search_term}&page=${page}`,
         method: "GET",
       }),
@@ -313,11 +316,21 @@ export const FeesApi = createApi({
     }),
 
     getConcessionsInDetail: builder.query<
-      ConcessionDetails,
+      Concession,
       { concession_id: number; academic_session: number }
     >({
       query: ({ concession_id, academic_session }) => ({
         url: `/concession/${concession_id}?academic_session=${academic_session}`,
+        method: "GET",
+      }),
+    }),
+
+    getConcessionsHolderStudents: builder.query<
+      {data : ConcessionStudenMaster[] , meta : PageMeta},
+      { concession_id: number; academic_session: number , class_id ?: number , division_id ?: number , search ?: string}
+    >({
+      query: ({ concession_id, academic_session , class_id = undefined , division_id = undefined , search = undefined}) => ({
+        url: `/concession/holder-students/${concession_id}?academic_session=${academic_session}&class_id=${class_id}&division_id=${division_id}&search=${search}`,
         method: "GET",
       }),
     }),
@@ -422,20 +435,20 @@ export const FeesApi = createApi({
     }),
 
     fetchInsatllmentWiseReport: builder.query<
-      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
-      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+      { data: TypeOfInstallmentWiseReportForClass[]; fees_type_details: FeesPlanDetail; installment: InstallmentBreakdown; message: string },
+      { division_id: number; academic_session: number; fees_type_id: number; installment_id: number }
     >({
-      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+      query: ({ division_id, academic_session, installment_id, fees_type_id }) => ({
         url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
         method: "GET",
       }),
     }),
 
     fetchReportBasedOnFeesType: builder.query<
-      { data: TypeOfInstallmentWiseReportForClass[] ;fees_type_details : FeesPlanDetail; installment : InstallmentBreakdown;  message: string },
-      { division_id: number; academic_session: number; fees_type_id : number; installment_id: number }
+      { data: TypeOfInstallmentWiseReportForClass[]; fees_type_details: FeesPlanDetail; installment: InstallmentBreakdown; message: string },
+      { division_id: number; academic_session: number; fees_type_id: number; installment_id: number }
     >({
-      query: ({ division_id, academic_session, installment_id , fees_type_id}) => ({
+      query: ({ division_id, academic_session, installment_id, fees_type_id }) => ({
         url: `/fees/report/installmentwisereport/${division_id}/${fees_type_id}/${installment_id}?academic_session=${academic_session}`,
         method: "GET",
       }),
@@ -443,17 +456,18 @@ export const FeesApi = createApi({
 
 
     updateStatusForTransaction: builder.mutation<
-      { data: StudentFeesInstallment},
-      {student_fees_master_id : number , transaction_id : number , 
-        payload : {
-          status ?: 'Reversal Requested',
-          remarks ?: string,
-          payment_status ?: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled', 
+      { data: StudentFeesInstallment },
+      {
+        student_fees_master_id: number, transaction_id: number,
+        payload: {
+          status?: 'Reversal Requested',
+          remarks?: string,
+          payment_status?: 'Success' | 'In Progress' | 'Failed' | 'Disputed' | 'Cancelled',
         }
-        is_extra_fees ? : boolean
+        is_extra_fees?: boolean
       }
     >({
-      query: ({ student_fees_master_id ,transaction_id , payload , is_extra_fees = false}) => ({
+      query: ({ student_fees_master_id, transaction_id, payload, is_extra_fees = false }) => ({
         url: `/transaction/${student_fees_master_id}/${transaction_id}?is_extra_fees=${is_extra_fees}`,
         method: "PUT",
         body: payload,
@@ -461,13 +475,14 @@ export const FeesApi = createApi({
     }),
 
     reverseTransaction: builder.mutation<
-      { data: StudentFeesInstallment},
-      {student_fees_master_id : number , transaction_id : number , 
-        payload : {remarks : string},
-        is_extra_fees ? : boolean      
+      { data: StudentFeesInstallment },
+      {
+        student_fees_master_id: number, transaction_id: number,
+        payload: { remarks: string },
+        is_extra_fees?: boolean
       }
     >({
-      query: ({ student_fees_master_id ,transaction_id , payload ,is_extra_fees = false}) => ({
+      query: ({ student_fees_master_id, transaction_id, payload, is_extra_fees = false }) => ({
         url: `/transaction/reverse/${student_fees_master_id}/${transaction_id}?is_extra_fees=${is_extra_fees}`,
         method: "PUT",
         body: payload,
@@ -515,6 +530,7 @@ export const {
   useCreateConcessionsMutation,
   useUpdateConcessionsMutation,
   useLazyGetConcessionsInDetailQuery,
+  useLazyGetConcessionsHolderStudentsQuery,
   useApplyConcessionsToPlanMutation,
   useApplyConcessionsToStudentMutation,
 
