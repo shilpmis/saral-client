@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useForm, useFieldArray, Controller } from "react-hook-form"
@@ -14,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Loader2, Plus, Trash2, AlertTriangle, Info, Lock, Edit } from "lucide-react"
+import { Loader2, Plus, Trash2, AlertTriangle, Info, Lock, Edit } from 'lucide-react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -25,32 +23,13 @@ import {
   useLazyGetAllFeesTypeQuery,
   useUpdateFeesPlanMutation,
 } from "@/services/feesService"
-import type { FeesPlanDetail, InstallmentBreakdowns, FeesPlan } from "@/types/fees"
+import type { FeesPlanDetail, InstallmentBreakdowns, FeesPlan, ReqObjectForUpdateFeesPlan } from "@/types/fees"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool, selectAuthState, selectCurrentUser } from "@/redux/slices/authSlice"
 import { useLazyGetAllClassesWithOutFeesPlanQuery } from "@/services/AcademicService"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "@/components/ui/NumberInput"
 
-// Exact interface as provided
-interface ReqObjectForUpdateFeesPlan {
-  general_detail_for_plan?: Partial<Pick<FeesPlan, "name" | "description" | "status">>
-  new_fees_type?: {
-    fees_type_id: number
-    installment_type: string
-    total_installment: number
-    total_amount: string
-    installment_breakDowns: Pick<InstallmentBreakdowns, "installment_no" | "due_date" | "installment_amount">[]
-  }[]
-  existing_fees_type?: {
-    fees_plan_detail_id: number // consider this as id field
-    fees_type_id: number
-    installment_type: string
-    total_installment: number
-    total_amount: string
-    installment_breakDowns: Pick<InstallmentBreakdowns, "id" | "installment_no" | "due_date" | "installment_amount">[]
-  }[]
-}
 
 // Define the installment types
 const installmentTypes = [
@@ -194,6 +173,10 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
   const [isFormFieldsForEditSet, setIsFormFieldsForEditSet] = useState<boolean>(false)
   const [isFullyEditable, setIsFullyEditable] = useState(false)
   const [originalFeeTypes, setOriginalFeeTypes] = useState<any[]>([])
+  const [modifiedFeeTypes, setModifiedFeeTypes] = useState<Set<number>>(new Set())
+  const [originalFormValues, setOriginalFormValues] = useState<any>(null)
+  const [deletedFeeTypes, setDeletedFeeTypes] = useState<Map<number, any>>(new Map()) // Store deleted fee types with their original data
+  const [deletedFeeTypeIds, setDeletedFeeTypeIds] = useState<Set<number>>(new Set()) // Track fees_plan_detail_ids to be deleted
 
   // Initialize the form
   const form = useForm<FeePlanFormValues>({
@@ -227,6 +210,15 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       return total + Number.parseFloat(feeType.total_amount || "0")
     }, 0)
   }, [form])
+
+  // Function to shift Sunday dates to next working day (Monday)
+  const shiftSundayToMonday = useCallback((date: Date) => {
+    const newDate = new Date(date)
+    if (newDate.getDay() === 0) { // Sunday is 0
+      newDate.setDate(newDate.getDate() + 1) // Move to Monday
+    }
+    return newDate
+  }, [])
 
   // Function to generate empty installment breakdowns based on count
   const generateEmptyInstallmentBreakdowns = useCallback(
@@ -267,6 +259,9 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
           dueDate = startDate
         }
 
+        // Shift Sunday dates to Monday
+        dueDate = shiftSundayToMonday(dueDate)
+
         breakdowns.push({
           installment_no: i + 1,
           due_date: format(dueDate, "yyyy-MM-dd"),
@@ -280,8 +275,13 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
         installment_breakDowns: breakdowns,
       })
     },
-    [form, updatePlanDetail],
+    [form, updatePlanDetail, shiftSundayToMonday],
   )
+
+  // Add function to track changes
+  const trackFeeTypeChange = useCallback((feeTypeIndex: number) => {
+    setModifiedFeeTypes(prev => new Set(prev).add(feeTypeIndex))
+  }, [])
 
   // Function to distribute total amount across installments
   const distributeAmount = useCallback(
@@ -291,18 +291,17 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
       if (!breakdowns || breakdowns.length === 0 || !totalAmount) return
 
+      // Calculate base amount per installment
       const baseAmount = Math.floor((totalAmount * 100) / breakdowns.length) / 100
-      const baseTotal = Number((baseAmount * breakdowns.length).toFixed(2))
-      const remainder = Number((totalAmount - baseTotal).toFixed(2))
-      let remainderCents = Math.round(remainder * 100)
+      const totalBaseAmount = baseAmount * breakdowns.length
+      const remainder = Number((totalAmount - totalBaseAmount).toFixed(2))
 
       const updatedBreakdowns = breakdowns.map((breakdown, idx) => {
-        if (remainderCents > 0 && idx < breakdowns.length) {
-          const adjustedAmount = baseAmount + 0.01
-          remainderCents--
+        // Add remainder to the last installment
+        if (idx === breakdowns.length - 1) {
           return {
             ...breakdown,
-            installment_amount: adjustedAmount.toFixed(2),
+            installment_amount: (baseAmount + remainder).toFixed(2),
           }
         }
         return {
@@ -316,8 +315,11 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
         ...currentPlanDetail,
         installment_breakDowns: updatedBreakdowns,
       })
+
+      // Track this fee type as modified
+      trackFeeTypeChange(planDetailIndex)
     },
-    [form, updatePlanDetail],
+    [form, updatePlanDetail, trackFeeTypeChange],
   )
 
   // Handle changes to installment type or count
@@ -333,16 +335,79 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
       form.setValue(`fees_types.${planDetailIndex}.total_installment`, defaultCount)
       generateEmptyInstallmentBreakdowns(defaultCount, planDetailIndex)
+
+      // Track this fee type as modified when installment type changes
+      trackFeeTypeChange(planDetailIndex)
     },
-    [form, generateEmptyInstallmentBreakdowns],
+    [form, generateEmptyInstallmentBreakdowns, trackFeeTypeChange],
   )
 
   const handleInstallmentCountChange = useCallback(
     (planDetailIndex: number, count: number) => {
       generateEmptyInstallmentBreakdowns(count, planDetailIndex)
+      // Track this fee type as modified when installment count changes
+      trackFeeTypeChange(planDetailIndex)
     },
-    [generateEmptyInstallmentBreakdowns],
+    [generateEmptyInstallmentBreakdowns, trackFeeTypeChange],
   )
+
+  // Handle fee type deletion with ability to restore
+  const handleDeleteFeeType = useCallback((planDetailIndex: number) => {
+    const feeTypeData = form.getValues(`fees_types.${planDetailIndex}`)
+    const originalFeeType = originalFeeTypes[planDetailIndex]
+
+    // If this is an existing fee type (has original data), store it for potential restoration
+    if (originalFeeType && type === "update") {
+      const feeTypeId = feeTypeData.fees_type_id
+      const deletedData = {
+        ...feeTypeData,
+        originalIndex: planDetailIndex,
+        fees_plan_detail_id: originalFeeType.fees_type.id,
+        originalData: originalFeeType
+      }
+
+      setDeletedFeeTypes(prev => new Map(prev).set(feeTypeId, deletedData))
+      setDeletedFeeTypeIds(prev => new Set(prev).add(originalFeeType.fees_type.id))
+    }
+
+    // Remove from form
+    removePlanDetail(planDetailIndex)
+
+    // Remove from modified tracking
+    setModifiedFeeTypes(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(planDetailIndex)
+      // Adjust indices for remaining items
+      const adjustedSet = new Set<number>()
+      newSet.forEach(index => {
+        if (index > planDetailIndex) {
+          adjustedSet.add(index - 1)
+        } else {
+          adjustedSet.add(index)
+        }
+      })
+      return adjustedSet
+    })
+
+    // Adjust active tab
+    if (planDetailIndex === activeFeeTypeIndex) {
+      if (planDetailIndex > 0) {
+        setActiveFeeTypeIndex(planDetailIndex - 1)
+      } else if (planDetailsFields.length > 1) {
+        setActiveFeeTypeIndex(0)
+      } else {
+        setActiveTab("basic")
+      }
+    } else if (planDetailIndex < activeFeeTypeIndex) {
+      setActiveFeeTypeIndex(activeFeeTypeIndex - 1)
+    }
+
+    toast({
+      variant: "default",
+      title: "Fee Type Removed",
+      description: type === "update" ? "Fee type removed. You can add it back if needed." : "Fee type removed from plan.",
+    })
+  }, [form, originalFeeTypes, type, removePlanDetail, activeFeeTypeIndex, planDetailsFields.length, setActiveTab])
 
   // Add a new fee type to the plan
   const handleAddFeeType = () => {
@@ -355,6 +420,69 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       return
     }
 
+    // Check if there are remaining fee types
+    const usedFeeTypeIds = planDetailsFields.map((_, index) =>
+      form.getValues(`fees_types.${index}.fees_type_id`)
+    ).filter(id => id && id > 0)
+
+    const availableFeeTypes = FetchedFeesType?.filter(feeType =>
+      !usedFeeTypeIds.includes(feeType.id)
+    ) || []
+
+    if (availableFeeTypes.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Fee Types Available",
+        description: "All available fee types have been added to this plan.",
+      })
+      return
+    }
+
+    // Check if we have any deleted fee types that can be restored
+    const deletedFeeTypesList = Array.from(deletedFeeTypes.entries()).filter(([feeTypeId]) =>
+      !usedFeeTypeIds.includes(feeTypeId)
+    )
+
+    if (deletedFeeTypesList.length > 0) {
+      // Show option to restore deleted fee type
+      const feeTypeId = deletedFeeTypesList[0][0]
+      const deletedData = deletedFeeTypesList[0][1]
+
+      // Restore the deleted fee type
+      appendPlanDetail({
+        fees_type_id: deletedData.fees_type_id,
+        installment_type: deletedData.installment_type,
+        total_installment: deletedData.total_installment,
+        total_amount: deletedData.total_amount,
+        installment_breakDowns: deletedData.installment_breakDowns,
+      })
+
+      // Remove from deleted tracking since it's restored
+      setDeletedFeeTypes(prev => {
+        const newMap = new Map(prev)
+        newMap.delete(feeTypeId)
+        return newMap
+      })
+
+      setDeletedFeeTypeIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(deletedData.fees_plan_detail_id)
+        return newSet
+      })
+
+      setActiveFeeTypeIndex(planDetailsFields.length)
+      setActiveTab("feeTypes")
+
+      toast({
+        variant: "default",
+        title: "Fee Type Restored",
+        description: "Previously deleted fee type has been restored with its original data.",
+      })
+
+      return
+    }
+
+    // Add new fee type as before
     appendPlanDetail({
       fees_type_id: 0,
       installment_type: "",
@@ -365,6 +493,65 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
     generateEmptyInstallmentBreakdowns(1, planDetailsFields.length)
     setActiveFeeTypeIndex(planDetailsFields.length)
     setActiveTab("feeTypes")
+  }
+
+  // Enhanced categorize changes function
+  const categorizeChangesForUpdate = (currentFeeTypes: any[], originalFeeTypes: any[]) => {
+    const newFeeTypes: any[] = []
+    const existingFeeTypes: any[] = []
+
+    currentFeeTypes.forEach((feeType, index) => {
+      // Check if this is a completely new fee type
+      if (!originalFeeTypes[index]) {
+        newFeeTypes.push(feeType)
+        return
+      }
+
+      // Only include existing fee types that have been modified
+      if (modifiedFeeTypes.has(index)) {
+        const originalFeeType = originalFeeTypes[index]
+
+        // Check what specifically changed
+        const hasAmountChanged = feeType.total_amount !== originalFeeType.fees_type.total_amount
+        const hasInstallmentCountChanged = Number(feeType.total_installment) !== originalFeeType.fees_type.total_installment
+        const hasInstallmentTypeChanged = feeType.installment_type !== originalFeeType.fees_type.installment_type
+
+        // Check if any installment amounts or dates changed
+        const hasInstallmentDetailsChanged = feeType.installment_breakDowns.some((breakdown: any, breakdownIndex: number) => {
+          const originalBreakdown = originalFeeType.installment_breakDowns?.[breakdownIndex]
+          if (!originalBreakdown) return true // New installment
+
+          return (
+            breakdown.installment_amount !== originalBreakdown.installment_amount ||
+            breakdown.due_date !== format(new Date(originalBreakdown.due_date), "yyyy-MM-dd")
+          )
+        })
+
+        // Only include if there are actual changes
+        if (hasAmountChanged || hasInstallmentCountChanged || hasInstallmentTypeChanged || hasInstallmentDetailsChanged) {
+          // Map existing installments and handle new ones
+          const mappedBreakdowns = feeType.installment_breakDowns.map((breakdown: any, breakdownIndex: number) => {
+            const originalBreakdown = originalFeeType.installment_breakDowns?.[breakdownIndex]
+            return {
+              ...breakdown,
+              id: originalBreakdown?.id || null, // null for new installments
+            }
+          })
+
+          existingFeeTypes.push({
+            ...feeType,
+            fees_plan_detail_id: originalFeeType.fees_type.id,
+            installment_breakDowns: mappedBreakdowns,
+          })
+        }
+      }
+    })
+
+    return {
+      newFeeTypes,
+      existingFeeTypes,
+      deletedFeeTypes: Array.from(deletedFeeTypeIds)
+    }
   }
 
   // Handle form submission
@@ -404,7 +591,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
       // Only include fee type updates if plan is fully editable
       if (isFullyEditable) {
-        const { newFeeTypes, existingFeeTypes } = categorizeChangesForUpdate(values.fees_types, originalFeeTypes)
+        const { newFeeTypes, existingFeeTypes, deletedFeeTypes } = categorizeChangesForUpdate(values.fees_types, originalFeeTypes)
 
         if (newFeeTypes.length > 0) {
           updatedPlan.new_fees_type = newFeeTypes.map((detail) => ({
@@ -412,7 +599,7 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
             installment_type: detail.installment_type,
             total_installment: Number(detail.total_installment),
             total_amount: detail.total_amount,
-            installment_breakDowns: detail.installment_breakDowns.map((breakdown : any) => ({
+            installment_breakDowns: detail.installment_breakDowns.map((breakdown: any) => ({
               installment_no: breakdown.installment_no,
               due_date: breakdown.due_date,
               installment_amount: breakdown.installment_amount,
@@ -427,13 +614,17 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
             installment_type: detail.installment_type,
             total_installment: Number(detail.total_installment),
             total_amount: detail.total_amount,
-            installment_breakDowns: detail.installment_breakDowns.map((breakdown : any) => ({
+            installment_breakDowns: detail.installment_breakDowns.map((breakdown: any) => ({
               id: breakdown.id,
               installment_no: breakdown.installment_no,
               due_date: breakdown.due_date,
               installment_amount: breakdown.installment_amount,
             })),
           }))
+        }
+
+        if (deletedFeeTypes.length > 0) {
+          updatedPlan.deleted_fees_type = deletedFeeTypes
         }
       }
 
@@ -494,30 +685,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
     return installmentType === "Yearly" || installmentType === "Admission"
   }, [])
 
-  // Categorize changes for update
-  const categorizeChangesForUpdate = (currentFeeTypes: any[], originalFeeTypes: any[]) => {
-    const newFeeTypes: any[] = []
-    const existingFeeTypes: any[] = []
-
-    currentFeeTypes.forEach((feeType, index) => {
-      if (!originalFeeTypes[index]) {
-        newFeeTypes.push(feeType)
-      } else {
-        const originalFeeType = originalFeeTypes[index]
-        existingFeeTypes.push({
-          ...feeType,
-          fees_plan_detail_id: originalFeeType.fees_type.id,
-          installment_breakDowns: feeType.installment_breakDowns.map((breakdown: any, breakdownIndex: number) => ({
-            ...breakdown,
-            id: originalFeeType.installment_breakDowns?.[breakdownIndex]?.id || null,
-          })),
-        })
-      }
-    })
-
-    return { newFeeTypes, existingFeeTypes }
-  }
-
   // Format currency
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString("en-IN", {
@@ -528,7 +695,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
   // Update form values when plan details are fetched
   useEffect(() => {
-    // Only run if fetchedDetialFeePlan exists and form fields are not set yet
     if (
       fetchedDetialFeePlan &&
       !isFormFieldsForEditSet
@@ -537,36 +703,39 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
 
       setIsFullyEditable(is_editable ?? false)
 
-      form.reset({
+      const formData = {
         fees_plan: {
           name: fees_plan.name,
           description: fees_plan.description,
           class_id: fees_plan.class_id,
         },
-        fees_types: [],
-      })
+        fees_types: fees_types.map(
+          (feeType: { fees_type: FeesPlanDetail; installment_breakDowns: InstallmentBreakdowns[] }) => ({
+            fees_type_id: feeType.fees_type.fees_type_id,
+            installment_type: feeType.fees_type.installment_type,
+            total_installment: feeType.fees_type.total_installment,
+            total_amount: feeType.fees_type.total_amount.toString(),
+            installment_breakDowns:
+              feeType.installment_breakDowns?.map((breakdown: any) => ({
+                installment_no: breakdown.installment_no,
+                due_date: format(new Date(breakdown.due_date), "yyyy-MM-dd"),
+                installment_amount: breakdown.installment_amount,
+              })) || [],
+          }),
+        ),
+      }
+
+      // Store original values for comparison
+      setOriginalFormValues(JSON.parse(JSON.stringify(formData)))
+
+      form.reset(formData)
 
       // Clear existing fee types
       while (form.getValues("fees_types").length > 0) {
         removePlanDetail(0)
       }
 
-      const data_to_append = fees_types.map(
-        (feeType: { fees_type: FeesPlanDetail; installment_breakDowns: InstallmentBreakdowns[] }) => ({
-          fees_type_id: feeType.fees_type.fees_type_id,
-          installment_type: feeType.fees_type.installment_type,
-          total_installment: feeType.fees_type.total_installment,
-          total_amount: feeType.fees_type.total_amount,
-          installment_breakDowns:
-            feeType.installment_breakDowns?.map((breakdown: any) => ({
-              installment_no: breakdown.installment_no,
-              due_date: format(new Date(breakdown.due_date), "yyyy-MM-dd"),
-              installment_amount: breakdown.installment_amount,
-            })) || [],
-        }),
-      )
-
-      data_to_append.forEach((data: any) => {
+      formData.fees_types.forEach((data: any) => {
         appendPlanDetail(data)
       })
 
@@ -574,11 +743,15 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
       setActiveFeeTypeIndex(0)
       setIsFormFieldsForEditSet(true)
 
+      // Reset all tracking states
+      setModifiedFeeTypes(new Set())
+      setDeletedFeeTypes(new Map())
+      setDeletedFeeTypeIds(new Set())
+
       if (fees_types.length > 0) {
         setActiveTab("feeTypes")
       }
     }
-    // Only depend on fetchedDetialFeePlan and isFormFieldsForEditSet
   }, [fetchedDetialFeePlan, isFormFieldsForEditSet])
 
   // Handle form errors
@@ -719,13 +892,14 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   <CardTitle>{t("fee_plan_details")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  
-                    <FormField
-                      control={form.control}
-                      name="fees_plan.class_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel required>{t("class")}</FormLabel>
+
+                  <FormField
+                    control={form.control}
+                    name="fees_plan.class_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>{t("class")}</FormLabel>
+                        <div className="flex items-center gap-2">
                           <Select
                             onValueChange={(value) => field.onChange(Number.parseInt(value))}
                             value={field.value ? field.value.toString() : undefined}
@@ -750,10 +924,16 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                               )}
                             </SelectContent>
                           </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          {type === "update" && !field.value && (
+                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                              Not attached
+                            </Badge>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -763,20 +943,6 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                         <FormLabel required>{t("plan_name")}</FormLabel>
                         <FormControl>
                           <Input placeholder={t("enter_fee_plan_name")} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="fees_plan.description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("description")}</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder={t("enter_plan_description")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -810,7 +976,20 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                   type="button"
                   onClick={handleAddFeeType}
                   variant="outline"
-                  disabled={type === "update" && !isFullyEditable}
+                  disabled={
+                    (type === "update" && !isFullyEditable) ||
+                    (() => {
+                      const usedFeeTypeIds = planDetailsFields.map((_, index) =>
+                        form.getValues(`fees_types.${index}.fees_type_id`)
+                      ).filter(id => id && id > 0)
+
+                      const availableFeeTypes = FetchedFeesType?.filter(feeType =>
+                        !usedFeeTypeIds.includes(feeType.id)
+                      ) || []
+
+                      return availableFeeTypes.length === 0
+                    })()
+                  }
                 >
                   <Plus className="h-4 w-4 mr-2" /> {t("add_fee_type")}
                 </Button>
@@ -856,22 +1035,13 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                           <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                               <CardTitle>{t("fee_type_details")}</CardTitle>
-                              {(type === "create") && (
+                              {(type === "create" || (type === "update" && isFullyEditable)) && (
                                 <Button
                                   type="button"
                                   className="text-white"
                                   variant="destructive"
                                   size="sm"
-                                  onClick={() => {
-                                    removePlanDetail(index)
-                                    if (index > 0) {
-                                      setActiveFeeTypeIndex(index - 1)
-                                    } else if (planDetailsFields.length > 1) {
-                                      setActiveFeeTypeIndex(0)
-                                    } else {
-                                      setActiveTab("basic")
-                                    }
-                                  }}
+                                  onClick={() => handleDeleteFeeType(index)}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   {t("remove")}
@@ -887,10 +1057,8 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                     <FormLabel required>{t("fee_type")}</FormLabel>
                                     <Select
                                       onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                                      // value={field.value ? field.value.toString() : undefined}
-                                      // disabled={type === "update" && !!fetchedDetialFeePlan?.fees_types[index]}
-                                      // disabled={!isFullyEditable && !!fetchedDetialFeePlan?.fees_types[index]}
-                                        disabled={type === 'update'}
+                                      value={field.value ? field.value.toString() : undefined}
+                                      disabled={type === 'update'}
                                     >
                                       <FormControl>
                                         <SelectTrigger>
@@ -1012,6 +1180,10 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                           value={field.value.toString() ?? undefined}
                                           onChange={(value) => {
                                             field.onChange(value)
+
+                                            // Track this fee type as modified when amount changes
+                                            trackFeeTypeChange(index)
+
                                             if (installmentBreakdowns.length > 0) {
                                               const currentPlanDetail = form.getValues(`fees_types.${index}`)
                                               const resetBreakdowns = currentPlanDetail.installment_breakDowns.map(
@@ -1088,18 +1260,20 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                 )}
 
                                 {installmentBreakdowns.length > 0 ? (
-                                  <div className="border rounded-md">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>{t("installment")} #</TableHead>
-                                          <TableHead>{t("due_date")}</TableHead>
-                                          <TableHead>{t("amount")}</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {installmentBreakdowns.map((installment, installmentIndex) => (
-                                          <TableRow key={`${index}-${installmentIndex}`}>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>{t("installment")} #</TableHead>
+                                        <TableHead>{t("due_date")}</TableHead>
+                                        <TableHead>{t("amount")}</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {installmentBreakdowns.map((installment, installmentIndex) => {
+                                        const isInstallmentDisabled = !isFullyEditable || (fetchedDetialFeePlan?.fees_plan?.status === "Inactive")
+
+                                        return (
+                                          <TableRow key={`${index}-${installmentIndex}`} className={isInstallmentDisabled ? "opacity-50" : ""}>
                                             <TableCell>
                                               <Badge variant="outline">{installment.installment_no}</Badge>
                                             </TableCell>
@@ -1111,14 +1285,25 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                                   <input
                                                     type="date"
                                                     value={field.value || ""}
-                                                    // disabled={
-                                                    //   type === "update" &&
-                                                    //   !!fetchedDetialFeePlan?.fees_types[index]?.installment_breakDowns[
-                                                    //     installmentIndex
-                                                    //   ]
-                                                    // }
-                                                    disabled={!isFullyEditable}
-                                                    onChange={(e) => field.onChange(e.target.value)}
+                                                    disabled={isInstallmentDisabled}
+                                                    onChange={(e) => {
+                                                      const selectedDate = new Date(e.target.value)
+                                                      const adjustedDate = shiftSundayToMonday(selectedDate)
+                                                      const adjustedDateString = format(adjustedDate, "yyyy-MM-dd")
+
+                                                      if (adjustedDateString !== e.target.value) {
+                                                        toast({
+                                                          variant: "default",
+                                                          title: "Date Adjusted",
+                                                          description: "Due date was moved from Sunday to Monday.",
+                                                        })
+                                                      }
+
+                                                      field.onChange(adjustedDateString)
+
+                                                      // Track this fee type as modified when due date changes
+                                                      trackFeeTypeChange(index)
+                                                    }}
                                                     onBlur={field.onBlur}
                                                     ref={field.ref}
                                                     className="border border-gray-300 p-2 rounded-md w-full"
@@ -1135,19 +1320,16 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                                     decimal={true}
                                                     {...field}
                                                     value={field.value.toString() || undefined}
-                                                    // disabled={
-                                                    //   type === "update" &&
-                                                    //   !!fetchedDetialFeePlan?.fees_types[index]?.installment_breakDowns[
-                                                    //     installmentIndex
-                                                    //   ]
-                                                    // }
-                                                    disabled={!isFullyEditable}
+                                                    disabled={isInstallmentDisabled}
                                                     onChange={(amount) => {
                                                       if (!amount) {
                                                         field.onChange("0")
                                                         return
                                                       }
                                                       field.onChange(amount)
+
+                                                      // Track this fee type as modified when installment amount changes
+                                                      trackFeeTypeChange(index)
                                                     }}
                                                     className="w-full"
                                                   />
@@ -1155,10 +1337,10 @@ export const AddFeePlanForm: React.FC<AddFeePlanFormProps> = ({ onCancel, onSucc
                                               />
                                             </TableCell>
                                           </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
+                                        )
+                                      })}
+                                    </TableBody>
+                                  </Table>
                                 ) : (
                                   <Alert>
                                     <Info className="h-4 w-4" />

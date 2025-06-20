@@ -16,24 +16,23 @@ import { type StaffFormData, staffSchema } from "@/utils/staff.validation"
 import { useLazyGetSchoolStaffRoleQuery } from "@/services/StaffService"
 import type { StaffRole, StaffType } from "@/types/staff"
 import { useTranslation } from "@/redux/hooks/useTranslation"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "../ui/NumberInput"
 import { selectAuthState } from "@/redux/slices/authSlice"
 import { selectSchoolStaffRoles } from "@/redux/slices/staffSlice"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { Loader2 } from "lucide-react"
 
 interface StaffFormProps {
-  // initial_data?: Partial<StaffFormData>
   initial_data?: StaffType | null
   onSubmit: (data: StaffFormData) => void
   onClose: () => void
   formType: "create" | "update" | "view"
   isApiInProgress: boolean
-  onSuccess?: () => void // Add this line
+  onSuccess?: () => void
 }
 
 const formatData = (value: any): string => {
-  return value ? new Date(value).toISOString().split("T")[0] : " "
+  return value ? new Date(value).toISOString().split("T")[0] : ""
 }
 
 const StaffForm: React.FC<StaffFormProps> = ({
@@ -127,7 +126,6 @@ const StaffForm: React.FC<StaffFormProps> = ({
 
   const handleSubmit: SubmitHandler<StaffFormData> = (data) => {
     onSubmit(data)
-    // The parent component will handle the success callback after API call
   }
 
   const handleNextTab = useCallback(() => {
@@ -146,17 +144,15 @@ const StaffForm: React.FC<StaffFormProps> = ({
     else if (activeTab === "address") setActiveTab("other")
     else if (activeTab === "bank") setActiveTab("address")
     else if (activeTab === "employment") setActiveTab("bank")
-  }, [activeTab])
+  }, [activeTab, formType])
 
   useEffect(() => {
     const errors = form.formState.errors
     if (Object.keys(errors).length > 0) {
       const firstErrorField = Object.keys(errors)[0]
-      // console.log("firstErrorField", firstErrorField)
       const tabToActivate = tabMapping[firstErrorField]
       setActiveTab(tabToActivate)
 
-      // Focus on the input field with the error
       setTimeout(() => {
         inputRefs.current[firstErrorField]?.focus()
       }, 0)
@@ -210,14 +206,14 @@ const StaffForm: React.FC<StaffFormProps> = ({
         bank_name: initial_data?.bank_name,
         account_no: initial_data?.account_no,
         IFSC_code: initial_data?.IFSC_code,
-        joining_date: initial_data?.birth_date ? formatData(initial_data.birth_date) : "",
+        joining_date: initial_data?.joining_date ? formatData(initial_data.joining_date) : "",
         employment_status: initial_data?.employment_status,
         state: initial_data?.state,
         qualification: initial_data?.qualification ?? null,
         subject_specialization: initial_data?.subject_specialization ?? null,
       })
     }
-  }, [formType])
+  }, [formType, initial_data, form])
 
   return (
     <Form {...form}>
@@ -233,7 +229,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
             <TabsTrigger value="employment">{t("employee")}</TabsTrigger>
           </TabsList>
 
-          {formType != "update" && (
+          {formType !== "update" && (
             <TabsContent value="role">
               <Card>
                 <CardHeader>
@@ -249,7 +245,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "teaching")}
-                            defaultValue={field.value ? "teaching" : "non-teaching"}
+                            value={field.value ? "teaching" : "non-teaching"}
                             className="flex flex-col space-y-1"
                           >
                             <FormItem className="flex items-center space-x-3 space-y-0">
@@ -270,16 +266,17 @@ const StaffForm: React.FC<StaffFormProps> = ({
                       </FormItem>
                     )}
                   />
+                  {/* Staff Role , reflect to user as a Staff Designation */}
                   <FormField
                     control={form.control}
                     name="staff_role_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel required>{t("staff_role")}</FormLabel>
+                        <FormLabel required>{t("staff_designation")}</FormLabel> 
                         {teachingRoles && nonTeachingRoles && (
                           <Select
                             onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                            defaultValue={field.value?.toString()}
+                            value={field.value?.toString()}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -413,7 +410,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel required>{t("gender")}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select gender" />
@@ -433,7 +430,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                     name="birth_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("date_of_birth")}</FormLabel>
+                        <FormLabel required>{t("date_of_birth")}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -449,9 +446,9 @@ const StaffForm: React.FC<StaffFormProps> = ({
                         <FormLabel>{t("aadhar_no")}</FormLabel>
                         <FormControl>
                           <NumberInput
-                            {...field}
-                            value={field.value ? String(field.value) : ""}
+                            value={field.value}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            allowEmpty={true}
                           />
                         </FormControl>
                         <FormMessage />
@@ -486,9 +483,10 @@ const StaffForm: React.FC<StaffFormProps> = ({
                         <FormLabel required>{t("mobile_no")}</FormLabel>
                         <FormControl>
                           <NumberInput
-                            {...field}
-                            value={field.value !== undefined ? String(field.value) : ""}
+                            value={field.value}
                             onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            allowEmpty={true}
+                            placeholder="Enter mobile number"
                           />
                         </FormControl>
                         <FormMessage />
@@ -517,7 +515,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel required>{t("qualification")}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Qualification" />
@@ -553,7 +551,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("subject_specialization")}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select subject specialization" />
@@ -663,7 +661,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("category")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                      <Select onValueChange={field.onChange} value={field.value ?? ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t("select_category")} />
@@ -810,9 +808,9 @@ const StaffForm: React.FC<StaffFormProps> = ({
                       <FormLabel>{t("account_number")}</FormLabel>
                       <FormControl>
                         <NumberInput
-                          {...field}
-                          value={field.value ? String(field.value) : undefined}
+                          value={field.value}
                           onChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                          allowEmpty={true}
                         />
                       </FormControl>
                       <FormMessage />
@@ -855,7 +853,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                   name="joining_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("joining_date")}</FormLabel>
+                      <FormLabel required>{t("joining_date")}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} value={field.value ?? ""} />
                       </FormControl>
@@ -869,7 +867,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel required>{t("employee_status")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select employment status" />
@@ -892,12 +890,8 @@ const StaffForm: React.FC<StaffFormProps> = ({
                 <Button type="button" variant="outline" onClick={handlePreviousTab}>
                   {t("previous")}
                 </Button>
-                {/* <Button type="submit" disabled={isApiInProgress}>
-                  {isApiInProgress ? <Loader2 className="animate-spin" />  : null}
-                  {t("submit")}
-                </Button> */}
                 <Button type="submit" disabled={isApiInProgress}>
-                  {isApiInProgress && <Loader2 className="animate-spin" />}
+                  {isApiInProgress && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
                   {formType === "create" ? t("Create") : "Update"}
                 </Button>
               </CardFooter>

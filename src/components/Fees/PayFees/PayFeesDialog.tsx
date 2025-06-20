@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetAllConcessionsQuery, usePayMultipleInstallmentsMutation } from "@/services/feesService"
 import { Switch } from "@/components/ui/switch"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "@/components/ui/NumberInput"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
 import { selectActiveAccademicSessionsForSchool } from "@/redux/slices/authSlice"
 

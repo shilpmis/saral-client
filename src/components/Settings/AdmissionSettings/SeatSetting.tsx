@@ -39,7 +39,7 @@ import { useTranslation } from "@/redux/hooks/useTranslation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import NumberInput from "@/components/ui/NumberInput"
+import { NumberInput } from "@/components/ui/NumberInput"
 
 const seatAvailabilitySchema = z.object({
   class_id: z

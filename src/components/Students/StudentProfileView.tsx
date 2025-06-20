@@ -28,24 +28,35 @@ import { useNavigate } from "react-router-dom"
 import type { StudentEnrollment } from "@/types/student"
 import { PDFDownloadLink } from "@react-pdf/renderer"
 import dynamic from "next/dynamic"
+import { selectAcademicClasses } from "@/redux/slices/academicSlice"
+import { useAppSelector } from "@/redux/hooks/useAppSelector"
 
 interface StudentProfileViewProps {
   student: StudentEnrollment
   onBack?: () => void
-  showToolBar : boolean
+  showToolBar: boolean
 }
 
-export function StudentProfileView({ student, onBack , showToolBar }: StudentProfileViewProps) {
+export function StudentProfileView({ student, onBack, showToolBar }: StudentProfileViewProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("overview")
+  // Add a state to force re-render PDFDownloadLink
+  const [pdfKey, setPdfKey] = useState(Date.now())
+
+  const AcademicClasses = useAppSelector(selectAcademicClasses)
+  
+  const getClass = (class_id : number)=>{
+    if(!AcademicClasses) return 'Loading...'
+    return AcademicClasses.find((cls)=>cls.id === class_id)?.class
+  }
 
   // Calculate fees payment percentage
   const feesPaymentPercentage = student.fees_status
     ? Math.round(
-        (Number.parseFloat(String(student.fees_status.paid_amount)) / Number.parseFloat(String(student.fees_status.total_amount))) *
-          100,
-      )
+      (Number.parseFloat(String(student.fees_status.paid_amount)) / Number.parseFloat(String(student.fees_status.total_amount))) *
+      100,
+    )
     : 0
 
   // Format date function
@@ -89,13 +100,9 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
     }
   }
 
-    const StudentDetailsPDF = dynamic(() => import("./StudentPdf"), {
-      ssr: false,
-      loading: () => <p>Loading PDF generator...</p>,
-    })
-
-  const PDFDownloadLink = dynamic(() => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink), {
-      ssr: false,
+  const StudentDetailsPDF = dynamic(() => import("./StudentPdf"), {
+    ssr: false,
+    loading: () => <p>Loading PDF generator...</p>,
   })
 
   return (
@@ -107,29 +114,26 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
           {t("back")}
         </Button>
         <div className="flex gap-2">
-          {/* <Button variant="outline" className="flex items-center gap-1">
-            <Printer className="h-4 w-4" />
-            {t("print_profile")}
-          </Button> */}
-            {typeof window !== "undefined" && (
-              <PDFDownloadLink
-                document={<StudentDetailsPDF student={student} currentUser={null} />}
-                fileName={`${student.student.first_name}_${student.student.last_name}_details.pdf`}
-              >
-                {({ blob, url, loading, error }: { blob: Blob | null; url: string | null; loading: boolean; error: Error | null }) => (
+          {typeof window !== "undefined" && (
+            <PDFDownloadLink
+              key={pdfKey}
+              document={<StudentDetailsPDF student={student} currentUser={null} />}
+              fileName={`${student.student.first_name}_${student.student.last_name}_details.pdf`}
+            >
+              {({ blob, url, loading, error }: { blob: Blob | null; url: string | null; loading: boolean; error: Error | null }) => (
                 <Button
                   variant="outline"
                   size="icon"
                   disabled={loading}
                   aria-label="Download PDF"
                   className="flex items-center gap-1"
+                  onClick={() => setTimeout(() => setPdfKey(Date.now()), 500)}
                 >
                   <Download className="h-4 w-4" />
-                  {/* {!loading && t("export_data")} */}
                 </Button>
-                )}
-              </PDFDownloadLink>
-            )}
+              )}
+            </PDFDownloadLink>
+          )}
           {/* <Button className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             {t("edit_profile")}
@@ -180,7 +184,7 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {t("dob")}: {student.student?.birth_date ? formatDate(student.student?.birth_date) : "N/A"}
+                    {t("DoB")}: {student.student?.birth_date ? formatDate(student.student?.birth_date) : "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -274,7 +278,9 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t("admission_class")}</p>
-                    <p className="font-medium">Class {student.student.student_meta?.admission_class_id}</p>
+                    <p className="font-medium">{
+                      student.student.student_meta?.admission_class_id ? `Class ${getClass(student.student.student_meta?.admission_class_id)}` : "N/A"
+                    }</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t("admission_type")}</p>
@@ -478,7 +484,9 @@ export function StudentProfileView({ student, onBack , showToolBar }: StudentPro
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("admission_class")}</span>
-                  <span className="font-medium">Class {student.student.student_meta?.admission_class_id}</span>
+                  <span className="font-medium">{
+                    student.student.student_meta?.admission_class_id ? `Class ${getClass(student.student.student_meta?.admission_class_id)}` : "N/A"
+                  } </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center">

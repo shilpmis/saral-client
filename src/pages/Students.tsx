@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload, Loader2, AlertCircle, CheckCircle2, FileText, FileDown, School } from "lucide-react"
+import { Plus, Upload, Loader2, AlertCircle, CheckCircle2, FileText, FileDown, School } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import StudentForm from "@/components/Students/StudentForm"
 import { useAppSelector } from "@/redux/hooks/useAppSelector"
@@ -31,7 +31,7 @@ import type { AcademicSession } from "@/types/user"
 import { useTranslation } from "@/redux/hooks/useTranslation"
 import { StudentSchemaForUploadData } from "@/utils/student.validation"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useNavigate, useNavigation } from "react-router-dom"
+import { useNavigate, useNavigation } from "react-router-dom" 
 // Type for validation results
 type ValidationResult = {
   row: number
@@ -164,6 +164,7 @@ export const Students: React.FC = () => {
     setSelectedClass(value)
     setSelectedDivision(null) // Reset division when class changes
     setCurrentPage(1)
+    setSearchValue("") // Clear search when class changes
     sessionStorage.setItem(SESSION_SELECTED_CLASS_KEY, value)
     sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, "")
     sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, "1")
@@ -180,6 +181,7 @@ export const Students: React.FC = () => {
           if (selectedDiv) {
             setSelectedDivision(selectedDiv)
             setCurrentPage(1)
+            setSearchValue("") // Clear search when division changes
             sessionStorage.setItem(SESSION_SELECTED_DIVISION_KEY, value)
             sessionStorage.setItem(SESSION_SELECTED_PAGE_KEY, "1")
 
@@ -214,9 +216,19 @@ export const Students: React.FC = () => {
 
   const filteredStudents = useMemo(() => {
     if (listedStudentForSelectedClass) {
-      return listedStudentForSelectedClass.filter((student) =>
-        Object.values(student).some((field) => String(field).toLowerCase().includes(searchValue.toLowerCase())),
-      )
+      return listedStudentForSelectedClass.filter((student) => {
+        const searchLower = searchValue.toLowerCase()
+        return (
+          student.first_name?.toLowerCase().includes(searchLower) ||
+          student.last_name?.toLowerCase().includes(searchLower) ||
+          student.middle_name?.toLowerCase().includes(searchLower) ||
+          student.gr_no?.toString().includes(searchLower) ||
+          student.roll_number?.toString().includes(searchLower) ||
+          student.aadhar_no?.toString().includes(searchLower) ||
+          student.father_name?.toLowerCase().includes(searchLower) ||
+          student.primary_mobile?.toString().includes(searchLower)
+        )
+      })
     }
     return []
   }, [listedStudentForSelectedClass, searchValue])
@@ -632,7 +644,7 @@ export const Students: React.FC = () => {
     <>
       <div className="p-6 bg-white shadow-md rounded-lg max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">{t("students")}</h2>
+          <h2 className="text-3xl font-bold">{t("student_managment")}</h2>
           <div className="flex space-x-2">
             <Button
               onClick={() =>
@@ -640,7 +652,7 @@ export const Students: React.FC = () => {
               }
               disabled={!AcademicClasses || AcademicClasses.length === 0}
             >
-              <Plus className="mr-2 h-4 w-4" /> {t("add_new_student")}
+              <Plus className="mr-2 h-4 w-4" /> {t("add_student")}
             </Button>
 
             {/* Upload CSV */}
@@ -1092,6 +1104,12 @@ export const Students: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <Input
+                  placeholder={t("search_students")}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="w-[200px]"
+                />
               </div>
             </CardContent>
           </Card>
@@ -1247,7 +1265,10 @@ export const Students: React.FC = () => {
           <DialogHeader>
             <DialogTitle>{t("download_student_data")}</DialogTitle>
           </DialogHeader>
-          <ExcelDownloadModalForStudents academicClasses={AcademicClasses} />
+          <ExcelDownloadModalForStudents 
+            academicClasses={AcademicClasses}
+            selctedDivisionFromParent={selectedDivision}
+          />
         </DialogContent>
       </Dialog>
     </>

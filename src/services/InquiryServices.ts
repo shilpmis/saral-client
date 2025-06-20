@@ -3,6 +3,7 @@ import type { PageMeta } from "@/types/global";
 import baseUrl from "@/utils/base-urls";
 import { ReqBodyForOnBoardingStudent, StudentEnrollment, StudentEntry } from "@/types/student";
 import { E } from "framer-motion/dist/types.d-DDSxwf0n";
+import { number } from "framer-motion";
 
 // Define the Inquiry type based on the API response
 export interface Inquiry {
@@ -35,7 +36,7 @@ export interface Inquiry {
 }
 
 interface GetInquiriesResponse {
-  data: Inquiry[];
+  data: Array<Inquiry & { student_id: number }>;
   meta: PageMeta;
 }
 
@@ -67,10 +68,14 @@ export const InquiryApi = createApi({
     // Get all inquiries with pagination
     getInquiries: builder.query<
       GetInquiriesResponse,
-      { page?: number; limit?: number; academic_session_id: number }
+      { academic_session_id: number ;
+        page?: number;
+        class_id ?: number ;
+        status ?: string
+        search ?: string }
     >({
-      query: ({ page = 1, academic_session_id }) => ({
-        url: `/inquiries?page=${page}&academic_session=${academic_session_id}`,
+      query: ({ page = 1, status = "All" , class_id = 'All', search = undefined ,academic_session_id }) => ({
+        url: `/inquiries?page=${page}&status=${status}&class=${class_id}&search=${search}&academic_session=${academic_session_id}`,
         // params: { page, limit },
       }),
       providesTags: (result) =>

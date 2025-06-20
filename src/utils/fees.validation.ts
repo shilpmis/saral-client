@@ -4,7 +4,9 @@ export const feeTypeSchema = z.object({
   name: z
     .string()
     .min(2, { message: "Fee type name must be at least 2 characters" }),
-  description: z.string(),
+    description: z
+    .string()
+    .min(5, { message: "Description must be at least 5 characters" }),
   status: z.enum(["Active", "Inactive"]),
   applicable_to: z.enum(["plan", "student"]),
   //   is_concession_applicable: z.boolean(),

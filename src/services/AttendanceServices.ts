@@ -46,7 +46,10 @@ export const AttendanceApi = createApi({
 
     updateAttendance: builder.mutation<
       AttendanceDetails,
-      { payload: AttendanceDetails; class_id: number; unix_date: number }
+      { payload: {
+        student_id: number;
+        status: "present" | "absent" | "late" | "half_day";
+      }[]; class_id: number; unix_date: number }
     >({
       query: ({ payload, class_id , unix_date }) => ({
         url: `attendance/${class_id}/${unix_date}`,
@@ -59,5 +62,5 @@ export const AttendanceApi = createApi({
   }),
 });
 
-export const { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation } =
+export const { useLazyFetchAttendanceForDateQuery, useMarkAttendanceMutation , useUpdateAttendanceMutation } =
   AttendanceApi;

@@ -952,10 +952,10 @@ export function StudentPromotionManagement() {
                     />
                   </div>
 
-                  <Button variant="outline" size="sm" onClick={fetchStudents} disabled={isLoading}>
+                  {/* <Button variant="outline" size="sm" onClick={fetchStudents} disabled={isLoading}>
                     <Filter className="mr-2 h-4 w-4" />
                     {t("apply_filters")}
-                  </Button>
+                  </Button> */}
                 </div>
 
                 <div className="flex gap-2">
@@ -979,10 +979,10 @@ export function StudentPromotionManagement() {
                     {t("promote_selected")} ({selectedStudents.length})
                   </Button>
 
-                  <Button variant="outline" size="sm" onClick={handleExportStudents} disabled={isLoading}>
+                  {/* <Button variant="outline" size="sm" onClick={handleExportStudents} disabled={isLoading}>
                     <FileDown className="mr-2 h-4 w-4" />
                     {t("export")}
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -1051,7 +1051,9 @@ export function StudentPromotionManagement() {
                             {student.student.first_name} {student.student.middle_name} {student.student.last_name}
                           </TableCell>
                           <TableCell>
-                            Class {student.class.class_id} {student.class.division}
+                            Class {academicClassesFromStore
+                              ? `${academicClassesFromStore.find(cls => cls.id === student.class.class_id)?.class || "Loading..."} ${student.class.division}`
+                              : "Loading ..."}
                           </TableCell>
                           <TableCell>
                             <Badge variant={student.status === "pursuing" ? "default" : "secondary"}>
@@ -1286,7 +1288,7 @@ export function StudentPromotionManagement() {
                   {sourceDivision === "all"
                     ? "All Divisions"
                     : availableSourceDivisions.find((div) => div.id.toString() === sourceDivision)?.division ||
-                      sourceDivision}
+                    sourceDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {academicSessions.find((s: any) => s.id.toString() === sourceAcademicSession)?.session_name}
@@ -1295,11 +1297,15 @@ export function StudentPromotionManagement() {
               <ArrowRight className="mx-4 text-muted-foreground" />
               <div className="text-center px-4 py-2 border rounded-md bg-primary/10">
                 <p className="text-sm font-medium">
-                  Class {targetClass}{" "}
+                  Class
+                  {academicClassesFromStore ?
+                    academicClassesFromStore.find(cls => cls.class === targetClass)?.class
+                    : "Loading.."}
+                  {" "}
                   {targetDivision === "auto"
                     ? "Auto Assign"
                     : availableTargetDivisions.find((div) => div.id.toString() === targetDivision)?.division ||
-                      targetDivision}
+                    targetDivision}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {
@@ -1360,14 +1366,9 @@ export function StudentPromotionManagement() {
             <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
               <p className="text-sm font-medium">
                 Class{" "}
-                {selectedStudentForAction
-                  ? typeof selectedStudentForAction.class.class === "number"
-                    ? selectedStudentForAction.class.class
-                    : selectedStudentForAction.class.id ||
-                      (selectedStudentForAction.class.class && typeof selectedStudentForAction.class.class === "object"
-                        ? selectedStudentForAction.class.id
-                        : "")
-                  : ""}{" "}
+                {academicClassesFromStore
+                  ? academicClassesFromStore.find(cls => cls.id === selectedStudentForAction?.class.class)?.class
+                  : "Loading.."}
                 {selectedStudentForAction?.class?.division}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1437,15 +1438,9 @@ export function StudentPromotionManagement() {
               <div className="text-center px-4 py-2 border rounded-md bg-muted/30">
                 <p className="text-sm font-medium">
                   Class{" "}
-                  {selectedStudentForAction
-                    ? typeof selectedStudentForAction.class.class === "number"
-                      ? selectedStudentForAction.class.class
-                      : selectedStudentForAction.class.id ||
-                        (selectedStudentForAction.class.class &&
-                        typeof selectedStudentForAction.class.class === "object"
-                          ? selectedStudentForAction.class.id
-                          : "")
-                    : ""}{" "}
+                  {academicClassesFromStore ?
+                    academicClassesFromStore.find(cls => cls.id === selectedStudentForAction?.class.class)?.class
+                   :  "Loading.."}
                   {selectedStudentForAction?.class?.division}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -1553,10 +1548,10 @@ export function StudentPromotionManagement() {
                         ? typeof selectedStudentForAction.class.class === "number"
                           ? selectedStudentForAction.class.class
                           : selectedStudentForAction.class.id ||
-                            (selectedStudentForAction.class.class &&
+                          (selectedStudentForAction.class.class &&
                             typeof selectedStudentForAction.class.class === "object"
-                              ? selectedStudentForAction.class.id
-                              : "")
+                            ? selectedStudentForAction.class.id
+                            : "")
                         : ""}{" "}
                       {selectedStudentForAction?.class?.division}
                     </p>

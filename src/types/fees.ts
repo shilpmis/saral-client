@@ -23,6 +23,8 @@ export interface Concession {
   concessions_to: "fees_type" | "plan";
   status: "Active" | "Inactive";
   category: "family" | "sports" | "staff" | "education" | "financial" | "other";
+  created_at: string;
+  // updated_at: string;
 }
 
 export interface ReqBodyForApplyConsessionToPlan {
@@ -132,6 +134,7 @@ export interface ReqObjectForUpdateFeesPlan {
       "id" | "installment_no" | "due_date" | "installment_amount"
     >[];
   }[];
+  deleted_fees_type?: number[] // Array of fees_plan_detail_id to be deleted
 }
 
 export interface DetailedFeesPlan {
@@ -718,6 +721,25 @@ export interface ConcessionDetails {
   concession_holder_students?: AppliedConcessioinToStudent[] | null;
 }
 
+export interface ConcessionStudenMaster extends Partial<Student> {
+  id: number;
+  student_id: number;
+  academic_session_id: number;
+  concession_id: number;
+  fees_plan_id: number;
+  fees_type_id: number | null;
+  deduction_type: "percentage" | "fixed_amount";
+  amount: number | null;
+  percentage: number | null;
+  status: "Active" | "Inactive";
+  concession?: Concession;
+  fees_plan?: FeesPlan;
+  fees_plan_name?: string;
+  fees_type?: FeesPlanDetail;
+  fees_type_name?: string;
+  class_id ?: number;
+  division_id ?: number;
+}
 
 export interface TypeOfInstallmentWiseReportForClass {
   id: number,

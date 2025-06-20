@@ -61,14 +61,14 @@ export function StaffProfileView({ staff, onBack, showToolBar }: StaffProfileVie
             {t("back")}
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-1">
+            {/* <Button variant="outline" className="flex items-center gap-1">
               <Printer className="h-4 w-4" />
               {t("print_profile")}
-            </Button>
-            <Button variant="outline" className="flex items-center gap-1">
+            </Button> */}
+            {/* <Button variant="outline" className="flex items-center gap-1">
               <Download className="h-4 w-4" />
               {t("export_data")}
-            </Button>
+            </Button> */}
           </div>
         </div>
       )}

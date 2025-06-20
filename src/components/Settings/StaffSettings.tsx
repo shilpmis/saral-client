@@ -195,7 +195,7 @@ export default function StaffSettings() {
         {(isFetching || isLoading) && <div>Loading...</div>}
         {StaffRoleState && StaffRoleState.length > 0 && (<Card>
           <CardHeader>
-            <CardTitle className="text-2xl">{t("manage_satff_roles")}</CardTitle>
+            <CardTitle className="text-2xl">{t("manage_satff_designation")}</CardTitle>
             <CardDescription>{t("add,_edit,_or_remove_staff_roles_for_your_school")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -282,7 +282,7 @@ export default function StaffSettings() {
                     name="role_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel required>{t("role")}</FormLabel>
+                        <FormLabel required>{t("designation")}</FormLabel>
                         <FormControl>
                           <Input type="text" {...field} />
                         </FormControl>
